@@ -413,7 +413,7 @@ public:
     // param: <size> is the amount of memory in bytes for the pipeline cache memory
     // param: <data> is pointer to the beginning of the pipeline cache memory
     // precondition: the memory at [data,data+size) is writeable for the pipeline cache
-    void writeHeaderSafetyCriticalOne(uint64_t size, uint8_t *data)
+    void writeHeaderSafetyCriticalOne(uint64_t size, uint8_t *data) const
     {
         VKSC_ASSERT(size > sizeof(VkPipelineCacheHeaderVersionSafetyCriticalOne));
         VkPipelineCacheHeaderVersionSafetyCriticalOne *sc1 = reinterpret_cast<VkPipelineCacheHeaderVersionSafetyCriticalOne *>(data);
@@ -435,7 +435,7 @@ public:
     // precondition: the memory at [data,data+size) is writeable for the pipeline cache
     // No implementation-specific per-pipeline or per-stage metadata is written, but space is reserved if
     // setPipelineIndexStride and/or setStageIndexStride were called appropriately.
-    uint64_t writePipelineIndex(uint64_t size, uint8_t *data)
+    uint64_t writePipelineIndex(uint64_t size, uint8_t *data) const
     {
         uint64_t indexSize = m_PipelineCount * m_PipelineIndexStride;
         uint64_t extraOffset = m_PipelineIndexOffset + indexSize;
@@ -454,7 +454,7 @@ public:
     // return: the amount of space in bytes required for the pipeline index and all associated data.
     // includes pipeline index and all associated pipeline entry data (json, stage index, stage code).
     // Does NOT include the size of the initial VkPipelineCacheHeaderVersionSafetyCriticalOne header.
-    uint64_t getPipelineIndexSize()
+    uint64_t getPipelineIndexSize() const
     {
         uint64_t indexSize = m_PipelineCount * m_PipelineIndexStride;
         uint64_t extraSize = 0;

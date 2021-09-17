@@ -58,7 +58,7 @@ public:
 
     // basic sanity check of the referenced pipeline cache data
     // make sure m_CacheData starts with a well-formed VkPipelineCacheHeaderVersionSafetyCriticalOne structure
-    bool isValid()
+    bool isValid() const
     {
         const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 =
             reinterpret_cast<const VkPipelineCacheHeaderVersionSafetyCriticalOne* const>(m_CacheData);
@@ -73,7 +73,7 @@ public:
     }
 
     // return pointer to the pipeline cache SafetyCriticalOne structure
-    const VkPipelineCacheHeaderVersionSafetyCriticalOne* const getSafetyCriticalOneHeader()
+    const VkPipelineCacheHeaderVersionSafetyCriticalOne* const getSafetyCriticalOneHeader() const
     {
         const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 =
             reinterpret_cast<const VkPipelineCacheHeaderVersionSafetyCriticalOne* const>(m_CacheData);
@@ -84,7 +84,7 @@ public:
     // return pointer to pipeline index entry by <index> in pipeline header
     // typically used for iterating over all pipelines in the cache
     // nullptr is returned if <index> is out of range
-    const VkPipelineCacheSafetyCriticalIndexEntry* const getPipelineIndexEntry(uint32_t index)
+    const VkPipelineCacheSafetyCriticalIndexEntry* const getPipelineIndexEntry(uint32_t index) const
     {
         const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 = getSafetyCriticalOneHeader();
 
@@ -94,7 +94,7 @@ public:
         }
 
         uint64_t offset = sc1->pipelineIndexOffset + (index * sc1->pipelineIndexStride);
-        VKSC_ASSERT(offset + sizeof(VkPipelineCacheSafetyCriticalIndexEntry) < m_CacheSize);
+        VKSC_ASSERT(offset + sizeof(VkPipelineCacheSafetyCriticalIndexEntry) <= m_CacheSize);
 
         const VkPipelineCacheSafetyCriticalIndexEntry* const pipelineIndexEntry =
             reinterpret_cast<const VkPipelineCacheSafetyCriticalIndexEntry* const>(m_CacheData + offset);
@@ -104,14 +104,14 @@ public:
 
     // return pointer to pipeline index entry for requested pipeline identifier
     // nullptr is returned if not found
-    const VkPipelineCacheSafetyCriticalIndexEntry* const getPipelineIndexEntry(const uint8_t identifier[VK_UUID_SIZE])
+    const VkPipelineCacheSafetyCriticalIndexEntry* const getPipelineIndexEntry(const uint8_t identifier[VK_UUID_SIZE]) const
     {
         const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 = getSafetyCriticalOneHeader();
 
         for (uint32_t i = 0; i < sc1->pipelineIndexCount; ++i)
         {
             uint64_t offset = sc1->pipelineIndexOffset + (i * sc1->pipelineIndexStride);
-            VKSC_ASSERT(offset + sizeof(VkPipelineCacheSafetyCriticalIndexEntry) < m_CacheSize);
+            VKSC_ASSERT(offset + sizeof(VkPipelineCacheSafetyCriticalIndexEntry) <= m_CacheSize);
 
             const VkPipelineCacheSafetyCriticalIndexEntry* const pipelineIndexEntry =
                 reinterpret_cast<const VkPipelineCacheSafetyCriticalIndexEntry* const>(m_CacheData + offset);
@@ -127,24 +127,24 @@ public:
 
     // return pointer to json for a given pipeline index entry
     // nullptr is returned if not present
-    const uint8_t* const getJson(const VkPipelineCacheSafetyCriticalIndexEntry* const pipelineIndexEntry)
+    const uint8_t* const getJson(const VkPipelineCacheSafetyCriticalIndexEntry* const pipelineIndexEntry) const
     {
         uint64_t offset = pipelineIndexEntry->jsonOffset;
         if (0 == offset) return nullptr;
 
-        VKSC_ASSERT(offset + pipelineIndexEntry->jsonSize < m_CacheSize);
+        VKSC_ASSERT(offset + pipelineIndexEntry->jsonSize <= m_CacheSize);
 
         return (m_CacheData + offset);
     }
 
     // return pointer to stage validation index entry given a pipeline index entry <pipelineIndexEntry> and <stage>
     // nullptr is returned if not present
-    const VkPipelineCacheStageValidationIndexEntry* const getStageIndexEntry(const VkPipelineCacheSafetyCriticalIndexEntry* const pipelineIndexEntry, uint32_t stage)
+    const VkPipelineCacheStageValidationIndexEntry* const getStageIndexEntry(const VkPipelineCacheSafetyCriticalIndexEntry* const pipelineIndexEntry, uint32_t stage) const
     {
         if (stage >= pipelineIndexEntry->stageIndexCount) return nullptr;
 
         uint64_t offset = pipelineIndexEntry->stageIndexOffset + (stage * pipelineIndexEntry->stageIndexStride);
-        VKSC_ASSERT(offset + sizeof(VkPipelineCacheStageValidationIndexEntry) < m_CacheSize);
+        VKSC_ASSERT(offset + sizeof(VkPipelineCacheStageValidationIndexEntry) <= m_CacheSize);
 
         const VkPipelineCacheStageValidationIndexEntry* const stageIndexEntry =
             reinterpret_cast<const VkPipelineCacheStageValidationIndexEntry* const>(m_CacheData + offset);
@@ -154,12 +154,12 @@ public:
 
     // return pointer to spirv code in the pipeline cache for a given stage index entry
     // nullptr is returned if not present
-    const uint8_t* const getSPIRV(const VkPipelineCacheStageValidationIndexEntry* const stageIndexEntry)
+    const uint8_t* const getSPIRV(const VkPipelineCacheStageValidationIndexEntry* const stageIndexEntry) const
     {
         uint64_t offset = stageIndexEntry->codeOffset;
         if (0 == offset) return nullptr;
 
-        VKSC_ASSERT(offset + stageIndexEntry->codeSize < m_CacheSize);
+        VKSC_ASSERT(offset + stageIndexEntry->codeSize <= m_CacheSize);
 
         return (m_CacheData + offset);
     }
@@ -171,4 +171,4 @@ private:
 
 };
 
-#endif // PCWRITER_HPP
+#endif // PCREADER_HPP

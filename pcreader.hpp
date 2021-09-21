@@ -73,7 +73,7 @@ public:
     }
 
     // return pointer to the pipeline cache SafetyCriticalOne structure
-    const VkPipelineCacheHeaderVersionSafetyCriticalOne* const getSafetyCriticalOneHeader() const
+    const VkPipelineCacheHeaderVersionSafetyCriticalOne* getSafetyCriticalOneHeader() const
     {
         const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 =
             reinterpret_cast<const VkPipelineCacheHeaderVersionSafetyCriticalOne* const>(m_CacheData);
@@ -84,7 +84,7 @@ public:
     // return pointer to pipeline index entry by <index> in pipeline header
     // typically used for iterating over all pipelines in the cache
     // nullptr is returned if <index> is out of range
-    const VkPipelineCacheSafetyCriticalIndexEntry* const getPipelineIndexEntry(uint32_t index) const
+    const VkPipelineCacheSafetyCriticalIndexEntry* getPipelineIndexEntry(uint32_t index) const
     {
         const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 = getSafetyCriticalOneHeader();
 
@@ -104,7 +104,7 @@ public:
 
     // return pointer to pipeline index entry for requested pipeline identifier
     // nullptr is returned if not found
-    const VkPipelineCacheSafetyCriticalIndexEntry* const getPipelineIndexEntry(const uint8_t identifier[VK_UUID_SIZE]) const
+    const VkPipelineCacheSafetyCriticalIndexEntry* getPipelineIndexEntry(const uint8_t identifier[VK_UUID_SIZE]) const
     {
         const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 = getSafetyCriticalOneHeader();
 
@@ -127,7 +127,7 @@ public:
 
     // return pointer to json for a given pipeline index entry
     // nullptr is returned if not present
-    const uint8_t* const getJson(const VkPipelineCacheSafetyCriticalIndexEntry* const pipelineIndexEntry) const
+    const uint8_t* getJson(const VkPipelineCacheSafetyCriticalIndexEntry* const pipelineIndexEntry) const
     {
         uint64_t offset = pipelineIndexEntry->jsonOffset;
         if (0 == offset) return nullptr;
@@ -139,7 +139,7 @@ public:
 
     // return pointer to stage validation index entry given a pipeline index entry <pipelineIndexEntry> and <stage>
     // nullptr is returned if not present
-    const VkPipelineCacheStageValidationIndexEntry* const getStageIndexEntry(const VkPipelineCacheSafetyCriticalIndexEntry* const pipelineIndexEntry, uint32_t stage) const
+    const VkPipelineCacheStageValidationIndexEntry* getStageIndexEntry(const VkPipelineCacheSafetyCriticalIndexEntry* const pipelineIndexEntry, uint32_t stage) const
     {
         if (stage >= pipelineIndexEntry->stageIndexCount) return nullptr;
 
@@ -154,7 +154,7 @@ public:
 
     // return pointer to spirv code in the pipeline cache for a given stage index entry
     // nullptr is returned if not present
-    const uint8_t* const getSPIRV(const VkPipelineCacheStageValidationIndexEntry* const stageIndexEntry) const
+    const uint8_t* getSPIRV(const VkPipelineCacheStageValidationIndexEntry* const stageIndexEntry) const
     {
         uint64_t offset = stageIndexEntry->codeOffset;
         if (0 == offset) return nullptr;

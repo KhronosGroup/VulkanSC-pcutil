@@ -1,3 +1,5 @@
 ptest
-ptest.dSYM/*
+ptest32
+pcinfo
+*.dSYM/*
 *.swp

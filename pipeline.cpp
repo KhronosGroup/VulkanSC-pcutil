@@ -16,6 +16,7 @@
  */
 
 
+#include <cassert>
 #include <cstddef>
 #include <iostream>
 #include <cstring>
@@ -221,7 +222,7 @@ int main(void)
     // query for pipeline by UUID
     for (uint8_t i=0; i<8; i++)
     {
-        uint8_t id = 7-i;
+        uint8_t id = static_cast<uint8_t>(7-i);
         uint8_t queryUUID[VK_UUID_SIZE]{id,id,id,id,id,id,id,id,id,id,id,id,id,id,id,id};
         const VkPipelineCacheSafetyCriticalIndexEntry *pie = pcr.getPipelineIndexEntry(queryUUID);
         if (nullptr != pie)
@@ -233,7 +234,7 @@ int main(void)
         const char *jsonPtr = reinterpret_cast<const char *>(pcr.getJson(pie));
         if (nullptr != jsonPtr)
         {
-            std::string json(jsonPtr, pie->jsonSize);
+            std::string json(jsonPtr, static_cast<size_t>(pie->jsonSize));
             std::cout << "json: " << json << std::endl;
         }
         for (uint32_t stage=0; stage < pie->stageIndexCount; stage++)

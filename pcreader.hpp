@@ -108,7 +108,7 @@ public:
     {
         const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 = getSafetyCriticalOneHeader();
 
-        for (uint32_t i = 0; i < sc1->pipelineIndexCount; ++i)
+        for (uint32_t i = 0U; i < sc1->pipelineIndexCount; ++i)
         {
             uint64_t offset = sc1->pipelineIndexOffset + (i * sc1->pipelineIndexStride);
             VKSC_ASSERT(offset + sizeof(VkPipelineCacheSafetyCriticalIndexEntry) <= m_CacheSize);
@@ -116,7 +116,7 @@ public:
             const VkPipelineCacheSafetyCriticalIndexEntry* const pipelineIndexEntry =
                 reinterpret_cast<const VkPipelineCacheSafetyCriticalIndexEntry* const>(m_CacheData + offset);
 
-            if (VKSC_MEMCMP(identifier, pipelineIndexEntry->pipelineIdentifier, VK_UUID_SIZE) == 0)
+            if (VKSC_MEMCMP(identifier, pipelineIndexEntry->pipelineIdentifier, VK_UUID_SIZE) == 0U)
             {
                 return pipelineIndexEntry;
             }
@@ -130,7 +130,7 @@ public:
     const uint8_t* getJson(const VkPipelineCacheSafetyCriticalIndexEntry* const pipelineIndexEntry) const
     {
         uint64_t offset = pipelineIndexEntry->jsonOffset;
-        if (0 == offset) return nullptr;
+        if (0U == offset) return nullptr;
 
         VKSC_ASSERT(offset + pipelineIndexEntry->jsonSize <= m_CacheSize);
 
@@ -157,7 +157,7 @@ public:
     const uint8_t* getSPIRV(const VkPipelineCacheStageValidationIndexEntry* const stageIndexEntry) const
     {
         uint64_t offset = stageIndexEntry->codeOffset;
-        if (0 == offset) return nullptr;
+        if (0U == offset) return nullptr;
 
         VKSC_ASSERT(offset + stageIndexEntry->codeSize <= m_CacheSize);
 

@@ -43,7 +43,7 @@ class VKSCStageEntry
 {
 public:
     // initialize the stage entry with no code
-    VKSCStageEntry(): m_SpirvSize(0), m_SpirvCode(nullptr) {}
+    VKSCStageEntry(): m_SpirvSize(0U), m_SpirvCode(nullptr) {}
 
     // disable copy and assignment
     VKSCStageEntry(VKSCStageEntry const& rhs) = delete; // copy constructor
@@ -76,20 +76,20 @@ public:
         VKSC_ASSERT(size > entryOffset + sizeof(VkPipelineCacheStageValidationIndexEntry));
 
         const uint64_t codeSize = m_SpirvSize;
-        if (codeSize > 0)
+        if (codeSize > 0U)
         {
             entry->codeSize = codeSize;
 
             VKSC_ASSERT(size > extraOffset + codeSize);
             uint8_t *code = data + extraOffset;
-            VKSC_MEMCPY(code, m_SpirvCode, codeSize);
+            VKSC_MEMCPY(code, m_SpirvCode, static_cast<size_t>(codeSize));
 
             entry->codeOffset = extraOffset;
             extraOffset += codeSize;
         } else
         {
-            entry->codeSize = 0;
-            entry->codeOffset = 0;
+            entry->codeSize = 0U;
+            entry->codeOffset = 0U;
         }
 
         return extraOffset;
@@ -202,25 +202,25 @@ public:
 
         // write optional json
         const uint64_t jsonSize = m_JsonSize;
-        if (jsonSize > 0)
+        if (jsonSize > 0U)
         {
             entry->jsonSize = jsonSize;
 
             VKSC_ASSERT(size > extraOffset + jsonSize);
             uint8_t *json = data + extraOffset;
-            VKSC_MEMCPY(json, m_JsonPointer, jsonSize);
+            VKSC_MEMCPY(json, m_JsonPointer, static_cast<size_t>(jsonSize));
 
             entry->jsonOffset = extraOffset;
             extraOffset += jsonSize;
         } else
         {
-            entry->jsonSize = 0;
-            entry->jsonOffset = 0;
+            entry->jsonSize = 0U;
+            entry->jsonOffset = 0U;
         }
 
         // write the stageIndex
         const uint32_t stageCount = m_StageCount;
-        if (stageCount > 0)
+        if (stageCount > 0U)
         {
             uint64_t indexSize = stageCount * stageStride;
             VKSC_ASSERT(size > extraOffset + indexSize);
@@ -231,7 +231,7 @@ public:
             entry->stageIndexOffset = currentOffset;
             extraOffset += indexSize;
 
-            for (uint32_t i = 0; i < stageCount; ++i)
+            for (uint32_t i = 0U; i < stageCount; ++i)
             {
                 extraOffset = m_Stages[i].writeStageEntry(size, data, currentOffset, extraOffset);
                 currentOffset += stageStride;
@@ -239,9 +239,9 @@ public:
             VKSC_ASSERT(currentOffset == entry->stageIndexOffset + indexSize);
         } else
         {
-            entry->stageIndexCount = 0;
-            entry->stageIndexStride = 0;
-            entry->stageIndexOffset = 0;
+            entry->stageIndexCount = 0U;
+            entry->stageIndexStride = 0U;
+            entry->stageIndexOffset = 0U;
         }
 
         return extraOffset;
@@ -252,15 +252,15 @@ public:
     // includes json, stage index, and all associated stage data (code).
     uint64_t getPipelineEntrySize(const uint32_t stageStride)
     {
-        uint64_t stageIndexSize = 0;
+        uint64_t stageIndexSize = 0U;
 
         const uint32_t stageCount = m_StageCount;
-        if (stageCount > 0)
+        if (stageCount > 0U)
         {
             stageIndexSize = stageCount * stageStride;
-            uint64_t extraSize = 0;
+            uint64_t extraSize = 0U;
 
-            for (uint32_t i = 0; i < stageCount; ++i)
+            for (uint32_t i = 0U; i < stageCount; ++i)
             {
                 extraSize += m_Stages[i].getStageEntryExtraSize();
             }
@@ -274,9 +274,9 @@ public:
 private:
     uint8_t         m_Identifier[VK_UUID_SIZE];
     const uint64_t  m_PoolSize;
-    uint64_t        m_JsonSize{0};
+    uint64_t        m_JsonSize{0U};
     const uint8_t*  m_JsonPointer{nullptr};
-    uint32_t        m_StageCount{0};
+    uint32_t        m_StageCount{0U};
     VKSCStageEntry* m_Stages{nullptr};
 };
 
@@ -344,7 +344,7 @@ public:
     // return: true if memory allocated, false otherwise
     bool allocatePipelineIndex(uint32_t pipelineCount)
     {
-        if (m_PipelineIndex || m_PipelineCount > 0) return false;
+        if (m_PipelineIndex || m_PipelineCount > 0U) return false;
 
         m_PipelineCount = pipelineCount;
         m_PipelineIndex = new VKSCPipelineEntry*[m_PipelineCount];
@@ -442,7 +442,7 @@ public:
         VKSC_ASSERT(size > extraOffset);
 
         uint64_t currentOffset = m_PipelineIndexOffset;
-        for (uint32_t i = 0; i < m_PipelineCount; ++i)
+        for (uint32_t i = 0U; i < m_PipelineCount; ++i)
         {
             extraOffset = m_PipelineIndex[i]->writePipelineEntry(size, data, currentOffset, extraOffset, m_StageIndexStride);
             currentOffset += m_PipelineIndexStride;
@@ -457,9 +457,9 @@ public:
     uint64_t getPipelineIndexSize() const
     {
         uint64_t indexSize = m_PipelineCount * m_PipelineIndexStride;
-        uint64_t extraSize = 0;
+        uint64_t extraSize = 0U;
 
-        for (uint32_t i = 0; i < m_PipelineCount; ++i)
+        for (uint32_t i = 0U; i < m_PipelineCount; ++i)
         {
             extraSize += m_PipelineIndex[i]->getPipelineEntrySize(m_StageIndexStride);
         }
@@ -468,15 +468,15 @@ public:
     }
 
 private:
-    uint32_t            m_VendorID              {0};
-    uint32_t            m_DeviceID              {0};
-    uint8_t             m_PipelineCacheUUID[VK_UUID_SIZE]{0};
+    uint32_t            m_VendorID              {0U};
+    uint32_t            m_DeviceID              {0U};
+    uint8_t             m_PipelineCacheUUID[VK_UUID_SIZE]{0U};
 
     uint32_t            m_PipelineIndexStride  {sizeof(VkPipelineCacheSafetyCriticalIndexEntry)};
     uint64_t            m_PipelineIndexOffset  {sizeof(VkPipelineCacheHeaderVersionSafetyCriticalOne)};
     uint32_t            m_StageIndexStride     {sizeof(VkPipelineCacheStageValidationIndexEntry)};
 
-    uint32_t            m_PipelineCount        {0};
+    uint32_t            m_PipelineCount        {0U};
     VKSCPipelineEntry** m_PipelineIndex        {nullptr};
 };
 

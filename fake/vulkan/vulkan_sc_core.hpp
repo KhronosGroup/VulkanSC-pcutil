@@ -33,7 +33,7 @@ typedef struct VkPipelineCacheStageValidationIndexEntry {
 
 typedef struct VkPipelineCacheSafetyCriticalIndexEntry {
     uint8_t     pipelineIdentifier[VK_UUID_SIZE];
-    uint64_t    poolEntrySize;
+    uint64_t    pipelineMemorySize;
     uint64_t    jsonSize;
     uint64_t    jsonOffset;
     uint32_t    stageIndexCount;
@@ -44,6 +44,7 @@ typedef struct VkPipelineCacheSafetyCriticalIndexEntry {
 typedef struct VkPipelineCacheHeaderVersionSafetyCriticalOne {
     VkPipelineCacheHeaderVersionOne     headerVersionOne;
     VkPipelineCacheValidationVersion    validationVersion;
+    uint32_t                            implementationData;
     uint32_t                            pipelineIndexCount;
     uint32_t                            pipelineIndexStride;
     uint64_t                            pipelineIndexOffset;

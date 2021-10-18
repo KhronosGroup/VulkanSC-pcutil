@@ -133,8 +133,8 @@ private:
 class VKSCPipelineEntry
 {
 public:
-    // initialize a pipeline entry with the pipeline <identifier> and required <poolSize>
-    VKSCPipelineEntry(const uint8_t identifier[VK_UUID_SIZE], uint64_t poolSize) : m_PoolSize(poolSize)
+    // initialize a pipeline entry with the pipeline <identifier> and required <memorySize>
+    VKSCPipelineEntry(const uint8_t identifier[VK_UUID_SIZE], uint64_t memorySize) : m_MemorySize(memorySize)
     {
         VKSC_MEMCPY(m_Identifier, identifier, VK_UUID_SIZE);
     }
@@ -205,7 +205,7 @@ public:
         VKSC_ASSERT(size > entryOffset + sizeof(VkPipelineCacheSafetyCriticalIndexEntry));
 
         VKSC_MEMCPY(entry->pipelineIdentifier, m_Identifier, VK_UUID_SIZE);
-        entry->poolEntrySize = m_PoolSize;
+        entry->pipelineMemorySize = m_MemorySize;
 
         // write optional json
         const uint64_t jsonSize = m_JsonSize;
@@ -280,7 +280,7 @@ public:
 
 private:
     uint8_t         m_Identifier[VK_UUID_SIZE];
-    const uint64_t  m_PoolSize;
+    const uint64_t  m_MemorySize;
     uint64_t        m_JsonSize{0U};
     const uint8_t*  m_JsonPointer{nullptr};
     uint32_t        m_StageCount{0U};
@@ -299,6 +299,7 @@ private:
 //        and call setVendorID, setDeviceID, and setPipelineCacheUUID
 //   - call allocatePipelineIndex to allocate storage for pointers to pipeline entries
 //   - call setPipelineEntry for each pipeline entry to be stored in the pipeline cache
+//   - (optional) call setImplementationData to store implementation-specific data in the pipeline index
 //   - (optional) call setPipelineIndexStride to override the default stride for the pipeline index
 //   - (optional) call setPipelineIndexOffset to override the default offset for the pipeline index
 //   - (optional) call setStageIndexStride to override the default stride for the stage entry index
@@ -416,6 +417,12 @@ public:
         VKSC_MEMCPY(m_PipelineCacheUUID, pipelineCacheUUID, VK_UUID_SIZE);
     }
 
+    // set the implementationData field
+    void setImplementationData(uint32_t implementationData)
+    {
+         m_ImplementationData = implementationData;
+    }
+
     // write the Safety Critical header at the the beginning of <data>
     // param: <size> is the amount of memory in bytes for the pipeline cache memory
     // param: <data> is pointer to the beginning of the pipeline cache memory
@@ -430,6 +437,7 @@ public:
         sc1->headerVersionOne.deviceID      = m_DeviceID;
         VKSC_MEMCPY(sc1->headerVersionOne.pipelineCacheUUID, m_PipelineCacheUUID, VK_UUID_SIZE);
         sc1->validationVersion = VK_PIPELINE_CACHE_VALIDATION_VERSION_SAFETY_CRITICAL_ONE;
+        sc1->implementationData = m_ImplementationData;
         sc1->pipelineIndexCount = m_PipelineCount;
         sc1->pipelineIndexStride = m_PipelineIndexStride;
         sc1->pipelineIndexOffset = m_PipelineIndexOffset;
@@ -478,6 +486,7 @@ private:
     uint32_t            m_VendorID              {0U};
     uint32_t            m_DeviceID              {0U};
     uint8_t             m_PipelineCacheUUID[VK_UUID_SIZE]{0U};
+    uint32_t            m_ImplementationData    {0U};
 
     uint32_t            m_PipelineIndexStride  {sizeof(VkPipelineCacheSafetyCriticalIndexEntry)};
     uint64_t            m_PipelineIndexOffset  {sizeof(VkPipelineCacheHeaderVersionSafetyCriticalOne)};

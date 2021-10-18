@@ -63,7 +63,7 @@ void print_pipeline_layout()
 
     PRINT_STRUCTSIZE(VkPipelineCacheSafetyCriticalIndexEntry);
     PRINT_STRUCTMEMB(VkPipelineCacheSafetyCriticalIndexEntry, pipelineIdentifier);
-    PRINT_STRUCTMEMB(VkPipelineCacheSafetyCriticalIndexEntry, poolEntrySize);
+    PRINT_STRUCTMEMB(VkPipelineCacheSafetyCriticalIndexEntry, pipelineMemorySize);
     PRINT_STRUCTMEMB(VkPipelineCacheSafetyCriticalIndexEntry, jsonSize);
     PRINT_STRUCTMEMB(VkPipelineCacheSafetyCriticalIndexEntry, jsonOffset);
     PRINT_STRUCTMEMB(VkPipelineCacheSafetyCriticalIndexEntry, stageIndexCount);
@@ -73,6 +73,7 @@ void print_pipeline_layout()
     PRINT_STRUCTSIZE(VkPipelineCacheHeaderVersionSafetyCriticalOne);
     PRINT_STRUCTMEMB(VkPipelineCacheHeaderVersionSafetyCriticalOne, headerVersionOne);
     PRINT_STRUCTMEMB(VkPipelineCacheHeaderVersionSafetyCriticalOne, validationVersion);
+    PRINT_STRUCTMEMB(VkPipelineCacheHeaderVersionSafetyCriticalOne, implementationData);
     PRINT_STRUCTMEMB(VkPipelineCacheHeaderVersionSafetyCriticalOne, pipelineIndexCount);
     PRINT_STRUCTMEMB(VkPipelineCacheHeaderVersionSafetyCriticalOne, pipelineIndexStride);
     PRINT_STRUCTMEMB(VkPipelineCacheHeaderVersionSafetyCriticalOne, pipelineIndexOffset);
@@ -113,6 +114,7 @@ std::ostream & operator<< (std::ostream &out, VkPipelineCacheHeaderVersionSafety
     out << "{" << std::endl;
     out << s.headerVersionOne << std::endl;
     out << s.validationVersion << std::endl;
+    out << s.implementationData << std::endl;
     out << s.pipelineIndexCount << std::endl;
     out << s.pipelineIndexStride << std::endl;
     out << s.pipelineIndexOffset << std::endl;
@@ -124,7 +126,7 @@ std::ostream & operator<< (std::ostream &out, VkPipelineCacheSafetyCriticalIndex
 {
     out << "{" << std::endl;
     out << "identifier " << s.pipelineIdentifier << std::endl;
-    out << "poolEntrySize " << s.poolEntrySize << std::endl;
+    out << "memorySize " << s.pipelineMemorySize << std::endl;
     out << "jsonSize " << s.jsonSize << std::endl;
     out << "jsonOffset " << s.jsonOffset << std::endl;
     out << "stageIndexCount " << s.stageIndexCount << std::endl;

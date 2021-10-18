@@ -16,6 +16,7 @@
  */
 #include <cstddef>
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <cstring>
 #include <vector>
@@ -63,6 +64,7 @@ std::ostream & operator<< (std::ostream &out, VkPipelineCacheHeaderVersionSafety
     out << "{" << std::endl;
     out << s.headerVersionOne << std::endl;
     out << s.validationVersion << std::endl;
+    out << s.implementationData << std::endl;
     out << s.pipelineIndexCount << std::endl;
     out << s.pipelineIndexStride << std::endl;
     out << s.pipelineIndexOffset << std::endl;
@@ -74,7 +76,7 @@ std::ostream & operator<< (std::ostream &out, VkPipelineCacheSafetyCriticalIndex
 {
     out << "{" << std::endl;
     out << "identifier " << s.pipelineIdentifier << std::endl;
-    out << "poolEntrySize " << s.poolEntrySize << std::endl;
+    out << "pipelineMemorySize " << s.pipelineMemorySize << std::endl;
     out << "jsonSize " << s.jsonSize << std::endl;
     out << "jsonOffset " << s.jsonOffset << std::endl;
     out << "stageIndexCount " << s.stageIndexCount << std::endl;
@@ -125,13 +127,13 @@ bool bucketPipelines(VKSCPipelineCacheHeaderReader &pcr, std::vector<PipelinePoo
 
         for( PipelinePool &pool : pools )
         {
-            if (pie->poolEntrySize <= pool.poolSize)
+            if (pie->pipelineMemorySize <= pool.poolSize)
             {
                 //cout << "adding index " << i << " to pool " << pool.poolSize << endl;
                 pool.poolEntries.push_back(i);
-                pool.poolMin = std::min(pool.poolMin, pie->poolEntrySize);
-                pool.poolMax = std::max(pool.poolMax, pie->poolEntrySize);
-                pool.poolTotal += pie->poolEntrySize;
+                pool.poolMin = std::min(pool.poolMin, pie->pipelineMemorySize);
+                pool.poolMax = std::max(pool.poolMax, pie->pipelineMemorySize);
+                pool.poolTotal += pie->pipelineMemorySize;
                 addedToPool = true;
                 break;
             }
@@ -141,7 +143,7 @@ bool bucketPipelines(VKSCPipelineCacheHeaderReader &pcr, std::vector<PipelinePoo
             // pipeline didn't fit in any pool
             cerr << "WARNING: index " << i
                  << " id: " << pie->pipelineIdentifier
-                 << " poolsize: " << pie->poolEntrySize
+                 << " pipelineMemorySize: " << pie->pipelineMemorySize
                  << " did not fit in any pool!" << std::endl;
             allAdded = false;
         }
@@ -166,9 +168,9 @@ bool printCacheInfo(VKSCPipelineCacheHeaderReader &pcr)
         {
             std::cout << "index: " << std::setw(3) << i
                       << " id: " << pie->pipelineIdentifier
-                      << " poolsize: " << pie->poolEntrySize << std::endl;
-            minPoolSize = std::min(minPoolSize, pie->poolEntrySize);
-            maxPoolSize = std::max(maxPoolSize, pie->poolEntrySize);
+                      << " pipelineMemorySize: " << pie->pipelineMemorySize << std::endl;
+            minPoolSize = std::min(minPoolSize, pie->pipelineMemorySize);
+            maxPoolSize = std::max(maxPoolSize, pie->pipelineMemorySize);
             //std::cout << "pie " << i << ": " << *pie << std::endl;
         } else {
             std::cout << "pie " << i << ": not found" << std::endl;

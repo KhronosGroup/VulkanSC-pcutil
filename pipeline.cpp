@@ -21,11 +21,11 @@
 #include <iostream>
 #include <cstring>
 #include <vector>
-#include <algorithm>
 
-#include "fake/vulkan_sc_core.hpp"
 #include "pcreader.hpp"
 #include "pcwriter.hpp"
+
+#include <vulkan/vulkan_sc_core.hpp>
 
 // Sanity check the structure sizes to ensure proper structure packing
 static_assert(sizeof(VkPipelineCacheHeaderVersionOne) == 32,

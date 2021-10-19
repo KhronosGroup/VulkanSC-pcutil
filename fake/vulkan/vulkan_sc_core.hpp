@@ -1,6 +1,9 @@
 // Fake Vulkan SC Core header
 // just enough to understand the pipeline cache header
 
+#ifndef FAKE_VULKAN_SC_CORE_H_PP
+#define FAKE_VULKAN_SC_CORE_H_PP 1
+
 #define VK_UUID_SIZE                      16U
 typedef uint64_t VkDeviceSize;
 
@@ -46,4 +49,5 @@ typedef struct VkPipelineCacheHeaderVersionSafetyCriticalOne {
     uint64_t                            pipelineIndexOffset;
 } VkPipelineCacheHeaderVersionSafetyCriticalOne;
 
+#endif // FAKE_VULKAN_SC_CORE_H_PP
 

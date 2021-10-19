@@ -16,14 +16,20 @@
  */
 
 #ifndef PCREADER_HPP
-#define PCREADER_HPP
+#define PCREADER_HPP 1
+
+#include <cstddef>
 
 #ifndef VKSC_ASSERT
+#include <cassert>
 #define VKSC_ASSERT assert
 #endif // VKSC_ASSERT
 #ifndef VKSC_MEMCMP
+#include <cstring>
 #define VKSC_MEMCMP memcmp
 #endif // VKSC_MEMCPY
+
+#include <vulkan/vulkan_sc_core.hpp>
 
 
 // VKSCPipelineCacheHeaderReader

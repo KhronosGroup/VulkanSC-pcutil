@@ -16,14 +16,21 @@
  */
 
 #ifndef PCWRITER_HPP
-#define PCWRITER_HPP
+#define PCWRITER_HPP 1
+
+#include <algorithm>
+#include <cstddef>
 
 #ifndef VKSC_ASSERT
+#include <cassert>
 #define VKSC_ASSERT assert
 #endif // VKSC_ASSERT
 #ifndef VKSC_MEMCPY
+#include <cstring>
 #define VKSC_MEMCPY memcpy
 #endif // VKSC_MEMCPY
+
+#include <vulkan/vulkan_sc_core.hpp>
 
 // VKSCStageEntry
 //

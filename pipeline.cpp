@@ -21,6 +21,7 @@
 #include <iostream>
 #include <cstring>
 #include <vector>
+#include <string>
 
 #include "pcreader.hpp"
 #include "pcwriter.hpp"

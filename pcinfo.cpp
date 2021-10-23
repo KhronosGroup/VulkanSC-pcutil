@@ -22,6 +22,8 @@
 #include <vector>
 #include <algorithm>
 #include <limits>
+#include <cctype>
+#include <string>
 
 #include "pcreader.hpp"
 #include <vulkan/vulkan_sc_core.hpp>

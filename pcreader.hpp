@@ -108,6 +108,22 @@ public:
         return hv1;
     }
 
+    // return the validation version from the SC1 header
+    VkPipelineCacheValidationVersion getValidationVersion() const
+    {
+        if (isLegacy())
+        {
+            const VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy* const sc1 = getSafetyCriticalOneHeaderLegacy();
+            return sc1->validationVersion;
+        }
+        else
+        {
+            const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 = getSafetyCriticalOneHeader();
+            return sc1->validationVersion;
+        }
+
+    }
+
     // return the implementation data field from the SC1 header
     uint32_t getImplementationData() const
     {

@@ -209,6 +209,7 @@ int main(void)
 
     const VkPipelineCacheHeaderVersionOne * hv1 = pcr.getHeaderVersionOne();
     std::cout << "headerv1 = " << *hv1 << std::endl;
+    std::cout << "validationVersion = " << pcr.getValidationVersion() << std::endl;
     std::cout << "implementationData = " << pcr.getImplementationData() << std::endl;
     std::cout << "pipelineIndexCount = " << pcr.getPipelineIndexCount() << std::endl;
     std::cout << "pipelineIndexStride = " << pcr.getPipelineIndexStride() << std::endl;

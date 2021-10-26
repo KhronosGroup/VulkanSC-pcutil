@@ -30,6 +30,14 @@
 
 using namespace std;
 
+typedef enum DetailMode
+{
+    DETAIL_MODE_NONE = 0,
+    DETAIL_MODE_BASIC,
+    DETAIL_MODE_HEADERS,
+    DETAIL_MODE_ALL,
+} DetailMode;
+
 std::ostream & operator<< (std::ostream &out, uint8_t i)
 {
     out << static_cast<unsigned int>(i);
@@ -153,10 +161,30 @@ bool bucketPipelines(VKSCPipelineCacheHeaderReader &pcr, std::vector<PipelinePoo
     return allAdded;
 }
 
-bool printCacheInfo(VKSCPipelineCacheHeaderReader &pcr)
+bool printCacheInfo(VKSCPipelineCacheHeaderReader &pcr, DetailMode details)
 {
+    const VkPipelineCacheHeaderVersionOne * hv1 = pcr.getHeaderVersionOne();
+
     uint64_t minPoolSize = std::numeric_limits<uint64_t>::max();
     uint64_t maxPoolSize = 0;
+
+    if (details >= DETAIL_MODE_HEADERS)
+    {
+        std::cout << std::endl
+                  << "headerSize:          " << hv1->headerSize << std::endl
+                  << "headerVersion:       " << hv1->headerVersion << std::endl
+                  << std::setbase(16)
+                  << "vendorID:            0x" << hv1->vendorID << std::endl
+                  << "deviceID:            0x" << hv1->deviceID << std::endl
+                  << "pipelineCacheUUID:   " << hv1->pipelineCacheUUID << std::endl
+                  << std::setbase(10)
+                  << "validationVersion:   " << pcr.getValidationVersion() << std::endl
+                  << "implementationData:  " << pcr.getImplementationData() << std::endl
+                  << "pipelineIndexCount:  " << pcr.getPipelineIndexCount() << std::endl
+                  << "pipelineIndexStride: " << pcr.getPipelineIndexStride() << std::endl
+                  << "pipelineIndexOffset: " << pcr.getPipelineIndexOffset() << std::endl
+                  << std::endl;
+    }
 
     // iterate over each pipeline and print the UUID
     for (uint32_t i=0; i < pcr.getPipelineIndexCount(); i++)
@@ -164,9 +192,53 @@ bool printCacheInfo(VKSCPipelineCacheHeaderReader &pcr)
         const VkPipelineCacheSafetyCriticalIndexEntry *pie = pcr.getPipelineIndexEntry(i);
         if (nullptr != pie)
         {
-            std::cout << "index: " << std::setw(3) << i
-                      << " id: " << pie->pipelineIdentifier
-                      << " pipelineMemorySize: " << pie->pipelineMemorySize << std::endl;
+            if (details >= DETAIL_MODE_HEADERS)
+            {
+                std::cout << "pipeline " << i << ":" << std::endl
+                          << "  pipelineIdentifier: " << pie->pipelineIdentifier << std::endl
+                          << "  pipelineMemorySize: " << pie->pipelineMemorySize << std::endl
+                          << "  jsonSize:           " << pie->jsonSize << std::endl
+                          << "  jsonOffset:         " << pie->jsonOffset << std::endl
+                          << "  stageIndexCount:    " << pie->stageIndexCount << std::endl
+                          << "  stageIndexStride:   " << pie->stageIndexStride << std::endl
+                          << "  stageIndexOffset:   " << pie->stageIndexOffset << std::endl;
+                for (uint32_t j=0; j < pie->stageIndexCount; j++)
+                {
+                    const VkPipelineCacheStageValidationIndexEntry *vie = pcr.getStageIndexEntry(pie, j);
+                    if (nullptr != vie)
+                    {
+                        std::cout << "  stage " << j << ":" << std::endl
+                                  << "    codeSize:         " << vie->codeSize << std::endl
+                                  << "    codeOffset:       " << vie->codeOffset << std::endl;
+                        if (details >= DETAIL_MODE_ALL)
+                        {
+                            const uint32_t *spirv = reinterpret_cast<const uint32_t *>(pcr.getSPIRV(vie));
+                            std::cout << "    spirv:            ";
+                            for (uint32_t k=0; k < vie->codeSize / 4; k++)
+                            {
+                                std::cout << "0x" << std::setw(8) << std::setbase(16) << spirv[k] << ",";
+                                if ((k % 8) == 7)
+                                {
+                                    std::cout << std::endl << "                      ";
+                                }
+                            }
+                            std::cout << std::setbase(10) << std::endl;
+                        }
+                    }
+                }
+                if (details >= DETAIL_MODE_ALL)
+                {
+                    const std::string json = std::string(reinterpret_cast<const char *>(pcr.getJson(pie)), pie->jsonSize);
+                    std::cout << "  json:" << std::endl << json << std::endl;
+                }
+                std::cout << std::endl;
+            }
+            else
+            {
+                std::cout << "index: " << std::setw(3) << i
+                          << " id: " << pie->pipelineIdentifier
+                          << " pipelineMemorySize: " << pie->pipelineMemorySize << std::endl;
+            }
             minPoolSize = std::min(minPoolSize, pie->pipelineMemorySize);
             maxPoolSize = std::max(maxPoolSize, pie->pipelineMemorySize);
             //std::cout << "pie " << i << ": " << *pie << std::endl;
@@ -190,6 +262,8 @@ void printUsageAndExit(char *executable, int exitCode)
               << std::endl << std::endl;
     std::cerr << "  -h | --help: print this usage message" << std::endl << std::endl;
     std::cerr << "  -l: list basic pipeline info (index, identifier, poolSize)" << std::endl << std::endl;
+    std::cerr << "  -d: list detailed pipeline info (-l, plus all header fields)" << std::endl << std::endl;
+    std::cerr << "  -a: list all pipeline info (-d, plus JSON and SPIR-V)" << std::endl << std::endl;
     std::cerr << "  -pool <poolsize>: add a bucket of size <poolsize>" << endl << endl;
     std::cerr << "  <pipeline_cache_file>: the pipeline cache file to parse (generated by PCC tool)" << std::endl << std::endl;
 
@@ -202,7 +276,7 @@ int main(int argc, char **argv)
     ifstream file_cache;
     char *cache_filename{nullptr};
     const int lastArg{argc};
-    bool listMode{false};
+    DetailMode listMode{DETAIL_MODE_NONE};
     std::vector<PipelinePool> pools{};
 
     if (argc < 2)
@@ -215,7 +289,15 @@ int main(int argc, char **argv)
     {
         if (strcmp(argv[i], "-l") == 0)
         {
-            listMode = true;
+            listMode = DETAIL_MODE_BASIC;
+        }
+        else if (strcmp(argv[i], "-d") == 0)
+        {
+            listMode = DETAIL_MODE_HEADERS;
+        }
+        else if (strcmp(argv[i], "-a") == 0)
+        {
+            listMode = DETAIL_MODE_ALL;
         }
         else if (strcmp(argv[i], "-pool") == 0)
         {
@@ -289,13 +371,13 @@ int main(int argc, char **argv)
     }
     if (pcr.isLegacy())
     {
-        std::cerr << "WARNING: using VK_PIPELINE_CACHE_HEADER_VERSION_SAFETY_CRITICAL_ONE_LEGACY cache file! "
+        std::cout << "WARNING: using VK_PIPELINE_CACHE_HEADER_VERSION_SAFETY_CRITICAL_ONE_LEGACY cache file! "
                      "Please upgrade your cache!" << std::endl;
     }
 
-    if (listMode)
+    if (listMode >= DETAIL_MODE_BASIC)
     {
-        printCacheInfo(pcr);
+        printCacheInfo(pcr, listMode);
     }
 
     if (pools.size() > 0)

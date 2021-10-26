@@ -117,11 +117,10 @@ std::ostream & operator<< (std::ostream &out, PipelinePool const &pool)
 // <pools> must be sorted in increasing order by poolSize
 bool bucketPipelines(VKSCPipelineCacheHeaderReader &pcr, std::vector<PipelinePool> &pools)
 {
-    const VkPipelineCacheHeaderVersionSafetyCriticalOne * sc1 = pcr.getSafetyCriticalOneHeader();
     bool allAdded = true;
 
     // iterate through the pipelines and add to the smallest pool that they fit
-    for (uint32_t i=0; i < sc1->pipelineIndexCount; i++)
+    for (uint32_t i=0; i < pcr.getPipelineIndexCount(); i++)
     {
         const VkPipelineCacheSafetyCriticalIndexEntry *pie = pcr.getPipelineIndexEntry(i);
         assert(pie != nullptr);
@@ -156,14 +155,11 @@ bool bucketPipelines(VKSCPipelineCacheHeaderReader &pcr, std::vector<PipelinePoo
 
 bool printCacheInfo(VKSCPipelineCacheHeaderReader &pcr)
 {
-    const VkPipelineCacheHeaderVersionSafetyCriticalOne * sc1 = pcr.getSafetyCriticalOneHeader();
-    //std::cout << "header = " << *sc1 << std::endl;
-
     uint64_t minPoolSize = std::numeric_limits<uint64_t>::max();
     uint64_t maxPoolSize = 0;
 
     // iterate over each pipeline and print the UUID
-    for (uint32_t i=0; i < sc1->pipelineIndexCount; i++)
+    for (uint32_t i=0; i < pcr.getPipelineIndexCount(); i++)
     {
         const VkPipelineCacheSafetyCriticalIndexEntry *pie = pcr.getPipelineIndexEntry(i);
         if (nullptr != pie)
@@ -181,7 +177,7 @@ bool printCacheInfo(VKSCPipelineCacheHeaderReader &pcr)
         }
     }
 
-    cout << "found " << sc1->pipelineIndexCount << " pipelines, sizes ["
+    cout << "found " << pcr.getPipelineIndexCount() << " pipelines, sizes ["
          << minPoolSize << ", " << maxPoolSize << "]" << endl;
 
     return true;
@@ -290,6 +286,11 @@ int main(int argc, char **argv)
         std::cerr << "Requested file is not a valid VK_PIPELINE_CACHE_HEADER_VERSION_SAFETY_CRITICAL_ONE "
                      "cache. Aborting!" << std::endl;
         return EXIT_FAILURE;
+    }
+    if (pcr.isLegacy())
+    {
+        std::cerr << "WARNING: using VK_PIPELINE_CACHE_HEADER_VERSION_SAFETY_CRITICAL_ONE_LEGACY cache file! "
+                     "Please upgrade your cache!" << std::endl;
     }
 
     if (listMode)

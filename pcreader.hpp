@@ -29,8 +29,18 @@
 #define VKSC_MEMCMP memcmp
 #endif // VKSC_MEMCPY
 
+// Must be version 1.0.6 or newer
 #include <vulkan/vulkan_sc_core.hpp>
 
+// Legacy Header for version 1.0.4
+#define VK_PIPELINE_CACHE_HEADER_VERSION_SAFETY_CRITICAL_ONE_LEGACY (VkPipelineCacheHeaderVersion)1000298000
+typedef struct VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy {
+    VkPipelineCacheHeaderVersionOne     headerVersionOne;
+    VkPipelineCacheValidationVersion    validationVersion;
+    uint32_t                            pipelineIndexCount;
+    uint32_t                            pipelineIndexStride;
+    uint64_t                            pipelineIndexOffset;
+} VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy;
 
 // VKSCPipelineCacheHeaderReader
 //
@@ -54,13 +64,21 @@
 // getSPIRV - get a pointer to the SPIRV code for a specified stage index entry
 //
 
+
 class VKSCPipelineCacheHeaderReader
 {
 public:
     // initialize the pipeline cache header reader with <cacheSize> bytes of data starting at <cacheData>
     // the pipeline cache is not copied, but the pointer is saved
     // cacheData is never modified
-    VKSCPipelineCacheHeaderReader(uint64_t cacheSize, const uint8_t* cacheData): m_CacheSize{cacheSize}, m_CacheData{cacheData} {}
+    VKSCPipelineCacheHeaderReader(uint64_t cacheSize, const uint8_t* cacheData)
+        : m_CacheSize{cacheSize}, m_CacheData{cacheData}
+    {
+        const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 =
+            reinterpret_cast<const VkPipelineCacheHeaderVersionSafetyCriticalOne* const>(m_CacheData);
+
+        m_IsLegacy = (sc1->headerVersionOne.headerVersion == VK_PIPELINE_CACHE_HEADER_VERSION_SAFETY_CRITICAL_ONE_LEGACY);
+    }
 
     // basic sanity check of the referenced pipeline cache data
     // make sure m_CacheData starts with a well-formed VkPipelineCacheHeaderVersionSafetyCriticalOne structure
@@ -70,7 +88,8 @@ public:
             reinterpret_cast<const VkPipelineCacheHeaderVersionSafetyCriticalOne* const>(m_CacheData);
 
         if (sc1->headerVersionOne.headerSize != sizeof(VkPipelineCacheHeaderVersionSafetyCriticalOne) ||
-            sc1->headerVersionOne.headerVersion != VK_PIPELINE_CACHE_HEADER_VERSION_SAFETY_CRITICAL_ONE ||
+            !(sc1->headerVersionOne.headerVersion == VK_PIPELINE_CACHE_HEADER_VERSION_SAFETY_CRITICAL_ONE ||
+              isLegacy()) ||
             sc1->validationVersion != VK_PIPELINE_CACHE_VALIDATION_VERSION_SAFETY_CRITICAL_ONE)
         {
             return false;
@@ -78,13 +97,74 @@ public:
         return true;
     }
 
-    // return pointer to the pipeline cache SafetyCriticalOne structure
-    const VkPipelineCacheHeaderVersionSafetyCriticalOne* getSafetyCriticalOneHeader() const
-    {
-        const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 =
-            reinterpret_cast<const VkPipelineCacheHeaderVersionSafetyCriticalOne* const>(m_CacheData);
+    bool isLegacy() const { return m_IsLegacy; }
 
-        return sc1;
+    // return pointer to the VkPipelineCacheHeaderVersionOne structure
+    const VkPipelineCacheHeaderVersionOne* getHeaderVersionOne() const
+    {
+        const VkPipelineCacheHeaderVersionOne* const hv1 =
+            reinterpret_cast<const VkPipelineCacheHeaderVersionOne* const>(m_CacheData);
+
+        return hv1;
+    }
+
+    // return the implementation data field from the SC1 header
+    uint32_t getImplementationData() const
+    {
+        if (isLegacy())
+        {
+            return 0U;
+        }
+        else
+        {
+            const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 = getSafetyCriticalOneHeader();
+            return sc1->implementationData;
+        }
+    }
+
+    // return the number of pipelines in the index
+    uint32_t getPipelineIndexCount() const
+    {
+        if (isLegacy())
+        {
+            const VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy* const sc1 = getSafetyCriticalOneHeaderLegacy();
+            return sc1->pipelineIndexCount;
+        }
+        else
+        {
+            const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 = getSafetyCriticalOneHeader();
+            return sc1->pipelineIndexCount;
+        }
+    }
+
+    // return the stride between pipeline index entries in the index
+    uint32_t getPipelineIndexStride() const
+    {
+        if (isLegacy())
+        {
+            const VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy* const sc1 = getSafetyCriticalOneHeaderLegacy();
+            return sc1->pipelineIndexStride;
+        }
+        else
+        {
+            const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 = getSafetyCriticalOneHeader();
+            return sc1->pipelineIndexStride;
+        }
+    }
+
+    // returns the offset to the start of pipeline index entries in the cache
+    uint64_t getPipelineIndexOffset() const
+    {
+        if (isLegacy())
+        {
+            const VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy* const sc1 = getSafetyCriticalOneHeaderLegacy();
+            return sc1->pipelineIndexOffset;
+        }
+        else
+        {
+            const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 = getSafetyCriticalOneHeader();
+            return sc1->pipelineIndexOffset;
+        }
     }
 
     // return pointer to pipeline index entry by <index> in pipeline header
@@ -92,14 +172,12 @@ public:
     // nullptr is returned if <index> is out of range
     const VkPipelineCacheSafetyCriticalIndexEntry* getPipelineIndexEntry(uint32_t index) const
     {
-        const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 = getSafetyCriticalOneHeader();
-
-        if (index >= sc1->pipelineIndexCount)
+        if (index >= getPipelineIndexCount())
         {
             return nullptr;
         }
 
-        uint64_t offset = sc1->pipelineIndexOffset + (index * sc1->pipelineIndexStride);
+        uint64_t offset = getPipelineIndexOffset() + (index * getPipelineIndexStride());
         VKSC_ASSERT(offset + sizeof(VkPipelineCacheSafetyCriticalIndexEntry) <= m_CacheSize);
 
         const VkPipelineCacheSafetyCriticalIndexEntry* const pipelineIndexEntry =
@@ -112,11 +190,13 @@ public:
     // nullptr is returned if not found
     const VkPipelineCacheSafetyCriticalIndexEntry* getPipelineIndexEntry(const uint8_t identifier[VK_UUID_SIZE]) const
     {
-        const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 = getSafetyCriticalOneHeader();
+        const uint32_t pipelineIndexCount = getPipelineIndexCount();
+        const uint32_t pipelineIndexStride = getPipelineIndexStride();
+        const uint64_t pipelineIndexOffset = getPipelineIndexOffset();
 
-        for (uint32_t i = 0U; i < sc1->pipelineIndexCount; ++i)
+        for (uint32_t i = 0U; i < pipelineIndexCount; ++i)
         {
-            uint64_t offset = sc1->pipelineIndexOffset + (i * sc1->pipelineIndexStride);
+            uint64_t offset = pipelineIndexOffset + (i * pipelineIndexStride);
             VKSC_ASSERT(offset + sizeof(VkPipelineCacheSafetyCriticalIndexEntry) <= m_CacheSize);
 
             const VkPipelineCacheSafetyCriticalIndexEntry* const pipelineIndexEntry =
@@ -171,9 +251,27 @@ public:
     }
 
 private:
+    // return pointer to the pipeline cache SafetyCriticalOne structure
+    const VkPipelineCacheHeaderVersionSafetyCriticalOne* getSafetyCriticalOneHeader() const
+    {
+        const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 =
+            reinterpret_cast<const VkPipelineCacheHeaderVersionSafetyCriticalOne* const>(m_CacheData);
+
+        return sc1;
+    }
+
+    // return pointer to the pipeline cache SafetyCriticalOneLegacy structure
+    const VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy* getSafetyCriticalOneHeaderLegacy() const
+    {
+        const VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy* const sc1 =
+            reinterpret_cast<const VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy* const>(m_CacheData);
+
+        return sc1;
+    }
 
     const uint64_t m_CacheSize;          // size of data pointed to by m_CacheData in bytes
     const uint8_t* const m_CacheData;    // pipeline cache data being read by this reader
+    bool m_IsLegacy;                     // is legacy (pre 1.0.5) pipeline cache format
 
 };
 

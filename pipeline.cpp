@@ -207,11 +207,15 @@ int main(void)
     VKSCPipelineCacheHeaderReader pcr(cacheSize, cache.data());
     std::cout << "isValid = " << pcr.isValid() << std::endl;
 
-    const VkPipelineCacheHeaderVersionSafetyCriticalOne * sc1 = pcr.getSafetyCriticalOneHeader();
-    std::cout << "header = " << *sc1 << std::endl;
+    const VkPipelineCacheHeaderVersionOne * hv1 = pcr.getHeaderVersionOne();
+    std::cout << "headerv1 = " << *hv1 << std::endl;
+    std::cout << "implementationData = " << pcr.getImplementationData() << std::endl;
+    std::cout << "pipelineIndexCount = " << pcr.getPipelineIndexCount() << std::endl;
+    std::cout << "pipelineIndexStride = " << pcr.getPipelineIndexStride() << std::endl;
+    std::cout << "pipelineIndexOffset = " << pcr.getPipelineIndexOffset() << std::endl;
 
     // iterate over each pipeline and print the UUID
-    for (uint32_t i=0; i < sc1->pipelineIndexCount; i++)
+    for (uint32_t i=0; i < pcr.getPipelineIndexCount(); i++)
     {
         const VkPipelineCacheSafetyCriticalIndexEntry *pie = pcr.getPipelineIndexEntry(i);
         if (nullptr != pie)

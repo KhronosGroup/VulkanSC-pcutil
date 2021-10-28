@@ -75,7 +75,7 @@ public:
         : m_CacheSize{cacheSize}, m_CacheData{cacheData}
     {
         const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 =
-            reinterpret_cast<const VkPipelineCacheHeaderVersionSafetyCriticalOne* const>(m_CacheData);
+            reinterpret_cast<const VkPipelineCacheHeaderVersionSafetyCriticalOne*>(m_CacheData);
 
         m_IsLegacy = (sc1->headerVersionOne.headerVersion == VK_PIPELINE_CACHE_HEADER_VERSION_SAFETY_CRITICAL_ONE_LEGACY);
     }
@@ -85,7 +85,7 @@ public:
     bool isValid() const
     {
         const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 =
-            reinterpret_cast<const VkPipelineCacheHeaderVersionSafetyCriticalOne* const>(m_CacheData);
+            reinterpret_cast<const VkPipelineCacheHeaderVersionSafetyCriticalOne*>(m_CacheData);
 
         if (sc1->headerVersionOne.headerSize != sizeof(VkPipelineCacheHeaderVersionSafetyCriticalOne) ||
             !(sc1->headerVersionOne.headerVersion == VK_PIPELINE_CACHE_HEADER_VERSION_SAFETY_CRITICAL_ONE ||
@@ -103,7 +103,7 @@ public:
     const VkPipelineCacheHeaderVersionOne* getHeaderVersionOne() const
     {
         const VkPipelineCacheHeaderVersionOne* const hv1 =
-            reinterpret_cast<const VkPipelineCacheHeaderVersionOne* const>(m_CacheData);
+            reinterpret_cast<const VkPipelineCacheHeaderVersionOne*>(m_CacheData);
 
         return hv1;
     }
@@ -197,7 +197,7 @@ public:
         VKSC_ASSERT(offset + sizeof(VkPipelineCacheSafetyCriticalIndexEntry) <= m_CacheSize);
 
         const VkPipelineCacheSafetyCriticalIndexEntry* const pipelineIndexEntry =
-            reinterpret_cast<const VkPipelineCacheSafetyCriticalIndexEntry* const>(m_CacheData + offset);
+            reinterpret_cast<const VkPipelineCacheSafetyCriticalIndexEntry*>(m_CacheData + offset);
 
         return pipelineIndexEntry;
     }
@@ -216,7 +216,7 @@ public:
             VKSC_ASSERT(offset + sizeof(VkPipelineCacheSafetyCriticalIndexEntry) <= m_CacheSize);
 
             const VkPipelineCacheSafetyCriticalIndexEntry* const pipelineIndexEntry =
-                reinterpret_cast<const VkPipelineCacheSafetyCriticalIndexEntry* const>(m_CacheData + offset);
+                reinterpret_cast<const VkPipelineCacheSafetyCriticalIndexEntry*>(m_CacheData + offset);
 
             if (VKSC_MEMCMP(identifier, pipelineIndexEntry->pipelineIdentifier, VK_UUID_SIZE) == 0U)
             {
@@ -249,7 +249,7 @@ public:
         VKSC_ASSERT(offset + sizeof(VkPipelineCacheStageValidationIndexEntry) <= m_CacheSize);
 
         const VkPipelineCacheStageValidationIndexEntry* const stageIndexEntry =
-            reinterpret_cast<const VkPipelineCacheStageValidationIndexEntry* const>(m_CacheData + offset);
+            reinterpret_cast<const VkPipelineCacheStageValidationIndexEntry*>(m_CacheData + offset);
 
         return stageIndexEntry;
     }
@@ -271,7 +271,7 @@ private:
     const VkPipelineCacheHeaderVersionSafetyCriticalOne* getSafetyCriticalOneHeader() const
     {
         const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 =
-            reinterpret_cast<const VkPipelineCacheHeaderVersionSafetyCriticalOne* const>(m_CacheData);
+            reinterpret_cast<const VkPipelineCacheHeaderVersionSafetyCriticalOne*>(m_CacheData);
 
         return sc1;
     }
@@ -280,7 +280,7 @@ private:
     const VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy* getSafetyCriticalOneHeaderLegacy() const
     {
         const VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy* const sc1 =
-            reinterpret_cast<const VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy* const>(m_CacheData);
+            reinterpret_cast<const VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy*>(m_CacheData);
 
         return sc1;
     }

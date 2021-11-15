@@ -71,11 +71,11 @@ public:
     // initialize the pipeline cache header reader with <cacheSize> bytes of data starting at <cacheData>
     // the pipeline cache is not copied, but the pointer is saved
     // cacheData is never modified
-    VKSCPipelineCacheHeaderReader(uint64_t cacheSize, const uint8_t* cacheData)
+    VKSCPipelineCacheHeaderReader(uint64_t cacheSize, uint8_t const * cacheData)
         : m_CacheSize{cacheSize}, m_CacheData{cacheData}
     {
-        const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 =
-            reinterpret_cast<const VkPipelineCacheHeaderVersionSafetyCriticalOne*>(m_CacheData);
+        VkPipelineCacheHeaderVersionSafetyCriticalOne const * const sc1 =
+            reinterpret_cast<VkPipelineCacheHeaderVersionSafetyCriticalOne const *>(m_CacheData);
 
         m_IsLegacy = (sc1->headerVersionOne.headerVersion == VK_PIPELINE_CACHE_HEADER_VERSION_SAFETY_CRITICAL_ONE_LEGACY);
     }
@@ -84,8 +84,8 @@ public:
     // make sure m_CacheData starts with a well-formed VkPipelineCacheHeaderVersionSafetyCriticalOne structure
     bool isValid() const
     {
-        const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 =
-            reinterpret_cast<const VkPipelineCacheHeaderVersionSafetyCriticalOne*>(m_CacheData);
+        VkPipelineCacheHeaderVersionSafetyCriticalOne const * const sc1 =
+            reinterpret_cast<VkPipelineCacheHeaderVersionSafetyCriticalOne const *>(m_CacheData);
 
         if (sc1->headerVersionOne.headerSize != sizeof(VkPipelineCacheHeaderVersionSafetyCriticalOne) ||
             !(sc1->headerVersionOne.headerVersion == VK_PIPELINE_CACHE_HEADER_VERSION_SAFETY_CRITICAL_ONE ||
@@ -100,10 +100,10 @@ public:
     bool isLegacy() const { return m_IsLegacy; }
 
     // return pointer to the VkPipelineCacheHeaderVersionOne structure
-    const VkPipelineCacheHeaderVersionOne* getHeaderVersionOne() const
+    VkPipelineCacheHeaderVersionOne const * getHeaderVersionOne() const
     {
-        const VkPipelineCacheHeaderVersionOne* const hv1 =
-            reinterpret_cast<const VkPipelineCacheHeaderVersionOne*>(m_CacheData);
+        VkPipelineCacheHeaderVersionOne const * const hv1 =
+            reinterpret_cast<VkPipelineCacheHeaderVersionOne const *>(m_CacheData);
 
         return hv1;
     }
@@ -113,12 +113,12 @@ public:
     {
         if (isLegacy())
         {
-            const VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy* const sc1 = getSafetyCriticalOneHeaderLegacy();
+            VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy const * const sc1 = getSafetyCriticalOneHeaderLegacy();
             return sc1->validationVersion;
         }
         else
         {
-            const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 = getSafetyCriticalOneHeader();
+            VkPipelineCacheHeaderVersionSafetyCriticalOne const * const sc1 = getSafetyCriticalOneHeader();
             return sc1->validationVersion;
         }
 
@@ -133,7 +133,7 @@ public:
         }
         else
         {
-            const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 = getSafetyCriticalOneHeader();
+            VkPipelineCacheHeaderVersionSafetyCriticalOne const * const sc1 = getSafetyCriticalOneHeader();
             return sc1->implementationData;
         }
     }
@@ -143,12 +143,12 @@ public:
     {
         if (isLegacy())
         {
-            const VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy* const sc1 = getSafetyCriticalOneHeaderLegacy();
+            VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy const * const sc1 = getSafetyCriticalOneHeaderLegacy();
             return sc1->pipelineIndexCount;
         }
         else
         {
-            const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 = getSafetyCriticalOneHeader();
+            VkPipelineCacheHeaderVersionSafetyCriticalOne const * const sc1 = getSafetyCriticalOneHeader();
             return sc1->pipelineIndexCount;
         }
     }
@@ -158,12 +158,12 @@ public:
     {
         if (isLegacy())
         {
-            const VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy* const sc1 = getSafetyCriticalOneHeaderLegacy();
+            VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy const * const sc1 = getSafetyCriticalOneHeaderLegacy();
             return sc1->pipelineIndexStride;
         }
         else
         {
-            const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 = getSafetyCriticalOneHeader();
+            VkPipelineCacheHeaderVersionSafetyCriticalOne const * const sc1 = getSafetyCriticalOneHeader();
             return sc1->pipelineIndexStride;
         }
     }
@@ -173,12 +173,12 @@ public:
     {
         if (isLegacy())
         {
-            const VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy* const sc1 = getSafetyCriticalOneHeaderLegacy();
+            VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy const * const sc1 = getSafetyCriticalOneHeaderLegacy();
             return sc1->pipelineIndexOffset;
         }
         else
         {
-            const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 = getSafetyCriticalOneHeader();
+            VkPipelineCacheHeaderVersionSafetyCriticalOne const * const sc1 = getSafetyCriticalOneHeader();
             return sc1->pipelineIndexOffset;
         }
     }
@@ -186,7 +186,7 @@ public:
     // return pointer to pipeline index entry by <index> in pipeline header
     // typically used for iterating over all pipelines in the cache
     // nullptr is returned if <index> is out of range
-    const VkPipelineCacheSafetyCriticalIndexEntry* getPipelineIndexEntry(uint32_t index) const
+    VkPipelineCacheSafetyCriticalIndexEntry const * getPipelineIndexEntry(uint32_t index) const
     {
         if (index >= getPipelineIndexCount())
         {
@@ -196,27 +196,27 @@ public:
         uint64_t offset = getPipelineIndexOffset() + (index * getPipelineIndexStride());
         VKSC_ASSERT(offset + sizeof(VkPipelineCacheSafetyCriticalIndexEntry) <= m_CacheSize);
 
-        const VkPipelineCacheSafetyCriticalIndexEntry* const pipelineIndexEntry =
-            reinterpret_cast<const VkPipelineCacheSafetyCriticalIndexEntry*>(m_CacheData + offset);
+        VkPipelineCacheSafetyCriticalIndexEntry const * const pipelineIndexEntry =
+            reinterpret_cast<VkPipelineCacheSafetyCriticalIndexEntry const *>(m_CacheData + offset);
 
         return pipelineIndexEntry;
     }
 
     // return pointer to pipeline index entry for requested pipeline identifier
     // nullptr is returned if not found
-    const VkPipelineCacheSafetyCriticalIndexEntry* getPipelineIndexEntry(const uint8_t identifier[VK_UUID_SIZE]) const
+    VkPipelineCacheSafetyCriticalIndexEntry const * getPipelineIndexEntry(uint8_t const identifier[VK_UUID_SIZE]) const
     {
-        const uint32_t pipelineIndexCount = getPipelineIndexCount();
-        const uint32_t pipelineIndexStride = getPipelineIndexStride();
-        const uint64_t pipelineIndexOffset = getPipelineIndexOffset();
+        uint32_t const pipelineIndexCount = getPipelineIndexCount();
+        uint32_t const pipelineIndexStride = getPipelineIndexStride();
+        uint64_t const pipelineIndexOffset = getPipelineIndexOffset();
 
         for (uint32_t i = 0U; i < pipelineIndexCount; ++i)
         {
             uint64_t offset = pipelineIndexOffset + (i * pipelineIndexStride);
             VKSC_ASSERT(offset + sizeof(VkPipelineCacheSafetyCriticalIndexEntry) <= m_CacheSize);
 
-            const VkPipelineCacheSafetyCriticalIndexEntry* const pipelineIndexEntry =
-                reinterpret_cast<const VkPipelineCacheSafetyCriticalIndexEntry*>(m_CacheData + offset);
+            VkPipelineCacheSafetyCriticalIndexEntry const * const pipelineIndexEntry =
+                reinterpret_cast<VkPipelineCacheSafetyCriticalIndexEntry const *>(m_CacheData + offset);
 
             if (VKSC_MEMCMP(identifier, pipelineIndexEntry->pipelineIdentifier, VK_UUID_SIZE) == 0U)
             {
@@ -229,7 +229,7 @@ public:
 
     // return pointer to json for a given pipeline index entry
     // nullptr is returned if not present
-    const uint8_t* getJson(const VkPipelineCacheSafetyCriticalIndexEntry* const pipelineIndexEntry) const
+    uint8_t const * getJson(VkPipelineCacheSafetyCriticalIndexEntry const * const pipelineIndexEntry) const
     {
         uint64_t offset = pipelineIndexEntry->jsonOffset;
         if (0U == offset) return nullptr;
@@ -241,22 +241,22 @@ public:
 
     // return pointer to stage validation index entry given a pipeline index entry <pipelineIndexEntry> and <stage>
     // nullptr is returned if not present
-    const VkPipelineCacheStageValidationIndexEntry* getStageIndexEntry(const VkPipelineCacheSafetyCriticalIndexEntry* const pipelineIndexEntry, uint32_t stage) const
+    VkPipelineCacheStageValidationIndexEntry const * getStageIndexEntry(VkPipelineCacheSafetyCriticalIndexEntry const * const pipelineIndexEntry, uint32_t stage) const
     {
         if (stage >= pipelineIndexEntry->stageIndexCount) return nullptr;
 
         uint64_t offset = pipelineIndexEntry->stageIndexOffset + (stage * pipelineIndexEntry->stageIndexStride);
         VKSC_ASSERT(offset + sizeof(VkPipelineCacheStageValidationIndexEntry) <= m_CacheSize);
 
-        const VkPipelineCacheStageValidationIndexEntry* const stageIndexEntry =
-            reinterpret_cast<const VkPipelineCacheStageValidationIndexEntry*>(m_CacheData + offset);
+        VkPipelineCacheStageValidationIndexEntry const * const stageIndexEntry =
+            reinterpret_cast<VkPipelineCacheStageValidationIndexEntry const *>(m_CacheData + offset);
 
         return stageIndexEntry;
     }
 
     // return pointer to spirv code in the pipeline cache for a given stage index entry
     // nullptr is returned if not present
-    const uint8_t* getSPIRV(const VkPipelineCacheStageValidationIndexEntry* const stageIndexEntry) const
+    uint8_t const * getSPIRV(VkPipelineCacheStageValidationIndexEntry const * const stageIndexEntry) const
     {
         uint64_t offset = stageIndexEntry->codeOffset;
         if (0U == offset) return nullptr;
@@ -270,23 +270,23 @@ private:
     // return pointer to the pipeline cache SafetyCriticalOne structure
     const VkPipelineCacheHeaderVersionSafetyCriticalOne* getSafetyCriticalOneHeader() const
     {
-        const VkPipelineCacheHeaderVersionSafetyCriticalOne* const sc1 =
-            reinterpret_cast<const VkPipelineCacheHeaderVersionSafetyCriticalOne*>(m_CacheData);
+        VkPipelineCacheHeaderVersionSafetyCriticalOne const * const sc1 =
+            reinterpret_cast<VkPipelineCacheHeaderVersionSafetyCriticalOne const *>(m_CacheData);
 
         return sc1;
     }
 
     // return pointer to the pipeline cache SafetyCriticalOneLegacy structure
-    const VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy* getSafetyCriticalOneHeaderLegacy() const
+    VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy const * getSafetyCriticalOneHeaderLegacy() const
     {
-        const VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy* const sc1 =
-            reinterpret_cast<const VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy*>(m_CacheData);
+        VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy const * const sc1 =
+            reinterpret_cast<VkPipelineCacheHeaderVersionSafetyCriticalOneLegacy const *>(m_CacheData);
 
         return sc1;
     }
 
-    const uint64_t m_CacheSize;          // size of data pointed to by m_CacheData in bytes
-    const uint8_t* const m_CacheData;    // pipeline cache data being read by this reader
+    uint64_t const m_CacheSize;          // size of data pointed to by m_CacheData in bytes
+    uint8_t const * const m_CacheData;   // pipeline cache data being read by this reader
     bool m_IsLegacy;                     // is legacy (pre 1.0.5) pipeline cache format
 
 };

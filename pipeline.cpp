@@ -86,7 +86,7 @@ std::ostream & operator<< (std::ostream &out, uint8_t i)
     return out;
 }
 
-std::ostream & operator<< (std::ostream &out, const uint8_t uuid[VK_UUID_SIZE])
+std::ostream & operator<< (std::ostream &out, uint8_t const uuid[VK_UUID_SIZE])
 {
     out << "{";
     for (uint32_t i=0; i<VK_UUID_SIZE; ++i)
@@ -151,14 +151,14 @@ int main(void)
 {
     print_pipeline_layout();
 
-    const uint64_t cacheSize = 10*1024*1024; // 10 MB
+    uint64_t const cacheSize = 10*1024*1024; // 10 MB
     std::vector<uint8_t> cache(cacheSize);
 
     uint8_t pcUuid[VK_UUID_SIZE]{0,1,2,3,4,5,6,7,8,9,0xa,0xb,0xc,0xd,0xe,0xf};
     VKSCPipelineCacheHeaderWriter pcw(0x10de,0xabcd,pcUuid);
 
     {
-        const uint32_t testSize = 8;
+        uint32_t const testSize = 8;
         std::vector<std::string> jsonStore(testSize);
         std::vector<std::vector<uint8_t>> codeStore(testSize*2);
         std::vector<VKSCPipelineEntry *> pipeStore(testSize);
@@ -173,7 +173,7 @@ int main(void)
 
             std::string fakeJson("<json>Let's pretend this is a Json file </json>");
             jsonStore[i] = fakeJson;
-            pe->setJsonCode(jsonStore[i].size(), reinterpret_cast<const uint8_t *>(jsonStore[i].data()));
+            pe->setJsonCode(jsonStore[i].size(), reinterpret_cast<uint8_t const *>(jsonStore[i].data()));
 
             uint32_t code[8] {0x11111111, 0x22222222, 0x33333333, i,
                               0x55665566, 0x66666666, 0x77887788, 0x88998899};
@@ -207,7 +207,7 @@ int main(void)
     VKSCPipelineCacheHeaderReader pcr(cacheSize, cache.data());
     std::cout << "isValid = " << pcr.isValid() << std::endl;
 
-    const VkPipelineCacheHeaderVersionOne * hv1 = pcr.getHeaderVersionOne();
+    VkPipelineCacheHeaderVersionOne const * hv1 = pcr.getHeaderVersionOne();
     std::cout << "headerv1 = " << *hv1 << std::endl;
     std::cout << "validationVersion = " << pcr.getValidationVersion() << std::endl;
     std::cout << "implementationData = " << pcr.getImplementationData() << std::endl;
@@ -218,7 +218,7 @@ int main(void)
     // iterate over each pipeline and print the UUID
     for (uint32_t i=0; i < pcr.getPipelineIndexCount(); i++)
     {
-        const VkPipelineCacheSafetyCriticalIndexEntry *pie = pcr.getPipelineIndexEntry(i);
+        VkPipelineCacheSafetyCriticalIndexEntry const *pie = pcr.getPipelineIndexEntry(i);
         if (nullptr != pie)
         {
             std::cout << "pie " << i << ": " << pie->pipelineIdentifier << std::endl;
@@ -232,14 +232,14 @@ int main(void)
     {
         uint8_t id = static_cast<uint8_t>(7-i);
         uint8_t queryUUID[VK_UUID_SIZE]{id,id,id,id,id,id,id,id,id,id,id,id,id,id,id,id};
-        const VkPipelineCacheSafetyCriticalIndexEntry *pie = pcr.getPipelineIndexEntry(queryUUID);
+        VkPipelineCacheSafetyCriticalIndexEntry const *pie = pcr.getPipelineIndexEntry(queryUUID);
         if (nullptr != pie)
         {
             std::cout << "pie " << id << ": " << *pie << std::endl;
         } else {
             std::cout << "pie " << id << ": not found" << std::endl;
         }
-        const char *jsonPtr = reinterpret_cast<const char *>(pcr.getJson(pie));
+        char const *jsonPtr = reinterpret_cast<char const *>(pcr.getJson(pie));
         if (nullptr != jsonPtr)
         {
             std::string json(jsonPtr, static_cast<size_t>(pie->jsonSize));
@@ -247,12 +247,12 @@ int main(void)
         }
         for (uint32_t stage=0; stage < pie->stageIndexCount; stage++)
         {
-            const VkPipelineCacheStageValidationIndexEntry *sie = pcr.getStageIndexEntry(pie, stage);
+            VkPipelineCacheStageValidationIndexEntry const *sie = pcr.getStageIndexEntry(pie, stage);
             if (nullptr != sie)
             {
                 std::cout << "sie " << stage << ": " << *sie << std::endl;
-                const uint8_t *spirv = pcr.getSPIRV(sie);
-                const uint32_t *code = reinterpret_cast<const uint32_t *>(spirv);
+                uint8_t const *spirv = pcr.getSPIRV(sie);
+                uint32_t const *code = reinterpret_cast<uint32_t const *>(spirv);
                 for (uint32_t c=0; c<sie->codeSize/4; c++)
                 {
                     std::cout << std::hex << code[c] << ", ";

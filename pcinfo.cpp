@@ -44,7 +44,7 @@ std::ostream & operator<< (std::ostream &out, uint8_t i)
     return out;
 }
 
-std::ostream & operator<< (std::ostream &out, const uint8_t uuid[VK_UUID_SIZE])
+std::ostream & operator<< (std::ostream &out, uint8_t const uuid[VK_UUID_SIZE])
 {
     out << "0x" << std::uppercase << std::hex;
     for (uint32_t i=0; i<VK_UUID_SIZE; ++i)
@@ -130,7 +130,7 @@ bool bucketPipelines(VKSCPipelineCacheHeaderReader &pcr, std::vector<PipelinePoo
     // iterate through the pipelines and add to the smallest pool that they fit
     for (uint32_t i=0; i < pcr.getPipelineIndexCount(); i++)
     {
-        const VkPipelineCacheSafetyCriticalIndexEntry *pie = pcr.getPipelineIndexEntry(i);
+        VkPipelineCacheSafetyCriticalIndexEntry const *pie = pcr.getPipelineIndexEntry(i);
         assert(pie != nullptr);
         bool addedToPool = false;
 
@@ -163,7 +163,7 @@ bool bucketPipelines(VKSCPipelineCacheHeaderReader &pcr, std::vector<PipelinePoo
 
 bool printCacheInfo(VKSCPipelineCacheHeaderReader &pcr, DetailMode details)
 {
-    const VkPipelineCacheHeaderVersionOne * hv1 = pcr.getHeaderVersionOne();
+    VkPipelineCacheHeaderVersionOne const * hv1 = pcr.getHeaderVersionOne();
 
     uint64_t minPoolSize = std::numeric_limits<uint64_t>::max();
     uint64_t maxPoolSize = 0;
@@ -189,7 +189,7 @@ bool printCacheInfo(VKSCPipelineCacheHeaderReader &pcr, DetailMode details)
     // iterate over each pipeline and print the UUID
     for (uint32_t i=0; i < pcr.getPipelineIndexCount(); i++)
     {
-        const VkPipelineCacheSafetyCriticalIndexEntry *pie = pcr.getPipelineIndexEntry(i);
+        VkPipelineCacheSafetyCriticalIndexEntry const *pie = pcr.getPipelineIndexEntry(i);
         if (nullptr != pie)
         {
             if (details >= DETAIL_MODE_HEADERS)
@@ -204,7 +204,7 @@ bool printCacheInfo(VKSCPipelineCacheHeaderReader &pcr, DetailMode details)
                           << "  stageIndexOffset:   " << pie->stageIndexOffset << std::endl;
                 for (uint32_t j=0; j < pie->stageIndexCount; j++)
                 {
-                    const VkPipelineCacheStageValidationIndexEntry *vie = pcr.getStageIndexEntry(pie, j);
+                    VkPipelineCacheStageValidationIndexEntry const *vie = pcr.getStageIndexEntry(pie, j);
                     if (nullptr != vie)
                     {
                         std::cout << "  stage " << j << ":" << std::endl
@@ -212,7 +212,7 @@ bool printCacheInfo(VKSCPipelineCacheHeaderReader &pcr, DetailMode details)
                                   << "    codeOffset:       " << vie->codeOffset << std::endl;
                         if (details >= DETAIL_MODE_ALL)
                         {
-                            const uint32_t *spirv = reinterpret_cast<const uint32_t *>(pcr.getSPIRV(vie));
+                            uint32_t const *spirv = reinterpret_cast<uint32_t const *>(pcr.getSPIRV(vie));
                             std::cout << "    spirv:            ";
                             for (uint32_t k=0; k < vie->codeSize / 4; k++)
                             {
@@ -228,7 +228,7 @@ bool printCacheInfo(VKSCPipelineCacheHeaderReader &pcr, DetailMode details)
                 }
                 if (details >= DETAIL_MODE_ALL)
                 {
-                    const std::string json = std::string(reinterpret_cast<const char *>(pcr.getJson(pie)), pie->jsonSize);
+                    std::string const json = std::string(reinterpret_cast<char const *>(pcr.getJson(pie)), pie->jsonSize);
                     std::cout << "  json:" << std::endl << json << std::endl;
                 }
                 std::cout << std::endl;
@@ -275,7 +275,7 @@ int main(int argc, char **argv)
 
     ifstream file_cache;
     char *cache_filename{nullptr};
-    const int lastArg{argc};
+    int const lastArg{argc};
     DetailMode listMode{DETAIL_MODE_NONE};
     std::vector<PipelinePool> pools{};
 
@@ -411,7 +411,7 @@ int main(int argc, char **argv)
             cout << "pool entry identifiers (hex):" << endl;
             for (auto id : pool.poolEntries)
             {
-                const VkPipelineCacheSafetyCriticalIndexEntry *pie = pcr.getPipelineIndexEntry(id);
+                VkPipelineCacheSafetyCriticalIndexEntry const *pie = pcr.getPipelineIndexEntry(id);
                 cout << "    " << pie->pipelineIdentifier << endl;
             }
         }

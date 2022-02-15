@@ -369,11 +369,6 @@ int main(int argc, char **argv)
                      "cache. Aborting!" << std::endl;
         return EXIT_FAILURE;
     }
-    if (pcr.isLegacy())
-    {
-        std::cout << "WARNING: using VK_PIPELINE_CACHE_HEADER_VERSION_SAFETY_CRITICAL_ONE_LEGACY cache file! "
-                     "Please upgrade your cache!" << std::endl;
-    }
 
     if (listMode >= DETAIL_MODE_BASIC)
     {

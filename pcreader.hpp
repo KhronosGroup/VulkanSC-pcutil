@@ -19,6 +19,7 @@
 #define PCREADER_HPP 1
 
 #include <cstddef>
+#include <limits>
 
 #ifndef VKSC_ASSERT
 #include <cassert>
@@ -129,13 +130,29 @@ public:
     // nullptr is returned if <index> is out of range
     VkPipelineCacheSafetyCriticalIndexEntry const * getPipelineIndexEntry(uint32_t index) const
     {
+        if (m_CacheSize < sizeof(VkPipelineCacheSafetyCriticalIndexEntry))
+        {
+            return nullptr;
+        }
+
         if (index >= getPipelineIndexCount())
         {
             return nullptr;
         }
 
-        uint64_t offset = getPipelineIndexOffset() + (index * getPipelineIndexStride());
-        VKSC_ASSERT(offset + sizeof(VkPipelineCacheSafetyCriticalIndexEntry) <= m_CacheSize);
+        uint64_t offset = uint64_t{index} * getPipelineIndexStride();
+
+        if (std::numeric_limits<uint64_t>::max() - getPipelineIndexOffset() < offset)
+        {
+            return nullptr;
+        }
+
+        offset += getPipelineIndexOffset();
+
+        if (m_CacheSize - sizeof(VkPipelineCacheSafetyCriticalIndexEntry) < offset)
+        {
+            return nullptr;
+        }
 
         VkPipelineCacheSafetyCriticalIndexEntry const * const pipelineIndexEntry =
             reinterpret_cast<VkPipelineCacheSafetyCriticalIndexEntry const *>(m_CacheData + offset);
@@ -151,18 +168,34 @@ public:
         uint32_t const pipelineIndexStride = getPipelineIndexStride();
         uint64_t const pipelineIndexOffset = getPipelineIndexOffset();
 
+        if (m_CacheSize < sizeof(VkPipelineCacheSafetyCriticalIndexEntry))
+        {
+            return nullptr;
+        }
+
+        uint64_t offset = pipelineIndexOffset;
+
         for (uint32_t i = 0U; i < pipelineIndexCount; ++i)
         {
-            uint64_t offset = pipelineIndexOffset + (i * pipelineIndexStride);
-            VKSC_ASSERT(offset + sizeof(VkPipelineCacheSafetyCriticalIndexEntry) <= m_CacheSize);
+            if (offset > m_CacheSize - sizeof(VkPipelineCacheSafetyCriticalIndexEntry))
+            {
+                return nullptr;
+            }
 
             VkPipelineCacheSafetyCriticalIndexEntry const * const pipelineIndexEntry =
                 reinterpret_cast<VkPipelineCacheSafetyCriticalIndexEntry const *>(m_CacheData + offset);
 
-            if (VKSC_MEMCMP(identifier, pipelineIndexEntry->pipelineIdentifier, VK_UUID_SIZE) == 0U)
+            if (VKSC_MEMCMP(identifier, pipelineIndexEntry->pipelineIdentifier, VK_UUID_SIZE) == 0)
             {
                 return pipelineIndexEntry;
             }
+
+            if (std::numeric_limits<uint64_t>::max() - offset < pipelineIndexStride)
+            {
+                return nullptr;
+            }
+
+            offset += pipelineIndexStride;
         }
 
         return nullptr;
@@ -173,12 +206,17 @@ public:
     uint8_t const * getJson(VkPipelineCacheSafetyCriticalIndexEntry const * const pipelineIndexEntry) const
     {
         uint64_t offset = pipelineIndexEntry->jsonOffset;
-        if (0U == offset)
+        
+        if (0U == offset) 
         {
             return nullptr;
         }
 
-        VKSC_ASSERT(offset + pipelineIndexEntry->jsonSize <= m_CacheSize);
+        if ((m_CacheSize <= offset) ||
+            (m_CacheSize - offset < pipelineIndexEntry->jsonSize))
+        {
+            return nullptr;
+        }
 
         return (m_CacheData + offset);
     }
@@ -187,13 +225,29 @@ public:
     // nullptr is returned if not present
     VkPipelineCacheStageValidationIndexEntry const * getStageIndexEntry(VkPipelineCacheSafetyCriticalIndexEntry const * const pipelineIndexEntry, uint32_t stage) const
     {
+        if (m_CacheSize < sizeof(VkPipelineCacheStageValidationIndexEntry))
+        {
+            return nullptr;
+        }
+
         if (stage >= pipelineIndexEntry->stageIndexCount)
         {
             return nullptr;
         }
 
-        uint64_t offset = pipelineIndexEntry->stageIndexOffset + (stage * pipelineIndexEntry->stageIndexStride);
-        VKSC_ASSERT(offset + sizeof(VkPipelineCacheStageValidationIndexEntry) <= m_CacheSize);
+        uint64_t offset = uint64_t{stage} * pipelineIndexEntry->stageIndexStride;
+
+        if (std::numeric_limits<uint64_t>::max() - offset < pipelineIndexEntry->stageIndexOffset)
+        {
+            return nullptr;
+        }
+
+        offset += pipelineIndexEntry->stageIndexOffset;
+
+        if (m_CacheSize - sizeof(VkPipelineCacheStageValidationIndexEntry) < offset)
+        {
+            return nullptr;
+        }
 
         VkPipelineCacheStageValidationIndexEntry const * const stageIndexEntry =
             reinterpret_cast<VkPipelineCacheStageValidationIndexEntry const *>(m_CacheData + offset);
@@ -211,7 +265,11 @@ public:
             return nullptr;
         }
 
-        VKSC_ASSERT(offset + stageIndexEntry->codeSize <= m_CacheSize);
+        if ((m_CacheSize < stageIndexEntry->codeSize) ||
+            (m_CacheSize - stageIndexEntry->codeSize < offset))
+        {
+            return nullptr;
+        }
 
         return (m_CacheData + offset);
     }

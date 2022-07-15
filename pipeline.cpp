@@ -239,7 +239,7 @@ int main(void)
         } else {
             std::cout << "pie " << id << ": not found" << std::endl;
         }
-        char const *jsonPtr = reinterpret_cast<char const *>(pcr.getJson(pie));
+        char const *jsonPtr = reinterpret_cast<char const *>(pcr.getJson(*pie));
         if (nullptr != jsonPtr)
         {
             std::string json(jsonPtr, static_cast<size_t>(pie->jsonSize));
@@ -247,11 +247,11 @@ int main(void)
         }
         for (uint32_t stage=0; stage < pie->stageIndexCount; stage++)
         {
-            VkPipelineCacheStageValidationIndexEntry const *sie = pcr.getStageIndexEntry(pie, stage);
+            VkPipelineCacheStageValidationIndexEntry const *sie = pcr.getStageIndexEntry(*pie, stage);
             if (nullptr != sie)
             {
                 std::cout << "sie " << stage << ": " << *sie << std::endl;
-                uint8_t const *spirv = pcr.getSPIRV(sie);
+                uint8_t const *spirv = pcr.getSPIRV(*sie);
                 uint32_t const *code = reinterpret_cast<uint32_t const *>(spirv);
                 for (uint32_t c=0; c<sie->codeSize/4; c++)
                 {

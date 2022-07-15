@@ -204,7 +204,7 @@ bool printCacheInfo(VKSCPipelineCacheHeaderReader &pcr, DetailMode details)
                           << "  stageIndexOffset:   " << pie->stageIndexOffset << std::endl;
                 for (uint32_t j=0; j < pie->stageIndexCount; j++)
                 {
-                    VkPipelineCacheStageValidationIndexEntry const *vie = pcr.getStageIndexEntry(pie, j);
+                    VkPipelineCacheStageValidationIndexEntry const *vie = pcr.getStageIndexEntry(*pie, j);
                     if (nullptr != vie)
                     {
                         std::cout << "  stage " << j << ":" << std::endl
@@ -212,7 +212,7 @@ bool printCacheInfo(VKSCPipelineCacheHeaderReader &pcr, DetailMode details)
                                   << "    codeOffset:       " << vie->codeOffset << std::endl;
                         if (details >= DETAIL_MODE_ALL)
                         {
-                            uint32_t const *spirv = reinterpret_cast<uint32_t const *>(pcr.getSPIRV(vie));
+                            uint32_t const *spirv = reinterpret_cast<uint32_t const *>(pcr.getSPIRV(*vie));
                             std::cout << "    spirv:            ";
                             for (uint32_t k=0; k < vie->codeSize / 4; k++)
                             {
@@ -228,7 +228,7 @@ bool printCacheInfo(VKSCPipelineCacheHeaderReader &pcr, DetailMode details)
                 }
                 if (details >= DETAIL_MODE_ALL)
                 {
-                    std::string const json = std::string(reinterpret_cast<char const *>(pcr.getJson(pie)), pie->jsonSize);
+                    std::string const json = std::string(reinterpret_cast<char const *>(pcr.getJson(*pie)), pie->jsonSize);
                     std::cout << "  json:" << std::endl << json << std::endl;
                 }
                 std::cout << std::endl;

@@ -62,7 +62,7 @@ public:
     // initialize the pipeline cache header reader with <cacheSize> bytes of data starting at <cacheData>
     // the pipeline cache is not copied, but the pointer is saved
     // cacheData is never modified
-    VKSCPipelineCacheHeaderReader(uint64_t cacheSize, uint8_t const * cacheData)
+    VKSCPipelineCacheHeaderReader(uint64_t const cacheSize, uint8_t const * const cacheData)
         : m_CacheSize{cacheSize}, m_CacheData{cacheData} {}
 
     // basic sanity check of the referenced pipeline cache data
@@ -128,7 +128,7 @@ public:
     // return pointer to pipeline index entry by <index> in pipeline header
     // typically used for iterating over all pipelines in the cache
     // nullptr is returned if <index> is out of range
-    VkPipelineCacheSafetyCriticalIndexEntry const * getPipelineIndexEntry(uint32_t index) const
+    VkPipelineCacheSafetyCriticalIndexEntry const * getPipelineIndexEntry(uint32_t const index) const
     {
         if (m_CacheSize < sizeof(VkPipelineCacheSafetyCriticalIndexEntry))
         {
@@ -203,9 +203,9 @@ public:
 
     // return pointer to json for a given pipeline index entry
     // nullptr is returned if not present
-    uint8_t const * getJson(VkPipelineCacheSafetyCriticalIndexEntry const * const pipelineIndexEntry) const
+    uint8_t const * getJson(VkPipelineCacheSafetyCriticalIndexEntry const &pipelineIndexEntry) const
     {
-        uint64_t offset = pipelineIndexEntry->jsonOffset;
+        uint64_t const offset = pipelineIndexEntry.jsonOffset;
         
         if (0U == offset) 
         {
@@ -213,7 +213,7 @@ public:
         }
 
         if ((m_CacheSize <= offset) ||
-            (m_CacheSize - offset < pipelineIndexEntry->jsonSize))
+            (m_CacheSize - offset < pipelineIndexEntry.jsonSize))
         {
             return nullptr;
         }
@@ -223,26 +223,26 @@ public:
 
     // return pointer to stage validation index entry given a pipeline index entry <pipelineIndexEntry> and <stage>
     // nullptr is returned if not present
-    VkPipelineCacheStageValidationIndexEntry const * getStageIndexEntry(VkPipelineCacheSafetyCriticalIndexEntry const * const pipelineIndexEntry, uint32_t stage) const
+    VkPipelineCacheStageValidationIndexEntry const * getStageIndexEntry(VkPipelineCacheSafetyCriticalIndexEntry const &pipelineIndexEntry, uint32_t const stage) const
     {
         if (m_CacheSize < sizeof(VkPipelineCacheStageValidationIndexEntry))
         {
             return nullptr;
         }
 
-        if (stage >= pipelineIndexEntry->stageIndexCount)
+        if (stage >= pipelineIndexEntry.stageIndexCount)
         {
             return nullptr;
         }
 
-        uint64_t offset = uint64_t{stage} * pipelineIndexEntry->stageIndexStride;
+        uint64_t offset = uint64_t{stage} * pipelineIndexEntry.stageIndexStride;
 
-        if (std::numeric_limits<uint64_t>::max() - offset < pipelineIndexEntry->stageIndexOffset)
+        if (std::numeric_limits<uint64_t>::max() - offset < pipelineIndexEntry.stageIndexOffset)
         {
             return nullptr;
         }
 
-        offset += pipelineIndexEntry->stageIndexOffset;
+        offset += pipelineIndexEntry.stageIndexOffset;
 
         if (m_CacheSize - sizeof(VkPipelineCacheStageValidationIndexEntry) < offset)
         {
@@ -257,16 +257,16 @@ public:
 
     // return pointer to spirv code in the pipeline cache for a given stage index entry
     // nullptr is returned if not present
-    uint8_t const * getSPIRV(VkPipelineCacheStageValidationIndexEntry const * const stageIndexEntry) const
+    uint8_t const * getSPIRV(VkPipelineCacheStageValidationIndexEntry const &stageIndexEntry) const
     {
-        uint64_t offset = stageIndexEntry->codeOffset;
+        uint64_t const offset = stageIndexEntry.codeOffset;
         if (0U == offset)
         {
             return nullptr;
         }
 
-        if ((m_CacheSize < stageIndexEntry->codeSize) ||
-            (m_CacheSize - stageIndexEntry->codeSize < offset))
+        if ((m_CacheSize < stageIndexEntry.codeSize) ||
+            (m_CacheSize - stageIndexEntry.codeSize < offset))
         {
             return nullptr;
         }

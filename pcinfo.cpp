@@ -34,7 +34,8 @@ typedef enum DetailMode
 {
     DETAIL_MODE_NONE = 0,
     DETAIL_MODE_BASIC,
-    DETAIL_MODE_HEADERS,
+    DETAIL_MODE_FIRST_HEADER,
+    DETAIL_MODE_ALL_HEADERS,
     DETAIL_MODE_ALL,
 } DetailMode;
 
@@ -168,7 +169,7 @@ bool printCacheInfo(VKSCPipelineCacheHeaderReader &pcr, DetailMode details)
     uint64_t minPoolSize = std::numeric_limits<uint64_t>::max();
     uint64_t maxPoolSize = 0;
 
-    if (details >= DETAIL_MODE_HEADERS)
+    if (details >= DETAIL_MODE_FIRST_HEADER)
     {
         std::cout << std::endl
                   << "headerSize:          " << hv1->headerSize << std::endl
@@ -192,7 +193,7 @@ bool printCacheInfo(VKSCPipelineCacheHeaderReader &pcr, DetailMode details)
         VkPipelineCacheSafetyCriticalIndexEntry const *pie = pcr.getPipelineIndexEntry(i);
         if (nullptr != pie)
         {
-            if (details >= DETAIL_MODE_HEADERS)
+            if (details >= DETAIL_MODE_ALL_HEADERS)
             {
                 std::cout << "pipeline " << i << ":" << std::endl
                           << "  pipelineIdentifier: " << pie->pipelineIdentifier << std::endl
@@ -233,7 +234,7 @@ bool printCacheInfo(VKSCPipelineCacheHeaderReader &pcr, DetailMode details)
                 }
                 std::cout << std::endl;
             }
-            else
+            else if (details == DETAIL_MODE_BASIC)
             {
                 std::cout << "index: " << std::setw(3) << i
                           << " id: " << pie->pipelineIdentifier
@@ -258,10 +259,11 @@ bool printCacheInfo(VKSCPipelineCacheHeaderReader &pcr, DetailMode details)
 
 void printUsageAndExit(char *executable, int exitCode)
 {
-    std::cerr << "usage: " << executable << " [-h|--help] [-l] [-pool <poolsize>] <pipeline_cache_file>"
+    std::cerr << "usage: " << executable << " [-h|--help] [-l|-f|-d|-a] [-pool <poolsize>] <pipeline_cache_file>"
               << std::endl << std::endl;
     std::cerr << "  -h | --help: print this usage message" << std::endl << std::endl;
     std::cerr << "  -l: list basic pipeline info (index, identifier, poolSize)" << std::endl << std::endl;
+    std::cerr << "  -f: list first header (device info, pipeline index)" << std::endl << std::endl;
     std::cerr << "  -d: list detailed pipeline info (-l, plus all header fields)" << std::endl << std::endl;
     std::cerr << "  -a: list all pipeline info (-d, plus JSON and SPIR-V)" << std::endl << std::endl;
     std::cerr << "  -pool <poolsize>: add a bucket of size <poolsize>" << endl << endl;
@@ -291,9 +293,13 @@ int main(int argc, char **argv)
         {
             listMode = DETAIL_MODE_BASIC;
         }
+        else if (strcmp(argv[i], "-f") == 0)
+        {
+            listMode = DETAIL_MODE_FIRST_HEADER;
+        }
         else if (strcmp(argv[i], "-d") == 0)
         {
-            listMode = DETAIL_MODE_HEADERS;
+            listMode = DETAIL_MODE_ALL_HEADERS;
         }
         else if (strcmp(argv[i], "-a") == 0)
         {

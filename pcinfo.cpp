@@ -229,7 +229,8 @@ bool printCacheInfo(VKSCPipelineCacheHeaderReader &pcr, DetailMode details)
                 }
                 if (details >= DETAIL_MODE_ALL)
                 {
-                    std::string const json = std::string(reinterpret_cast<char const *>(pcr.getJson(*pie)), pie->jsonSize);
+                    std::string const json = std::string(reinterpret_cast<char const *>(pcr.getJson(*pie)),
+                                                         static_cast<size_t>(pie->jsonSize));
                     std::cout << "  json:" << std::endl << json << std::endl;
                 }
                 std::cout << std::endl;

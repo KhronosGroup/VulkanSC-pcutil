@@ -1,0 +1,208 @@
+pipeline layout test
+size of VkPipelineCacheHeaderVersionOne: 32
+{offset, size} of headerSize		: 0, 4
+{offset, size} of headerVersion		: 4, 4
+{offset, size} of vendorID		: 8, 4
+{offset, size} of deviceID		: 12, 4
+{offset, size} of pipelineCacheUUID		: 16, 16
+size of VkPipelineCacheStageValidationIndexEntry: 16
+{offset, size} of codeSize		: 0, 8
+{offset, size} of codeOffset		: 8, 8
+size of VkPipelineCacheSafetyCriticalIndexEntry: 56
+{offset, size} of pipelineIdentifier		: 0, 16
+{offset, size} of pipelineMemorySize		: 16, 8
+{offset, size} of jsonSize		: 24, 8
+{offset, size} of jsonOffset		: 32, 8
+{offset, size} of stageIndexCount		: 40, 4
+{offset, size} of stageIndexStride		: 44, 4
+{offset, size} of stageIndexOffset		: 48, 8
+size of VkPipelineCacheHeaderVersionSafetyCriticalOne: 56
+{offset, size} of headerVersionOne		: 0, 32
+{offset, size} of validationVersion		: 32, 4
+{offset, size} of implementationData		: 36, 4
+{offset, size} of pipelineIndexCount		: 40, 4
+{offset, size} of pipelineIndexStride		: 44, 4
+{offset, size} of pipelineIndexOffset		: 48, 8
+pipeline index ends at 1520 bytes
+pipelineIndexSize is 1464 bytes
+isValid = 1
+headerv1 = {
+56
+1000298001
+4318
+43981
+{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+}
+validationVersion = 1
+implementationData = 0
+pipelineIndexCount = 8
+pipelineIndexStride = 56
+pipelineIndexOffset = 56
+pie 0: {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+pie 1: {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+pie 2: {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2}
+pie 3: {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3}
+pie 4: {4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4}
+pie 5: {5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5}
+pie 6: {6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6}
+pie 7: {7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7}
+pie 7: {
+identifier {7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7}
+memorySize 109
+jsonSize 47
+jsonOffset 1393
+stageIndexCount 2
+stageIndexStride 16
+stageIndexOffset 1440
+}
+json: <json>Let's pretend this is a Json file </json>
+sie 0: {
+32
+1472
+}
+11111111, 22222222, 33333333, 7, 55665566, 66666666, 77887788, 88998899, 
+sie 1: {
+16
+1504
+}
+deaddead, beef7ac0, feedface, e, 
+pie 6: {
+identifier {6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6}
+memorySize 98
+jsonSize 47
+jsonOffset 1266
+stageIndexCount 2
+stageIndexStride 16
+stageIndexOffset 1313
+}
+json: <json>Let's pretend this is a Json file </json>
+sie 0: {
+32
+1345
+}
+11111111, 22222222, 33333333, 6, 55665566, 66666666, 77887788, 88998899, 
+sie 1: {
+16
+1377
+}
+deaddead, beef7ac0, feedface, c, 
+pie 5: {
+identifier {5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5}
+memorySize 87
+jsonSize 47
+jsonOffset 1139
+stageIndexCount 2
+stageIndexStride 16
+stageIndexOffset 1186
+}
+json: <json>Let's pretend this is a Json file </json>
+sie 0: {
+32
+1218
+}
+11111111, 22222222, 33333333, 5, 55665566, 66666666, 77887788, 88998899, 
+sie 1: {
+16
+1250
+}
+deaddead, beef7ac0, feedface, a, 
+pie 4: {
+identifier {4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4}
+memorySize 76
+jsonSize 47
+jsonOffset 1012
+stageIndexCount 2
+stageIndexStride 16
+stageIndexOffset 1059
+}
+json: <json>Let's pretend this is a Json file </json>
+sie 0: {
+32
+1091
+}
+11111111, 22222222, 33333333, 4, 55665566, 66666666, 77887788, 88998899, 
+sie 1: {
+16
+1123
+}
+deaddead, beef7ac0, feedface, 8, 
+pie 3: {
+identifier {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3}
+memorySize 65
+jsonSize 47
+jsonOffset 885
+stageIndexCount 2
+stageIndexStride 16
+stageIndexOffset 932
+}
+json: <json>Let's pretend this is a Json file </json>
+sie 0: {
+32
+964
+}
+11111111, 22222222, 33333333, 3, 55665566, 66666666, 77887788, 88998899, 
+sie 1: {
+16
+996
+}
+deaddead, beef7ac0, feedface, 6, 
+pie 2: {
+identifier {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2}
+memorySize 54
+jsonSize 47
+jsonOffset 758
+stageIndexCount 2
+stageIndexStride 16
+stageIndexOffset 805
+}
+json: <json>Let's pretend this is a Json file </json>
+sie 0: {
+32
+837
+}
+11111111, 22222222, 33333333, 2, 55665566, 66666666, 77887788, 88998899, 
+sie 1: {
+16
+869
+}
+deaddead, beef7ac0, feedface, 4, 
+pie 1: {
+identifier {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+memorySize 43
+jsonSize 47
+jsonOffset 631
+stageIndexCount 2
+stageIndexStride 16
+stageIndexOffset 678
+}
+json: <json>Let's pretend this is a Json file </json>
+sie 0: {
+32
+710
+}
+11111111, 22222222, 33333333, 1, 55665566, 66666666, 77887788, 88998899, 
+sie 1: {
+16
+742
+}
+deaddead, beef7ac0, feedface, 2, 
+pie 0: {
+identifier {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+memorySize 32
+jsonSize 47
+jsonOffset 504
+stageIndexCount 2
+stageIndexStride 16
+stageIndexOffset 551
+}
+json: <json>Let's pretend this is a Json file </json>
+sie 0: {
+32
+583
+}
+11111111, 22222222, 33333333, 0, 55665566, 66666666, 77887788, 88998899, 
+sie 1: {
+16
+615
+}
+deaddead, beef7ac0, feedface, 0, 

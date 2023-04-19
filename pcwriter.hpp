@@ -79,6 +79,7 @@ public:
     // precondition: the memory at [data,data+size) is writeable for the pipeline cache
     uint64_t writeStageEntry(uint64_t size, uint8_t *data, uint64_t entryOffset, uint64_t extraOffset) const
     {
+        (void)size;
         VkPipelineCacheStageValidationIndexEntry *entry = reinterpret_cast<VkPipelineCacheStageValidationIndexEntry *>(data+entryOffset);
         VKSC_ASSERT(size > entryOffset + sizeof(VkPipelineCacheStageValidationIndexEntry));
 
@@ -429,6 +430,7 @@ public:
     // precondition: the memory at [data,data+size) is writeable for the pipeline cache
     void writeHeaderSafetyCriticalOne(uint64_t size, uint8_t *data) const
     {
+        (void)size;
         VKSC_ASSERT(size > sizeof(VkPipelineCacheHeaderVersionSafetyCriticalOne));
         VkPipelineCacheHeaderVersionSafetyCriticalOne *sc1 = reinterpret_cast<VkPipelineCacheHeaderVersionSafetyCriticalOne *>(data);
         sc1->headerVersionOne.headerSize    = sizeof(VkPipelineCacheHeaderVersionSafetyCriticalOne);

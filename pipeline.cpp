@@ -193,6 +193,7 @@ int main(void)
 
         pcw.writeHeaderSafetyCriticalOne(cacheSize, cache.data());
         uint64_t end = pcw.writePipelineIndex(cacheSize, cache.data());
+        if (end == 0) std::cout << "pipeline write aborted due to duplicates" << std::endl;
         uint64_t pipelineIndexSize = pcw.getPipelineIndexSize();
 
         for (auto& entry : pipeStore)
@@ -238,6 +239,7 @@ int main(void)
             std::cout << "pie " << id << ": " << *pie << std::endl;
         } else {
             std::cout << "pie " << id << ": not found" << std::endl;
+            continue;
         }
         char const *jsonPtr = reinterpret_cast<char const *>(pcr.getJson(*pie));
         if (nullptr != jsonPtr)

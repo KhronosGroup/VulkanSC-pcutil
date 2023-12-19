@@ -84,23 +84,26 @@ public:
         VkPipelineCacheStageValidationIndexEntry *entry = reinterpret_cast<VkPipelineCacheStageValidationIndexEntry *>(data+entryOffset);
         VKSC_ASSERT(size > entryOffset + sizeof(VkPipelineCacheStageValidationIndexEntry));
 
+        VkPipelineCacheStageValidationIndexEntry tmpEntry {};
+
         uint64_t const codeSize = m_SpirvSize;
         if (codeSize > 0U)
         {
-            entry->codeSize = codeSize;
+            tmpEntry.codeSize = codeSize;
 
             VKSC_ASSERT(size > extraOffset + codeSize);
             uint8_t *code = data + extraOffset;
             VKSC_MEMCPY(code, m_SpirvCode, static_cast<size_t>(codeSize));
 
-            entry->codeOffset = extraOffset;
+            tmpEntry.codeOffset = extraOffset;
             extraOffset += codeSize;
         } else
         {
-            entry->codeSize = 0U;
-            entry->codeOffset = 0U;
+            tmpEntry.codeSize = 0U;
+            tmpEntry.codeOffset = 0U;
         }
 
+        VKSC_MEMCPY(entry, &tmpEntry, static_cast<size_t>(sizeof(tmpEntry)));
         return extraOffset;
     }
 
@@ -206,25 +209,28 @@ public:
         VkPipelineCacheSafetyCriticalIndexEntry *entry = reinterpret_cast<VkPipelineCacheSafetyCriticalIndexEntry *>(data+entryOffset);
         VKSC_ASSERT(size > entryOffset + sizeof(VkPipelineCacheSafetyCriticalIndexEntry));
 
-        VKSC_MEMCPY(entry->pipelineIdentifier, m_Identifier, VK_UUID_SIZE);
-        entry->pipelineMemorySize = m_MemorySize;
+        VkPipelineCacheSafetyCriticalIndexEntry tmpEntry {};
+
+        VKSC_MEMCPY(tmpEntry.pipelineIdentifier, m_Identifier, VK_UUID_SIZE);
+        tmpEntry.pipelineMemorySize = m_MemorySize;
 
         // write optional json
         uint64_t const jsonSize = m_JsonSize;
         if (jsonSize > 0U)
         {
-            entry->jsonSize = jsonSize;
+            tmpEntry.jsonSize = jsonSize;
 
             VKSC_ASSERT(size > extraOffset + jsonSize);
             uint8_t *json = data + extraOffset;
             VKSC_MEMCPY(json, m_JsonPointer, static_cast<size_t>(jsonSize));
 
-            entry->jsonOffset = extraOffset;
+            tmpEntry.jsonOffset = extraOffset;
+
             extraOffset += jsonSize;
         } else
         {
-            entry->jsonSize = 0U;
-            entry->jsonOffset = 0U;
+            tmpEntry.jsonSize = 0U;
+            tmpEntry.jsonOffset = 0U;
         }
 
         // write the stageIndex
@@ -235,9 +241,9 @@ public:
             VKSC_ASSERT(size > extraOffset + indexSize);
             uint64_t currentOffset = extraOffset;
 
-            entry->stageIndexCount = stageCount;
-            entry->stageIndexStride = stageStride;
-            entry->stageIndexOffset = currentOffset;
+            tmpEntry.stageIndexCount = stageCount;
+            tmpEntry.stageIndexStride = stageStride;
+            tmpEntry.stageIndexOffset = currentOffset;
             extraOffset += indexSize;
 
             for (uint32_t i = 0U; i < stageCount; ++i)
@@ -245,14 +251,15 @@ public:
                 extraOffset = m_Stages[i].writeStageEntry(size, data, currentOffset, extraOffset);
                 currentOffset += stageStride;
             }
-            VKSC_ASSERT(currentOffset == entry->stageIndexOffset + indexSize);
+            VKSC_ASSERT(currentOffset == tmpEntry.stageIndexOffset + indexSize);
         } else
         {
-            entry->stageIndexCount = 0U;
-            entry->stageIndexStride = 0U;
-            entry->stageIndexOffset = 0U;
+            tmpEntry.stageIndexCount = 0U;
+            tmpEntry.stageIndexStride = 0U;
+            tmpEntry.stageIndexOffset = 0U;
         }
 
+        VKSC_MEMCPY(entry, &tmpEntry, static_cast<size_t>(sizeof(tmpEntry)));
         return extraOffset;
     }
 

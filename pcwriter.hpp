@@ -30,6 +30,10 @@
 #include <cstring>
 #define VKSC_MEMCPY memcpy
 #endif // VKSC_MEMCPY
+#ifndef VKSC_MEMCMP
+#include <cstring>
+#define VKSC_MEMCMP memcmp
+#endif // VKSC_MEMCPY
 
 #include <vulkan/vulkan_sc_core.hpp>
 
@@ -149,6 +153,12 @@ public:
     VKSCPipelineEntry(VKSCPipelineEntry&& rhs) = delete; // move constructor
     VKSCPipelineEntry& operator=(VKSCPipelineEntry const& rhs) = delete; // copy assignment
     VKSCPipelineEntry& operator=(VKSCPipelineEntry&& rhs) = delete; // move assignment
+
+    // equality operator -- determined soley by equality of pipeline <identifier>
+    bool operator==(VKSCPipelineEntry const& rhs)
+    {
+        return (VKSC_MEMCMP(m_Identifier, rhs.m_Identifier, VK_UUID_SIZE) == 0);
+    }
 
     // destructor - delete any memory this class allocated
     ~VKSCPipelineEntry()
@@ -456,7 +466,8 @@ public:
     // write the Pipeline Index and all associated data at mPipelineIndexOffset bytes into <data>
     // param: <size> is the amount of memory in bytes for the pipeline cache memory
     // param: <data> is pointer to the beginning of the pipeline cache memory
-    // returns the offset in bytes into <data> which immediately follows the written information
+    // return: the offset in bytes into <data> which immediately follows the written information
+    // return: 0 if the pipeline cache contains duplicate identifiers, no data is written
     // precondition: the memory at [data,data+size) is writeable for the pipeline cache
     // No implementation-specific per-pipeline or per-stage metadata is written, but space is reserved if
     // setPipelineIndexStride and/or setStageIndexStride were called appropriately.
@@ -466,6 +477,13 @@ public:
         uint64_t extraOffset = m_PipelineIndexOffset + indexSize;
         VKSC_ASSERT(size > extraOffset);
 
+        // cowardly refuse to create a pipeline cache with duplicate identifiers
+        if (checkDuplicatePipelineIdentifiers())
+        {
+            //VKSC_ASSERT(0 && "pipeline contains duplicates");
+            return 0;
+        }
+
         uint64_t currentOffset = m_PipelineIndexOffset;
         for (uint32_t i = 0U; i < m_PipelineCount; ++i)
         {
@@ -474,6 +492,25 @@ public:
         }
 
         return extraOffset;
+    }
+
+    // A valid pipeline cache cannot contain duplicate pipeline identifiers, as it would be
+    // undefined which one would be used at runtime. It would also waste pipeline cache storage
+    // space, since they are presumably identical.
+    bool checkDuplicatePipelineIdentifiers() const
+    {
+        for (uint32_t i = 0U; i < m_PipelineCount; i++)
+        {
+            for (uint32_t j = i + 1U; j < m_PipelineCount; j++)
+            {
+                if (*m_PipelineIndex[i] == *m_PipelineIndex[j])
+                {
+                    std::cerr << "ERROR: pipelines " << i << " and " << j << " have identical pipeline identifiers." << std::endl;
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     // return: the amount of space in bytes required for the pipeline index and all associated data.

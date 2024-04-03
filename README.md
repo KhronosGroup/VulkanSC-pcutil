@@ -42,7 +42,7 @@ macros before including pcreader.hpp.
 The PC Writer utility performs dynamic memory allocations using the standard `new`
 and `delete` array operators.
 
-It also makes use of the `assert` and `memcpy` standard library functions.
+It also makes use of the `assert`, `memcpy`, and `memcmp` standard library functions.
 If a user of the library wishes to disable asserts or provide an alternative memcpy
-implementation this can be done by setting the `VKSC_ASSERT` and `VKSC_MEMCPY`
-macros before including pcwriter.hpp.
+and memcmp implementations this can be done by setting the `VKSC_ASSERT`, `VKSC_MEMCPY`,
+and `VKSC_MEMCMP` macros before including pcwriter.hpp.

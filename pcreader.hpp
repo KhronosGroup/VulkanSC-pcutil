@@ -19,6 +19,7 @@
 #define PCREADER_HPP 1
 
 #include <cstddef>
+#include <cstdint>
 #include <limits>
 
 #ifndef VKSC_ASSERT

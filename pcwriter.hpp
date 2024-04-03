@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 
 #ifndef VKSC_ASSERT
 #include <cassert>

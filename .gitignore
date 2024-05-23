@@ -3,3 +3,4 @@ ptest32
 pcinfo
 *.dSYM/*
 *.swp
+.vscode/

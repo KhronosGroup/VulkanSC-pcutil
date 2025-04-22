@@ -62,9 +62,8 @@ if (${CMAKE_CXX_COMPILER_ID} MATCHES "(GNU|Clang)")
         add_compile_options(
             -Wno-stringop-truncation
             -Wl,--no-undefined
-            -Wno-address         # JOSN lib generator generates non-null address checks for stack arrays
-            -Wno-unused-function # JSON gen layer exports everything using unused global static functions
-            -Wno-format-overflow # vulkan_json_gen.c triggers this
+            -Wno-address         # TODO: JOSN lib generator generates non-null address checks for stack arrays
+            -Wno-unused-function # TODO: JSON gen layer generates pointer and non-pointer versions of many methods, but use only one
         )
     endif()
 

@@ -1,0 +1,34 @@
+{
+    "repos": [
+        {
+            "name": "Vulkan-Headers",
+            "url": "https://github.com/KhronosGroup/VulkanSC-Headers.git",
+            "sub_dir": "Vulkan-Headers",
+            "build_dir": "Vulkan-Headers/build",
+            "install_dir": "Vulkan-Headers/build/install",
+            "cmake_options": [
+                "-DGEN_VULKANSC_COMBINED=ON"
+            ],
+            "commit": "vksc1.0.18"
+        },
+        {
+            "name": "Vulkan-Utility-Libraries",
+            "api": "vulkansc",
+            "url": "https://github.com/KhronosGroup/VulkanSC-Utility-Libraries.git",
+            "sub_dir": "Vulkan-Utility-Libraries",
+            "build_dir": "Vulkan-Utility-Libraries/build",
+            "install_dir": "Vulkan-Utility-Libraries/build/install",
+            "commit": "vksc1.0.18",
+            "deps": [
+                {
+                    "var_name": "VULKAN_HEADERS_INSTALL_DIR",
+                    "repo_name": "Vulkan-Headers"
+                }
+            ]
+        }
+    ],
+    "install_names": {
+        "Vulkan-Headers": "VULKAN_HEADERS_INSTALL_DIR",
+        "Vulkan-Utility-Libraries": "VULKAN_UTILITY_LIBRARIES_INSTALL_DIR"
+    }
+}

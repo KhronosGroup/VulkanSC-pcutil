@@ -1,18 +1,9 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION
+/*
+ * Copyright (c) 2025 The Khronos Group Inc.
+ * Copyright (c) 2025 RasterGrid Kft.
+ * Copyright (c) 2021, NVIDIA CORPORATION
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * Author: Daniel Koch <dkoch@nvidia.com>
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef PCWRITER_HPP
@@ -25,13 +16,13 @@
 #ifndef VKSC_ASSERT
 #include <cassert>
 #define VKSC_ASSERT assert
-#endif // VKSC_ASSERT
+#endif  // VKSC_ASSERT
 #ifndef VKSC_MEMCPY
 #include <cstring>
 #define VKSC_MEMCPY memcpy
-#endif // VKSC_MEMCPY
+#endif  // VKSC_MEMCPY
 
-#include <vulkan/vulkan_sc_core.hpp>
+#include <vulkan/vulkan_sc.h>
 
 // VKSCStageEntry
 //
@@ -47,24 +38,22 @@
 // of the data that was passed in while this object is instantiated.
 // The SPIR-V code will never be modified by this class.
 //
-class VKSCStageEntry
-{
-public:
+class VKSCStageEntry {
+  public:
     // initialize the stage entry with no code
-    VKSCStageEntry(): m_SpirvSize(0U), m_SpirvCode(nullptr) {}
+    VKSCStageEntry() : m_SpirvSize(0U), m_SpirvCode(nullptr) {}
 
     // disable copy and assignment
-    VKSCStageEntry(VKSCStageEntry const& rhs) = delete; // copy constructor
-    VKSCStageEntry(VKSCStageEntry&& rhs) = delete; // move constructor
-    VKSCStageEntry& operator=(VKSCStageEntry const& rhs) = delete; // copy assignment
-    VKSCStageEntry& operator=(VKSCStageEntry&& rhs) = delete; // move assignment
+    VKSCStageEntry(VKSCStageEntry const& rhs) = delete;             // copy constructor
+    VKSCStageEntry(VKSCStageEntry&& rhs) = delete;                  // move constructor
+    VKSCStageEntry& operator=(VKSCStageEntry const& rhs) = delete;  // copy assignment
+    VKSCStageEntry& operator=(VKSCStageEntry&& rhs) = delete;       // move assignment
 
     // set the SPIR-V code pointer and size for this stage entry.
     // <size> bytes of SPIR-V starting at <code>.
     // the SPIR-V code is not copied, but the pointer is saved.
     // The data pointed to by <code> is never modified by this class.
-    void setShaderCode(uint64_t size, uint8_t const * const code)
-    {
+    void setShaderCode(uint64_t size, uint8_t const* const code) {
         m_SpirvSize = size;
         m_SpirvCode = code;
     }
@@ -78,27 +67,25 @@ public:
     //  - store the spirv code starting at <extraOffset>
     // return: the advanced value of <extraOffset>
     // precondition: the memory at [data,data+size) is writeable for the pipeline cache
-    uint64_t writeStageEntry(uint64_t size, uint8_t *data, uint64_t entryOffset, uint64_t extraOffset) const
-    {
+    uint64_t writeStageEntry(uint64_t size, uint8_t* data, uint64_t entryOffset, uint64_t extraOffset) const {
         (void)size;
-        VkPipelineCacheStageValidationIndexEntry *entry = reinterpret_cast<VkPipelineCacheStageValidationIndexEntry *>(data+entryOffset);
+        VkPipelineCacheStageValidationIndexEntry* entry =
+            reinterpret_cast<VkPipelineCacheStageValidationIndexEntry*>(data + entryOffset);
         VKSC_ASSERT(size > entryOffset + sizeof(VkPipelineCacheStageValidationIndexEntry));
 
-        VkPipelineCacheStageValidationIndexEntry tmpEntry {};
+        VkPipelineCacheStageValidationIndexEntry tmpEntry{};
 
         uint64_t const codeSize = m_SpirvSize;
-        if (codeSize > 0U)
-        {
+        if (codeSize > 0U) {
             tmpEntry.codeSize = codeSize;
 
             VKSC_ASSERT(size > extraOffset + codeSize);
-            uint8_t *code = data + extraOffset;
+            uint8_t* code = data + extraOffset;
             VKSC_MEMCPY(code, m_SpirvCode, static_cast<size_t>(codeSize));
 
             tmpEntry.codeOffset = extraOffset;
             extraOffset += codeSize;
-        } else
-        {
+        } else {
             tmpEntry.codeSize = 0U;
             tmpEntry.codeOffset = 0U;
         }
@@ -109,14 +96,11 @@ public:
 
     // return: the amount of space in bytes required for the associated data (code)
     // for this stage entry.
-    uint64_t getStageEntryExtraSize()
-    {
-        return m_SpirvSize;
-    }
+    uint64_t getStageEntryExtraSize() { return m_SpirvSize; }
 
-private:
+  private:
     uint64_t m_SpirvSize;
-    uint8_t const * m_SpirvCode;
+    uint8_t const* m_SpirvCode;
 };
 
 // VKSCPipelineEntry
@@ -135,35 +119,30 @@ private:
 // of the data that was passed in while this object is instantiated.
 // The SPIR-V and JSON code will never be modified by this class.
 //
-class VKSCPipelineEntry
-{
-public:
+class VKSCPipelineEntry {
+  public:
     // initialize a pipeline entry with the pipeline <identifier> and required <memorySize>
-    VKSCPipelineEntry(uint8_t const identifier[VK_UUID_SIZE], uint64_t memorySize) : m_MemorySize(memorySize)
-    {
+    VKSCPipelineEntry(uint8_t const identifier[VK_UUID_SIZE], uint64_t memorySize) : m_MemorySize(memorySize) {
         VKSC_MEMCPY(m_Identifier, identifier, VK_UUID_SIZE);
     }
 
     // disable copy and assignment
-    VKSCPipelineEntry(VKSCPipelineEntry const& rhs) = delete; // copy constructor
-    VKSCPipelineEntry(VKSCPipelineEntry&& rhs) = delete; // move constructor
-    VKSCPipelineEntry& operator=(VKSCPipelineEntry const& rhs) = delete; // copy assignment
-    VKSCPipelineEntry& operator=(VKSCPipelineEntry&& rhs) = delete; // move assignment
+    VKSCPipelineEntry(VKSCPipelineEntry const& rhs) = delete;             // copy constructor
+    VKSCPipelineEntry(VKSCPipelineEntry&& rhs) = delete;                  // move constructor
+    VKSCPipelineEntry& operator=(VKSCPipelineEntry const& rhs) = delete;  // copy assignment
+    VKSCPipelineEntry& operator=(VKSCPipelineEntry&& rhs) = delete;       // move assignment
 
     // destructor - delete any memory this class allocated
-    ~VKSCPipelineEntry()
-    {
-        if (m_Stages)
-        {
-            delete [] m_Stages;
+    ~VKSCPipelineEntry() {
+        if (m_Stages) {
+            delete[] m_Stages;
         }
     }
 
     // allocate storage for <stageCount> stage entries
     // this function can only be called once
     // return: true if memory allocated, false otherwise
-    bool allocateStages(uint32_t stageCount)
-    {
+    bool allocateStages(uint32_t stageCount) {
         if (m_Stages) return false;
 
         m_StageCount = stageCount;
@@ -178,8 +157,7 @@ public:
     // of the data that was passed in while this object is instantiated.
     // The data pointed to by <code> is never modified by this class.
     // precondition: <stage> must be less than the value that was passed to allocateStages
-    void setShaderStageCode(uint32_t stage, uint64_t size, uint8_t const * code)
-    {
+    void setShaderStageCode(uint32_t stage, uint64_t size, uint8_t const* code) {
         VKSC_ASSERT(stage < m_StageCount);
         m_Stages[stage].setShaderCode(size, code);
     }
@@ -188,8 +166,7 @@ public:
     // The json code is NOT copied and the application must maintain the lifetime
     // of the data that was passed in while this object is instantiated.
     // The data pointed to by <json> is never modified by this class.
-    void setJsonCode(uint64_t size, uint8_t const * json)
-    {
+    void setJsonCode(uint64_t size, uint8_t const* json) {
         m_JsonSize = size;
         m_JsonPointer = json;
     }
@@ -204,39 +181,37 @@ public:
     //  - store any json and stage info starting at <extraOffset>
     // return: the advanced value of <extraOffset>
     // precondition: the memory at [data,data+size) is writeable for the pipeline cache
-    uint64_t writePipelineEntry(uint64_t size, uint8_t *data, uint64_t entryOffset, uint64_t extraOffset, uint32_t const stageStride) const
-    {
-        VkPipelineCacheSafetyCriticalIndexEntry *entry = reinterpret_cast<VkPipelineCacheSafetyCriticalIndexEntry *>(data+entryOffset);
+    uint64_t writePipelineEntry(uint64_t size, uint8_t* data, uint64_t entryOffset, uint64_t extraOffset,
+                                uint32_t const stageStride) const {
+        VkPipelineCacheSafetyCriticalIndexEntry* entry =
+            reinterpret_cast<VkPipelineCacheSafetyCriticalIndexEntry*>(data + entryOffset);
         VKSC_ASSERT(size > entryOffset + sizeof(VkPipelineCacheSafetyCriticalIndexEntry));
 
-        VkPipelineCacheSafetyCriticalIndexEntry tmpEntry {};
+        VkPipelineCacheSafetyCriticalIndexEntry tmpEntry{};
 
         VKSC_MEMCPY(tmpEntry.pipelineIdentifier, m_Identifier, VK_UUID_SIZE);
         tmpEntry.pipelineMemorySize = m_MemorySize;
 
         // write optional json
         uint64_t const jsonSize = m_JsonSize;
-        if (jsonSize > 0U)
-        {
+        if (jsonSize > 0U) {
             tmpEntry.jsonSize = jsonSize;
 
             VKSC_ASSERT(size > extraOffset + jsonSize);
-            uint8_t *json = data + extraOffset;
+            uint8_t* json = data + extraOffset;
             VKSC_MEMCPY(json, m_JsonPointer, static_cast<size_t>(jsonSize));
 
             tmpEntry.jsonOffset = extraOffset;
 
             extraOffset += jsonSize;
-        } else
-        {
+        } else {
             tmpEntry.jsonSize = 0U;
             tmpEntry.jsonOffset = 0U;
         }
 
         // write the stageIndex
         uint32_t const stageCount = m_StageCount;
-        if (stageCount > 0U)
-        {
+        if (stageCount > 0U) {
             uint64_t indexSize = stageCount * stageStride;
             VKSC_ASSERT(size > extraOffset + indexSize);
             uint64_t currentOffset = extraOffset;
@@ -246,14 +221,12 @@ public:
             tmpEntry.stageIndexOffset = currentOffset;
             extraOffset += indexSize;
 
-            for (uint32_t i = 0U; i < stageCount; ++i)
-            {
+            for (uint32_t i = 0U; i < stageCount; ++i) {
                 extraOffset = m_Stages[i].writeStageEntry(size, data, currentOffset, extraOffset);
                 currentOffset += stageStride;
             }
             VKSC_ASSERT(currentOffset == tmpEntry.stageIndexOffset + indexSize);
-        } else
-        {
+        } else {
             tmpEntry.stageIndexCount = 0U;
             tmpEntry.stageIndexStride = 0U;
             tmpEntry.stageIndexOffset = 0U;
@@ -266,18 +239,15 @@ public:
     // param: <stageStride> is the stride between successive entries in the stage index.
     // return: the amount of space in bytes required for the additional data for this pipeline entry,
     // includes json, stage index, and all associated stage data (code).
-    uint64_t getPipelineEntrySize(uint32_t const stageStride)
-    {
+    uint64_t getPipelineEntrySize(uint32_t const stageStride) {
         uint64_t stageIndexSize = 0U;
 
         uint32_t const stageCount = m_StageCount;
-        if (stageCount > 0U)
-        {
+        if (stageCount > 0U) {
             stageIndexSize = stageCount * stageStride;
             uint64_t extraSize = 0U;
 
-            for (uint32_t i = 0U; i < stageCount; ++i)
-            {
+            for (uint32_t i = 0U; i < stageCount; ++i) {
                 extraSize += m_Stages[i].getStageEntryExtraSize();
             }
             stageIndexSize += extraSize;
@@ -286,13 +256,12 @@ public:
         return m_JsonSize + stageIndexSize;
     }
 
-
-private:
-    uint8_t         m_Identifier[VK_UUID_SIZE];
-    uint64_t const  m_MemorySize;
-    uint64_t        m_JsonSize{0U};
-    uint8_t const * m_JsonPointer{nullptr};
-    uint32_t        m_StageCount{0U};
+  private:
+    uint8_t m_Identifier[VK_UUID_SIZE];
+    uint64_t const m_MemorySize;
+    uint64_t m_JsonSize{0U};
+    uint8_t const* m_JsonPointer{nullptr};
+    uint32_t m_StageCount{0U};
     VKSCStageEntry* m_Stages{nullptr};
 };
 
@@ -318,7 +287,6 @@ private:
 //   - call writePipelineIndex to write the pipline index and all associated data starting at
 //     the previously set offset
 
-
 // setPipelineIndexStride - set the stride between successive entries in the pipeline index.
 //   defaults to size of VkPipelineCacheSafetyCriticalIndexEntry.
 //
@@ -333,34 +301,29 @@ private:
 // writePipelineIndex - write the pipeline index and all associated data starting at the previously set offset
 //
 
-class VKSCPipelineCacheHeaderWriter
-{
-public:
+class VKSCPipelineCacheHeaderWriter {
+  public:
     // initialize a pipeline cache header writer
     // caller must explicitly set vendorID, deviceID, pipelineCacheUUID before writing the header
     VKSCPipelineCacheHeaderWriter() {}
 
     // initialize a pipeline cache header writer with the given <vendorID>, <deviceID>, and <pipelineCacheUUID>
     VKSCPipelineCacheHeaderWriter(uint32_t vendorID, uint32_t deviceID, uint8_t const pipelineCacheUUID[VK_UUID_SIZE])
-        : m_VendorID(vendorID), m_DeviceID(deviceID)
-    {
+        : m_VendorID(vendorID), m_DeviceID(deviceID) {
         VKSC_MEMCPY(m_PipelineCacheUUID, pipelineCacheUUID, VK_UUID_SIZE);
     }
 
     // destructor - delete any memory this class allocated
-    ~VKSCPipelineCacheHeaderWriter()
-    {
-        if (m_PipelineIndex)
-        {
-            delete [] m_PipelineIndex;
+    ~VKSCPipelineCacheHeaderWriter() {
+        if (m_PipelineIndex) {
+            delete[] m_PipelineIndex;
         }
     }
 
     // allocate storage for <pipelineCount> pointers for pipeline index entries
     // this function can only be called once
     // return: true if memory allocated, false otherwise
-    bool allocatePipelineIndex(uint32_t pipelineCount)
-    {
+    bool allocatePipelineIndex(uint32_t pipelineCount) {
         if (m_PipelineIndex || m_PipelineCount > 0U) return false;
 
         m_PipelineCount = pipelineCount;
@@ -373,8 +336,7 @@ public:
     // of the data that was passed in while this object is instantiated.
     // The data pointed to by <entry> is never modified by this class.
     // precondition: <index> must be less than the value that was passed to allocatePipelineIndex
-    void setPipelineEntry(uint32_t index, VKSCPipelineEntry* entry)
-    {
+    void setPipelineEntry(uint32_t index, VKSCPipelineEntry* entry) {
         VKSC_ASSERT(index < m_PipelineCount && m_PipelineIndex);
         m_PipelineIndex[index] = entry;
     }
@@ -383,8 +345,7 @@ public:
     // By default this is equal to size of VkPipelineCacheSafetyCriticalIndexEntry
     // If set by the user, it must be no smaller than this.
     // If the user wishes to store additional per-pipeline metadata in the index, the stride should be increased accordingly.
-    void setPipelineIndexStride(uint32_t stride)
-    {
+    void setPipelineIndexStride(uint32_t stride) {
         m_PipelineIndexStride = std::min(static_cast<uint32_t>(sizeof(VkPipelineCacheSafetyCriticalIndexEntry)), stride);
     }
 
@@ -393,8 +354,7 @@ public:
     // If set by the user, it must be be after the header.
     // If the user wishes to store implementation-specific data before the pipeline index, this offset should be
     // set to the location following the implementation-specific data.
-    void setPipelineIndexOffset(uint32_t offset)
-    {
+    void setPipelineIndexOffset(uint32_t offset) {
         VKSC_ASSERT(offset > sizeof(VkPipelineCacheHeaderVersionSafetyCriticalOne));
         m_PipelineIndexOffset = offset;
     }
@@ -403,48 +363,36 @@ public:
     // By default this is equal to the size of VkPipelineCacheStageValidationIndexEntry
     // If set by the user, it must be no smaller than this.
     // If the user wishes to store additional per-stage metadata in the index, the stride should be increased accordingly.
-    void setStageIndexStride(uint32_t stride)
-    {
+    void setStageIndexStride(uint32_t stride) {
         m_StageIndexStride = std::min(static_cast<uint32_t>(sizeof(VkPipelineCacheStageValidationIndexEntry)), stride);
     }
 
     // set the vendorID
-    void setVendorID(uint32_t vendorID)
-    {
-        m_VendorID = vendorID;
-    }
+    void setVendorID(uint32_t vendorID) { m_VendorID = vendorID; }
 
     // set the deviceID
-    void setDeviceID(uint32_t deviceID)
-    {
-         m_DeviceID = deviceID;
-    }
+    void setDeviceID(uint32_t deviceID) { m_DeviceID = deviceID; }
 
     // set the pipelineCacheUUID
-    void setPipelineCacheUUID(uint8_t const pipelineCacheUUID[VK_UUID_SIZE])
-    {
+    void setPipelineCacheUUID(uint8_t const pipelineCacheUUID[VK_UUID_SIZE]) {
         VKSC_MEMCPY(m_PipelineCacheUUID, pipelineCacheUUID, VK_UUID_SIZE);
     }
 
     // set the implementationData field
-    void setImplementationData(uint32_t implementationData)
-    {
-         m_ImplementationData = implementationData;
-    }
+    void setImplementationData(uint32_t implementationData) { m_ImplementationData = implementationData; }
 
     // write the Safety Critical header at the the beginning of <data>
     // param: <size> is the amount of memory in bytes for the pipeline cache memory
     // param: <data> is pointer to the beginning of the pipeline cache memory
     // precondition: the memory at [data,data+size) is writeable for the pipeline cache
-    void writeHeaderSafetyCriticalOne(uint64_t size, uint8_t *data) const
-    {
+    void writeHeaderSafetyCriticalOne(uint64_t size, uint8_t* data) const {
         (void)size;
         VKSC_ASSERT(size > sizeof(VkPipelineCacheHeaderVersionSafetyCriticalOne));
-        VkPipelineCacheHeaderVersionSafetyCriticalOne *sc1 = reinterpret_cast<VkPipelineCacheHeaderVersionSafetyCriticalOne *>(data);
-        sc1->headerVersionOne.headerSize    = sizeof(VkPipelineCacheHeaderVersionSafetyCriticalOne);
+        VkPipelineCacheHeaderVersionSafetyCriticalOne* sc1 = reinterpret_cast<VkPipelineCacheHeaderVersionSafetyCriticalOne*>(data);
+        sc1->headerVersionOne.headerSize = sizeof(VkPipelineCacheHeaderVersionSafetyCriticalOne);
         sc1->headerVersionOne.headerVersion = VK_PIPELINE_CACHE_HEADER_VERSION_SAFETY_CRITICAL_ONE;
-        sc1->headerVersionOne.vendorID      = m_VendorID;
-        sc1->headerVersionOne.deviceID      = m_DeviceID;
+        sc1->headerVersionOne.vendorID = m_VendorID;
+        sc1->headerVersionOne.deviceID = m_DeviceID;
         VKSC_MEMCPY(sc1->headerVersionOne.pipelineCacheUUID, m_PipelineCacheUUID, VK_UUID_SIZE);
         sc1->validationVersion = VK_PIPELINE_CACHE_VALIDATION_VERSION_SAFETY_CRITICAL_ONE;
         sc1->implementationData = m_ImplementationData;
@@ -460,15 +408,13 @@ public:
     // precondition: the memory at [data,data+size) is writeable for the pipeline cache
     // No implementation-specific per-pipeline or per-stage metadata is written, but space is reserved if
     // setPipelineIndexStride and/or setStageIndexStride were called appropriately.
-    uint64_t writePipelineIndex(uint64_t size, uint8_t *data) const
-    {
+    uint64_t writePipelineIndex(uint64_t size, uint8_t* data) const {
         uint64_t indexSize = m_PipelineCount * m_PipelineIndexStride;
         uint64_t extraOffset = m_PipelineIndexOffset + indexSize;
         VKSC_ASSERT(size > extraOffset);
 
         uint64_t currentOffset = m_PipelineIndexOffset;
-        for (uint32_t i = 0U; i < m_PipelineCount; ++i)
-        {
+        for (uint32_t i = 0U; i < m_PipelineCount; ++i) {
             extraOffset = m_PipelineIndex[i]->writePipelineEntry(size, data, currentOffset, extraOffset, m_StageIndexStride);
             currentOffset += m_PipelineIndexStride;
         }
@@ -479,31 +425,29 @@ public:
     // return: the amount of space in bytes required for the pipeline index and all associated data.
     // includes pipeline index and all associated pipeline entry data (json, stage index, stage code).
     // Does NOT include the size of the initial VkPipelineCacheHeaderVersionSafetyCriticalOne header.
-    uint64_t getPipelineIndexSize() const
-    {
+    uint64_t getPipelineIndexSize() const {
         uint64_t indexSize = m_PipelineCount * m_PipelineIndexStride;
         uint64_t extraSize = 0U;
 
-        for (uint32_t i = 0U; i < m_PipelineCount; ++i)
-        {
+        for (uint32_t i = 0U; i < m_PipelineCount; ++i) {
             extraSize += m_PipelineIndex[i]->getPipelineEntrySize(m_StageIndexStride);
         }
 
         return indexSize + extraSize;
     }
 
-private:
-    uint32_t            m_VendorID              {0U};
-    uint32_t            m_DeviceID              {0U};
-    uint8_t             m_PipelineCacheUUID[VK_UUID_SIZE]{0U};
-    uint32_t            m_ImplementationData    {0U};
+  private:
+    uint32_t m_VendorID{0U};
+    uint32_t m_DeviceID{0U};
+    uint8_t m_PipelineCacheUUID[VK_UUID_SIZE]{0U};
+    uint32_t m_ImplementationData{0U};
 
-    uint32_t            m_PipelineIndexStride  {sizeof(VkPipelineCacheSafetyCriticalIndexEntry)};
-    uint64_t            m_PipelineIndexOffset  {sizeof(VkPipelineCacheHeaderVersionSafetyCriticalOne)};
-    uint32_t            m_StageIndexStride     {sizeof(VkPipelineCacheStageValidationIndexEntry)};
+    uint32_t m_PipelineIndexStride{sizeof(VkPipelineCacheSafetyCriticalIndexEntry)};
+    uint64_t m_PipelineIndexOffset{sizeof(VkPipelineCacheHeaderVersionSafetyCriticalOne)};
+    uint32_t m_StageIndexStride{sizeof(VkPipelineCacheStageValidationIndexEntry)};
 
-    uint32_t            m_PipelineCount        {0U};
-    VKSCPipelineEntry** m_PipelineIndex        {nullptr};
+    uint32_t m_PipelineCount{0U};
+    VKSCPipelineEntry** m_PipelineIndex{nullptr};
 };
 
-#endif // PCWRITER_HPP
+#endif  // PCWRITER_HPP

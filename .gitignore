@@ -1,5 +1,51 @@
-ptest
-ptest32
-pcinfo
-*.dSYM/*
-*.swp
+# Copyright (c) 2025 The Khronos Group Inc.
+# Copyright (c) 2025 RasterGrid Kft.
+#
+# SPDX-License-Identifier: CC-BY-4.0
+
+# By default we install dependencies to the external directory
+/external/*
+
+# Ignore any build directories
+*build*/
+
+CMakeCache.txt
+CMakeLists.txt.user
+CMakeUserPresets.json
+CMakeFiles/
+cmake_install.cmake
+Makefile
+scripts/__pycache__
+*.so
+*.so.*
+_out64
+out32/*
+out64/*
+*.pyc
+*.vcproj
+*.sln
+*.suo
+*.vcxproj
+*.sdf
+*.filters
+*.config
+*.creator
+*.creator.user
+*.files
+*.includes
+.vscode/
+.vs/
+.DS_Store
+
+# Chromium build artifacts
+.cipd/
+.gn
+.gclient
+.gclient_entries
+.gclient_previous_sync_commits
+out/
+third_party/
+buildtools/
+depot_tools/
+testing/
+tools/

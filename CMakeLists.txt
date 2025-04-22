@@ -1,38 +1,139 @@
-# Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# ~~~
+# Copyright (c) 2025 The Khronos Group Inc.
+# Copyright (c) 2025 RasterGrid Kft.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# Author: Daniel Koch <dkoch@nvidia.com>
+# SPDX-License-Identifier: Apache-2.0
+# ~~~
+cmake_minimum_required(VERSION 3.22.1)
 
-cmake_minimum_required(VERSION 3.10.2)
+project(VulkanSC-Pipeline-Cache-Utils)
 
-project(VULKANSC_PC_UTILS)
+option(PCU_BUILD_PCINFO "Build pcinfo" ON)
+option(PCU_TESTS "Build pipeline cache utils unit tests of built" ${PROJECT_IS_TOP_LEVEL})
+option(PCU_WERROR "Treat pipeline cache utils compiler warnings as errors" ${PROJECT_IS_TOP_LEVEL})
+option(ENABLE_ADDRESS_SANITIZER "Use address sanitization")
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(API_TYPE "vulkansc")
+add_definitions(-DVULKANSC)
 
-if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang")
-    set(COMMON_COMPILE_FLAGS "-Wall -Wextra -Werror -Wconversion")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_COMPILE_FLAGS}")
+add_subdirectory(scripts)
+
+set(CMAKE_CXX_VISIBILITY_PRESET "hidden")
+set(CMAKE_C_VISIBILITY_PRESET "hidden")
+set(CMAKE_VISIBILITY_INLINES_HIDDEN "YES")
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+if (ENABLE_ADDRESS_SANITIZER)
+    add_compile_options(-fsanitize=address)
+    if (NOT MSVC)
+        add_link_options(-fsanitize=address)
+    endif()
 endif()
 
-add_executable(pcinfo pcinfo.cpp)
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-target_include_directories(pcinfo PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/fake/)
+find_package(VulkanHeaders REQUIRED CONFIG QUIET)
 
-add_executable(pctest pipeline.cpp)
+find_package(VulkanUtilityLibraries REQUIRED CONFIG QUIET)
 
-target_include_directories(pctest PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/fake/)
+include(GNUInstallDirs)
 
+if (PCU_WERROR)
+    add_compile_options("$<IF:$<CXX_COMPILER_ID:MSVC>,/WX,-Werror>")
+endif()
+
+if (${CMAKE_CXX_COMPILER_ID} MATCHES "(GNU|Clang)")
+    add_compile_options(
+        -Wall
+        -Wextra
+        -Wno-unused-parameter
+        -Wno-missing-field-initializers
+        -Wno-format-security
+    )
+
+    if (${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
+        add_compile_options(
+            -Wno-stringop-truncation
+            -Wl,--no-undefined
+            -Wno-address         # JOSN lib generator generates non-null address checks for stack arrays
+            -Wno-unused-function # JSON gen layer exports everything using unused global static functions
+            -Wno-format-overflow # vulkan_json_gen.c triggers this
+        )
+    endif()
+
+    if (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
+        add_compile_options(
+            -Wno-sign-conversion
+            -Wno-shorten-64-to-32
+            -Wno-string-conversion
+            -Wno-implicit-int-conversion
+            -Wno-enum-enum-conversion
+        )
+    endif()
+elseif(MSVC)
+    add_compile_options("/W3")
+    # Warn about nested declarations
+    add_compile_options("/w34456")
+    # Warn about potentially uninitialized variables
+    add_compile_options("/w34701")
+    add_compile_options("/w34703")
+    # Warn about different indirection types
+    add_compile_options("/w34057")
+    # Warn about signed/unsigned mismatch
+    add_compile_options("/w34245")
+    # Warn about unused variables
+    add_compile_options("/w34189")
+    # Do not warn about switch statements with no case labels
+    add_compile_options("/wd4065")
+    # Stricter ISO conformance
+    add_compile_options("/permissive-")
+
+    # Allow usage of unsafe CRT functions and minimize what Windows.h leaks
+    add_compile_definitions(_CRT_SECURE_NO_WARNINGS NOMINMAX WIN32_LEAN_AND_MEAN)
+endif()
+
+if (PCU_CODEGEN)
+    find_package(Python3 REQUIRED QUIET)
+    get_target_property(VULKAN_HEADERS_INTERFACE_INCLUDE_DIRECTORIES Vulkan::Headers INTERFACE_INCLUDE_DIRECTORIES)
+    get_filename_component(VULKAN_HEADERS_PACKAGE_PREFIX_DIR
+        "${VULKAN_HEADERS_INTERFACE_INCLUDE_DIRECTORIES}/.."
+        ABSOLUTE
+    )
+    find_file(VK_XML vk.xml
+        HINTS
+            "${VULKAN_HEADERS_PACKAGE_PREFIX_DIR}"
+        PATH_SUFFIXES
+            registry              # <BUILD_INTERFACE>
+            share/vulkan/registry # <INSTALL_INTERFACE>
+        REQUIRED
+    )
+    get_filename_component(VK_XML_DIR
+        "${VK_XML}"
+        DIRECTORY
+    )
+    add_custom_target(pcu_codegen
+        COMMAND Python3::Interpreter "${PROJECT_SOURCE_DIR}/scripts/generate_source.py"
+            --api ${API_TYPE}
+            "${VK_XML_DIR}"
+    )
+endif()
+
+add_subdirectory(library/pcutil)
+add_subdirectory(library/pcjson)
+add_subdirectory(layers/json_gen)
+
+if(PCU_BUILD_PCINFO)
+    add_subdirectory(vkscpcinfo)
+endif()
+
+if(BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()

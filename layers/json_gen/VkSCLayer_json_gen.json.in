@@ -1,0 +1,20 @@
+{
+    "file_format_version" : "1.0.0",
+    "layer" : {
+        "name": "@JSON_LAYER_NAME@",
+        "type": "GLOBAL",
+        "library_path": "@RELATIVE_LAYER_BINARY@",
+        "api_version": "@VK_VERSION@",
+        "implementation_version": "2",
+        "description": "Khronos JSON generator layer",
+        "device_extensions": [
+            {
+                "name": "VK_EXT_pipeline_properties",
+                "spec_version": "1",
+                "entrypoints": [
+                    "vkGetPipelinePropertiesEXT"
+                ]
+            }
+        ]
+    }
+}

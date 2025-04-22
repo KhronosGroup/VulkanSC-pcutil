@@ -1,0 +1,133 @@
+# Copyright (c) 2024 The Khronos Group Inc.
+# Copyright (c) 2023-2024 RasterGrid Kft.
+# Copyright (c) 2023-2024 Valve Corporation
+# Copyright (c) 2023-2024 LunarG, Inc.
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: VKSC-PCU (Build/Tests)
+
+# https://docs.github.com/en/actions/using-jobs/using-concurrency
+concurrency:
+  # github.head_ref is only defined on pull_request
+  # Fallback to the run ID, which is guaranteed to be both unique and defined for the run.
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id  }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - '!main'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+    contents: read
+
+jobs:
+  pre_build:
+    name: Pre-build tests
+    # Runner fixed to accelerate clang-format install, to omit installing a full-blown LLVM install
+    # with the likes of KyleMayes/install-llvm-action for. When oldest supported Ubuntu changes, so
+    # should the clang-format used.
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+    steps:
+    - name: ${{ format('Checkout {0}', github.repository) }}
+      uses: actions/checkout@v4
+    - name: Check code formatting
+      uses: jidicula/clang-format-action@v4.15.0
+      with:
+        # Default clang-format in oldest supported Ubuntu (22.04), also available in 24.04
+        clang-format-version: '14'
+    - name: Check REUSE compliance
+      uses: fsfe/reuse-action@v5.0.0
+    - name: Install Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+    - name: Install clang-format
+      run: |
+        sudo apt update
+        sudo apt install clang-format
+    - name: Codegen identity
+      run: |
+        python3 scripts/update_deps.py --dir external --no-build
+        python3 scripts/generate_source.py external/Vulkan-Headers/registry/
+        git restore layers/json_gen/json_gen.cpp # JSONGenOutputGenerator is known to be non-deterministic
+        git diff --exit-code
+
+  linux:
+    name: ${{ format('{0}, {1} ({2})', matrix.os, matrix.compiler.cc, matrix.config) }}
+    needs: pre_build
+    runs-on: ${{matrix.os}}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-22.04, ubuntu-24.04 ]
+        compiler: [ {cc: gcc, cxx: g++}, {cc: clang, cxx: clang++} ]
+        config: [ Debug, Release ]
+    steps:
+      - name: ${{ format('Checkout {0}', github.repository) }}
+        uses: actions/checkout@v4
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install CMake & Ninja
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: 3.22.1
+      - name: Configure
+        run: |
+          cmake -S. -B build \
+          -G Ninja \
+          -D PCU_TESTS=ON \
+          -D UPDATE_DEPS=ON \
+          -D CMAKE_BUILD_TYPE=${{matrix.config}} \
+          -D PCU_WERROR=OFF
+      - name: Build
+        run: cmake --build build/
+      - name: Test
+        run: ctest --output-on-failure --test-dir build/
+      - name: Install
+        run: cmake --install build --prefix build/install
+
+  windows:
+    name: ${{ format('{0} ({1}), {2} ({3})', matrix.os, matrix.arch, matrix.toolset, matrix.config) }}
+    needs: pre_build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ windows-2022 ]
+        arch: [ Win32, x64 ]
+        toolset: [ v143, ClangCL ]
+        config: [ Debug, Release ]
+    steps:
+      - name: ${{ format('Checkout {0}', github.repository) }}
+        uses: actions/checkout@v4
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install CMake & Ninja
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: 3.22.1
+      - name: Configure
+        run: |
+          cmake -S. -B build `
+          -G "Visual Studio 17 2022" `
+          -D PCU_TESTS=ON `
+          -D UPDATE_DEPS=ON `
+          -D CMAKE_BUILD_TYPE=${{matrix.config}} `
+          -A ${{ matrix.arch }} `
+          -D PCU_WERROR=OFF
+      - name: Build
+        run: cmake --build build/ --config ${{matrix.config}}
+      - name: Test
+        run: ctest --output-on-failure -C ${{matrix.config}} --test-dir build/
+      - name: Install
+        run: cmake --install build --prefix build/install --config ${{matrix.config}}

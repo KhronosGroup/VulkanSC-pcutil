@@ -252,7 +252,6 @@ class JSONParserOptions(GeneratorOptions):
                  apicall='',
                  apientry='',
                  apientryp='',
-                 isCTS = False,
                  indentFuncProto=True,
                  indentFuncPointer=False,
                  alignFuncParam=0,
@@ -266,7 +265,6 @@ class JSONParserOptions(GeneratorOptions):
                  ):
 
         GeneratorOptions.__init__(self, **kwargs)
-        self.isCTS = isCTS
         self.versions = versions
         self.defaultExtensions = defaultExtensions
         self.addExtensions = addExtensions
@@ -376,7 +374,6 @@ class JSONParserGenerator(OutputGenerator):
     def beginFile(self, genOpts):
         OutputGenerator.beginFile(self, genOpts)
 
-        self.isCTS = genOpts.isCTS
         self.versions = genOpts.versions
         self.defaultExtensions = genOpts.defaultExtensions
         self.addExtensions = genOpts.addExtensions

@@ -201,7 +201,6 @@ class JSONGeneratorOptions(GeneratorOptions):
                  apicall='',
                  apientry='',
                  apientryp='',
-                 isCTS = False,
                  indentFuncProto=True,
                  indentFuncPointer=False,
                  alignFuncParam=0,
@@ -213,7 +212,6 @@ class JSONGeneratorOptions(GeneratorOptions):
                  ):
 
         GeneratorOptions.__init__(self, **kwargs)
-        self.isCTS = isCTS
 
         self.vulkanLayer = vulkanLayer
 
@@ -449,8 +447,6 @@ class JSONOutputGenerator(OutputGenerator):
             self.createLayerUnusedList()
 
         self.createvkscFeatureList()
-
-        self.isCTS = genOpts.isCTS
 
         self.baseTypeListMap  = {
                                   "int32_t"   : "int32_t",

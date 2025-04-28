@@ -25,6 +25,7 @@
 #include <sstream>
 #include <cassert>
 #include <limits>
+#include <type_traits>
 #include <json/json.h>
 
 namespace vk_json_parser {
@@ -113,6 +114,14 @@ static void parse_char(const Json::Value& obj, const char** o) {
     writePtr[_res.size()] = '\0';
     *o = writePtr;
 }
+
+#ifdef VULKAN_JSON_CTS
+#define NVSCI_NS vk::pt
+constexpr bool is_cts = true;
+#else
+#define NVSCI_NS
+constexpr bool is_cts = false;
+#endif
 
 static void parse_int32_t(const Json::Value& obj, int32_t& o) { o = obj.asInt(); }
 
@@ -210,15 +219,21 @@ static void parse_int64_t(const Json::Value& obj, int64_t& o) { o = obj.asInt64(
 
 static void parse_uint16_t(const Json::Value& obj, uint16_t& o) { o = static_cast<uint16_t>(obj.asUInt()); }
 
-static void parse_NvSciBufAttrList(const Json::Value& obj, NvSciBufAttrList& o) { o = static_cast<NvSciBufAttrList>(obj.asInt()); }
-
-static void parse_NvSciBufObj(const Json::Value& obj, NvSciBufObj& o) { o = static_cast<NvSciBufObj>(obj.asInt()); }
-
-static void parse_NvSciSyncAttrList(const Json::Value& obj, NvSciSyncAttrList& o) {
-    o = static_cast<NvSciSyncAttrList>(obj.asInt());
+static void parse_NvSciBufAttrList(const Json::Value& obj, NVSCI_NS::NvSciBufAttrList& o) {
+    o = static_cast<NVSCI_NS::NvSciBufAttrList>(obj.asInt());
 }
 
-static void parse_NvSciSyncObj(const Json::Value& obj, NvSciSyncObj& o) { o = static_cast<NvSciSyncObj>(obj.asInt()); }
+static void parse_NvSciBufObj(const Json::Value& obj, NVSCI_NS::NvSciBufObj& o) {
+    o = static_cast<NVSCI_NS::NvSciBufObj>(obj.asInt());
+}
+
+static void parse_NvSciSyncAttrList(const Json::Value& obj, NVSCI_NS::NvSciSyncAttrList& o) {
+    o = static_cast<NVSCI_NS::NvSciSyncAttrList>(obj.asInt());
+}
+
+static void parse_NvSciSyncObj(const Json::Value& obj, NVSCI_NS::NvSciSyncObj& o) {
+    o = static_cast<NVSCI_NS::NvSciSyncObj>(obj.asInt());
+}
 
 static void* parsePNextChain(const Json::Value& obj);
 
@@ -269,7 +284,11 @@ static std::vector<uint8_t> base64decode(const std::string& encoded) {
                 outPtr[2] |= decodedBits;
                 break;
             default:
+#ifdef VULKAN_JSON_CTS
+                DE_ASSERT(false);
+#else
                 assert(false);
+#endif
         }
 
         base64DecodeOffset++;
@@ -4266,6 +4285,10 @@ static void parse_VkBufferMemoryBarrier(const Json::Value& obj, VkBufferMemoryBa
 
     parse_uint32_t(obj["dstQueueFamilyIndex"], (o.dstQueueFamilyIndex));
 
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_VkDeviceSize(obj["offset"], (o.offset));
 
     parse_VkDeviceSize(obj["size"], (o.size));
@@ -4330,6 +4353,10 @@ static void parse_VkImageMemoryBarrier(const Json::Value& obj, VkImageMemoryBarr
 
     parse_uint32_t(obj["dstQueueFamilyIndex"], (o.dstQueueFamilyIndex));
 
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_VkImageSubresourceRange(obj["subresourceRange"], (o.subresourceRange));
 }
 
@@ -4352,15 +4379,32 @@ static void parse_VkPipelineCacheHeaderVersionOne(const Json::Value& obj, VkPipe
 
     parse_uint32_t(obj["deviceID"], (o.deviceID));
 
-    const Json::Value& obj_pipelineCacheUUID_arr = obj["pipelineCacheUUID"];
-    for (unsigned int i = 0; i < obj_pipelineCacheUUID_arr.size(); i++) {
-        parse_uint8_t(obj_pipelineCacheUUID_arr[i], const_cast<uint8_t&>((o.pipelineCacheUUID[i])));
+    if constexpr (is_cts && std::is_same_v<VkPipelineCacheHeaderVersionOne, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_pipelineCacheUUID_arr = obj["pipelineCacheUUID"];
+        for (unsigned int i = 0; i < obj_pipelineCacheUUID_arr.size(); i++) {
+            uint64_t pipelineCacheUUIDInternal = 0;
+            parse_uint64_t(obj_pipelineCacheUUID_arr[i], pipelineCacheUUIDInternal);
+            pipelineCacheUUIDTab[i] = uint8_t(pipelineCacheUUIDInternal);
+        }
+        o.pipelineCacheUUID = pipelineCacheUUIDTab;
+    } else {
+        const Json::Value& obj_pipelineCacheUUID_arr = obj["pipelineCacheUUID"];
+        for (unsigned int i = 0; i < obj_pipelineCacheUUID_arr.size(); i++) {
+            parse_uint8_t(obj_pipelineCacheUUID_arr[i], const_cast<uint8_t&>((o.pipelineCacheUUID[i])));
+        }
     }
 }
 
 static void parse_VkAllocationCallbacks(const Json::Value& obj, VkAllocationCallbacks& o) {
-    /** Note: Ignoring void* data. **/
-
+    if constexpr (is_cts && is_same_v<VkAllocationCallbacks, VkPipelineCacheCreateInfo>) {
+        if (o.initialDataSize > 0U) {
+            void* data = s_globalMem.allocate(uint32_t(o.initialDataSize));
+            parse_void_data(obj["pUserData"], data, int(o.initialDataSize));
+            o.pUserData = data;
+        } else
+            o.pUserData = NULL;
+    } else { /** Note: Ignoring void* data. **/
+    }
     /** Note: Ignoring function pointer (PFN_vkAllocationFunction). **/
 
     /** Note: Ignoring function pointer (PFN_vkReallocationFunction). **/
@@ -4663,18 +4707,36 @@ static void parse_VkPhysicalDeviceLimits(const Json::Value& obj, VkPhysicalDevic
 
     parse_uint32_t(obj["maxComputeSharedMemorySize"], (o.maxComputeSharedMemorySize));
 
-    const Json::Value& obj_maxComputeWorkGroupCount_arr = obj["maxComputeWorkGroupCount"];
-    for (unsigned int i = 0; i < obj_maxComputeWorkGroupCount_arr.size(); i++) {
-        parse_uint32_t(obj_maxComputeWorkGroupCount_arr[i], const_cast<uint32_t&>((o.maxComputeWorkGroupCount[i])));
+    if constexpr (is_cts && std::is_same_v<VkPhysicalDeviceLimits, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_maxComputeWorkGroupCount_arr = obj["maxComputeWorkGroupCount"];
+        for (unsigned int i = 0; i < obj_maxComputeWorkGroupCount_arr.size(); i++) {
+            uint64_t maxComputeWorkGroupCountInternal = 0;
+            parse_uint64_t(obj_maxComputeWorkGroupCount_arr[i], maxComputeWorkGroupCountInternal);
+            maxComputeWorkGroupCountTab[i] = uint32_t(maxComputeWorkGroupCountInternal);
+        }
+        o.maxComputeWorkGroupCount = maxComputeWorkGroupCountTab;
+    } else {
+        const Json::Value& obj_maxComputeWorkGroupCount_arr = obj["maxComputeWorkGroupCount"];
+        for (unsigned int i = 0; i < obj_maxComputeWorkGroupCount_arr.size(); i++) {
+            parse_uint32_t(obj_maxComputeWorkGroupCount_arr[i], const_cast<uint32_t&>((o.maxComputeWorkGroupCount[i])));
+        }
     }
-
     parse_uint32_t(obj["maxComputeWorkGroupInvocations"], (o.maxComputeWorkGroupInvocations));
 
-    const Json::Value& obj_maxComputeWorkGroupSize_arr = obj["maxComputeWorkGroupSize"];
-    for (unsigned int i = 0; i < obj_maxComputeWorkGroupSize_arr.size(); i++) {
-        parse_uint32_t(obj_maxComputeWorkGroupSize_arr[i], const_cast<uint32_t&>((o.maxComputeWorkGroupSize[i])));
+    if constexpr (is_cts && std::is_same_v<VkPhysicalDeviceLimits, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_maxComputeWorkGroupSize_arr = obj["maxComputeWorkGroupSize"];
+        for (unsigned int i = 0; i < obj_maxComputeWorkGroupSize_arr.size(); i++) {
+            uint64_t maxComputeWorkGroupSizeInternal = 0;
+            parse_uint64_t(obj_maxComputeWorkGroupSize_arr[i], maxComputeWorkGroupSizeInternal);
+            maxComputeWorkGroupSizeTab[i] = uint32_t(maxComputeWorkGroupSizeInternal);
+        }
+        o.maxComputeWorkGroupSize = maxComputeWorkGroupSizeTab;
+    } else {
+        const Json::Value& obj_maxComputeWorkGroupSize_arr = obj["maxComputeWorkGroupSize"];
+        for (unsigned int i = 0; i < obj_maxComputeWorkGroupSize_arr.size(); i++) {
+            parse_uint32_t(obj_maxComputeWorkGroupSize_arr[i], const_cast<uint32_t&>((o.maxComputeWorkGroupSize[i])));
+        }
     }
-
     parse_uint32_t(obj["subPixelPrecisionBits"], (o.subPixelPrecisionBits));
 
     parse_uint32_t(obj["subTexelPrecisionBits"], (o.subTexelPrecisionBits));
@@ -4691,16 +4753,34 @@ static void parse_VkPhysicalDeviceLimits(const Json::Value& obj, VkPhysicalDevic
 
     parse_uint32_t(obj["maxViewports"], (o.maxViewports));
 
-    const Json::Value& obj_maxViewportDimensions_arr = obj["maxViewportDimensions"];
-    for (unsigned int i = 0; i < obj_maxViewportDimensions_arr.size(); i++) {
-        parse_uint32_t(obj_maxViewportDimensions_arr[i], const_cast<uint32_t&>((o.maxViewportDimensions[i])));
+    if constexpr (is_cts && std::is_same_v<VkPhysicalDeviceLimits, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_maxViewportDimensions_arr = obj["maxViewportDimensions"];
+        for (unsigned int i = 0; i < obj_maxViewportDimensions_arr.size(); i++) {
+            uint64_t maxViewportDimensionsInternal = 0;
+            parse_uint64_t(obj_maxViewportDimensions_arr[i], maxViewportDimensionsInternal);
+            maxViewportDimensionsTab[i] = uint32_t(maxViewportDimensionsInternal);
+        }
+        o.maxViewportDimensions = maxViewportDimensionsTab;
+    } else {
+        const Json::Value& obj_maxViewportDimensions_arr = obj["maxViewportDimensions"];
+        for (unsigned int i = 0; i < obj_maxViewportDimensions_arr.size(); i++) {
+            parse_uint32_t(obj_maxViewportDimensions_arr[i], const_cast<uint32_t&>((o.maxViewportDimensions[i])));
+        }
     }
-
-    const Json::Value& obj_viewportBoundsRange_arr = obj["viewportBoundsRange"];
-    for (unsigned int i = 0; i < obj_viewportBoundsRange_arr.size(); i++) {
-        parse_float(obj_viewportBoundsRange_arr[i], const_cast<float&>((o.viewportBoundsRange[i])));
+    if constexpr (is_cts && std::is_same_v<VkPhysicalDeviceLimits, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_viewportBoundsRange_arr = obj["viewportBoundsRange"];
+        for (unsigned int i = 0; i < obj_viewportBoundsRange_arr.size(); i++) {
+            uint64_t viewportBoundsRangeInternal = 0;
+            parse_uint64_t(obj_viewportBoundsRange_arr[i], viewportBoundsRangeInternal);
+            viewportBoundsRangeTab[i] = float(viewportBoundsRangeInternal);
+        }
+        o.viewportBoundsRange = viewportBoundsRangeTab;
+    } else {
+        const Json::Value& obj_viewportBoundsRange_arr = obj["viewportBoundsRange"];
+        for (unsigned int i = 0; i < obj_viewportBoundsRange_arr.size(); i++) {
+            parse_float(obj_viewportBoundsRange_arr[i], const_cast<float&>((o.viewportBoundsRange[i])));
+        }
     }
-
     parse_uint32_t(obj["viewportSubPixelBits"], (o.viewportSubPixelBits));
 
     parse_size_t(obj["minMemoryMapAlignment"], (o.minMemoryMapAlignment));
@@ -4765,16 +4845,34 @@ static void parse_VkPhysicalDeviceLimits(const Json::Value& obj, VkPhysicalDevic
 
     parse_uint32_t(obj["discreteQueuePriorities"], (o.discreteQueuePriorities));
 
-    const Json::Value& obj_pointSizeRange_arr = obj["pointSizeRange"];
-    for (unsigned int i = 0; i < obj_pointSizeRange_arr.size(); i++) {
-        parse_float(obj_pointSizeRange_arr[i], const_cast<float&>((o.pointSizeRange[i])));
+    if constexpr (is_cts && std::is_same_v<VkPhysicalDeviceLimits, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_pointSizeRange_arr = obj["pointSizeRange"];
+        for (unsigned int i = 0; i < obj_pointSizeRange_arr.size(); i++) {
+            uint64_t pointSizeRangeInternal = 0;
+            parse_uint64_t(obj_pointSizeRange_arr[i], pointSizeRangeInternal);
+            pointSizeRangeTab[i] = float(pointSizeRangeInternal);
+        }
+        o.pointSizeRange = pointSizeRangeTab;
+    } else {
+        const Json::Value& obj_pointSizeRange_arr = obj["pointSizeRange"];
+        for (unsigned int i = 0; i < obj_pointSizeRange_arr.size(); i++) {
+            parse_float(obj_pointSizeRange_arr[i], const_cast<float&>((o.pointSizeRange[i])));
+        }
     }
-
-    const Json::Value& obj_lineWidthRange_arr = obj["lineWidthRange"];
-    for (unsigned int i = 0; i < obj_lineWidthRange_arr.size(); i++) {
-        parse_float(obj_lineWidthRange_arr[i], const_cast<float&>((o.lineWidthRange[i])));
+    if constexpr (is_cts && std::is_same_v<VkPhysicalDeviceLimits, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_lineWidthRange_arr = obj["lineWidthRange"];
+        for (unsigned int i = 0; i < obj_lineWidthRange_arr.size(); i++) {
+            uint64_t lineWidthRangeInternal = 0;
+            parse_uint64_t(obj_lineWidthRange_arr[i], lineWidthRangeInternal);
+            lineWidthRangeTab[i] = float(lineWidthRangeInternal);
+        }
+        o.lineWidthRange = lineWidthRangeTab;
+    } else {
+        const Json::Value& obj_lineWidthRange_arr = obj["lineWidthRange"];
+        for (unsigned int i = 0; i < obj_lineWidthRange_arr.size(); i++) {
+            parse_float(obj_lineWidthRange_arr[i], const_cast<float&>((o.lineWidthRange[i])));
+        }
     }
-
     parse_float(obj["pointSizeGranularity"], (o.pointSizeGranularity));
 
     parse_float(obj["lineWidthGranularity"], (o.lineWidthGranularity));
@@ -4793,16 +4891,35 @@ static void parse_VkPhysicalDeviceLimits(const Json::Value& obj, VkPhysicalDevic
 static void parse_VkPhysicalDeviceMemoryProperties(const Json::Value& obj, VkPhysicalDeviceMemoryProperties& o) {
     parse_uint32_t(obj["memoryTypeCount"], (o.memoryTypeCount));
 
-    const Json::Value& obj_memoryTypes_arr = obj["memoryTypes"];
-    for (unsigned int i = 0; i < obj_memoryTypes_arr.size(); i++) {
-        parse_VkMemoryType(obj_memoryTypes_arr[i], const_cast<VkMemoryType&>((o.memoryTypes[i])));
+    if constexpr (is_cts && std::is_same_v<VkPhysicalDeviceMemoryProperties, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_memoryTypes_arr = obj["memoryTypes"];
+        for (unsigned int i = 0; i < obj_memoryTypes_arr.size(); i++) {
+            uint64_t memoryTypesInternal = 0;
+            parse_uint64_t(obj_memoryTypes_arr[i], memoryTypesInternal);
+            memoryTypesTab[i] = VkMemoryType(memoryTypesInternal);
+        }
+        o.memoryTypes = memoryTypesTab;
+    } else {
+        const Json::Value& obj_memoryTypes_arr = obj["memoryTypes"];
+        for (unsigned int i = 0; i < obj_memoryTypes_arr.size(); i++) {
+            parse_VkMemoryType(obj_memoryTypes_arr[i], const_cast<VkMemoryType&>((o.memoryTypes[i])));
+        }
     }
-
     parse_uint32_t(obj["memoryHeapCount"], (o.memoryHeapCount));
 
-    const Json::Value& obj_memoryHeaps_arr = obj["memoryHeaps"];
-    for (unsigned int i = 0; i < obj_memoryHeaps_arr.size(); i++) {
-        parse_VkMemoryHeap(obj_memoryHeaps_arr[i], const_cast<VkMemoryHeap&>((o.memoryHeaps[i])));
+    if constexpr (is_cts && std::is_same_v<VkPhysicalDeviceMemoryProperties, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_memoryHeaps_arr = obj["memoryHeaps"];
+        for (unsigned int i = 0; i < obj_memoryHeaps_arr.size(); i++) {
+            uint64_t memoryHeapsInternal = 0;
+            parse_uint64_t(obj_memoryHeaps_arr[i], memoryHeapsInternal);
+            memoryHeapsTab[i] = VkMemoryHeap(memoryHeapsInternal);
+        }
+        o.memoryHeaps = memoryHeapsTab;
+    } else {
+        const Json::Value& obj_memoryHeaps_arr = obj["memoryHeaps"];
+        for (unsigned int i = 0; i < obj_memoryHeaps_arr.size(); i++) {
+            parse_VkMemoryHeap(obj_memoryHeaps_arr[i], const_cast<VkMemoryHeap&>((o.memoryHeaps[i])));
+        }
     }
 }
 
@@ -4831,11 +4948,20 @@ static void parse_VkPhysicalDeviceProperties(const Json::Value& obj, VkPhysicalD
 
     /** TODO: Handle this - deviceName **/
 
-    const Json::Value& obj_pipelineCacheUUID_arr = obj["pipelineCacheUUID"];
-    for (unsigned int i = 0; i < obj_pipelineCacheUUID_arr.size(); i++) {
-        parse_uint8_t(obj_pipelineCacheUUID_arr[i], const_cast<uint8_t&>((o.pipelineCacheUUID[i])));
+    if constexpr (is_cts && std::is_same_v<VkPhysicalDeviceProperties, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_pipelineCacheUUID_arr = obj["pipelineCacheUUID"];
+        for (unsigned int i = 0; i < obj_pipelineCacheUUID_arr.size(); i++) {
+            uint64_t pipelineCacheUUIDInternal = 0;
+            parse_uint64_t(obj_pipelineCacheUUID_arr[i], pipelineCacheUUIDInternal);
+            pipelineCacheUUIDTab[i] = uint8_t(pipelineCacheUUIDInternal);
+        }
+        o.pipelineCacheUUID = pipelineCacheUUIDTab;
+    } else {
+        const Json::Value& obj_pipelineCacheUUID_arr = obj["pipelineCacheUUID"];
+        for (unsigned int i = 0; i < obj_pipelineCacheUUID_arr.size(); i++) {
+            parse_uint8_t(obj_pipelineCacheUUID_arr[i], const_cast<uint8_t&>((o.pipelineCacheUUID[i])));
+        }
     }
-
     parse_VkPhysicalDeviceLimits(obj["limits"], (o.limits));
 
     parse_VkPhysicalDeviceSparseProperties(obj["sparseProperties"], (o.sparseProperties));
@@ -4862,10 +4988,21 @@ static void parse_VkDeviceQueueCreateInfo(const Json::Value& obj, VkDeviceQueueC
 
     parse_uint32_t(obj["queueCount"], (o.queueCount));
 
-    (o.pQueuePriorities) = (float*)s_globalMem.allocate((o.queueCount), sizeof(float));
-    const Json::Value& obj_pQueuePriorities_arr = obj["pQueuePriorities"];
-    for (unsigned int i = 0; i < obj_pQueuePriorities_arr.size(); i++) {
-        parse_float(obj_pQueuePriorities_arr[i], const_cast<float&>((o.pQueuePriorities[i])));
+    if constexpr (is_cts && std::is_same_v<VkDeviceQueueCreateInfo, VkPipelineLayoutCreateInfo>) {
+        float* pQueuePrioritiesTab = (float*)s_globalMem.allocate((o.queueCount), sizeof(float));
+        const Json::Value& obj_pQueuePriorities_arr = obj["pQueuePriorities"];
+        for (unsigned int i = 0; i < obj_pQueuePriorities_arr.size(); i++) {
+            uint64_t pQueuePrioritiesInternal = 0;
+            parse_uint64_t(obj_pQueuePriorities_arr[i], pQueuePrioritiesInternal);
+            pQueuePrioritiesTab[i] = float(pQueuePrioritiesInternal);
+        }
+        o.pQueuePriorities = pQueuePrioritiesTab;
+    } else {
+        (o.pQueuePriorities) = (float*)s_globalMem.allocate((o.queueCount), sizeof(float));
+        const Json::Value& obj_pQueuePriorities_arr = obj["pQueuePriorities"];
+        for (unsigned int i = 0; i < obj_pQueuePriorities_arr.size(); i++) {
+            parse_float(obj_pQueuePriorities_arr[i], const_cast<float&>((o.pQueuePriorities[i])));
+        }
     }
 }
 
@@ -4931,32 +5068,75 @@ static void parse_VkSubmitInfo(const Json::Value& obj, VkSubmitInfo& o) {
 
     parse_uint32_t(obj["waitSemaphoreCount"], (o.waitSemaphoreCount));
 
-    (o.pWaitSemaphores) = (VkSemaphore*)s_globalMem.allocate((o.waitSemaphoreCount), sizeof(VkSemaphore));
-    const Json::Value& obj_pWaitSemaphores_arr = obj["pWaitSemaphores"];
-    for (unsigned int i = 0; i < obj_pWaitSemaphores_arr.size(); i++) {
-        parse_VkSemaphore(obj_pWaitSemaphores_arr[i], const_cast<VkSemaphore&>((o.pWaitSemaphores[i])));
+    if constexpr (is_cts && std::is_same_v<VkSubmitInfo, VkPipelineLayoutCreateInfo>) {
+        VkSemaphore* pWaitSemaphoresTab = (VkSemaphore*)s_globalMem.allocate((o.waitSemaphoreCount), sizeof(VkSemaphore));
+        const Json::Value& obj_pWaitSemaphores_arr = obj["pWaitSemaphores"];
+        for (unsigned int i = 0; i < obj_pWaitSemaphores_arr.size(); i++) {
+            uint64_t pWaitSemaphoresInternal = 0;
+            parse_uint64_t(obj_pWaitSemaphores_arr[i], pWaitSemaphoresInternal);
+            pWaitSemaphoresTab[i] = VkSemaphore(pWaitSemaphoresInternal);
+        }
+        o.pWaitSemaphores = pWaitSemaphoresTab;
+    } else {
+        (o.pWaitSemaphores) = (VkSemaphore*)s_globalMem.allocate((o.waitSemaphoreCount), sizeof(VkSemaphore));
+        const Json::Value& obj_pWaitSemaphores_arr = obj["pWaitSemaphores"];
+        for (unsigned int i = 0; i < obj_pWaitSemaphores_arr.size(); i++) {
+            parse_VkSemaphore(obj_pWaitSemaphores_arr[i], const_cast<VkSemaphore&>((o.pWaitSemaphores[i])));
+        }
     }
-
-    (o.pWaitDstStageMask) = (VkPipelineStageFlags*)s_globalMem.allocate((o.waitSemaphoreCount), sizeof(VkPipelineStageFlags));
-    const Json::Value& obj_pWaitDstStageMask_arr = obj["pWaitDstStageMask"];
-    for (unsigned int i = 0; i < obj_pWaitDstStageMask_arr.size(); i++) {
-        parse_VkPipelineStageFlags(obj_pWaitDstStageMask_arr[i], const_cast<VkPipelineStageFlags&>((o.pWaitDstStageMask[i])));
+    if constexpr (is_cts && std::is_same_v<VkSubmitInfo, VkPipelineLayoutCreateInfo>) {
+        VkPipelineStageFlags* pWaitDstStageMaskTab =
+            (VkPipelineStageFlags*)s_globalMem.allocate((o.waitSemaphoreCount), sizeof(VkPipelineStageFlags));
+        const Json::Value& obj_pWaitDstStageMask_arr = obj["pWaitDstStageMask"];
+        for (unsigned int i = 0; i < obj_pWaitDstStageMask_arr.size(); i++) {
+            uint64_t pWaitDstStageMaskInternal = 0;
+            parse_uint64_t(obj_pWaitDstStageMask_arr[i], pWaitDstStageMaskInternal);
+            pWaitDstStageMaskTab[i] = VkPipelineStageFlags(pWaitDstStageMaskInternal);
+        }
+        o.pWaitDstStageMask = pWaitDstStageMaskTab;
+    } else {
+        (o.pWaitDstStageMask) = (VkPipelineStageFlags*)s_globalMem.allocate((o.waitSemaphoreCount), sizeof(VkPipelineStageFlags));
+        const Json::Value& obj_pWaitDstStageMask_arr = obj["pWaitDstStageMask"];
+        for (unsigned int i = 0; i < obj_pWaitDstStageMask_arr.size(); i++) {
+            parse_VkPipelineStageFlags(obj_pWaitDstStageMask_arr[i], const_cast<VkPipelineStageFlags&>((o.pWaitDstStageMask[i])));
+        }
     }
-
     parse_uint32_t(obj["commandBufferCount"], (o.commandBufferCount));
 
-    (o.pCommandBuffers) = (VkCommandBuffer*)s_globalMem.allocate((o.commandBufferCount), sizeof(VkCommandBuffer));
-    const Json::Value& obj_pCommandBuffers_arr = obj["pCommandBuffers"];
-    for (unsigned int i = 0; i < obj_pCommandBuffers_arr.size(); i++) {
-        parse_VkCommandBuffer(obj_pCommandBuffers_arr[i], const_cast<VkCommandBuffer&>((o.pCommandBuffers[i])));
+    if constexpr (is_cts && std::is_same_v<VkSubmitInfo, VkPipelineLayoutCreateInfo>) {
+        VkCommandBuffer* pCommandBuffersTab =
+            (VkCommandBuffer*)s_globalMem.allocate((o.commandBufferCount), sizeof(VkCommandBuffer));
+        const Json::Value& obj_pCommandBuffers_arr = obj["pCommandBuffers"];
+        for (unsigned int i = 0; i < obj_pCommandBuffers_arr.size(); i++) {
+            uint64_t pCommandBuffersInternal = 0;
+            parse_uint64_t(obj_pCommandBuffers_arr[i], pCommandBuffersInternal);
+            pCommandBuffersTab[i] = VkCommandBuffer(pCommandBuffersInternal);
+        }
+        o.pCommandBuffers = pCommandBuffersTab;
+    } else {
+        (o.pCommandBuffers) = (VkCommandBuffer*)s_globalMem.allocate((o.commandBufferCount), sizeof(VkCommandBuffer));
+        const Json::Value& obj_pCommandBuffers_arr = obj["pCommandBuffers"];
+        for (unsigned int i = 0; i < obj_pCommandBuffers_arr.size(); i++) {
+            parse_VkCommandBuffer(obj_pCommandBuffers_arr[i], const_cast<VkCommandBuffer&>((o.pCommandBuffers[i])));
+        }
     }
-
     parse_uint32_t(obj["signalSemaphoreCount"], (o.signalSemaphoreCount));
 
-    (o.pSignalSemaphores) = (VkSemaphore*)s_globalMem.allocate((o.signalSemaphoreCount), sizeof(VkSemaphore));
-    const Json::Value& obj_pSignalSemaphores_arr = obj["pSignalSemaphores"];
-    for (unsigned int i = 0; i < obj_pSignalSemaphores_arr.size(); i++) {
-        parse_VkSemaphore(obj_pSignalSemaphores_arr[i], const_cast<VkSemaphore&>((o.pSignalSemaphores[i])));
+    if constexpr (is_cts && std::is_same_v<VkSubmitInfo, VkPipelineLayoutCreateInfo>) {
+        VkSemaphore* pSignalSemaphoresTab = (VkSemaphore*)s_globalMem.allocate((o.signalSemaphoreCount), sizeof(VkSemaphore));
+        const Json::Value& obj_pSignalSemaphores_arr = obj["pSignalSemaphores"];
+        for (unsigned int i = 0; i < obj_pSignalSemaphores_arr.size(); i++) {
+            uint64_t pSignalSemaphoresInternal = 0;
+            parse_uint64_t(obj_pSignalSemaphores_arr[i], pSignalSemaphoresInternal);
+            pSignalSemaphoresTab[i] = VkSemaphore(pSignalSemaphoresInternal);
+        }
+        o.pSignalSemaphores = pSignalSemaphoresTab;
+    } else {
+        (o.pSignalSemaphores) = (VkSemaphore*)s_globalMem.allocate((o.signalSemaphoreCount), sizeof(VkSemaphore));
+        const Json::Value& obj_pSignalSemaphores_arr = obj["pSignalSemaphores"];
+        for (unsigned int i = 0; i < obj_pSignalSemaphores_arr.size(); i++) {
+            parse_VkSemaphore(obj_pSignalSemaphores_arr[i], const_cast<VkSemaphore&>((o.pSignalSemaphores[i])));
+        }
     }
 }
 
@@ -4964,6 +5144,10 @@ static void parse_VkMappedMemoryRange(const Json::Value& obj, VkMappedMemoryRang
     parse_VkStructureType(obj["sType"], (o.sType));
 
     o.pNext = (VkMappedMemoryRange*)parsePNextChain(obj);
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 
     parse_VkDeviceSize(obj["offset"], (o.offset));
 
@@ -5049,10 +5233,21 @@ static void parse_VkBufferCreateInfo(const Json::Value& obj, VkBufferCreateInfo&
 
     parse_uint32_t(obj["queueFamilyIndexCount"], (o.queueFamilyIndexCount));
 
-    (o.pQueueFamilyIndices) = (uint32_t*)s_globalMem.allocate((o.queueFamilyIndexCount), sizeof(uint32_t));
-    const Json::Value& obj_pQueueFamilyIndices_arr = obj["pQueueFamilyIndices"];
-    for (unsigned int i = 0; i < obj_pQueueFamilyIndices_arr.size(); i++) {
-        parse_uint32_t(obj_pQueueFamilyIndices_arr[i], const_cast<uint32_t&>((o.pQueueFamilyIndices[i])));
+    if constexpr (is_cts && std::is_same_v<VkBufferCreateInfo, VkPipelineLayoutCreateInfo>) {
+        uint32_t* pQueueFamilyIndicesTab = (uint32_t*)s_globalMem.allocate((o.queueFamilyIndexCount), sizeof(uint32_t));
+        const Json::Value& obj_pQueueFamilyIndices_arr = obj["pQueueFamilyIndices"];
+        for (unsigned int i = 0; i < obj_pQueueFamilyIndices_arr.size(); i++) {
+            uint64_t pQueueFamilyIndicesInternal = 0;
+            parse_uint64_t(obj_pQueueFamilyIndices_arr[i], pQueueFamilyIndicesInternal);
+            pQueueFamilyIndicesTab[i] = uint32_t(pQueueFamilyIndicesInternal);
+        }
+        o.pQueueFamilyIndices = pQueueFamilyIndicesTab;
+    } else {
+        (o.pQueueFamilyIndices) = (uint32_t*)s_globalMem.allocate((o.queueFamilyIndexCount), sizeof(uint32_t));
+        const Json::Value& obj_pQueueFamilyIndices_arr = obj["pQueueFamilyIndices"];
+        for (unsigned int i = 0; i < obj_pQueueFamilyIndices_arr.size(); i++) {
+            parse_uint32_t(obj_pQueueFamilyIndices_arr[i], const_cast<uint32_t&>((o.pQueueFamilyIndices[i])));
+        }
     }
 }
 
@@ -5062,6 +5257,10 @@ static void parse_VkBufferViewCreateInfo(const Json::Value& obj, VkBufferViewCre
     o.pNext = (VkBufferViewCreateInfo*)parsePNextChain(obj);
 
     parse_VkBufferViewCreateFlags(obj["flags"], (o.flags));
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 
     parse_VkFormat(obj["format"], (o.format));
 
@@ -5097,12 +5296,22 @@ static void parse_VkImageCreateInfo(const Json::Value& obj, VkImageCreateInfo& o
 
     parse_uint32_t(obj["queueFamilyIndexCount"], (o.queueFamilyIndexCount));
 
-    (o.pQueueFamilyIndices) = (uint32_t*)s_globalMem.allocate((o.queueFamilyIndexCount), sizeof(uint32_t));
-    const Json::Value& obj_pQueueFamilyIndices_arr = obj["pQueueFamilyIndices"];
-    for (unsigned int i = 0; i < obj_pQueueFamilyIndices_arr.size(); i++) {
-        parse_uint32_t(obj_pQueueFamilyIndices_arr[i], const_cast<uint32_t&>((o.pQueueFamilyIndices[i])));
+    if constexpr (is_cts && std::is_same_v<VkImageCreateInfo, VkPipelineLayoutCreateInfo>) {
+        uint32_t* pQueueFamilyIndicesTab = (uint32_t*)s_globalMem.allocate((o.queueFamilyIndexCount), sizeof(uint32_t));
+        const Json::Value& obj_pQueueFamilyIndices_arr = obj["pQueueFamilyIndices"];
+        for (unsigned int i = 0; i < obj_pQueueFamilyIndices_arr.size(); i++) {
+            uint64_t pQueueFamilyIndicesInternal = 0;
+            parse_uint64_t(obj_pQueueFamilyIndices_arr[i], pQueueFamilyIndicesInternal);
+            pQueueFamilyIndicesTab[i] = uint32_t(pQueueFamilyIndicesInternal);
+        }
+        o.pQueueFamilyIndices = pQueueFamilyIndicesTab;
+    } else {
+        (o.pQueueFamilyIndices) = (uint32_t*)s_globalMem.allocate((o.queueFamilyIndexCount), sizeof(uint32_t));
+        const Json::Value& obj_pQueueFamilyIndices_arr = obj["pQueueFamilyIndices"];
+        for (unsigned int i = 0; i < obj_pQueueFamilyIndices_arr.size(); i++) {
+            parse_uint32_t(obj_pQueueFamilyIndices_arr[i], const_cast<uint32_t&>((o.pQueueFamilyIndices[i])));
+        }
     }
-
     parse_VkImageLayout(obj["initialLayout"], (o.initialLayout));
 }
 
@@ -5135,6 +5344,10 @@ static void parse_VkImageViewCreateInfo(const Json::Value& obj, VkImageViewCreat
 
     parse_VkImageViewCreateFlags(obj["flags"], (o.flags));
 
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_VkImageViewType(obj["viewType"], (o.viewType));
 
     parse_VkFormat(obj["format"], (o.format));
@@ -5153,7 +5366,15 @@ static void parse_VkPipelineCacheCreateInfo(const Json::Value& obj, VkPipelineCa
 
     parse_size_t(obj["initialDataSize"], (o.initialDataSize));
 
-    /** Note: Ignoring void* data. **/
+    if constexpr (is_cts && is_same_v<VkPipelineCacheCreateInfo, VkPipelineCacheCreateInfo>) {
+        if (o.initialDataSize > 0U) {
+            void* data = s_globalMem.allocate(uint32_t(o.initialDataSize));
+            parse_void_data(obj["pInitialData"], data, int(o.initialDataSize));
+            o.pInitialData = data;
+        } else
+            o.pInitialData = NULL;
+    } else { /** Note: Ignoring void* data. **/
+    }
 }
 
 static void parse_VkSpecializationMapEntry(const Json::Value& obj, VkSpecializationMapEntry& o) {
@@ -5196,6 +5417,13 @@ static void parse_VkPipelineShaderStageCreateInfo(const Json::Value& obj, VkPipe
 
     parse_VkShaderStageFlagBits(obj["stage"], (o.stage));
 
+#ifdef VULKAN_JSON_CTS
+    uint64_t moduleInternal = 0;
+    parse_uint64_t(obj["module"], moduleInternal);
+    o.module = VkShaderModule(moduleInternal);
+#else
+#endif  //  VULKAN_JSON_CTS
+
     (o.pName) = (const char*)s_globalMem.allocate(255);
     parse_char(obj["pName"], &(o.pName));
 
@@ -5218,6 +5446,17 @@ static void parse_VkComputePipelineCreateInfo(const Json::Value& obj, VkComputeP
     parse_VkPipelineCreateFlags(obj["flags"], (o.flags));
 
     parse_VkPipelineShaderStageCreateInfo(obj["stage"], (o.stage));
+
+#ifdef VULKAN_JSON_CTS
+    uint64_t layoutInternal = 0;
+    parse_uint64_t(obj["layout"], layoutInternal);
+    o.layout = VkPipelineLayout(layoutInternal);
+#else
+#endif  //  VULKAN_JSON_CTS
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 
     parse_int32_t(obj["basePipelineIndex"], (o.basePipelineIndex));
 }
@@ -5486,9 +5725,19 @@ static void parse_VkPipelineColorBlendStateCreateInfo(const Json::Value& obj, Vk
         }
     }
 
-    const Json::Value& obj_blendConstants_arr = obj["blendConstants"];
-    for (unsigned int i = 0; i < obj_blendConstants_arr.size(); i++) {
-        parse_float(obj_blendConstants_arr[i], const_cast<float&>((o.blendConstants[i])));
+    if constexpr (is_cts && std::is_same_v<VkPipelineColorBlendStateCreateInfo, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_blendConstants_arr = obj["blendConstants"];
+        for (unsigned int i = 0; i < obj_blendConstants_arr.size(); i++) {
+            uint64_t blendConstantsInternal = 0;
+            parse_uint64_t(obj_blendConstants_arr[i], blendConstantsInternal);
+            blendConstantsTab[i] = float(blendConstantsInternal);
+        }
+        o.blendConstants = blendConstantsTab;
+    } else {
+        const Json::Value& obj_blendConstants_arr = obj["blendConstants"];
+        for (unsigned int i = 0; i < obj_blendConstants_arr.size(); i++) {
+            parse_float(obj_blendConstants_arr[i], const_cast<float&>((o.blendConstants[i])));
+        }
     }
 }
 
@@ -5501,10 +5750,21 @@ static void parse_VkPipelineDynamicStateCreateInfo(const Json::Value& obj, VkPip
 
     parse_uint32_t(obj["dynamicStateCount"], (o.dynamicStateCount));
 
-    (o.pDynamicStates) = (VkDynamicState*)s_globalMem.allocate((o.dynamicStateCount), sizeof(VkDynamicState));
-    const Json::Value& obj_pDynamicStates_arr = obj["pDynamicStates"];
-    for (unsigned int i = 0; i < obj_pDynamicStates_arr.size(); i++) {
-        parse_VkDynamicState(obj_pDynamicStates_arr[i], const_cast<VkDynamicState&>((o.pDynamicStates[i])));
+    if constexpr (is_cts && std::is_same_v<VkPipelineDynamicStateCreateInfo, VkPipelineLayoutCreateInfo>) {
+        VkDynamicState* pDynamicStatesTab = (VkDynamicState*)s_globalMem.allocate((o.dynamicStateCount), sizeof(VkDynamicState));
+        const Json::Value& obj_pDynamicStates_arr = obj["pDynamicStates"];
+        for (unsigned int i = 0; i < obj_pDynamicStates_arr.size(); i++) {
+            uint64_t pDynamicStatesInternal = 0;
+            parse_uint64_t(obj_pDynamicStates_arr[i], pDynamicStatesInternal);
+            pDynamicStatesTab[i] = VkDynamicState(pDynamicStatesInternal);
+        }
+        o.pDynamicStates = pDynamicStatesTab;
+    } else {
+        (o.pDynamicStates) = (VkDynamicState*)s_globalMem.allocate((o.dynamicStateCount), sizeof(VkDynamicState));
+        const Json::Value& obj_pDynamicStates_arr = obj["pDynamicStates"];
+        for (unsigned int i = 0; i < obj_pDynamicStates_arr.size(); i++) {
+            parse_VkDynamicState(obj_pDynamicStates_arr[i], const_cast<VkDynamicState&>((o.pDynamicStates[i])));
+        }
     }
 }
 
@@ -5635,7 +5895,25 @@ static void parse_VkGraphicsPipelineCreateInfo(const Json::Value& obj, VkGraphic
         }
     }
 
+#ifdef VULKAN_JSON_CTS
+    uint64_t layoutInternal = 0;
+    parse_uint64_t(obj["layout"], layoutInternal);
+    o.layout = VkPipelineLayout(layoutInternal);
+#else
+#endif  //  VULKAN_JSON_CTS
+
+#ifdef VULKAN_JSON_CTS
+    uint64_t renderPassInternal = 0;
+    parse_uint64_t(obj["renderPass"], renderPassInternal);
+    o.renderPass = VkRenderPass(renderPassInternal);
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_uint32_t(obj["subpass"], (o.subpass));
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 
     parse_int32_t(obj["basePipelineIndex"], (o.basePipelineIndex));
 }
@@ -5657,12 +5935,23 @@ static void parse_VkPipelineLayoutCreateInfo(const Json::Value& obj, VkPipelineL
 
     parse_uint32_t(obj["setLayoutCount"], (o.setLayoutCount));
 
-    (o.pSetLayouts) = (VkDescriptorSetLayout*)s_globalMem.allocate((o.setLayoutCount), sizeof(VkDescriptorSetLayout));
-    const Json::Value& obj_pSetLayouts_arr = obj["pSetLayouts"];
-    for (unsigned int i = 0; i < obj_pSetLayouts_arr.size(); i++) {
-        parse_VkDescriptorSetLayout(obj_pSetLayouts_arr[i], const_cast<VkDescriptorSetLayout&>((o.pSetLayouts[i])));
+    if constexpr (is_cts && std::is_same_v<VkPipelineLayoutCreateInfo, VkPipelineLayoutCreateInfo>) {
+        VkDescriptorSetLayout* pSetLayoutsTab =
+            (VkDescriptorSetLayout*)s_globalMem.allocate((o.setLayoutCount), sizeof(VkDescriptorSetLayout));
+        const Json::Value& obj_pSetLayouts_arr = obj["pSetLayouts"];
+        for (unsigned int i = 0; i < obj_pSetLayouts_arr.size(); i++) {
+            uint64_t pSetLayoutsInternal = 0;
+            parse_uint64_t(obj_pSetLayouts_arr[i], pSetLayoutsInternal);
+            pSetLayoutsTab[i] = VkDescriptorSetLayout(pSetLayoutsInternal);
+        }
+        o.pSetLayouts = pSetLayoutsTab;
+    } else {
+        (o.pSetLayouts) = (VkDescriptorSetLayout*)s_globalMem.allocate((o.setLayoutCount), sizeof(VkDescriptorSetLayout));
+        const Json::Value& obj_pSetLayouts_arr = obj["pSetLayouts"];
+        for (unsigned int i = 0; i < obj_pSetLayouts_arr.size(); i++) {
+            parse_VkDescriptorSetLayout(obj_pSetLayouts_arr[i], const_cast<VkDescriptorSetLayout&>((o.pSetLayouts[i])));
+        }
     }
-
     parse_uint32_t(obj["pushConstantRangeCount"], (o.pushConstantRangeCount));
 
     (o.pPushConstantRanges) = (VkPushConstantRange*)s_globalMem.allocate((o.pushConstantRangeCount), sizeof(VkPushConstantRange));
@@ -5719,9 +6008,17 @@ static void parse_VkCopyDescriptorSet(const Json::Value& obj, VkCopyDescriptorSe
 
     o.pNext = (VkCopyDescriptorSet*)parsePNextChain(obj);
 
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_uint32_t(obj["srcBinding"], (o.srcBinding));
 
     parse_uint32_t(obj["srcArrayElement"], (o.srcArrayElement));
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 
     parse_uint32_t(obj["dstBinding"], (o.dstBinding));
 
@@ -5731,12 +6028,24 @@ static void parse_VkCopyDescriptorSet(const Json::Value& obj, VkCopyDescriptorSe
 }
 
 static void parse_VkDescriptorBufferInfo(const Json::Value& obj, VkDescriptorBufferInfo& o) {
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_VkDeviceSize(obj["offset"], (o.offset));
 
     parse_VkDeviceSize(obj["range"], (o.range));
 }
 
 static void parse_VkDescriptorImageInfo(const Json::Value& obj, VkDescriptorImageInfo& o) {
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_VkImageLayout(obj["imageLayout"], (o.imageLayout));
 }
 
@@ -5773,12 +6082,28 @@ static void parse_VkDescriptorSetAllocateInfo(const Json::Value& obj, VkDescript
 
     o.pNext = (VkDescriptorSetAllocateInfo*)parsePNextChain(obj);
 
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_uint32_t(obj["descriptorSetCount"], (o.descriptorSetCount));
 
-    (o.pSetLayouts) = (VkDescriptorSetLayout*)s_globalMem.allocate((o.descriptorSetCount), sizeof(VkDescriptorSetLayout));
-    const Json::Value& obj_pSetLayouts_arr = obj["pSetLayouts"];
-    for (unsigned int i = 0; i < obj_pSetLayouts_arr.size(); i++) {
-        parse_VkDescriptorSetLayout(obj_pSetLayouts_arr[i], const_cast<VkDescriptorSetLayout&>((o.pSetLayouts[i])));
+    if constexpr (is_cts && std::is_same_v<VkDescriptorSetAllocateInfo, VkPipelineLayoutCreateInfo>) {
+        VkDescriptorSetLayout* pSetLayoutsTab =
+            (VkDescriptorSetLayout*)s_globalMem.allocate((o.descriptorSetCount), sizeof(VkDescriptorSetLayout));
+        const Json::Value& obj_pSetLayouts_arr = obj["pSetLayouts"];
+        for (unsigned int i = 0; i < obj_pSetLayouts_arr.size(); i++) {
+            uint64_t pSetLayoutsInternal = 0;
+            parse_uint64_t(obj_pSetLayouts_arr[i], pSetLayoutsInternal);
+            pSetLayoutsTab[i] = VkDescriptorSetLayout(pSetLayoutsInternal);
+        }
+        o.pSetLayouts = pSetLayoutsTab;
+    } else {
+        (o.pSetLayouts) = (VkDescriptorSetLayout*)s_globalMem.allocate((o.descriptorSetCount), sizeof(VkDescriptorSetLayout));
+        const Json::Value& obj_pSetLayouts_arr = obj["pSetLayouts"];
+        for (unsigned int i = 0; i < obj_pSetLayouts_arr.size(); i++) {
+            parse_VkDescriptorSetLayout(obj_pSetLayouts_arr[i], const_cast<VkDescriptorSetLayout&>((o.pSetLayouts[i])));
+        }
     }
 }
 
@@ -5790,6 +6115,23 @@ static void parse_VkDescriptorSetLayoutBinding(const Json::Value& obj, VkDescrip
     parse_uint32_t(obj["descriptorCount"], (o.descriptorCount));
 
     parse_VkShaderStageFlags(obj["stageFlags"], (o.stageFlags));
+
+    const Json::Value& obj_pImmutableSamplers = obj["pImmutableSamplers"];
+    if (obj_pImmutableSamplers.empty() || (obj_pImmutableSamplers.isString() && obj_pImmutableSamplers.asString() == "NULL"))
+        o.pImmutableSamplers = nullptr;
+    else {
+        VkSampler* samplers = (VkSampler*)s_globalMem.allocate((o.descriptorCount), sizeof(VkSampler));
+        for (unsigned int i = 0; i < obj_pImmutableSamplers.size(); i++) {
+            deUint64 sInternal = 0;
+            parse_uint64_t(obj_pImmutableSamplers[i], sInternal);
+            samplers[i] = VkSampler(sInternal);
+        }
+        o.pImmutableSamplers = samplers;
+    }
+}
+else {
+}
+
 }
 
 static void parse_VkDescriptorSetLayoutCreateInfo(const Json::Value& obj, VkDescriptorSetLayoutCreateInfo& o) {
@@ -5816,6 +6158,10 @@ static void parse_VkWriteDescriptorSet(const Json::Value& obj, VkWriteDescriptor
     parse_VkStructureType(obj["sType"], (o.sType));
 
     o.pNext = (VkWriteDescriptorSet*)parsePNextChain(obj);
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 
     parse_uint32_t(obj["dstBinding"], (o.dstBinding));
 
@@ -5845,10 +6191,21 @@ static void parse_VkWriteDescriptorSet(const Json::Value& obj, VkWriteDescriptor
         }
     }
 
-    (o.pTexelBufferView) = (VkBufferView*)s_globalMem.allocate((o.descriptorCount), sizeof(VkBufferView));
-    const Json::Value& obj_pTexelBufferView_arr = obj["pTexelBufferView"];
-    for (unsigned int i = 0; i < obj_pTexelBufferView_arr.size(); i++) {
-        parse_VkBufferView(obj_pTexelBufferView_arr[i], const_cast<VkBufferView&>((o.pTexelBufferView[i])));
+    if constexpr (is_cts && std::is_same_v<VkWriteDescriptorSet, VkPipelineLayoutCreateInfo>) {
+        VkBufferView* pTexelBufferViewTab = (VkBufferView*)s_globalMem.allocate((o.descriptorCount), sizeof(VkBufferView));
+        const Json::Value& obj_pTexelBufferView_arr = obj["pTexelBufferView"];
+        for (unsigned int i = 0; i < obj_pTexelBufferView_arr.size(); i++) {
+            uint64_t pTexelBufferViewInternal = 0;
+            parse_uint64_t(obj_pTexelBufferView_arr[i], pTexelBufferViewInternal);
+            pTexelBufferViewTab[i] = VkBufferView(pTexelBufferViewInternal);
+        }
+        o.pTexelBufferView = pTexelBufferViewTab;
+    } else {
+        (o.pTexelBufferView) = (VkBufferView*)s_globalMem.allocate((o.descriptorCount), sizeof(VkBufferView));
+        const Json::Value& obj_pTexelBufferView_arr = obj["pTexelBufferView"];
+        for (unsigned int i = 0; i < obj_pTexelBufferView_arr.size(); i++) {
+            parse_VkBufferView(obj_pTexelBufferView_arr[i], const_cast<VkBufferView&>((o.pTexelBufferView[i])));
+        }
     }
 }
 
@@ -5885,14 +6242,31 @@ static void parse_VkFramebufferCreateInfo(const Json::Value& obj, VkFramebufferC
 
     parse_VkFramebufferCreateFlags(obj["flags"], (o.flags));
 
+#ifdef VULKAN_JSON_CTS
+    uint64_t renderPassInternal = 0;
+    parse_uint64_t(obj["renderPass"], renderPassInternal);
+    o.renderPass = VkRenderPass(renderPassInternal);
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_uint32_t(obj["attachmentCount"], (o.attachmentCount));
 
-    (o.pAttachments) = (VkImageView*)s_globalMem.allocate((o.attachmentCount), sizeof(VkImageView));
-    const Json::Value& obj_pAttachments_arr = obj["pAttachments"];
-    for (unsigned int i = 0; i < obj_pAttachments_arr.size(); i++) {
-        parse_VkImageView(obj_pAttachments_arr[i], const_cast<VkImageView&>((o.pAttachments[i])));
+    if constexpr (is_cts && std::is_same_v<VkFramebufferCreateInfo, VkPipelineLayoutCreateInfo>) {
+        VkImageView* pAttachmentsTab = (VkImageView*)s_globalMem.allocate((o.attachmentCount), sizeof(VkImageView));
+        const Json::Value& obj_pAttachments_arr = obj["pAttachments"];
+        for (unsigned int i = 0; i < obj_pAttachments_arr.size(); i++) {
+            uint64_t pAttachmentsInternal = 0;
+            parse_uint64_t(obj_pAttachments_arr[i], pAttachmentsInternal);
+            pAttachmentsTab[i] = VkImageView(pAttachmentsInternal);
+        }
+        o.pAttachments = pAttachmentsTab;
+    } else {
+        (o.pAttachments) = (VkImageView*)s_globalMem.allocate((o.attachmentCount), sizeof(VkImageView));
+        const Json::Value& obj_pAttachments_arr = obj["pAttachments"];
+        for (unsigned int i = 0; i < obj_pAttachments_arr.size(); i++) {
+            parse_VkImageView(obj_pAttachments_arr[i], const_cast<VkImageView&>((o.pAttachments[i])));
+        }
     }
-
     parse_uint32_t(obj["width"], (o.width));
 
     parse_uint32_t(obj["height"], (o.height));
@@ -5952,10 +6326,21 @@ static void parse_VkSubpassDescription(const Json::Value& obj, VkSubpassDescript
 
     parse_uint32_t(obj["preserveAttachmentCount"], (o.preserveAttachmentCount));
 
-    (o.pPreserveAttachments) = (uint32_t*)s_globalMem.allocate((o.preserveAttachmentCount), sizeof(uint32_t));
-    const Json::Value& obj_pPreserveAttachments_arr = obj["pPreserveAttachments"];
-    for (unsigned int i = 0; i < obj_pPreserveAttachments_arr.size(); i++) {
-        parse_uint32_t(obj_pPreserveAttachments_arr[i], const_cast<uint32_t&>((o.pPreserveAttachments[i])));
+    if constexpr (is_cts && std::is_same_v<VkSubpassDescription, VkPipelineLayoutCreateInfo>) {
+        uint32_t* pPreserveAttachmentsTab = (uint32_t*)s_globalMem.allocate((o.preserveAttachmentCount), sizeof(uint32_t));
+        const Json::Value& obj_pPreserveAttachments_arr = obj["pPreserveAttachments"];
+        for (unsigned int i = 0; i < obj_pPreserveAttachments_arr.size(); i++) {
+            uint64_t pPreserveAttachmentsInternal = 0;
+            parse_uint64_t(obj_pPreserveAttachments_arr[i], pPreserveAttachmentsInternal);
+            pPreserveAttachmentsTab[i] = uint32_t(pPreserveAttachmentsInternal);
+        }
+        o.pPreserveAttachments = pPreserveAttachmentsTab;
+    } else {
+        (o.pPreserveAttachments) = (uint32_t*)s_globalMem.allocate((o.preserveAttachmentCount), sizeof(uint32_t));
+        const Json::Value& obj_pPreserveAttachments_arr = obj["pPreserveAttachments"];
+        for (unsigned int i = 0; i < obj_pPreserveAttachments_arr.size(); i++) {
+            parse_uint32_t(obj_pPreserveAttachments_arr[i], const_cast<uint32_t&>((o.pPreserveAttachments[i])));
+        }
     }
 }
 
@@ -6034,6 +6419,10 @@ static void parse_VkCommandBufferAllocateInfo(const Json::Value& obj, VkCommandB
 
     o.pNext = (VkCommandBufferAllocateInfo*)parsePNextChain(obj);
 
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_VkCommandBufferLevel(obj["level"], (o.level));
 
     parse_uint32_t(obj["commandBufferCount"], (o.commandBufferCount));
@@ -6044,7 +6433,18 @@ static void parse_VkCommandBufferInheritanceInfo(const Json::Value& obj, VkComma
 
     o.pNext = (VkCommandBufferInheritanceInfo*)parsePNextChain(obj);
 
+#ifdef VULKAN_JSON_CTS
+    uint64_t renderPassInternal = 0;
+    parse_uint64_t(obj["renderPass"], renderPassInternal);
+    o.renderPass = VkRenderPass(renderPassInternal);
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_uint32_t(obj["subpass"], (o.subpass));
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 
     parse_VkBool32(obj["occlusionQueryEnable"], (o.occlusionQueryEnable));
 
@@ -6105,19 +6505,47 @@ static void parse_VkBufferImageCopy(const Json::Value& obj, VkBufferImageCopy& o
 }
 
 static void parse_VkClearColorValue(const Json::Value& obj, VkClearColorValue& o) {
-    const Json::Value& obj_float32_arr = obj["float32"];
-    for (unsigned int i = 0; i < obj_float32_arr.size(); i++) {
-        parse_float(obj_float32_arr[i], const_cast<float&>((o.float32[i])));
+    if constexpr (is_cts && std::is_same_v<VkClearColorValue, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_float32_arr = obj["float32"];
+        for (unsigned int i = 0; i < obj_float32_arr.size(); i++) {
+            uint64_t float32Internal = 0;
+            parse_uint64_t(obj_float32_arr[i], float32Internal);
+            float32Tab[i] = float(float32Internal);
+        }
+        o.float32 = float32Tab;
+    } else {
+        const Json::Value& obj_float32_arr = obj["float32"];
+        for (unsigned int i = 0; i < obj_float32_arr.size(); i++) {
+            parse_float(obj_float32_arr[i], const_cast<float&>((o.float32[i])));
+        }
     }
-
-    const Json::Value& obj_int32_arr = obj["int32"];
-    for (unsigned int i = 0; i < obj_int32_arr.size(); i++) {
-        parse_int32_t(obj_int32_arr[i], const_cast<int32_t&>((o.int32[i])));
+    if constexpr (is_cts && std::is_same_v<VkClearColorValue, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_int32_arr = obj["int32"];
+        for (unsigned int i = 0; i < obj_int32_arr.size(); i++) {
+            uint64_t int32Internal = 0;
+            parse_uint64_t(obj_int32_arr[i], int32Internal);
+            int32Tab[i] = int32_t(int32Internal);
+        }
+        o.int32 = int32Tab;
+    } else {
+        const Json::Value& obj_int32_arr = obj["int32"];
+        for (unsigned int i = 0; i < obj_int32_arr.size(); i++) {
+            parse_int32_t(obj_int32_arr[i], const_cast<int32_t&>((o.int32[i])));
+        }
     }
-
-    const Json::Value& obj_uint32_arr = obj["uint32"];
-    for (unsigned int i = 0; i < obj_uint32_arr.size(); i++) {
-        parse_uint32_t(obj_uint32_arr[i], const_cast<uint32_t&>((o.uint32[i])));
+    if constexpr (is_cts && std::is_same_v<VkClearColorValue, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_uint32_arr = obj["uint32"];
+        for (unsigned int i = 0; i < obj_uint32_arr.size(); i++) {
+            uint64_t uint32Internal = 0;
+            parse_uint64_t(obj_uint32_arr[i], uint32Internal);
+            uint32Tab[i] = uint32_t(uint32Internal);
+        }
+        o.uint32 = uint32Tab;
+    } else {
+        const Json::Value& obj_uint32_arr = obj["uint32"];
+        for (unsigned int i = 0; i < obj_uint32_arr.size(); i++) {
+            parse_uint32_t(obj_uint32_arr[i], const_cast<uint32_t&>((o.uint32[i])));
+        }
     }
 }
 
@@ -6152,16 +6580,35 @@ static void parse_VkClearRect(const Json::Value& obj, VkClearRect& o) {
 static void parse_VkImageBlit(const Json::Value& obj, VkImageBlit& o) {
     parse_VkImageSubresourceLayers(obj["srcSubresource"], (o.srcSubresource));
 
-    const Json::Value& obj_srcOffsets_arr = obj["srcOffsets"];
-    for (unsigned int i = 0; i < obj_srcOffsets_arr.size(); i++) {
-        parse_VkOffset3D(obj_srcOffsets_arr[i], const_cast<VkOffset3D&>((o.srcOffsets[i])));
+    if constexpr (is_cts && std::is_same_v<VkImageBlit, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_srcOffsets_arr = obj["srcOffsets"];
+        for (unsigned int i = 0; i < obj_srcOffsets_arr.size(); i++) {
+            uint64_t srcOffsetsInternal = 0;
+            parse_uint64_t(obj_srcOffsets_arr[i], srcOffsetsInternal);
+            srcOffsetsTab[i] = VkOffset3D(srcOffsetsInternal);
+        }
+        o.srcOffsets = srcOffsetsTab;
+    } else {
+        const Json::Value& obj_srcOffsets_arr = obj["srcOffsets"];
+        for (unsigned int i = 0; i < obj_srcOffsets_arr.size(); i++) {
+            parse_VkOffset3D(obj_srcOffsets_arr[i], const_cast<VkOffset3D&>((o.srcOffsets[i])));
+        }
     }
-
     parse_VkImageSubresourceLayers(obj["dstSubresource"], (o.dstSubresource));
 
-    const Json::Value& obj_dstOffsets_arr = obj["dstOffsets"];
-    for (unsigned int i = 0; i < obj_dstOffsets_arr.size(); i++) {
-        parse_VkOffset3D(obj_dstOffsets_arr[i], const_cast<VkOffset3D&>((o.dstOffsets[i])));
+    if constexpr (is_cts && std::is_same_v<VkImageBlit, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_dstOffsets_arr = obj["dstOffsets"];
+        for (unsigned int i = 0; i < obj_dstOffsets_arr.size(); i++) {
+            uint64_t dstOffsetsInternal = 0;
+            parse_uint64_t(obj_dstOffsets_arr[i], dstOffsetsInternal);
+            dstOffsetsTab[i] = VkOffset3D(dstOffsetsInternal);
+        }
+        o.dstOffsets = dstOffsetsTab;
+    } else {
+        const Json::Value& obj_dstOffsets_arr = obj["dstOffsets"];
+        for (unsigned int i = 0; i < obj_dstOffsets_arr.size(); i++) {
+            parse_VkOffset3D(obj_dstOffsets_arr[i], const_cast<VkOffset3D&>((o.dstOffsets[i])));
+        }
     }
 }
 
@@ -6194,14 +6641,36 @@ static void parse_VkRenderPassBeginInfo(const Json::Value& obj, VkRenderPassBegi
 
     o.pNext = (VkRenderPassBeginInfo*)parsePNextChain(obj);
 
+#ifdef VULKAN_JSON_CTS
+    uint64_t renderPassInternal = 0;
+    parse_uint64_t(obj["renderPass"], renderPassInternal);
+    o.renderPass = VkRenderPass(renderPassInternal);
+#else
+#endif  //  VULKAN_JSON_CTS
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_VkRect2D(obj["renderArea"], (o.renderArea));
 
     parse_uint32_t(obj["clearValueCount"], (o.clearValueCount));
 
-    (o.pClearValues) = (VkClearValue*)s_globalMem.allocate((o.clearValueCount), sizeof(VkClearValue));
-    const Json::Value& obj_pClearValues_arr = obj["pClearValues"];
-    for (unsigned int i = 0; i < obj_pClearValues_arr.size(); i++) {
-        parse_VkClearValue(obj_pClearValues_arr[i], const_cast<VkClearValue&>((o.pClearValues[i])));
+    if constexpr (is_cts && std::is_same_v<VkRenderPassBeginInfo, VkPipelineLayoutCreateInfo>) {
+        VkClearValue* pClearValuesTab = (VkClearValue*)s_globalMem.allocate((o.clearValueCount), sizeof(VkClearValue));
+        const Json::Value& obj_pClearValues_arr = obj["pClearValues"];
+        for (unsigned int i = 0; i < obj_pClearValues_arr.size(); i++) {
+            uint64_t pClearValuesInternal = 0;
+            parse_uint64_t(obj_pClearValues_arr[i], pClearValuesInternal);
+            pClearValuesTab[i] = VkClearValue(pClearValuesInternal);
+        }
+        o.pClearValues = pClearValuesTab;
+    } else {
+        (o.pClearValues) = (VkClearValue*)s_globalMem.allocate((o.clearValueCount), sizeof(VkClearValue));
+        const Json::Value& obj_pClearValues_arr = obj["pClearValues"];
+        for (unsigned int i = 0; i < obj_pClearValues_arr.size(); i++) {
+            parse_VkClearValue(obj_pClearValues_arr[i], const_cast<VkClearValue&>((o.pClearValues[i])));
+        }
     }
 }
 
@@ -6627,6 +7096,14 @@ static void parse_VkBindBufferMemoryInfo(const Json::Value& obj, VkBindBufferMem
 
     o.pNext = (VkBindBufferMemoryInfo*)parsePNextChain(obj);
 
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_VkDeviceSize(obj["memoryOffset"], (o.memoryOffset));
 }
 
@@ -6634,6 +7111,14 @@ static void parse_VkBindImageMemoryInfo(const Json::Value& obj, VkBindImageMemor
     parse_VkStructureType(obj["sType"], (o.sType));
 
     o.pNext = (VkBindImageMemoryInfo*)parsePNextChain(obj);
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 
     parse_VkDeviceSize(obj["memoryOffset"], (o.memoryOffset));
 }
@@ -6666,6 +7151,14 @@ static void parse_VkMemoryDedicatedAllocateInfo(const Json::Value& obj, VkMemory
     parse_VkStructureType(obj["sType"], (o.sType));
 
     o.pNext = (VkMemoryDedicatedAllocateInfo*)parsePNextChain(obj);
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 }
 
 static void parse_VkMemoryAllocateFlagsInfo(const Json::Value& obj, VkMemoryAllocateFlagsInfo& o) {
@@ -6713,26 +7206,57 @@ static void parse_VkDeviceGroupSubmitInfo(const Json::Value& obj, VkDeviceGroupS
 
     parse_uint32_t(obj["waitSemaphoreCount"], (o.waitSemaphoreCount));
 
-    (o.pWaitSemaphoreDeviceIndices) = (uint32_t*)s_globalMem.allocate((o.waitSemaphoreCount), sizeof(uint32_t));
-    const Json::Value& obj_pWaitSemaphoreDeviceIndices_arr = obj["pWaitSemaphoreDeviceIndices"];
-    for (unsigned int i = 0; i < obj_pWaitSemaphoreDeviceIndices_arr.size(); i++) {
-        parse_uint32_t(obj_pWaitSemaphoreDeviceIndices_arr[i], const_cast<uint32_t&>((o.pWaitSemaphoreDeviceIndices[i])));
+    if constexpr (is_cts && std::is_same_v<VkDeviceGroupSubmitInfo, VkPipelineLayoutCreateInfo>) {
+        uint32_t* pWaitSemaphoreDeviceIndicesTab = (uint32_t*)s_globalMem.allocate((o.waitSemaphoreCount), sizeof(uint32_t));
+        const Json::Value& obj_pWaitSemaphoreDeviceIndices_arr = obj["pWaitSemaphoreDeviceIndices"];
+        for (unsigned int i = 0; i < obj_pWaitSemaphoreDeviceIndices_arr.size(); i++) {
+            uint64_t pWaitSemaphoreDeviceIndicesInternal = 0;
+            parse_uint64_t(obj_pWaitSemaphoreDeviceIndices_arr[i], pWaitSemaphoreDeviceIndicesInternal);
+            pWaitSemaphoreDeviceIndicesTab[i] = uint32_t(pWaitSemaphoreDeviceIndicesInternal);
+        }
+        o.pWaitSemaphoreDeviceIndices = pWaitSemaphoreDeviceIndicesTab;
+    } else {
+        (o.pWaitSemaphoreDeviceIndices) = (uint32_t*)s_globalMem.allocate((o.waitSemaphoreCount), sizeof(uint32_t));
+        const Json::Value& obj_pWaitSemaphoreDeviceIndices_arr = obj["pWaitSemaphoreDeviceIndices"];
+        for (unsigned int i = 0; i < obj_pWaitSemaphoreDeviceIndices_arr.size(); i++) {
+            parse_uint32_t(obj_pWaitSemaphoreDeviceIndices_arr[i], const_cast<uint32_t&>((o.pWaitSemaphoreDeviceIndices[i])));
+        }
     }
-
     parse_uint32_t(obj["commandBufferCount"], (o.commandBufferCount));
 
-    (o.pCommandBufferDeviceMasks) = (uint32_t*)s_globalMem.allocate((o.commandBufferCount), sizeof(uint32_t));
-    const Json::Value& obj_pCommandBufferDeviceMasks_arr = obj["pCommandBufferDeviceMasks"];
-    for (unsigned int i = 0; i < obj_pCommandBufferDeviceMasks_arr.size(); i++) {
-        parse_uint32_t(obj_pCommandBufferDeviceMasks_arr[i], const_cast<uint32_t&>((o.pCommandBufferDeviceMasks[i])));
+    if constexpr (is_cts && std::is_same_v<VkDeviceGroupSubmitInfo, VkPipelineLayoutCreateInfo>) {
+        uint32_t* pCommandBufferDeviceMasksTab = (uint32_t*)s_globalMem.allocate((o.commandBufferCount), sizeof(uint32_t));
+        const Json::Value& obj_pCommandBufferDeviceMasks_arr = obj["pCommandBufferDeviceMasks"];
+        for (unsigned int i = 0; i < obj_pCommandBufferDeviceMasks_arr.size(); i++) {
+            uint64_t pCommandBufferDeviceMasksInternal = 0;
+            parse_uint64_t(obj_pCommandBufferDeviceMasks_arr[i], pCommandBufferDeviceMasksInternal);
+            pCommandBufferDeviceMasksTab[i] = uint32_t(pCommandBufferDeviceMasksInternal);
+        }
+        o.pCommandBufferDeviceMasks = pCommandBufferDeviceMasksTab;
+    } else {
+        (o.pCommandBufferDeviceMasks) = (uint32_t*)s_globalMem.allocate((o.commandBufferCount), sizeof(uint32_t));
+        const Json::Value& obj_pCommandBufferDeviceMasks_arr = obj["pCommandBufferDeviceMasks"];
+        for (unsigned int i = 0; i < obj_pCommandBufferDeviceMasks_arr.size(); i++) {
+            parse_uint32_t(obj_pCommandBufferDeviceMasks_arr[i], const_cast<uint32_t&>((o.pCommandBufferDeviceMasks[i])));
+        }
     }
-
     parse_uint32_t(obj["signalSemaphoreCount"], (o.signalSemaphoreCount));
 
-    (o.pSignalSemaphoreDeviceIndices) = (uint32_t*)s_globalMem.allocate((o.signalSemaphoreCount), sizeof(uint32_t));
-    const Json::Value& obj_pSignalSemaphoreDeviceIndices_arr = obj["pSignalSemaphoreDeviceIndices"];
-    for (unsigned int i = 0; i < obj_pSignalSemaphoreDeviceIndices_arr.size(); i++) {
-        parse_uint32_t(obj_pSignalSemaphoreDeviceIndices_arr[i], const_cast<uint32_t&>((o.pSignalSemaphoreDeviceIndices[i])));
+    if constexpr (is_cts && std::is_same_v<VkDeviceGroupSubmitInfo, VkPipelineLayoutCreateInfo>) {
+        uint32_t* pSignalSemaphoreDeviceIndicesTab = (uint32_t*)s_globalMem.allocate((o.signalSemaphoreCount), sizeof(uint32_t));
+        const Json::Value& obj_pSignalSemaphoreDeviceIndices_arr = obj["pSignalSemaphoreDeviceIndices"];
+        for (unsigned int i = 0; i < obj_pSignalSemaphoreDeviceIndices_arr.size(); i++) {
+            uint64_t pSignalSemaphoreDeviceIndicesInternal = 0;
+            parse_uint64_t(obj_pSignalSemaphoreDeviceIndices_arr[i], pSignalSemaphoreDeviceIndicesInternal);
+            pSignalSemaphoreDeviceIndicesTab[i] = uint32_t(pSignalSemaphoreDeviceIndicesInternal);
+        }
+        o.pSignalSemaphoreDeviceIndices = pSignalSemaphoreDeviceIndicesTab;
+    } else {
+        (o.pSignalSemaphoreDeviceIndices) = (uint32_t*)s_globalMem.allocate((o.signalSemaphoreCount), sizeof(uint32_t));
+        const Json::Value& obj_pSignalSemaphoreDeviceIndices_arr = obj["pSignalSemaphoreDeviceIndices"];
+        for (unsigned int i = 0; i < obj_pSignalSemaphoreDeviceIndices_arr.size(); i++) {
+            parse_uint32_t(obj_pSignalSemaphoreDeviceIndices_arr[i], const_cast<uint32_t&>((o.pSignalSemaphoreDeviceIndices[i])));
+        }
     }
 }
 
@@ -6743,10 +7267,21 @@ static void parse_VkBindBufferMemoryDeviceGroupInfo(const Json::Value& obj, VkBi
 
     parse_uint32_t(obj["deviceIndexCount"], (o.deviceIndexCount));
 
-    (o.pDeviceIndices) = (uint32_t*)s_globalMem.allocate((o.deviceIndexCount), sizeof(uint32_t));
-    const Json::Value& obj_pDeviceIndices_arr = obj["pDeviceIndices"];
-    for (unsigned int i = 0; i < obj_pDeviceIndices_arr.size(); i++) {
-        parse_uint32_t(obj_pDeviceIndices_arr[i], const_cast<uint32_t&>((o.pDeviceIndices[i])));
+    if constexpr (is_cts && std::is_same_v<VkBindBufferMemoryDeviceGroupInfo, VkPipelineLayoutCreateInfo>) {
+        uint32_t* pDeviceIndicesTab = (uint32_t*)s_globalMem.allocate((o.deviceIndexCount), sizeof(uint32_t));
+        const Json::Value& obj_pDeviceIndices_arr = obj["pDeviceIndices"];
+        for (unsigned int i = 0; i < obj_pDeviceIndices_arr.size(); i++) {
+            uint64_t pDeviceIndicesInternal = 0;
+            parse_uint64_t(obj_pDeviceIndices_arr[i], pDeviceIndicesInternal);
+            pDeviceIndicesTab[i] = uint32_t(pDeviceIndicesInternal);
+        }
+        o.pDeviceIndices = pDeviceIndicesTab;
+    } else {
+        (o.pDeviceIndices) = (uint32_t*)s_globalMem.allocate((o.deviceIndexCount), sizeof(uint32_t));
+        const Json::Value& obj_pDeviceIndices_arr = obj["pDeviceIndices"];
+        for (unsigned int i = 0; i < obj_pDeviceIndices_arr.size(); i++) {
+            parse_uint32_t(obj_pDeviceIndices_arr[i], const_cast<uint32_t&>((o.pDeviceIndices[i])));
+        }
     }
 }
 
@@ -6757,12 +7292,22 @@ static void parse_VkBindImageMemoryDeviceGroupInfo(const Json::Value& obj, VkBin
 
     parse_uint32_t(obj["deviceIndexCount"], (o.deviceIndexCount));
 
-    (o.pDeviceIndices) = (uint32_t*)s_globalMem.allocate((o.deviceIndexCount), sizeof(uint32_t));
-    const Json::Value& obj_pDeviceIndices_arr = obj["pDeviceIndices"];
-    for (unsigned int i = 0; i < obj_pDeviceIndices_arr.size(); i++) {
-        parse_uint32_t(obj_pDeviceIndices_arr[i], const_cast<uint32_t&>((o.pDeviceIndices[i])));
+    if constexpr (is_cts && std::is_same_v<VkBindImageMemoryDeviceGroupInfo, VkPipelineLayoutCreateInfo>) {
+        uint32_t* pDeviceIndicesTab = (uint32_t*)s_globalMem.allocate((o.deviceIndexCount), sizeof(uint32_t));
+        const Json::Value& obj_pDeviceIndices_arr = obj["pDeviceIndices"];
+        for (unsigned int i = 0; i < obj_pDeviceIndices_arr.size(); i++) {
+            uint64_t pDeviceIndicesInternal = 0;
+            parse_uint64_t(obj_pDeviceIndices_arr[i], pDeviceIndicesInternal);
+            pDeviceIndicesTab[i] = uint32_t(pDeviceIndicesInternal);
+        }
+        o.pDeviceIndices = pDeviceIndicesTab;
+    } else {
+        (o.pDeviceIndices) = (uint32_t*)s_globalMem.allocate((o.deviceIndexCount), sizeof(uint32_t));
+        const Json::Value& obj_pDeviceIndices_arr = obj["pDeviceIndices"];
+        for (unsigned int i = 0; i < obj_pDeviceIndices_arr.size(); i++) {
+            parse_uint32_t(obj_pDeviceIndices_arr[i], const_cast<uint32_t&>((o.pDeviceIndices[i])));
+        }
     }
-
     parse_uint32_t(obj["splitInstanceBindRegionCount"], (o.splitInstanceBindRegionCount));
 
     (o.pSplitInstanceBindRegions) = (VkRect2D*)s_globalMem.allocate((o.splitInstanceBindRegionCount), sizeof(VkRect2D));
@@ -6783,11 +7328,20 @@ static void parse_VkPhysicalDeviceGroupProperties(const Json::Value& obj, VkPhys
 
     parse_uint32_t(obj["physicalDeviceCount"], (o.physicalDeviceCount));
 
-    const Json::Value& obj_physicalDevices_arr = obj["physicalDevices"];
-    for (unsigned int i = 0; i < obj_physicalDevices_arr.size(); i++) {
-        parse_VkPhysicalDevice(obj_physicalDevices_arr[i], const_cast<VkPhysicalDevice&>((o.physicalDevices[i])));
+    if constexpr (is_cts && std::is_same_v<VkPhysicalDeviceGroupProperties, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_physicalDevices_arr = obj["physicalDevices"];
+        for (unsigned int i = 0; i < obj_physicalDevices_arr.size(); i++) {
+            uint64_t physicalDevicesInternal = 0;
+            parse_uint64_t(obj_physicalDevices_arr[i], physicalDevicesInternal);
+            physicalDevicesTab[i] = VkPhysicalDevice(physicalDevicesInternal);
+        }
+        o.physicalDevices = physicalDevicesTab;
+    } else {
+        const Json::Value& obj_physicalDevices_arr = obj["physicalDevices"];
+        for (unsigned int i = 0; i < obj_physicalDevices_arr.size(); i++) {
+            parse_VkPhysicalDevice(obj_physicalDevices_arr[i], const_cast<VkPhysicalDevice&>((o.physicalDevices[i])));
+        }
     }
-
     parse_VkBool32(obj["subsetAllocation"], (o.subsetAllocation));
 }
 
@@ -6798,10 +7352,22 @@ static void parse_VkDeviceGroupDeviceCreateInfo(const Json::Value& obj, VkDevice
 
     parse_uint32_t(obj["physicalDeviceCount"], (o.physicalDeviceCount));
 
-    (o.pPhysicalDevices) = (VkPhysicalDevice*)s_globalMem.allocate((o.physicalDeviceCount), sizeof(VkPhysicalDevice));
-    const Json::Value& obj_pPhysicalDevices_arr = obj["pPhysicalDevices"];
-    for (unsigned int i = 0; i < obj_pPhysicalDevices_arr.size(); i++) {
-        parse_VkPhysicalDevice(obj_pPhysicalDevices_arr[i], const_cast<VkPhysicalDevice&>((o.pPhysicalDevices[i])));
+    if constexpr (is_cts && std::is_same_v<VkDeviceGroupDeviceCreateInfo, VkPipelineLayoutCreateInfo>) {
+        VkPhysicalDevice* pPhysicalDevicesTab =
+            (VkPhysicalDevice*)s_globalMem.allocate((o.physicalDeviceCount), sizeof(VkPhysicalDevice));
+        const Json::Value& obj_pPhysicalDevices_arr = obj["pPhysicalDevices"];
+        for (unsigned int i = 0; i < obj_pPhysicalDevices_arr.size(); i++) {
+            uint64_t pPhysicalDevicesInternal = 0;
+            parse_uint64_t(obj_pPhysicalDevices_arr[i], pPhysicalDevicesInternal);
+            pPhysicalDevicesTab[i] = VkPhysicalDevice(pPhysicalDevicesInternal);
+        }
+        o.pPhysicalDevices = pPhysicalDevicesTab;
+    } else {
+        (o.pPhysicalDevices) = (VkPhysicalDevice*)s_globalMem.allocate((o.physicalDeviceCount), sizeof(VkPhysicalDevice));
+        const Json::Value& obj_pPhysicalDevices_arr = obj["pPhysicalDevices"];
+        for (unsigned int i = 0; i < obj_pPhysicalDevices_arr.size(); i++) {
+            parse_VkPhysicalDevice(obj_pPhysicalDevices_arr[i], const_cast<VkPhysicalDevice&>((o.pPhysicalDevices[i])));
+        }
     }
 }
 
@@ -6809,12 +7375,20 @@ static void parse_VkBufferMemoryRequirementsInfo2(const Json::Value& obj, VkBuff
     parse_VkStructureType(obj["sType"], (o.sType));
 
     o.pNext = (VkBufferMemoryRequirementsInfo2*)parsePNextChain(obj);
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 }
 
 static void parse_VkImageMemoryRequirementsInfo2(const Json::Value& obj, VkImageMemoryRequirementsInfo2& o) {
     parse_VkStructureType(obj["sType"], (o.sType));
 
     o.pNext = (VkImageMemoryRequirementsInfo2*)parsePNextChain(obj);
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 }
 
 static void parse_VkMemoryRequirements2(const Json::Value& obj, VkMemoryRequirements2& o) {
@@ -6950,26 +7524,57 @@ static void parse_VkRenderPassMultiviewCreateInfo(const Json::Value& obj, VkRend
 
     parse_uint32_t(obj["subpassCount"], (o.subpassCount));
 
-    (o.pViewMasks) = (uint32_t*)s_globalMem.allocate((o.subpassCount), sizeof(uint32_t));
-    const Json::Value& obj_pViewMasks_arr = obj["pViewMasks"];
-    for (unsigned int i = 0; i < obj_pViewMasks_arr.size(); i++) {
-        parse_uint32_t(obj_pViewMasks_arr[i], const_cast<uint32_t&>((o.pViewMasks[i])));
+    if constexpr (is_cts && std::is_same_v<VkRenderPassMultiviewCreateInfo, VkPipelineLayoutCreateInfo>) {
+        uint32_t* pViewMasksTab = (uint32_t*)s_globalMem.allocate((o.subpassCount), sizeof(uint32_t));
+        const Json::Value& obj_pViewMasks_arr = obj["pViewMasks"];
+        for (unsigned int i = 0; i < obj_pViewMasks_arr.size(); i++) {
+            uint64_t pViewMasksInternal = 0;
+            parse_uint64_t(obj_pViewMasks_arr[i], pViewMasksInternal);
+            pViewMasksTab[i] = uint32_t(pViewMasksInternal);
+        }
+        o.pViewMasks = pViewMasksTab;
+    } else {
+        (o.pViewMasks) = (uint32_t*)s_globalMem.allocate((o.subpassCount), sizeof(uint32_t));
+        const Json::Value& obj_pViewMasks_arr = obj["pViewMasks"];
+        for (unsigned int i = 0; i < obj_pViewMasks_arr.size(); i++) {
+            parse_uint32_t(obj_pViewMasks_arr[i], const_cast<uint32_t&>((o.pViewMasks[i])));
+        }
     }
-
     parse_uint32_t(obj["dependencyCount"], (o.dependencyCount));
 
-    (o.pViewOffsets) = (int32_t*)s_globalMem.allocate((o.dependencyCount), sizeof(int32_t));
-    const Json::Value& obj_pViewOffsets_arr = obj["pViewOffsets"];
-    for (unsigned int i = 0; i < obj_pViewOffsets_arr.size(); i++) {
-        parse_int32_t(obj_pViewOffsets_arr[i], const_cast<int32_t&>((o.pViewOffsets[i])));
+    if constexpr (is_cts && std::is_same_v<VkRenderPassMultiviewCreateInfo, VkPipelineLayoutCreateInfo>) {
+        int32_t* pViewOffsetsTab = (int32_t*)s_globalMem.allocate((o.dependencyCount), sizeof(int32_t));
+        const Json::Value& obj_pViewOffsets_arr = obj["pViewOffsets"];
+        for (unsigned int i = 0; i < obj_pViewOffsets_arr.size(); i++) {
+            uint64_t pViewOffsetsInternal = 0;
+            parse_uint64_t(obj_pViewOffsets_arr[i], pViewOffsetsInternal);
+            pViewOffsetsTab[i] = int32_t(pViewOffsetsInternal);
+        }
+        o.pViewOffsets = pViewOffsetsTab;
+    } else {
+        (o.pViewOffsets) = (int32_t*)s_globalMem.allocate((o.dependencyCount), sizeof(int32_t));
+        const Json::Value& obj_pViewOffsets_arr = obj["pViewOffsets"];
+        for (unsigned int i = 0; i < obj_pViewOffsets_arr.size(); i++) {
+            parse_int32_t(obj_pViewOffsets_arr[i], const_cast<int32_t&>((o.pViewOffsets[i])));
+        }
     }
-
     parse_uint32_t(obj["correlationMaskCount"], (o.correlationMaskCount));
 
-    (o.pCorrelationMasks) = (uint32_t*)s_globalMem.allocate((o.correlationMaskCount), sizeof(uint32_t));
-    const Json::Value& obj_pCorrelationMasks_arr = obj["pCorrelationMasks"];
-    for (unsigned int i = 0; i < obj_pCorrelationMasks_arr.size(); i++) {
-        parse_uint32_t(obj_pCorrelationMasks_arr[i], const_cast<uint32_t&>((o.pCorrelationMasks[i])));
+    if constexpr (is_cts && std::is_same_v<VkRenderPassMultiviewCreateInfo, VkPipelineLayoutCreateInfo>) {
+        uint32_t* pCorrelationMasksTab = (uint32_t*)s_globalMem.allocate((o.correlationMaskCount), sizeof(uint32_t));
+        const Json::Value& obj_pCorrelationMasks_arr = obj["pCorrelationMasks"];
+        for (unsigned int i = 0; i < obj_pCorrelationMasks_arr.size(); i++) {
+            uint64_t pCorrelationMasksInternal = 0;
+            parse_uint64_t(obj_pCorrelationMasks_arr[i], pCorrelationMasksInternal);
+            pCorrelationMasksTab[i] = uint32_t(pCorrelationMasksInternal);
+        }
+        o.pCorrelationMasks = pCorrelationMasksTab;
+    } else {
+        (o.pCorrelationMasks) = (uint32_t*)s_globalMem.allocate((o.correlationMaskCount), sizeof(uint32_t));
+        const Json::Value& obj_pCorrelationMasks_arr = obj["pCorrelationMasks"];
+        for (unsigned int i = 0; i < obj_pCorrelationMasks_arr.size(); i++) {
+            parse_uint32_t(obj_pCorrelationMasks_arr[i], const_cast<uint32_t&>((o.pCorrelationMasks[i])));
+        }
     }
 }
 
@@ -7067,6 +7672,13 @@ static void parse_VkSamplerYcbcrConversionInfo(const Json::Value& obj, VkSampler
     parse_VkStructureType(obj["sType"], (o.sType));
 
     o.pNext = (VkSamplerYcbcrConversionInfo*)parsePNextChain(obj);
+
+#ifdef VULKAN_JSON_CTS
+    uint64_t conversionInternal = 0;
+    parse_uint64_t(obj["conversion"], conversionInternal);
+    o.conversion = VkSamplerYcbcrConversion(conversionInternal);
+#else
+#endif  //  VULKAN_JSON_CTS
 }
 
 static void parse_VkBindImagePlaneMemoryInfo(const Json::Value& obj, VkBindImagePlaneMemoryInfo& o) {
@@ -7152,21 +7764,48 @@ static void parse_VkPhysicalDeviceIDProperties(const Json::Value& obj, VkPhysica
 
     o.pNext = (VkPhysicalDeviceIDProperties*)parsePNextChain(obj);
 
-    const Json::Value& obj_deviceUUID_arr = obj["deviceUUID"];
-    for (unsigned int i = 0; i < obj_deviceUUID_arr.size(); i++) {
-        parse_uint8_t(obj_deviceUUID_arr[i], const_cast<uint8_t&>((o.deviceUUID[i])));
+    if constexpr (is_cts && std::is_same_v<VkPhysicalDeviceIDProperties, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_deviceUUID_arr = obj["deviceUUID"];
+        for (unsigned int i = 0; i < obj_deviceUUID_arr.size(); i++) {
+            uint64_t deviceUUIDInternal = 0;
+            parse_uint64_t(obj_deviceUUID_arr[i], deviceUUIDInternal);
+            deviceUUIDTab[i] = uint8_t(deviceUUIDInternal);
+        }
+        o.deviceUUID = deviceUUIDTab;
+    } else {
+        const Json::Value& obj_deviceUUID_arr = obj["deviceUUID"];
+        for (unsigned int i = 0; i < obj_deviceUUID_arr.size(); i++) {
+            parse_uint8_t(obj_deviceUUID_arr[i], const_cast<uint8_t&>((o.deviceUUID[i])));
+        }
     }
-
-    const Json::Value& obj_driverUUID_arr = obj["driverUUID"];
-    for (unsigned int i = 0; i < obj_driverUUID_arr.size(); i++) {
-        parse_uint8_t(obj_driverUUID_arr[i], const_cast<uint8_t&>((o.driverUUID[i])));
+    if constexpr (is_cts && std::is_same_v<VkPhysicalDeviceIDProperties, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_driverUUID_arr = obj["driverUUID"];
+        for (unsigned int i = 0; i < obj_driverUUID_arr.size(); i++) {
+            uint64_t driverUUIDInternal = 0;
+            parse_uint64_t(obj_driverUUID_arr[i], driverUUIDInternal);
+            driverUUIDTab[i] = uint8_t(driverUUIDInternal);
+        }
+        o.driverUUID = driverUUIDTab;
+    } else {
+        const Json::Value& obj_driverUUID_arr = obj["driverUUID"];
+        for (unsigned int i = 0; i < obj_driverUUID_arr.size(); i++) {
+            parse_uint8_t(obj_driverUUID_arr[i], const_cast<uint8_t&>((o.driverUUID[i])));
+        }
     }
-
-    const Json::Value& obj_deviceLUID_arr = obj["deviceLUID"];
-    for (unsigned int i = 0; i < obj_deviceLUID_arr.size(); i++) {
-        parse_uint8_t(obj_deviceLUID_arr[i], const_cast<uint8_t&>((o.deviceLUID[i])));
+    if constexpr (is_cts && std::is_same_v<VkPhysicalDeviceIDProperties, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_deviceLUID_arr = obj["deviceLUID"];
+        for (unsigned int i = 0; i < obj_deviceLUID_arr.size(); i++) {
+            uint64_t deviceLUIDInternal = 0;
+            parse_uint64_t(obj_deviceLUID_arr[i], deviceLUIDInternal);
+            deviceLUIDTab[i] = uint8_t(deviceLUIDInternal);
+        }
+        o.deviceLUID = deviceLUIDTab;
+    } else {
+        const Json::Value& obj_deviceLUID_arr = obj["deviceLUID"];
+        for (unsigned int i = 0; i < obj_deviceLUID_arr.size(); i++) {
+            parse_uint8_t(obj_deviceLUID_arr[i], const_cast<uint8_t&>((o.deviceLUID[i])));
+        }
     }
-
     parse_uint32_t(obj["deviceNodeMask"], (o.deviceNodeMask));
 
     parse_VkBool32(obj["deviceLUIDValid"], (o.deviceLUIDValid));
@@ -7486,21 +8125,48 @@ static void parse_VkPhysicalDeviceVulkan11Properties(const Json::Value& obj, VkP
 
     o.pNext = (VkPhysicalDeviceVulkan11Properties*)parsePNextChain(obj);
 
-    const Json::Value& obj_deviceUUID_arr = obj["deviceUUID"];
-    for (unsigned int i = 0; i < obj_deviceUUID_arr.size(); i++) {
-        parse_uint8_t(obj_deviceUUID_arr[i], const_cast<uint8_t&>((o.deviceUUID[i])));
+    if constexpr (is_cts && std::is_same_v<VkPhysicalDeviceVulkan11Properties, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_deviceUUID_arr = obj["deviceUUID"];
+        for (unsigned int i = 0; i < obj_deviceUUID_arr.size(); i++) {
+            uint64_t deviceUUIDInternal = 0;
+            parse_uint64_t(obj_deviceUUID_arr[i], deviceUUIDInternal);
+            deviceUUIDTab[i] = uint8_t(deviceUUIDInternal);
+        }
+        o.deviceUUID = deviceUUIDTab;
+    } else {
+        const Json::Value& obj_deviceUUID_arr = obj["deviceUUID"];
+        for (unsigned int i = 0; i < obj_deviceUUID_arr.size(); i++) {
+            parse_uint8_t(obj_deviceUUID_arr[i], const_cast<uint8_t&>((o.deviceUUID[i])));
+        }
     }
-
-    const Json::Value& obj_driverUUID_arr = obj["driverUUID"];
-    for (unsigned int i = 0; i < obj_driverUUID_arr.size(); i++) {
-        parse_uint8_t(obj_driverUUID_arr[i], const_cast<uint8_t&>((o.driverUUID[i])));
+    if constexpr (is_cts && std::is_same_v<VkPhysicalDeviceVulkan11Properties, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_driverUUID_arr = obj["driverUUID"];
+        for (unsigned int i = 0; i < obj_driverUUID_arr.size(); i++) {
+            uint64_t driverUUIDInternal = 0;
+            parse_uint64_t(obj_driverUUID_arr[i], driverUUIDInternal);
+            driverUUIDTab[i] = uint8_t(driverUUIDInternal);
+        }
+        o.driverUUID = driverUUIDTab;
+    } else {
+        const Json::Value& obj_driverUUID_arr = obj["driverUUID"];
+        for (unsigned int i = 0; i < obj_driverUUID_arr.size(); i++) {
+            parse_uint8_t(obj_driverUUID_arr[i], const_cast<uint8_t&>((o.driverUUID[i])));
+        }
     }
-
-    const Json::Value& obj_deviceLUID_arr = obj["deviceLUID"];
-    for (unsigned int i = 0; i < obj_deviceLUID_arr.size(); i++) {
-        parse_uint8_t(obj_deviceLUID_arr[i], const_cast<uint8_t&>((o.deviceLUID[i])));
+    if constexpr (is_cts && std::is_same_v<VkPhysicalDeviceVulkan11Properties, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_deviceLUID_arr = obj["deviceLUID"];
+        for (unsigned int i = 0; i < obj_deviceLUID_arr.size(); i++) {
+            uint64_t deviceLUIDInternal = 0;
+            parse_uint64_t(obj_deviceLUID_arr[i], deviceLUIDInternal);
+            deviceLUIDTab[i] = uint8_t(deviceLUIDInternal);
+        }
+        o.deviceLUID = deviceLUIDTab;
+    } else {
+        const Json::Value& obj_deviceLUID_arr = obj["deviceLUID"];
+        for (unsigned int i = 0; i < obj_deviceLUID_arr.size(); i++) {
+            parse_uint8_t(obj_deviceLUID_arr[i], const_cast<uint8_t&>((o.deviceLUID[i])));
+        }
     }
-
     parse_uint32_t(obj["deviceNodeMask"], (o.deviceNodeMask));
 
     parse_VkBool32(obj["deviceLUIDValid"], (o.deviceLUIDValid));
@@ -7761,10 +8427,21 @@ static void parse_VkImageFormatListCreateInfo(const Json::Value& obj, VkImageFor
 
     parse_uint32_t(obj["viewFormatCount"], (o.viewFormatCount));
 
-    (o.pViewFormats) = (VkFormat*)s_globalMem.allocate((o.viewFormatCount), sizeof(VkFormat));
-    const Json::Value& obj_pViewFormats_arr = obj["pViewFormats"];
-    for (unsigned int i = 0; i < obj_pViewFormats_arr.size(); i++) {
-        parse_VkFormat(obj_pViewFormats_arr[i], const_cast<VkFormat&>((o.pViewFormats[i])));
+    if constexpr (is_cts && std::is_same_v<VkImageFormatListCreateInfo, VkPipelineLayoutCreateInfo>) {
+        VkFormat* pViewFormatsTab = (VkFormat*)s_globalMem.allocate((o.viewFormatCount), sizeof(VkFormat));
+        const Json::Value& obj_pViewFormats_arr = obj["pViewFormats"];
+        for (unsigned int i = 0; i < obj_pViewFormats_arr.size(); i++) {
+            uint64_t pViewFormatsInternal = 0;
+            parse_uint64_t(obj_pViewFormats_arr[i], pViewFormatsInternal);
+            pViewFormatsTab[i] = VkFormat(pViewFormatsInternal);
+        }
+        o.pViewFormats = pViewFormatsTab;
+    } else {
+        (o.pViewFormats) = (VkFormat*)s_globalMem.allocate((o.viewFormatCount), sizeof(VkFormat));
+        const Json::Value& obj_pViewFormats_arr = obj["pViewFormats"];
+        for (unsigned int i = 0; i < obj_pViewFormats_arr.size(); i++) {
+            parse_VkFormat(obj_pViewFormats_arr[i], const_cast<VkFormat&>((o.pViewFormats[i])));
+        }
     }
 }
 
@@ -7864,10 +8541,21 @@ static void parse_VkSubpassDescription2(const Json::Value& obj, VkSubpassDescrip
 
     parse_uint32_t(obj["preserveAttachmentCount"], (o.preserveAttachmentCount));
 
-    (o.pPreserveAttachments) = (uint32_t*)s_globalMem.allocate((o.preserveAttachmentCount), sizeof(uint32_t));
-    const Json::Value& obj_pPreserveAttachments_arr = obj["pPreserveAttachments"];
-    for (unsigned int i = 0; i < obj_pPreserveAttachments_arr.size(); i++) {
-        parse_uint32_t(obj_pPreserveAttachments_arr[i], const_cast<uint32_t&>((o.pPreserveAttachments[i])));
+    if constexpr (is_cts && std::is_same_v<VkSubpassDescription2, VkPipelineLayoutCreateInfo>) {
+        uint32_t* pPreserveAttachmentsTab = (uint32_t*)s_globalMem.allocate((o.preserveAttachmentCount), sizeof(uint32_t));
+        const Json::Value& obj_pPreserveAttachments_arr = obj["pPreserveAttachments"];
+        for (unsigned int i = 0; i < obj_pPreserveAttachments_arr.size(); i++) {
+            uint64_t pPreserveAttachmentsInternal = 0;
+            parse_uint64_t(obj_pPreserveAttachments_arr[i], pPreserveAttachmentsInternal);
+            pPreserveAttachmentsTab[i] = uint32_t(pPreserveAttachmentsInternal);
+        }
+        o.pPreserveAttachments = pPreserveAttachmentsTab;
+    } else {
+        (o.pPreserveAttachments) = (uint32_t*)s_globalMem.allocate((o.preserveAttachmentCount), sizeof(uint32_t));
+        const Json::Value& obj_pPreserveAttachments_arr = obj["pPreserveAttachments"];
+        for (unsigned int i = 0; i < obj_pPreserveAttachments_arr.size(); i++) {
+            parse_uint32_t(obj_pPreserveAttachments_arr[i], const_cast<uint32_t&>((o.pPreserveAttachments[i])));
+        }
     }
 }
 
@@ -7938,10 +8626,21 @@ static void parse_VkRenderPassCreateInfo2(const Json::Value& obj, VkRenderPassCr
 
     parse_uint32_t(obj["correlatedViewMaskCount"], (o.correlatedViewMaskCount));
 
-    (o.pCorrelatedViewMasks) = (uint32_t*)s_globalMem.allocate((o.correlatedViewMaskCount), sizeof(uint32_t));
-    const Json::Value& obj_pCorrelatedViewMasks_arr = obj["pCorrelatedViewMasks"];
-    for (unsigned int i = 0; i < obj_pCorrelatedViewMasks_arr.size(); i++) {
-        parse_uint32_t(obj_pCorrelatedViewMasks_arr[i], const_cast<uint32_t&>((o.pCorrelatedViewMasks[i])));
+    if constexpr (is_cts && std::is_same_v<VkRenderPassCreateInfo2, VkPipelineLayoutCreateInfo>) {
+        uint32_t* pCorrelatedViewMasksTab = (uint32_t*)s_globalMem.allocate((o.correlatedViewMaskCount), sizeof(uint32_t));
+        const Json::Value& obj_pCorrelatedViewMasks_arr = obj["pCorrelatedViewMasks"];
+        for (unsigned int i = 0; i < obj_pCorrelatedViewMasks_arr.size(); i++) {
+            uint64_t pCorrelatedViewMasksInternal = 0;
+            parse_uint64_t(obj_pCorrelatedViewMasks_arr[i], pCorrelatedViewMasksInternal);
+            pCorrelatedViewMasksTab[i] = uint32_t(pCorrelatedViewMasksInternal);
+        }
+        o.pCorrelatedViewMasks = pCorrelatedViewMasksTab;
+    } else {
+        (o.pCorrelatedViewMasks) = (uint32_t*)s_globalMem.allocate((o.correlatedViewMaskCount), sizeof(uint32_t));
+        const Json::Value& obj_pCorrelatedViewMasks_arr = obj["pCorrelatedViewMasks"];
+        for (unsigned int i = 0; i < obj_pCorrelatedViewMasks_arr.size(); i++) {
+            parse_uint32_t(obj_pCorrelatedViewMasks_arr[i], const_cast<uint32_t&>((o.pCorrelatedViewMasks[i])));
+        }
     }
 }
 
@@ -8053,10 +8752,22 @@ static void parse_VkDescriptorSetLayoutBindingFlagsCreateInfo(const Json::Value&
 
     parse_uint32_t(obj["bindingCount"], (o.bindingCount));
 
-    (o.pBindingFlags) = (VkDescriptorBindingFlags*)s_globalMem.allocate((o.bindingCount), sizeof(VkDescriptorBindingFlags));
-    const Json::Value& obj_pBindingFlags_arr = obj["pBindingFlags"];
-    for (unsigned int i = 0; i < obj_pBindingFlags_arr.size(); i++) {
-        parse_VkDescriptorBindingFlags(obj_pBindingFlags_arr[i], const_cast<VkDescriptorBindingFlags&>((o.pBindingFlags[i])));
+    if constexpr (is_cts && std::is_same_v<VkDescriptorSetLayoutBindingFlagsCreateInfo, VkPipelineLayoutCreateInfo>) {
+        VkDescriptorBindingFlags* pBindingFlagsTab =
+            (VkDescriptorBindingFlags*)s_globalMem.allocate((o.bindingCount), sizeof(VkDescriptorBindingFlags));
+        const Json::Value& obj_pBindingFlags_arr = obj["pBindingFlags"];
+        for (unsigned int i = 0; i < obj_pBindingFlags_arr.size(); i++) {
+            uint64_t pBindingFlagsInternal = 0;
+            parse_uint64_t(obj_pBindingFlags_arr[i], pBindingFlagsInternal);
+            pBindingFlagsTab[i] = VkDescriptorBindingFlags(pBindingFlagsInternal);
+        }
+        o.pBindingFlags = pBindingFlagsTab;
+    } else {
+        (o.pBindingFlags) = (VkDescriptorBindingFlags*)s_globalMem.allocate((o.bindingCount), sizeof(VkDescriptorBindingFlags));
+        const Json::Value& obj_pBindingFlags_arr = obj["pBindingFlags"];
+        for (unsigned int i = 0; i < obj_pBindingFlags_arr.size(); i++) {
+            parse_VkDescriptorBindingFlags(obj_pBindingFlags_arr[i], const_cast<VkDescriptorBindingFlags&>((o.pBindingFlags[i])));
+        }
     }
 }
 
@@ -8176,10 +8887,21 @@ static void parse_VkDescriptorSetVariableDescriptorCountAllocateInfo(const Json:
 
     parse_uint32_t(obj["descriptorSetCount"], (o.descriptorSetCount));
 
-    (o.pDescriptorCounts) = (uint32_t*)s_globalMem.allocate((o.descriptorSetCount), sizeof(uint32_t));
-    const Json::Value& obj_pDescriptorCounts_arr = obj["pDescriptorCounts"];
-    for (unsigned int i = 0; i < obj_pDescriptorCounts_arr.size(); i++) {
-        parse_uint32_t(obj_pDescriptorCounts_arr[i], const_cast<uint32_t&>((o.pDescriptorCounts[i])));
+    if constexpr (is_cts && std::is_same_v<VkDescriptorSetVariableDescriptorCountAllocateInfo, VkPipelineLayoutCreateInfo>) {
+        uint32_t* pDescriptorCountsTab = (uint32_t*)s_globalMem.allocate((o.descriptorSetCount), sizeof(uint32_t));
+        const Json::Value& obj_pDescriptorCounts_arr = obj["pDescriptorCounts"];
+        for (unsigned int i = 0; i < obj_pDescriptorCounts_arr.size(); i++) {
+            uint64_t pDescriptorCountsInternal = 0;
+            parse_uint64_t(obj_pDescriptorCounts_arr[i], pDescriptorCountsInternal);
+            pDescriptorCountsTab[i] = uint32_t(pDescriptorCountsInternal);
+        }
+        o.pDescriptorCounts = pDescriptorCountsTab;
+    } else {
+        (o.pDescriptorCounts) = (uint32_t*)s_globalMem.allocate((o.descriptorSetCount), sizeof(uint32_t));
+        const Json::Value& obj_pDescriptorCounts_arr = obj["pDescriptorCounts"];
+        for (unsigned int i = 0; i < obj_pDescriptorCounts_arr.size(); i++) {
+            parse_uint32_t(obj_pDescriptorCounts_arr[i], const_cast<uint32_t&>((o.pDescriptorCounts[i])));
+        }
     }
 }
 
@@ -8301,10 +9023,21 @@ static void parse_VkFramebufferAttachmentImageInfo(const Json::Value& obj, VkFra
 
     parse_uint32_t(obj["viewFormatCount"], (o.viewFormatCount));
 
-    (o.pViewFormats) = (VkFormat*)s_globalMem.allocate((o.viewFormatCount), sizeof(VkFormat));
-    const Json::Value& obj_pViewFormats_arr = obj["pViewFormats"];
-    for (unsigned int i = 0; i < obj_pViewFormats_arr.size(); i++) {
-        parse_VkFormat(obj_pViewFormats_arr[i], const_cast<VkFormat&>((o.pViewFormats[i])));
+    if constexpr (is_cts && std::is_same_v<VkFramebufferAttachmentImageInfo, VkPipelineLayoutCreateInfo>) {
+        VkFormat* pViewFormatsTab = (VkFormat*)s_globalMem.allocate((o.viewFormatCount), sizeof(VkFormat));
+        const Json::Value& obj_pViewFormats_arr = obj["pViewFormats"];
+        for (unsigned int i = 0; i < obj_pViewFormats_arr.size(); i++) {
+            uint64_t pViewFormatsInternal = 0;
+            parse_uint64_t(obj_pViewFormats_arr[i], pViewFormatsInternal);
+            pViewFormatsTab[i] = VkFormat(pViewFormatsInternal);
+        }
+        o.pViewFormats = pViewFormatsTab;
+    } else {
+        (o.pViewFormats) = (VkFormat*)s_globalMem.allocate((o.viewFormatCount), sizeof(VkFormat));
+        const Json::Value& obj_pViewFormats_arr = obj["pViewFormats"];
+        for (unsigned int i = 0; i < obj_pViewFormats_arr.size(); i++) {
+            parse_VkFormat(obj_pViewFormats_arr[i], const_cast<VkFormat&>((o.pViewFormats[i])));
+        }
     }
 }
 
@@ -8335,10 +9068,21 @@ static void parse_VkRenderPassAttachmentBeginInfo(const Json::Value& obj, VkRend
 
     parse_uint32_t(obj["attachmentCount"], (o.attachmentCount));
 
-    (o.pAttachments) = (VkImageView*)s_globalMem.allocate((o.attachmentCount), sizeof(VkImageView));
-    const Json::Value& obj_pAttachments_arr = obj["pAttachments"];
-    for (unsigned int i = 0; i < obj_pAttachments_arr.size(); i++) {
-        parse_VkImageView(obj_pAttachments_arr[i], const_cast<VkImageView&>((o.pAttachments[i])));
+    if constexpr (is_cts && std::is_same_v<VkRenderPassAttachmentBeginInfo, VkPipelineLayoutCreateInfo>) {
+        VkImageView* pAttachmentsTab = (VkImageView*)s_globalMem.allocate((o.attachmentCount), sizeof(VkImageView));
+        const Json::Value& obj_pAttachments_arr = obj["pAttachments"];
+        for (unsigned int i = 0; i < obj_pAttachments_arr.size(); i++) {
+            uint64_t pAttachmentsInternal = 0;
+            parse_uint64_t(obj_pAttachments_arr[i], pAttachmentsInternal);
+            pAttachmentsTab[i] = VkImageView(pAttachmentsInternal);
+        }
+        o.pAttachments = pAttachmentsTab;
+    } else {
+        (o.pAttachments) = (VkImageView*)s_globalMem.allocate((o.attachmentCount), sizeof(VkImageView));
+        const Json::Value& obj_pAttachments_arr = obj["pAttachments"];
+        for (unsigned int i = 0; i < obj_pAttachments_arr.size(); i++) {
+            parse_VkImageView(obj_pAttachments_arr[i], const_cast<VkImageView&>((o.pAttachments[i])));
+        }
     }
 }
 
@@ -8429,7 +9173,40 @@ static void parse_VkTimelineSemaphoreSubmitInfo(const Json::Value& obj, VkTimeli
 
     parse_uint32_t(obj["waitSemaphoreValueCount"], (o.waitSemaphoreValueCount));
 
-    parse_uint32_t(obj["signalSemaphoreValueCount"], (o.signalSemaphoreValueCount));
+    const Json::Value& obj_pWaitSemaphoreValues = obj["pWaitSemaphoreValues"];
+    if (obj_pWaitSemaphoreValues.empty() || (obj_pWaitSemaphoreValues.isString() && obj_pWaitSemaphoreValues.asString() == "NULL"))
+        o.pWaitSemaphoreValues = nullptr;
+    else {
+        uint64_t* samplers = (uint64_t*)s_globalMem.allocate((o.descriptorCount), sizeof(uint64_t));
+        for (unsigned int i = 0; i < obj_pWaitSemaphoreValues.size(); i++) {
+            deUint64 sInternal = 0;
+            parse_uint64_t(obj_pWaitSemaphoreValues[i], sInternal);
+            samplers[i] = uint64_t(sInternal);
+        }
+        o.pWaitSemaphoreValues = samplers;
+    }
+}
+else {
+}
+
+parse_uint32_t(obj["signalSemaphoreValueCount"], (o.signalSemaphoreValueCount));
+
+const Json::Value& obj_pSignalSemaphoreValues = obj["pSignalSemaphoreValues"];
+if (obj_pSignalSemaphoreValues.empty() ||
+    (obj_pSignalSemaphoreValues.isString() && obj_pSignalSemaphoreValues.asString() == "NULL"))
+    o.pSignalSemaphoreValues = nullptr;
+else {
+    uint64_t* samplers = (uint64_t*)s_globalMem.allocate((o.descriptorCount), sizeof(uint64_t));
+    for (unsigned int i = 0; i < obj_pSignalSemaphoreValues.size(); i++) {
+        deUint64 sInternal = 0;
+        parse_uint64_t(obj_pSignalSemaphoreValues[i], sInternal);
+        samplers[i] = uint64_t(sInternal);
+    }
+    o.pSignalSemaphoreValues = samplers;
+}
+}
+else {
+}
 }
 
 static void parse_VkSemaphoreWaitInfo(const Json::Value& obj, VkSemaphoreWaitInfo& o) {
@@ -8441,16 +9218,37 @@ static void parse_VkSemaphoreWaitInfo(const Json::Value& obj, VkSemaphoreWaitInf
 
     parse_uint32_t(obj["semaphoreCount"], (o.semaphoreCount));
 
-    (o.pSemaphores) = (VkSemaphore*)s_globalMem.allocate((o.semaphoreCount), sizeof(VkSemaphore));
-    const Json::Value& obj_pSemaphores_arr = obj["pSemaphores"];
-    for (unsigned int i = 0; i < obj_pSemaphores_arr.size(); i++) {
-        parse_VkSemaphore(obj_pSemaphores_arr[i], const_cast<VkSemaphore&>((o.pSemaphores[i])));
+    if constexpr (is_cts && std::is_same_v<VkSemaphoreWaitInfo, VkPipelineLayoutCreateInfo>) {
+        VkSemaphore* pSemaphoresTab = (VkSemaphore*)s_globalMem.allocate((o.semaphoreCount), sizeof(VkSemaphore));
+        const Json::Value& obj_pSemaphores_arr = obj["pSemaphores"];
+        for (unsigned int i = 0; i < obj_pSemaphores_arr.size(); i++) {
+            uint64_t pSemaphoresInternal = 0;
+            parse_uint64_t(obj_pSemaphores_arr[i], pSemaphoresInternal);
+            pSemaphoresTab[i] = VkSemaphore(pSemaphoresInternal);
+        }
+        o.pSemaphores = pSemaphoresTab;
+    } else {
+        (o.pSemaphores) = (VkSemaphore*)s_globalMem.allocate((o.semaphoreCount), sizeof(VkSemaphore));
+        const Json::Value& obj_pSemaphores_arr = obj["pSemaphores"];
+        for (unsigned int i = 0; i < obj_pSemaphores_arr.size(); i++) {
+            parse_VkSemaphore(obj_pSemaphores_arr[i], const_cast<VkSemaphore&>((o.pSemaphores[i])));
+        }
     }
-
-    (o.pValues) = (uint64_t*)s_globalMem.allocate((o.semaphoreCount), sizeof(uint64_t));
-    const Json::Value& obj_pValues_arr = obj["pValues"];
-    for (unsigned int i = 0; i < obj_pValues_arr.size(); i++) {
-        parse_uint64_t(obj_pValues_arr[i], const_cast<uint64_t&>((o.pValues[i])));
+    if constexpr (is_cts && std::is_same_v<VkSemaphoreWaitInfo, VkPipelineLayoutCreateInfo>) {
+        uint64_t* pValuesTab = (uint64_t*)s_globalMem.allocate((o.semaphoreCount), sizeof(uint64_t));
+        const Json::Value& obj_pValues_arr = obj["pValues"];
+        for (unsigned int i = 0; i < obj_pValues_arr.size(); i++) {
+            uint64_t pValuesInternal = 0;
+            parse_uint64_t(obj_pValues_arr[i], pValuesInternal);
+            pValuesTab[i] = uint64_t(pValuesInternal);
+        }
+        o.pValues = pValuesTab;
+    } else {
+        (o.pValues) = (uint64_t*)s_globalMem.allocate((o.semaphoreCount), sizeof(uint64_t));
+        const Json::Value& obj_pValues_arr = obj["pValues"];
+        for (unsigned int i = 0; i < obj_pValues_arr.size(); i++) {
+            parse_uint64_t(obj_pValues_arr[i], const_cast<uint64_t&>((o.pValues[i])));
+        }
     }
 }
 
@@ -8458,6 +9256,10 @@ static void parse_VkSemaphoreSignalInfo(const Json::Value& obj, VkSemaphoreSigna
     parse_VkStructureType(obj["sType"], (o.sType));
 
     o.pNext = (VkSemaphoreSignalInfo*)parsePNextChain(obj);
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 
     parse_uint64_t(obj["value"], (o.value));
 }
@@ -8479,6 +9281,10 @@ static void parse_VkBufferDeviceAddressInfo(const Json::Value& obj, VkBufferDevi
     parse_VkStructureType(obj["sType"], (o.sType));
 
     o.pNext = (VkBufferDeviceAddressInfo*)parsePNextChain(obj);
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 }
 
 static void parse_VkBufferOpaqueCaptureAddressCreateInfo(const Json::Value& obj, VkBufferOpaqueCaptureAddressCreateInfo& o) {
@@ -8501,6 +9307,10 @@ static void parse_VkDeviceMemoryOpaqueCaptureAddressInfo(const Json::Value& obj,
     parse_VkStructureType(obj["sType"], (o.sType));
 
     o.pNext = (VkDeviceMemoryOpaqueCaptureAddressInfo*)parsePNextChain(obj);
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 }
 
 static std::map<std::string, int> VkFaultLevel_map = {
@@ -8772,11 +9582,20 @@ static void parse_VkPipelineOfflineCreateInfo(const Json::Value& obj, VkPipeline
 
     o.pNext = (VkPipelineOfflineCreateInfo*)parsePNextChain(obj);
 
-    const Json::Value& obj_pipelineIdentifier_arr = obj["pipelineIdentifier"];
-    for (unsigned int i = 0; i < obj_pipelineIdentifier_arr.size(); i++) {
-        parse_uint8_t(obj_pipelineIdentifier_arr[i], const_cast<uint8_t&>((o.pipelineIdentifier[i])));
+    if constexpr (is_cts && std::is_same_v<VkPipelineOfflineCreateInfo, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_pipelineIdentifier_arr = obj["pipelineIdentifier"];
+        for (unsigned int i = 0; i < obj_pipelineIdentifier_arr.size(); i++) {
+            uint64_t pipelineIdentifierInternal = 0;
+            parse_uint64_t(obj_pipelineIdentifier_arr[i], pipelineIdentifierInternal);
+            pipelineIdentifierTab[i] = uint8_t(pipelineIdentifierInternal);
+        }
+        o.pipelineIdentifier = pipelineIdentifierTab;
+    } else {
+        const Json::Value& obj_pipelineIdentifier_arr = obj["pipelineIdentifier"];
+        for (unsigned int i = 0; i < obj_pipelineIdentifier_arr.size(); i++) {
+            parse_uint8_t(obj_pipelineIdentifier_arr[i], const_cast<uint8_t&>((o.pipelineIdentifier[i])));
+        }
     }
-
     parse_VkPipelineMatchControl(obj["matchControl"], (o.matchControl));
 
     parse_VkDeviceSize(obj["poolEntrySize"], (o.poolEntrySize));
@@ -8789,11 +9608,20 @@ static void parse_VkPipelineCacheStageValidationIndexEntry(const Json::Value& ob
 }
 
 static void parse_VkPipelineCacheSafetyCriticalIndexEntry(const Json::Value& obj, VkPipelineCacheSafetyCriticalIndexEntry& o) {
-    const Json::Value& obj_pipelineIdentifier_arr = obj["pipelineIdentifier"];
-    for (unsigned int i = 0; i < obj_pipelineIdentifier_arr.size(); i++) {
-        parse_uint8_t(obj_pipelineIdentifier_arr[i], const_cast<uint8_t&>((o.pipelineIdentifier[i])));
+    if constexpr (is_cts && std::is_same_v<VkPipelineCacheSafetyCriticalIndexEntry, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_pipelineIdentifier_arr = obj["pipelineIdentifier"];
+        for (unsigned int i = 0; i < obj_pipelineIdentifier_arr.size(); i++) {
+            uint64_t pipelineIdentifierInternal = 0;
+            parse_uint64_t(obj_pipelineIdentifier_arr[i], pipelineIdentifierInternal);
+            pipelineIdentifierTab[i] = uint8_t(pipelineIdentifierInternal);
+        }
+        o.pipelineIdentifier = pipelineIdentifierTab;
+    } else {
+        const Json::Value& obj_pipelineIdentifier_arr = obj["pipelineIdentifier"];
+        for (unsigned int i = 0; i < obj_pipelineIdentifier_arr.size(); i++) {
+            parse_uint8_t(obj_pipelineIdentifier_arr[i], const_cast<uint8_t&>((o.pipelineIdentifier[i])));
+        }
     }
-
     parse_uint64_t(obj["pipelineMemorySize"], (o.pipelineMemorySize));
 
     parse_uint64_t(obj["jsonSize"], (o.jsonSize));
@@ -9013,6 +9841,10 @@ static void parse_VkSwapchainCreateInfoKHR(const Json::Value& obj, VkSwapchainCr
 
     parse_VkSwapchainCreateFlagsKHR(obj["flags"], (o.flags));
 
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_uint32_t(obj["minImageCount"], (o.minImageCount));
 
     parse_VkFormat(obj["imageFormat"], (o.imageFormat));
@@ -9029,12 +9861,22 @@ static void parse_VkSwapchainCreateInfoKHR(const Json::Value& obj, VkSwapchainCr
 
     parse_uint32_t(obj["queueFamilyIndexCount"], (o.queueFamilyIndexCount));
 
-    (o.pQueueFamilyIndices) = (uint32_t*)s_globalMem.allocate((o.queueFamilyIndexCount), sizeof(uint32_t));
-    const Json::Value& obj_pQueueFamilyIndices_arr = obj["pQueueFamilyIndices"];
-    for (unsigned int i = 0; i < obj_pQueueFamilyIndices_arr.size(); i++) {
-        parse_uint32_t(obj_pQueueFamilyIndices_arr[i], const_cast<uint32_t&>((o.pQueueFamilyIndices[i])));
+    if constexpr (is_cts && std::is_same_v<VkSwapchainCreateInfoKHR, VkPipelineLayoutCreateInfo>) {
+        uint32_t* pQueueFamilyIndicesTab = (uint32_t*)s_globalMem.allocate((o.queueFamilyIndexCount), sizeof(uint32_t));
+        const Json::Value& obj_pQueueFamilyIndices_arr = obj["pQueueFamilyIndices"];
+        for (unsigned int i = 0; i < obj_pQueueFamilyIndices_arr.size(); i++) {
+            uint64_t pQueueFamilyIndicesInternal = 0;
+            parse_uint64_t(obj_pQueueFamilyIndices_arr[i], pQueueFamilyIndicesInternal);
+            pQueueFamilyIndicesTab[i] = uint32_t(pQueueFamilyIndicesInternal);
+        }
+        o.pQueueFamilyIndices = pQueueFamilyIndicesTab;
+    } else {
+        (o.pQueueFamilyIndices) = (uint32_t*)s_globalMem.allocate((o.queueFamilyIndexCount), sizeof(uint32_t));
+        const Json::Value& obj_pQueueFamilyIndices_arr = obj["pQueueFamilyIndices"];
+        for (unsigned int i = 0; i < obj_pQueueFamilyIndices_arr.size(); i++) {
+            parse_uint32_t(obj_pQueueFamilyIndices_arr[i], const_cast<uint32_t&>((o.pQueueFamilyIndices[i])));
+        }
     }
-
     parse_VkSurfaceTransformFlagBitsKHR(obj["preTransform"], (o.preTransform));
 
     parse_VkCompositeAlphaFlagBitsKHR(obj["compositeAlpha"], (o.compositeAlpha));
@@ -9042,6 +9884,10 @@ static void parse_VkSwapchainCreateInfoKHR(const Json::Value& obj, VkSwapchainCr
     parse_VkPresentModeKHR(obj["presentMode"], (o.presentMode));
 
     parse_VkBool32(obj["clipped"], (o.clipped));
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 }
 
 static void parse_VkPresentInfoKHR(const Json::Value& obj, VkPresentInfoKHR& o) {
@@ -9051,37 +9897,91 @@ static void parse_VkPresentInfoKHR(const Json::Value& obj, VkPresentInfoKHR& o) 
 
     parse_uint32_t(obj["waitSemaphoreCount"], (o.waitSemaphoreCount));
 
-    (o.pWaitSemaphores) = (VkSemaphore*)s_globalMem.allocate((o.waitSemaphoreCount), sizeof(VkSemaphore));
-    const Json::Value& obj_pWaitSemaphores_arr = obj["pWaitSemaphores"];
-    for (unsigned int i = 0; i < obj_pWaitSemaphores_arr.size(); i++) {
-        parse_VkSemaphore(obj_pWaitSemaphores_arr[i], const_cast<VkSemaphore&>((o.pWaitSemaphores[i])));
+    if constexpr (is_cts && std::is_same_v<VkPresentInfoKHR, VkPipelineLayoutCreateInfo>) {
+        VkSemaphore* pWaitSemaphoresTab = (VkSemaphore*)s_globalMem.allocate((o.waitSemaphoreCount), sizeof(VkSemaphore));
+        const Json::Value& obj_pWaitSemaphores_arr = obj["pWaitSemaphores"];
+        for (unsigned int i = 0; i < obj_pWaitSemaphores_arr.size(); i++) {
+            uint64_t pWaitSemaphoresInternal = 0;
+            parse_uint64_t(obj_pWaitSemaphores_arr[i], pWaitSemaphoresInternal);
+            pWaitSemaphoresTab[i] = VkSemaphore(pWaitSemaphoresInternal);
+        }
+        o.pWaitSemaphores = pWaitSemaphoresTab;
+    } else {
+        (o.pWaitSemaphores) = (VkSemaphore*)s_globalMem.allocate((o.waitSemaphoreCount), sizeof(VkSemaphore));
+        const Json::Value& obj_pWaitSemaphores_arr = obj["pWaitSemaphores"];
+        for (unsigned int i = 0; i < obj_pWaitSemaphores_arr.size(); i++) {
+            parse_VkSemaphore(obj_pWaitSemaphores_arr[i], const_cast<VkSemaphore&>((o.pWaitSemaphores[i])));
+        }
     }
-
     parse_uint32_t(obj["swapchainCount"], (o.swapchainCount));
 
-    (o.pSwapchains) = (VkSwapchainKHR*)s_globalMem.allocate((o.swapchainCount), sizeof(VkSwapchainKHR));
-    const Json::Value& obj_pSwapchains_arr = obj["pSwapchains"];
-    for (unsigned int i = 0; i < obj_pSwapchains_arr.size(); i++) {
-        parse_VkSwapchainKHR(obj_pSwapchains_arr[i], const_cast<VkSwapchainKHR&>((o.pSwapchains[i])));
+    if constexpr (is_cts && std::is_same_v<VkPresentInfoKHR, VkPipelineLayoutCreateInfo>) {
+        VkSwapchainKHR* pSwapchainsTab = (VkSwapchainKHR*)s_globalMem.allocate((o.swapchainCount), sizeof(VkSwapchainKHR));
+        const Json::Value& obj_pSwapchains_arr = obj["pSwapchains"];
+        for (unsigned int i = 0; i < obj_pSwapchains_arr.size(); i++) {
+            uint64_t pSwapchainsInternal = 0;
+            parse_uint64_t(obj_pSwapchains_arr[i], pSwapchainsInternal);
+            pSwapchainsTab[i] = VkSwapchainKHR(pSwapchainsInternal);
+        }
+        o.pSwapchains = pSwapchainsTab;
+    } else {
+        (o.pSwapchains) = (VkSwapchainKHR*)s_globalMem.allocate((o.swapchainCount), sizeof(VkSwapchainKHR));
+        const Json::Value& obj_pSwapchains_arr = obj["pSwapchains"];
+        for (unsigned int i = 0; i < obj_pSwapchains_arr.size(); i++) {
+            parse_VkSwapchainKHR(obj_pSwapchains_arr[i], const_cast<VkSwapchainKHR&>((o.pSwapchains[i])));
+        }
     }
-
-    (o.pImageIndices) = (uint32_t*)s_globalMem.allocate((o.swapchainCount), sizeof(uint32_t));
-    const Json::Value& obj_pImageIndices_arr = obj["pImageIndices"];
-    for (unsigned int i = 0; i < obj_pImageIndices_arr.size(); i++) {
-        parse_uint32_t(obj_pImageIndices_arr[i], const_cast<uint32_t&>((o.pImageIndices[i])));
+    if constexpr (is_cts && std::is_same_v<VkPresentInfoKHR, VkPipelineLayoutCreateInfo>) {
+        uint32_t* pImageIndicesTab = (uint32_t*)s_globalMem.allocate((o.swapchainCount), sizeof(uint32_t));
+        const Json::Value& obj_pImageIndices_arr = obj["pImageIndices"];
+        for (unsigned int i = 0; i < obj_pImageIndices_arr.size(); i++) {
+            uint64_t pImageIndicesInternal = 0;
+            parse_uint64_t(obj_pImageIndices_arr[i], pImageIndicesInternal);
+            pImageIndicesTab[i] = uint32_t(pImageIndicesInternal);
+        }
+        o.pImageIndices = pImageIndicesTab;
+    } else {
+        (o.pImageIndices) = (uint32_t*)s_globalMem.allocate((o.swapchainCount), sizeof(uint32_t));
+        const Json::Value& obj_pImageIndices_arr = obj["pImageIndices"];
+        for (unsigned int i = 0; i < obj_pImageIndices_arr.size(); i++) {
+            parse_uint32_t(obj_pImageIndices_arr[i], const_cast<uint32_t&>((o.pImageIndices[i])));
+        }
     }
+    const Json::Value& obj_pResults = obj["pResults"];
+    if (obj_pResults.empty() || (obj_pResults.isString() && obj_pResults.asString() == "NULL"))
+        o.pResults = nullptr;
+    else {
+        VkResult* samplers = (VkResult*)s_globalMem.allocate((o.descriptorCount), sizeof(VkResult));
+        for (unsigned int i = 0; i < obj_pResults.size(); i++) {
+            deUint64 sInternal = 0;
+            parse_uint64_t(obj_pResults[i], sInternal);
+            samplers[i] = VkResult(sInternal);
+        }
+        o.pResults = samplers;
+    }
+}
+else {
+}
 }
 
 static void parse_VkImageSwapchainCreateInfoKHR(const Json::Value& obj, VkImageSwapchainCreateInfoKHR& o) {
     parse_VkStructureType(obj["sType"], (o.sType));
 
     o.pNext = (VkImageSwapchainCreateInfoKHR*)parsePNextChain(obj);
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 }
 
 static void parse_VkBindImageMemorySwapchainInfoKHR(const Json::Value& obj, VkBindImageMemorySwapchainInfoKHR& o) {
     parse_VkStructureType(obj["sType"], (o.sType));
 
     o.pNext = (VkBindImageMemorySwapchainInfoKHR*)parsePNextChain(obj);
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 
     parse_uint32_t(obj["imageIndex"], (o.imageIndex));
 }
@@ -9091,7 +9991,19 @@ static void parse_VkAcquireNextImageInfoKHR(const Json::Value& obj, VkAcquireNex
 
     o.pNext = (VkAcquireNextImageInfoKHR*)parsePNextChain(obj);
 
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_uint64_t(obj["timeout"], (o.timeout));
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 
     parse_uint32_t(obj["deviceMask"], (o.deviceMask));
 }
@@ -9101,11 +10013,20 @@ static void parse_VkDeviceGroupPresentCapabilitiesKHR(const Json::Value& obj, Vk
 
     o.pNext = (VkDeviceGroupPresentCapabilitiesKHR*)parsePNextChain(obj);
 
-    const Json::Value& obj_presentMask_arr = obj["presentMask"];
-    for (unsigned int i = 0; i < obj_presentMask_arr.size(); i++) {
-        parse_uint32_t(obj_presentMask_arr[i], const_cast<uint32_t&>((o.presentMask[i])));
+    if constexpr (is_cts && std::is_same_v<VkDeviceGroupPresentCapabilitiesKHR, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_presentMask_arr = obj["presentMask"];
+        for (unsigned int i = 0; i < obj_presentMask_arr.size(); i++) {
+            uint64_t presentMaskInternal = 0;
+            parse_uint64_t(obj_presentMask_arr[i], presentMaskInternal);
+            presentMaskTab[i] = uint32_t(presentMaskInternal);
+        }
+        o.presentMask = presentMaskTab;
+    } else {
+        const Json::Value& obj_presentMask_arr = obj["presentMask"];
+        for (unsigned int i = 0; i < obj_presentMask_arr.size(); i++) {
+            parse_uint32_t(obj_presentMask_arr[i], const_cast<uint32_t&>((o.presentMask[i])));
+        }
     }
-
     parse_VkDeviceGroupPresentModeFlagsKHR(obj["modes"], (o.modes));
 }
 
@@ -9116,12 +10037,22 @@ static void parse_VkDeviceGroupPresentInfoKHR(const Json::Value& obj, VkDeviceGr
 
     parse_uint32_t(obj["swapchainCount"], (o.swapchainCount));
 
-    (o.pDeviceMasks) = (uint32_t*)s_globalMem.allocate((o.swapchainCount), sizeof(uint32_t));
-    const Json::Value& obj_pDeviceMasks_arr = obj["pDeviceMasks"];
-    for (unsigned int i = 0; i < obj_pDeviceMasks_arr.size(); i++) {
-        parse_uint32_t(obj_pDeviceMasks_arr[i], const_cast<uint32_t&>((o.pDeviceMasks[i])));
+    if constexpr (is_cts && std::is_same_v<VkDeviceGroupPresentInfoKHR, VkPipelineLayoutCreateInfo>) {
+        uint32_t* pDeviceMasksTab = (uint32_t*)s_globalMem.allocate((o.swapchainCount), sizeof(uint32_t));
+        const Json::Value& obj_pDeviceMasks_arr = obj["pDeviceMasks"];
+        for (unsigned int i = 0; i < obj_pDeviceMasks_arr.size(); i++) {
+            uint64_t pDeviceMasksInternal = 0;
+            parse_uint64_t(obj_pDeviceMasks_arr[i], pDeviceMasksInternal);
+            pDeviceMasksTab[i] = uint32_t(pDeviceMasksInternal);
+        }
+        o.pDeviceMasks = pDeviceMasksTab;
+    } else {
+        (o.pDeviceMasks) = (uint32_t*)s_globalMem.allocate((o.swapchainCount), sizeof(uint32_t));
+        const Json::Value& obj_pDeviceMasks_arr = obj["pDeviceMasks"];
+        for (unsigned int i = 0; i < obj_pDeviceMasks_arr.size(); i++) {
+            parse_uint32_t(obj_pDeviceMasks_arr[i], const_cast<uint32_t&>((o.pDeviceMasks[i])));
+        }
     }
-
     parse_VkDeviceGroupPresentModeFlagBitsKHR(obj["mode"], (o.mode));
 }
 
@@ -9202,6 +10133,10 @@ static void parse_VkDisplayModeCreateInfoKHR(const Json::Value& obj, VkDisplayMo
 }
 
 static void parse_VkDisplayModePropertiesKHR(const Json::Value& obj, VkDisplayModePropertiesKHR& o) {
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_VkDisplayModeParametersKHR(obj["parameters"], (o.parameters));
 }
 
@@ -9226,10 +10161,18 @@ static void parse_VkDisplayPlaneCapabilitiesKHR(const Json::Value& obj, VkDispla
 }
 
 static void parse_VkDisplayPlanePropertiesKHR(const Json::Value& obj, VkDisplayPlanePropertiesKHR& o) {
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_uint32_t(obj["currentStackIndex"], (o.currentStackIndex));
 }
 
 static void parse_VkDisplayPropertiesKHR(const Json::Value& obj, VkDisplayPropertiesKHR& o) {
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     /** TODO: Handle this - displayName **/
 
     parse_VkExtent2D(obj["physicalDimensions"], (o.physicalDimensions));
@@ -9249,6 +10192,10 @@ static void parse_VkDisplaySurfaceCreateInfoKHR(const Json::Value& obj, VkDispla
     o.pNext = (VkDisplaySurfaceCreateInfoKHR*)parsePNextChain(obj);
 
     parse_VkDisplaySurfaceCreateFlagsKHR(obj["flags"], (o.flags));
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 
     parse_uint32_t(obj["planeIndex"], (o.planeIndex));
 
@@ -9298,6 +10245,10 @@ static void parse_VkMemoryGetFdInfoKHR(const Json::Value& obj, VkMemoryGetFdInfo
 
     o.pNext = (VkMemoryGetFdInfoKHR*)parsePNextChain(obj);
 
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_VkExternalMemoryHandleTypeFlagBits(obj["handleType"], (o.handleType));
 }
 
@@ -9305,6 +10256,10 @@ static void parse_VkImportSemaphoreFdInfoKHR(const Json::Value& obj, VkImportSem
     parse_VkStructureType(obj["sType"], (o.sType));
 
     o.pNext = (VkImportSemaphoreFdInfoKHR*)parsePNextChain(obj);
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 
     parse_VkSemaphoreImportFlags(obj["flags"], (o.flags));
 
@@ -9317,6 +10272,10 @@ static void parse_VkSemaphoreGetFdInfoKHR(const Json::Value& obj, VkSemaphoreGet
     parse_VkStructureType(obj["sType"], (o.sType));
 
     o.pNext = (VkSemaphoreGetFdInfoKHR*)parsePNextChain(obj);
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 
     parse_VkExternalSemaphoreHandleTypeFlagBits(obj["handleType"], (o.handleType));
 }
@@ -9374,6 +10333,10 @@ static void parse_VkImportFenceFdInfoKHR(const Json::Value& obj, VkImportFenceFd
 
     o.pNext = (VkImportFenceFdInfoKHR*)parsePNextChain(obj);
 
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_VkFenceImportFlags(obj["flags"], (o.flags));
 
     parse_VkExternalFenceHandleTypeFlagBits(obj["handleType"], (o.handleType));
@@ -9385,6 +10348,10 @@ static void parse_VkFenceGetFdInfoKHR(const Json::Value& obj, VkFenceGetFdInfoKH
     parse_VkStructureType(obj["sType"], (o.sType));
 
     o.pNext = (VkFenceGetFdInfoKHR*)parsePNextChain(obj);
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 
     parse_VkExternalFenceHandleTypeFlagBits(obj["handleType"], (o.handleType));
 }
@@ -9512,9 +10479,19 @@ static void parse_VkPerformanceCounterKHR(const Json::Value& obj, VkPerformanceC
 
     parse_VkPerformanceCounterStorageKHR(obj["storage"], (o.storage));
 
-    const Json::Value& obj_uuid_arr = obj["uuid"];
-    for (unsigned int i = 0; i < obj_uuid_arr.size(); i++) {
-        parse_uint8_t(obj_uuid_arr[i], const_cast<uint8_t&>((o.uuid[i])));
+    if constexpr (is_cts && std::is_same_v<VkPerformanceCounterKHR, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_uuid_arr = obj["uuid"];
+        for (unsigned int i = 0; i < obj_uuid_arr.size(); i++) {
+            uint64_t uuidInternal = 0;
+            parse_uint64_t(obj_uuid_arr[i], uuidInternal);
+            uuidTab[i] = uint8_t(uuidInternal);
+        }
+        o.uuid = uuidTab;
+    } else {
+        const Json::Value& obj_uuid_arr = obj["uuid"];
+        for (unsigned int i = 0; i < obj_uuid_arr.size(); i++) {
+            parse_uint8_t(obj_uuid_arr[i], const_cast<uint8_t&>((o.uuid[i])));
+        }
     }
 }
 
@@ -9541,10 +10518,21 @@ static void parse_VkQueryPoolPerformanceCreateInfoKHR(const Json::Value& obj, Vk
 
     parse_uint32_t(obj["counterIndexCount"], (o.counterIndexCount));
 
-    (o.pCounterIndices) = (uint32_t*)s_globalMem.allocate((o.counterIndexCount), sizeof(uint32_t));
-    const Json::Value& obj_pCounterIndices_arr = obj["pCounterIndices"];
-    for (unsigned int i = 0; i < obj_pCounterIndices_arr.size(); i++) {
-        parse_uint32_t(obj_pCounterIndices_arr[i], const_cast<uint32_t&>((o.pCounterIndices[i])));
+    if constexpr (is_cts && std::is_same_v<VkQueryPoolPerformanceCreateInfoKHR, VkPipelineLayoutCreateInfo>) {
+        uint32_t* pCounterIndicesTab = (uint32_t*)s_globalMem.allocate((o.counterIndexCount), sizeof(uint32_t));
+        const Json::Value& obj_pCounterIndices_arr = obj["pCounterIndices"];
+        for (unsigned int i = 0; i < obj_pCounterIndices_arr.size(); i++) {
+            uint64_t pCounterIndicesInternal = 0;
+            parse_uint64_t(obj_pCounterIndices_arr[i], pCounterIndicesInternal);
+            pCounterIndicesTab[i] = uint32_t(pCounterIndicesInternal);
+        }
+        o.pCounterIndices = pCounterIndicesTab;
+    } else {
+        (o.pCounterIndices) = (uint32_t*)s_globalMem.allocate((o.counterIndexCount), sizeof(uint32_t));
+        const Json::Value& obj_pCounterIndices_arr = obj["pCounterIndices"];
+        for (unsigned int i = 0; i < obj_pCounterIndices_arr.size(); i++) {
+            parse_uint32_t(obj_pCounterIndices_arr[i], const_cast<uint32_t&>((o.pCounterIndices[i])));
+        }
     }
 }
 
@@ -9592,6 +10580,10 @@ static void parse_VkPhysicalDeviceSurfaceInfo2KHR(const Json::Value& obj, VkPhys
     parse_VkStructureType(obj["sType"], (o.sType));
 
     o.pNext = (VkPhysicalDeviceSurfaceInfo2KHR*)parsePNextChain(obj);
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 }
 
 static void parse_VkSurfaceCapabilities2KHR(const Json::Value& obj, VkSurfaceCapabilities2KHR& o) {
@@ -9638,6 +10630,10 @@ static void parse_VkDisplayPlaneInfo2KHR(const Json::Value& obj, VkDisplayPlaneI
     parse_VkStructureType(obj["sType"], (o.sType));
 
     o.pNext = (VkDisplayPlaneInfo2KHR*)parsePNextChain(obj);
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 
     parse_uint32_t(obj["planeIndex"], (o.planeIndex));
 }
@@ -9708,9 +10704,19 @@ static void parse_VkQueueFamilyGlobalPriorityProperties(const Json::Value& obj, 
 
     parse_uint32_t(obj["priorityCount"], (o.priorityCount));
 
-    const Json::Value& obj_priorities_arr = obj["priorities"];
-    for (unsigned int i = 0; i < obj_priorities_arr.size(); i++) {
-        parse_VkQueueGlobalPriority(obj_priorities_arr[i], const_cast<VkQueueGlobalPriority&>((o.priorities[i])));
+    if constexpr (is_cts && std::is_same_v<VkQueueFamilyGlobalPriorityProperties, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_priorities_arr = obj["priorities"];
+        for (unsigned int i = 0; i < obj_priorities_arr.size(); i++) {
+            uint64_t prioritiesInternal = 0;
+            parse_uint64_t(obj_priorities_arr[i], prioritiesInternal);
+            prioritiesTab[i] = VkQueueGlobalPriority(prioritiesInternal);
+        }
+        o.priorities = prioritiesTab;
+    } else {
+        const Json::Value& obj_priorities_arr = obj["priorities"];
+        for (unsigned int i = 0; i < obj_priorities_arr.size(); i++) {
+            parse_VkQueueGlobalPriority(obj_priorities_arr[i], const_cast<VkQueueGlobalPriority&>((o.priorities[i])));
+        }
     }
 }
 
@@ -9762,10 +10768,20 @@ static void parse_VkPipelineFragmentShadingRateStateCreateInfoKHR(const Json::Va
 
     parse_VkExtent2D(obj["fragmentSize"], (o.fragmentSize));
 
-    const Json::Value& obj_combinerOps_arr = obj["combinerOps"];
-    for (unsigned int i = 0; i < obj_combinerOps_arr.size(); i++) {
-        parse_VkFragmentShadingRateCombinerOpKHR(obj_combinerOps_arr[i],
-                                                 const_cast<VkFragmentShadingRateCombinerOpKHR&>((o.combinerOps[i])));
+    if constexpr (is_cts && std::is_same_v<VkPipelineFragmentShadingRateStateCreateInfoKHR, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_combinerOps_arr = obj["combinerOps"];
+        for (unsigned int i = 0; i < obj_combinerOps_arr.size(); i++) {
+            uint64_t combinerOpsInternal = 0;
+            parse_uint64_t(obj_combinerOps_arr[i], combinerOpsInternal);
+            combinerOpsTab[i] = VkFragmentShadingRateCombinerOpKHR(combinerOpsInternal);
+        }
+        o.combinerOps = combinerOpsTab;
+    } else {
+        const Json::Value& obj_combinerOps_arr = obj["combinerOps"];
+        for (unsigned int i = 0; i < obj_combinerOps_arr.size(); i++) {
+            parse_VkFragmentShadingRateCombinerOpKHR(obj_combinerOps_arr[i],
+                                                     const_cast<VkFragmentShadingRateCombinerOpKHR&>((o.combinerOps[i])));
+        }
     }
 }
 
@@ -10263,6 +11279,10 @@ static void parse_VkBufferMemoryBarrier2(const Json::Value& obj, VkBufferMemoryB
 
     parse_uint32_t(obj["dstQueueFamilyIndex"], (o.dstQueueFamilyIndex));
 
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_VkDeviceSize(obj["offset"], (o.offset));
 
     parse_VkDeviceSize(obj["size"], (o.size));
@@ -10288,6 +11308,10 @@ static void parse_VkImageMemoryBarrier2(const Json::Value& obj, VkImageMemoryBar
     parse_uint32_t(obj["srcQueueFamilyIndex"], (o.srcQueueFamilyIndex));
 
     parse_uint32_t(obj["dstQueueFamilyIndex"], (o.dstQueueFamilyIndex));
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 
     parse_VkImageSubresourceRange(obj["subresourceRange"], (o.subresourceRange));
 }
@@ -10345,6 +11369,10 @@ static void parse_VkSemaphoreSubmitInfo(const Json::Value& obj, VkSemaphoreSubmi
 
     o.pNext = (VkSemaphoreSubmitInfo*)parsePNextChain(obj);
 
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_uint64_t(obj["value"], (o.value));
 
     parse_VkPipelineStageFlags2(obj["stageMask"], (o.stageMask));
@@ -10356,6 +11384,10 @@ static void parse_VkCommandBufferSubmitInfo(const Json::Value& obj, VkCommandBuf
     parse_VkStructureType(obj["sType"], (o.sType));
 
     o.pNext = (VkCommandBufferSubmitInfo*)parsePNextChain(obj);
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 
     parse_uint32_t(obj["deviceMask"], (o.deviceMask));
 }
@@ -10434,6 +11466,14 @@ static void parse_VkCopyBufferInfo2(const Json::Value& obj, VkCopyBufferInfo2& o
 
     o.pNext = (VkCopyBufferInfo2*)parsePNextChain(obj);
 
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_uint32_t(obj["regionCount"], (o.regionCount));
 
     (o.pRegions) = (VkBufferCopy2*)s_globalMem.allocate((o.regionCount), sizeof(VkBufferCopy2));
@@ -10468,7 +11508,15 @@ static void parse_VkCopyImageInfo2(const Json::Value& obj, VkCopyImageInfo2& o) 
 
     o.pNext = (VkCopyImageInfo2*)parsePNextChain(obj);
 
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_VkImageLayout(obj["srcImageLayout"], (o.srcImageLayout));
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 
     parse_VkImageLayout(obj["dstImageLayout"], (o.dstImageLayout));
 
@@ -10508,6 +11556,14 @@ static void parse_VkCopyBufferToImageInfo2(const Json::Value& obj, VkCopyBufferT
 
     o.pNext = (VkCopyBufferToImageInfo2*)parsePNextChain(obj);
 
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_VkImageLayout(obj["dstImageLayout"], (o.dstImageLayout));
 
     parse_uint32_t(obj["regionCount"], (o.regionCount));
@@ -10528,7 +11584,15 @@ static void parse_VkCopyImageToBufferInfo2(const Json::Value& obj, VkCopyImageTo
 
     o.pNext = (VkCopyImageToBufferInfo2*)parsePNextChain(obj);
 
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_VkImageLayout(obj["srcImageLayout"], (o.srcImageLayout));
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 
     parse_uint32_t(obj["regionCount"], (o.regionCount));
 
@@ -10550,16 +11614,35 @@ static void parse_VkImageBlit2(const Json::Value& obj, VkImageBlit2& o) {
 
     parse_VkImageSubresourceLayers(obj["srcSubresource"], (o.srcSubresource));
 
-    const Json::Value& obj_srcOffsets_arr = obj["srcOffsets"];
-    for (unsigned int i = 0; i < obj_srcOffsets_arr.size(); i++) {
-        parse_VkOffset3D(obj_srcOffsets_arr[i], const_cast<VkOffset3D&>((o.srcOffsets[i])));
+    if constexpr (is_cts && std::is_same_v<VkImageBlit2, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_srcOffsets_arr = obj["srcOffsets"];
+        for (unsigned int i = 0; i < obj_srcOffsets_arr.size(); i++) {
+            uint64_t srcOffsetsInternal = 0;
+            parse_uint64_t(obj_srcOffsets_arr[i], srcOffsetsInternal);
+            srcOffsetsTab[i] = VkOffset3D(srcOffsetsInternal);
+        }
+        o.srcOffsets = srcOffsetsTab;
+    } else {
+        const Json::Value& obj_srcOffsets_arr = obj["srcOffsets"];
+        for (unsigned int i = 0; i < obj_srcOffsets_arr.size(); i++) {
+            parse_VkOffset3D(obj_srcOffsets_arr[i], const_cast<VkOffset3D&>((o.srcOffsets[i])));
+        }
     }
-
     parse_VkImageSubresourceLayers(obj["dstSubresource"], (o.dstSubresource));
 
-    const Json::Value& obj_dstOffsets_arr = obj["dstOffsets"];
-    for (unsigned int i = 0; i < obj_dstOffsets_arr.size(); i++) {
-        parse_VkOffset3D(obj_dstOffsets_arr[i], const_cast<VkOffset3D&>((o.dstOffsets[i])));
+    if constexpr (is_cts && std::is_same_v<VkImageBlit2, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_dstOffsets_arr = obj["dstOffsets"];
+        for (unsigned int i = 0; i < obj_dstOffsets_arr.size(); i++) {
+            uint64_t dstOffsetsInternal = 0;
+            parse_uint64_t(obj_dstOffsets_arr[i], dstOffsetsInternal);
+            dstOffsetsTab[i] = VkOffset3D(dstOffsetsInternal);
+        }
+        o.dstOffsets = dstOffsetsTab;
+    } else {
+        const Json::Value& obj_dstOffsets_arr = obj["dstOffsets"];
+        for (unsigned int i = 0; i < obj_dstOffsets_arr.size(); i++) {
+            parse_VkOffset3D(obj_dstOffsets_arr[i], const_cast<VkOffset3D&>((o.dstOffsets[i])));
+        }
     }
 }
 
@@ -10568,7 +11651,15 @@ static void parse_VkBlitImageInfo2(const Json::Value& obj, VkBlitImageInfo2& o) 
 
     o.pNext = (VkBlitImageInfo2*)parsePNextChain(obj);
 
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_VkImageLayout(obj["srcImageLayout"], (o.srcImageLayout));
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 
     parse_VkImageLayout(obj["dstImageLayout"], (o.dstImageLayout));
 
@@ -10608,7 +11699,15 @@ static void parse_VkResolveImageInfo2(const Json::Value& obj, VkResolveImageInfo
 
     o.pNext = (VkResolveImageInfo2*)parsePNextChain(obj);
 
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_VkImageLayout(obj["srcImageLayout"], (o.srcImageLayout));
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 
     parse_VkImageLayout(obj["dstImageLayout"], (o.dstImageLayout));
 
@@ -11160,9 +12259,19 @@ static void parse_VkDebugUtilsLabelEXT(const Json::Value& obj, VkDebugUtilsLabel
 
     /** TODO: Handle this - pLabelName **/
 
-    const Json::Value& obj_color_arr = obj["color"];
-    for (unsigned int i = 0; i < obj_color_arr.size(); i++) {
-        parse_float(obj_color_arr[i], const_cast<float&>((o.color[i])));
+    if constexpr (is_cts && std::is_same_v<VkDebugUtilsLabelEXT, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_color_arr = obj["color"];
+        for (unsigned int i = 0; i < obj_color_arr.size(); i++) {
+            uint64_t colorInternal = 0;
+            parse_uint64_t(obj_color_arr[i], colorInternal);
+            colorTab[i] = float(colorInternal);
+        }
+        o.color = colorTab;
+    } else {
+        const Json::Value& obj_color_arr = obj["color"];
+        for (unsigned int i = 0; i < obj_color_arr.size(); i++) {
+            parse_float(obj_color_arr[i], const_cast<float&>((o.color[i])));
+        }
     }
 }
 
@@ -11241,7 +12350,15 @@ static void parse_VkDebugUtilsMessengerCreateInfoEXT(const Json::Value& obj, VkD
 
     /** Note: Ignoring function pointer (PFN_vkDebugUtilsMessengerCallbackEXT). **/
 
-    /** Note: Ignoring void* data. **/
+    if constexpr (is_cts && is_same_v<VkDebugUtilsMessengerCreateInfoEXT, VkPipelineCacheCreateInfo>) {
+        if (o.initialDataSize > 0U) {
+            void* data = s_globalMem.allocate(uint32_t(o.initialDataSize));
+            parse_void_data(obj["pUserData"], data, int(o.initialDataSize));
+            o.pUserData = data;
+        } else
+            o.pUserData = NULL;
+    } else { /** Note: Ignoring void* data. **/
+    }
 }
 
 static void parse_VkDebugUtilsObjectTagInfoEXT(const Json::Value& obj, VkDebugUtilsObjectTagInfoEXT& o) {
@@ -11257,7 +12374,15 @@ static void parse_VkDebugUtilsObjectTagInfoEXT(const Json::Value& obj, VkDebugUt
 
     parse_size_t(obj["tagSize"], (o.tagSize));
 
-    /** Note: Ignoring void* data. **/
+    if constexpr (is_cts && is_same_v<VkDebugUtilsObjectTagInfoEXT, VkPipelineCacheCreateInfo>) {
+        if (o.initialDataSize > 0U) {
+            void* data = s_globalMem.allocate(uint32_t(o.initialDataSize));
+            parse_void_data(obj["pTag"], data, int(o.initialDataSize));
+            o.pTag = data;
+        } else
+            o.pTag = NULL;
+    } else { /** Note: Ignoring void* data. **/
+    }
 }
 
 static void parse_VkSampleLocationEXT(const Json::Value& obj, VkSampleLocationEXT& o) {
@@ -11356,11 +12481,20 @@ static void parse_VkPhysicalDeviceSampleLocationsPropertiesEXT(const Json::Value
 
     parse_VkExtent2D(obj["maxSampleLocationGridSize"], (o.maxSampleLocationGridSize));
 
-    const Json::Value& obj_sampleLocationCoordinateRange_arr = obj["sampleLocationCoordinateRange"];
-    for (unsigned int i = 0; i < obj_sampleLocationCoordinateRange_arr.size(); i++) {
-        parse_float(obj_sampleLocationCoordinateRange_arr[i], const_cast<float&>((o.sampleLocationCoordinateRange[i])));
+    if constexpr (is_cts && std::is_same_v<VkPhysicalDeviceSampleLocationsPropertiesEXT, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_sampleLocationCoordinateRange_arr = obj["sampleLocationCoordinateRange"];
+        for (unsigned int i = 0; i < obj_sampleLocationCoordinateRange_arr.size(); i++) {
+            uint64_t sampleLocationCoordinateRangeInternal = 0;
+            parse_uint64_t(obj_sampleLocationCoordinateRange_arr[i], sampleLocationCoordinateRangeInternal);
+            sampleLocationCoordinateRangeTab[i] = float(sampleLocationCoordinateRangeInternal);
+        }
+        o.sampleLocationCoordinateRange = sampleLocationCoordinateRangeTab;
+    } else {
+        const Json::Value& obj_sampleLocationCoordinateRange_arr = obj["sampleLocationCoordinateRange"];
+        for (unsigned int i = 0; i < obj_sampleLocationCoordinateRange_arr.size(); i++) {
+            parse_float(obj_sampleLocationCoordinateRange_arr[i], const_cast<float&>((o.sampleLocationCoordinateRange[i])));
+        }
     }
-
     parse_uint32_t(obj["sampleLocationSubPixelBits"], (o.sampleLocationSubPixelBits));
 
     parse_VkBool32(obj["variableSampleLocations"], (o.variableSampleLocations));
@@ -11562,10 +12696,21 @@ static void parse_VkPhysicalDeviceImageDrmFormatModifierInfoEXT(const Json::Valu
 
     parse_uint32_t(obj["queueFamilyIndexCount"], (o.queueFamilyIndexCount));
 
-    (o.pQueueFamilyIndices) = (uint32_t*)s_globalMem.allocate((o.queueFamilyIndexCount), sizeof(uint32_t));
-    const Json::Value& obj_pQueueFamilyIndices_arr = obj["pQueueFamilyIndices"];
-    for (unsigned int i = 0; i < obj_pQueueFamilyIndices_arr.size(); i++) {
-        parse_uint32_t(obj_pQueueFamilyIndices_arr[i], const_cast<uint32_t&>((o.pQueueFamilyIndices[i])));
+    if constexpr (is_cts && std::is_same_v<VkPhysicalDeviceImageDrmFormatModifierInfoEXT, VkPipelineLayoutCreateInfo>) {
+        uint32_t* pQueueFamilyIndicesTab = (uint32_t*)s_globalMem.allocate((o.queueFamilyIndexCount), sizeof(uint32_t));
+        const Json::Value& obj_pQueueFamilyIndices_arr = obj["pQueueFamilyIndices"];
+        for (unsigned int i = 0; i < obj_pQueueFamilyIndices_arr.size(); i++) {
+            uint64_t pQueueFamilyIndicesInternal = 0;
+            parse_uint64_t(obj_pQueueFamilyIndices_arr[i], pQueueFamilyIndicesInternal);
+            pQueueFamilyIndicesTab[i] = uint32_t(pQueueFamilyIndicesInternal);
+        }
+        o.pQueueFamilyIndices = pQueueFamilyIndicesTab;
+    } else {
+        (o.pQueueFamilyIndices) = (uint32_t*)s_globalMem.allocate((o.queueFamilyIndexCount), sizeof(uint32_t));
+        const Json::Value& obj_pQueueFamilyIndices_arr = obj["pQueueFamilyIndices"];
+        for (unsigned int i = 0; i < obj_pQueueFamilyIndices_arr.size(); i++) {
+            parse_uint32_t(obj_pQueueFamilyIndices_arr[i], const_cast<uint32_t&>((o.pQueueFamilyIndices[i])));
+        }
     }
 }
 
@@ -11576,10 +12721,21 @@ static void parse_VkImageDrmFormatModifierListCreateInfoEXT(const Json::Value& o
 
     parse_uint32_t(obj["drmFormatModifierCount"], (o.drmFormatModifierCount));
 
-    (o.pDrmFormatModifiers) = (uint64_t*)s_globalMem.allocate((o.drmFormatModifierCount), sizeof(uint64_t));
-    const Json::Value& obj_pDrmFormatModifiers_arr = obj["pDrmFormatModifiers"];
-    for (unsigned int i = 0; i < obj_pDrmFormatModifiers_arr.size(); i++) {
-        parse_uint64_t(obj_pDrmFormatModifiers_arr[i], const_cast<uint64_t&>((o.pDrmFormatModifiers[i])));
+    if constexpr (is_cts && std::is_same_v<VkImageDrmFormatModifierListCreateInfoEXT, VkPipelineLayoutCreateInfo>) {
+        uint64_t* pDrmFormatModifiersTab = (uint64_t*)s_globalMem.allocate((o.drmFormatModifierCount), sizeof(uint64_t));
+        const Json::Value& obj_pDrmFormatModifiers_arr = obj["pDrmFormatModifiers"];
+        for (unsigned int i = 0; i < obj_pDrmFormatModifiers_arr.size(); i++) {
+            uint64_t pDrmFormatModifiersInternal = 0;
+            parse_uint64_t(obj_pDrmFormatModifiers_arr[i], pDrmFormatModifiersInternal);
+            pDrmFormatModifiersTab[i] = uint64_t(pDrmFormatModifiersInternal);
+        }
+        o.pDrmFormatModifiers = pDrmFormatModifiersTab;
+    } else {
+        (o.pDrmFormatModifiers) = (uint64_t*)s_globalMem.allocate((o.drmFormatModifierCount), sizeof(uint64_t));
+        const Json::Value& obj_pDrmFormatModifiers_arr = obj["pDrmFormatModifiers"];
+        for (unsigned int i = 0; i < obj_pDrmFormatModifiers_arr.size(); i++) {
+            parse_uint64_t(obj_pDrmFormatModifiers_arr[i], const_cast<uint64_t&>((o.pDrmFormatModifiers[i])));
+        }
     }
 }
 
@@ -11668,7 +12824,15 @@ static void parse_VkImportMemoryHostPointerInfoEXT(const Json::Value& obj, VkImp
 
     parse_VkExternalMemoryHandleTypeFlagBits(obj["handleType"], (o.handleType));
 
-    /** Note: Ignoring void* data. **/
+    if constexpr (is_cts && is_same_v<VkImportMemoryHostPointerInfoEXT, VkPipelineCacheCreateInfo>) {
+        if (o.initialDataSize > 0U) {
+            void* data = s_globalMem.allocate(uint32_t(o.initialDataSize));
+            parse_void_data(obj["pHostPointer"], data, int(o.initialDataSize));
+            o.pHostPointer = data;
+        } else
+            o.pHostPointer = NULL;
+    } else { /** Note: Ignoring void* data. **/
+    }
 }
 
 static void parse_VkMemoryHostPointerPropertiesEXT(const Json::Value& obj, VkMemoryHostPointerPropertiesEXT& o) {
@@ -11753,14 +12917,33 @@ static void parse_VkPhysicalDeviceMemoryBudgetPropertiesEXT(const Json::Value& o
 
     o.pNext = (VkPhysicalDeviceMemoryBudgetPropertiesEXT*)parsePNextChain(obj);
 
-    const Json::Value& obj_heapBudget_arr = obj["heapBudget"];
-    for (unsigned int i = 0; i < obj_heapBudget_arr.size(); i++) {
-        parse_VkDeviceSize(obj_heapBudget_arr[i], const_cast<VkDeviceSize&>((o.heapBudget[i])));
+    if constexpr (is_cts && std::is_same_v<VkPhysicalDeviceMemoryBudgetPropertiesEXT, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_heapBudget_arr = obj["heapBudget"];
+        for (unsigned int i = 0; i < obj_heapBudget_arr.size(); i++) {
+            uint64_t heapBudgetInternal = 0;
+            parse_uint64_t(obj_heapBudget_arr[i], heapBudgetInternal);
+            heapBudgetTab[i] = VkDeviceSize(heapBudgetInternal);
+        }
+        o.heapBudget = heapBudgetTab;
+    } else {
+        const Json::Value& obj_heapBudget_arr = obj["heapBudget"];
+        for (unsigned int i = 0; i < obj_heapBudget_arr.size(); i++) {
+            parse_VkDeviceSize(obj_heapBudget_arr[i], const_cast<VkDeviceSize&>((o.heapBudget[i])));
+        }
     }
-
-    const Json::Value& obj_heapUsage_arr = obj["heapUsage"];
-    for (unsigned int i = 0; i < obj_heapUsage_arr.size(); i++) {
-        parse_VkDeviceSize(obj_heapUsage_arr[i], const_cast<VkDeviceSize&>((o.heapUsage[i])));
+    if constexpr (is_cts && std::is_same_v<VkPhysicalDeviceMemoryBudgetPropertiesEXT, VkPipelineLayoutCreateInfo>) {
+        const Json::Value& obj_heapUsage_arr = obj["heapUsage"];
+        for (unsigned int i = 0; i < obj_heapUsage_arr.size(); i++) {
+            uint64_t heapUsageInternal = 0;
+            parse_uint64_t(obj_heapUsage_arr[i], heapUsageInternal);
+            heapUsageTab[i] = VkDeviceSize(heapUsageInternal);
+        }
+        o.heapUsage = heapUsageTab;
+    } else {
+        const Json::Value& obj_heapUsage_arr = obj["heapUsage"];
+        for (unsigned int i = 0; i < obj_heapUsage_arr.size(); i++) {
+            parse_VkDeviceSize(obj_heapUsage_arr[i], const_cast<VkDeviceSize&>((o.heapUsage[i])));
+        }
     }
 }
 
@@ -11798,22 +12981,45 @@ static void parse_VkValidationFeaturesEXT(const Json::Value& obj, VkValidationFe
 
     parse_uint32_t(obj["enabledValidationFeatureCount"], (o.enabledValidationFeatureCount));
 
-    (o.pEnabledValidationFeatures) = (VkValidationFeatureEnableEXT*)s_globalMem.allocate((o.enabledValidationFeatureCount),
-                                                                                         sizeof(VkValidationFeatureEnableEXT));
-    const Json::Value& obj_pEnabledValidationFeatures_arr = obj["pEnabledValidationFeatures"];
-    for (unsigned int i = 0; i < obj_pEnabledValidationFeatures_arr.size(); i++) {
-        parse_VkValidationFeatureEnableEXT(obj_pEnabledValidationFeatures_arr[i],
-                                           const_cast<VkValidationFeatureEnableEXT&>((o.pEnabledValidationFeatures[i])));
+    if constexpr (is_cts && std::is_same_v<VkValidationFeaturesEXT, VkPipelineLayoutCreateInfo>) {
+        VkValidationFeatureEnableEXT* pEnabledValidationFeaturesTab = (VkValidationFeatureEnableEXT*)s_globalMem.allocate(
+            (o.enabledValidationFeatureCount), sizeof(VkValidationFeatureEnableEXT));
+        const Json::Value& obj_pEnabledValidationFeatures_arr = obj["pEnabledValidationFeatures"];
+        for (unsigned int i = 0; i < obj_pEnabledValidationFeatures_arr.size(); i++) {
+            uint64_t pEnabledValidationFeaturesInternal = 0;
+            parse_uint64_t(obj_pEnabledValidationFeatures_arr[i], pEnabledValidationFeaturesInternal);
+            pEnabledValidationFeaturesTab[i] = VkValidationFeatureEnableEXT(pEnabledValidationFeaturesInternal);
+        }
+        o.pEnabledValidationFeatures = pEnabledValidationFeaturesTab;
+    } else {
+        (o.pEnabledValidationFeatures) = (VkValidationFeatureEnableEXT*)s_globalMem.allocate((o.enabledValidationFeatureCount),
+                                                                                             sizeof(VkValidationFeatureEnableEXT));
+        const Json::Value& obj_pEnabledValidationFeatures_arr = obj["pEnabledValidationFeatures"];
+        for (unsigned int i = 0; i < obj_pEnabledValidationFeatures_arr.size(); i++) {
+            parse_VkValidationFeatureEnableEXT(obj_pEnabledValidationFeatures_arr[i],
+                                               const_cast<VkValidationFeatureEnableEXT&>((o.pEnabledValidationFeatures[i])));
+        }
     }
-
     parse_uint32_t(obj["disabledValidationFeatureCount"], (o.disabledValidationFeatureCount));
 
-    (o.pDisabledValidationFeatures) = (VkValidationFeatureDisableEXT*)s_globalMem.allocate((o.disabledValidationFeatureCount),
-                                                                                           sizeof(VkValidationFeatureDisableEXT));
-    const Json::Value& obj_pDisabledValidationFeatures_arr = obj["pDisabledValidationFeatures"];
-    for (unsigned int i = 0; i < obj_pDisabledValidationFeatures_arr.size(); i++) {
-        parse_VkValidationFeatureDisableEXT(obj_pDisabledValidationFeatures_arr[i],
-                                            const_cast<VkValidationFeatureDisableEXT&>((o.pDisabledValidationFeatures[i])));
+    if constexpr (is_cts && std::is_same_v<VkValidationFeaturesEXT, VkPipelineLayoutCreateInfo>) {
+        VkValidationFeatureDisableEXT* pDisabledValidationFeaturesTab = (VkValidationFeatureDisableEXT*)s_globalMem.allocate(
+            (o.disabledValidationFeatureCount), sizeof(VkValidationFeatureDisableEXT));
+        const Json::Value& obj_pDisabledValidationFeatures_arr = obj["pDisabledValidationFeatures"];
+        for (unsigned int i = 0; i < obj_pDisabledValidationFeatures_arr.size(); i++) {
+            uint64_t pDisabledValidationFeaturesInternal = 0;
+            parse_uint64_t(obj_pDisabledValidationFeatures_arr[i], pDisabledValidationFeaturesInternal);
+            pDisabledValidationFeaturesTab[i] = VkValidationFeatureDisableEXT(pDisabledValidationFeaturesInternal);
+        }
+        o.pDisabledValidationFeatures = pDisabledValidationFeaturesTab;
+    } else {
+        (o.pDisabledValidationFeatures) = (VkValidationFeatureDisableEXT*)s_globalMem.allocate(
+            (o.disabledValidationFeatureCount), sizeof(VkValidationFeatureDisableEXT));
+        const Json::Value& obj_pDisabledValidationFeatures_arr = obj["pDisabledValidationFeatures"];
+        for (unsigned int i = 0; i < obj_pDisabledValidationFeatures_arr.size(); i++) {
+            parse_VkValidationFeatureDisableEXT(obj_pDisabledValidationFeatures_arr[i],
+                                                const_cast<VkValidationFeatureDisableEXT&>((o.pDisabledValidationFeatures[i])));
+        }
     }
 }
 
@@ -12088,15 +13294,31 @@ static void parse_VkImportFenceSciSyncInfoNV(const Json::Value& obj, VkImportFen
 
     o.pNext = (VkImportFenceSciSyncInfoNV*)parsePNextChain(obj);
 
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_VkExternalFenceHandleTypeFlagBits(obj["handleType"], (o.handleType));
 
-    /** Note: Ignoring void* data. **/
+    if constexpr (is_cts && is_same_v<VkImportFenceSciSyncInfoNV, VkPipelineCacheCreateInfo>) {
+        if (o.initialDataSize > 0U) {
+            void* data = s_globalMem.allocate(uint32_t(o.initialDataSize));
+            parse_void_data(obj["handle"], data, int(o.initialDataSize));
+            o.handle = data;
+        } else
+            o.handle = NULL;
+    } else { /** Note: Ignoring void* data. **/
+    }
 }
 
 static void parse_VkFenceGetSciSyncInfoNV(const Json::Value& obj, VkFenceGetSciSyncInfoNV& o) {
     parse_VkStructureType(obj["sType"], (o.sType));
 
     o.pNext = (VkFenceGetSciSyncInfoNV*)parsePNextChain(obj);
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 
     parse_VkExternalFenceHandleTypeFlagBits(obj["handleType"], (o.handleType));
 }
@@ -12124,15 +13346,31 @@ static void parse_VkImportSemaphoreSciSyncInfoNV(const Json::Value& obj, VkImpor
 
     o.pNext = (VkImportSemaphoreSciSyncInfoNV*)parsePNextChain(obj);
 
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     parse_VkExternalSemaphoreHandleTypeFlagBits(obj["handleType"], (o.handleType));
 
-    /** Note: Ignoring void* data. **/
+    if constexpr (is_cts && is_same_v<VkImportSemaphoreSciSyncInfoNV, VkPipelineCacheCreateInfo>) {
+        if (o.initialDataSize > 0U) {
+            void* data = s_globalMem.allocate(uint32_t(o.initialDataSize));
+            parse_void_data(obj["handle"], data, int(o.initialDataSize));
+            o.handle = data;
+        } else
+            o.handle = NULL;
+    } else { /** Note: Ignoring void* data. **/
+    }
 }
 
 static void parse_VkSemaphoreGetSciSyncInfoNV(const Json::Value& obj, VkSemaphoreGetSciSyncInfoNV& o) {
     parse_VkStructureType(obj["sType"], (o.sType));
 
     o.pNext = (VkSemaphoreGetSciSyncInfoNV*)parsePNextChain(obj);
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 
     parse_VkExternalSemaphoreHandleTypeFlagBits(obj["handleType"], (o.handleType));
 }
@@ -12173,6 +13411,10 @@ static void parse_VkMemoryGetSciBufInfoNV(const Json::Value& obj, VkMemoryGetSci
     parse_VkStructureType(obj["sType"], (o.sType));
 
     o.pNext = (VkMemoryGetSciBufInfoNV*)parsePNextChain(obj);
+
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
 
     parse_VkExternalMemoryHandleTypeFlagBits(obj["handleType"], (o.handleType));
 }
@@ -12225,10 +13467,21 @@ static void parse_VkPipelineColorWriteCreateInfoEXT(const Json::Value& obj, VkPi
 
     parse_uint32_t(obj["attachmentCount"], (o.attachmentCount));
 
-    (o.pColorWriteEnables) = (VkBool32*)s_globalMem.allocate((o.attachmentCount), sizeof(VkBool32));
-    const Json::Value& obj_pColorWriteEnables_arr = obj["pColorWriteEnables"];
-    for (unsigned int i = 0; i < obj_pColorWriteEnables_arr.size(); i++) {
-        parse_VkBool32(obj_pColorWriteEnables_arr[i], const_cast<VkBool32&>((o.pColorWriteEnables[i])));
+    if constexpr (is_cts && std::is_same_v<VkPipelineColorWriteCreateInfoEXT, VkPipelineLayoutCreateInfo>) {
+        VkBool32* pColorWriteEnablesTab = (VkBool32*)s_globalMem.allocate((o.attachmentCount), sizeof(VkBool32));
+        const Json::Value& obj_pColorWriteEnables_arr = obj["pColorWriteEnables"];
+        for (unsigned int i = 0; i < obj_pColorWriteEnables_arr.size(); i++) {
+            uint64_t pColorWriteEnablesInternal = 0;
+            parse_uint64_t(obj_pColorWriteEnables_arr[i], pColorWriteEnablesInternal);
+            pColorWriteEnablesTab[i] = VkBool32(pColorWriteEnablesInternal);
+        }
+        o.pColorWriteEnables = pColorWriteEnablesTab;
+    } else {
+        (o.pColorWriteEnables) = (VkBool32*)s_globalMem.allocate((o.attachmentCount), sizeof(VkBool32));
+        const Json::Value& obj_pColorWriteEnables_arr = obj["pColorWriteEnables"];
+        for (unsigned int i = 0; i < obj_pColorWriteEnables_arr.size(); i++) {
+            parse_VkBool32(obj_pColorWriteEnables_arr[i], const_cast<VkBool32&>((o.pColorWriteEnables[i])));
+        }
     }
 }
 
@@ -12278,6 +13531,10 @@ static void parse_VkSemaphoreSciSyncCreateInfoNV(const Json::Value& obj, VkSemap
 
     o.pNext = (VkSemaphoreSciSyncCreateInfoNV*)parsePNextChain(obj);
 
+#ifdef VULKAN_JSON_CTS
+#else
+#endif  //  VULKAN_JSON_CTS
+
     /** TODO: Handle this - pFence **/
 }
 
@@ -12310,7 +13567,15 @@ static void parse_VkLayerSettingEXT(const Json::Value& obj, VkLayerSettingEXT& o
 
     parse_uint32_t(obj["valueCount"], (o.valueCount));
 
-    /** Note: Ignoring void* data. **/
+    if constexpr (is_cts && is_same_v<VkLayerSettingEXT, VkPipelineCacheCreateInfo>) {
+        if (o.initialDataSize > 0U) {
+            void* data = s_globalMem.allocate(uint32_t(o.initialDataSize));
+            parse_void_data(obj["pValues"], data, int(o.initialDataSize));
+            o.pValues = data;
+        } else
+            o.pValues = NULL;
+    } else { /** Note: Ignoring void* data. **/
+    }
 }
 
 static void parse_VkLayerSettingsCreateInfoEXT(const Json::Value& obj, VkLayerSettingsCreateInfoEXT& o) {

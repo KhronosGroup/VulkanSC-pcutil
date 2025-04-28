@@ -76,6 +76,21 @@ static void print_size_t(size_t o, const std::string& s, bool commaNeeded = true
          << " : " << static_cast<uint32_t>(o) << (commaNeeded ? "," : "") << std::endl;
 }
 
+static void print_empty(const std::string& s, bool commaNeeded) {
+    PRINT_SPACE _OUT << "\"" << s << "\""
+                     << " : "
+                     << "\"" << (commaNeeded ? "," : "") << std::endl;
+}
+#ifdef VULKAN_JSON_CTS
+#define print_empty_value_required_by_cts(memberName, instanceName, commaNeeded) \
+    PRINT_SPACE _OUT << "\"" << #memberName << "\""                              \
+                     << " : " << instanceName memberName.getInternal() << (commaNeeded ? "," : "") << std::endl
+constexpr bool is_cts = true;
+#else
+#define print_empty_value_required_by_cts(memberName, instanceName, commaNeeded) print_empty(#memberName, commaNeeded)
+constexpr bool is_cts = false;
+#endif
+
 static void print_int32_t(int32_t o, const std::string& s, bool commaNeeded = true) { PRINT_VAL(commaNeeded) }
 
 static void print_int32_t(const int32_t* o, const std::string& s, bool commaNeeded = true) { PRINT_VAL(commaNeeded) }
@@ -92,9 +107,35 @@ static void print_uint64_t(uint64_t o, const std::string& s, bool commaNeeded = 
 
 static void print_uint64_t(const uint64_t* o, const std::string& s, bool commaNeeded = true) { PRINT_VAL(commaNeeded) }
 
-static void print_float(float o, const std::string& s, bool commaNeeded = true) { PRINT_VAL(commaNeeded) }
+static void print_float(float o, const std::string& s, bool commaNeeded = true) {
+#ifdef VULKAN_JSON_CTS
+    if (std::isnan(o)) {
+        PRINT_SPACE
+        if (s != "")
+            _OUT << "\"" << s << "\""
+                 << " : \"NaN\"" << (commaNeeded ? "," : "") << std::endl;
+        else
+            _OUT << "\"NaN\"" << (commaNeeded ? "," : "") << std::endl;
+    } else {
+        PRINT_VAL(commaNeeded)
+    }
+#endif  // JSON_GEN_IN_CTS
+}
 
-static void print_float(const float* o, const std::string& s, bool commaNeeded = true) { PRINT_VAL(commaNeeded) }
+static void print_float(const float* o, const std::string& s, bool commaNeeded = true) {
+#ifdef VULKAN_JSON_CTS
+    if (std::isnan(*o)) {
+        PRINT_SPACE
+        if (s != "")
+            _OUT << "\"" << s << "\""
+                 << " : \"NaN\"" << (commaNeeded ? "," : "") << std::endl;
+        else
+            _OUT << "\"NaN\"" << (commaNeeded ? "," : "") << std::endl;
+    } else {
+        PRINT_VAL(commaNeeded)
+    }
+#endif  // JSON_GEN_IN_CTS
+}
 
 static void print_int(int o, const std::string& s, bool commaNeeded = true) { PRINT_VAL(commaNeeded) }
 
@@ -142,8 +183,15 @@ std::ostream& operator<<(std::ostream& str, const Base64Formatter& fmt) {
 
     /* Loop all input chars. */
     while (srcNdx < numBytes) {
+#ifdef min
+#define min_bak min
 #undef min
+#endif
         int numRead = std::min(3, numBytes - srcNdx);
+#ifdef min_bak
+#define min min_bak
+#undef min_bak
+#endif
         uint8_t s0 = data[srcNdx];
         uint8_t s1 = (numRead >= 2) ? data[srcNdx + 1] : 0;
         uint8_t s2 = (numRead >= 3) ? data[srcNdx + 2] : 0;
@@ -6109,13 +6157,7 @@ static void print_VkBufferMemoryBarrier(VkBufferMemoryBarrier obj, const std::st
 
     print_uint32_t(obj.dstQueueFamilyIndex, "dstQueueFamilyIndex", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "buffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("buffer", true);
 
     print_VkDeviceSize(obj.offset, "offset", 1);
 
@@ -6152,13 +6194,7 @@ static void print_VkBufferMemoryBarrier(const VkBufferMemoryBarrier* obj, const 
 
     print_uint32_t(obj->dstQueueFamilyIndex, "dstQueueFamilyIndex", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "buffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("buffer", true);
 
     print_VkDeviceSize(obj->offset, "offset", 1);
 
@@ -6369,13 +6405,7 @@ static void print_VkImageMemoryBarrier(VkImageMemoryBarrier obj, const std::stri
 
     print_uint32_t(obj.dstQueueFamilyIndex, "dstQueueFamilyIndex", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "image"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("image", true);
 
     PRINT_SPACE
     _OUT << "\"subresourceRange\": " << std::endl;
@@ -6416,13 +6446,7 @@ static void print_VkImageMemoryBarrier(const VkImageMemoryBarrier* obj, const st
 
     print_uint32_t(obj->dstQueueFamilyIndex, "dstQueueFamilyIndex", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "image"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("image", true);
 
     PRINT_SPACE
     _OUT << "\"subresourceRange\": " << std::endl;
@@ -6510,8 +6534,13 @@ static void print_VkPipelineCacheHeaderVersionOne(VkPipelineCacheHeaderVersionOn
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_UUID_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
         print_uint8_t(obj.pipelineCacheUUID[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
+        print_uint8_t(obj.pipelineCacheUUID[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -6543,8 +6572,13 @@ static void print_VkPipelineCacheHeaderVersionOne(const VkPipelineCacheHeaderVer
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_UUID_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
         print_uint8_t(obj->pipelineCacheUUID[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
+        print_uint8_t(obj->pipelineCacheUUID[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -7270,8 +7304,13 @@ static void print_VkPhysicalDeviceLimits(VkPhysicalDeviceLimits obj, const std::
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 3; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 3;
         print_uint32_t(obj.maxComputeWorkGroupCount[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 3;
+        print_uint32_t(obj.maxComputeWorkGroupCount[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -7284,8 +7323,13 @@ static void print_VkPhysicalDeviceLimits(VkPhysicalDeviceLimits obj, const std::
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 3; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 3;
         print_uint32_t(obj.maxComputeWorkGroupSize[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 3;
+        print_uint32_t(obj.maxComputeWorkGroupSize[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -7312,8 +7356,13 @@ static void print_VkPhysicalDeviceLimits(VkPhysicalDeviceLimits obj, const std::
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 2; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 2;
         print_uint32_t(obj.maxViewportDimensions[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 2;
+        print_uint32_t(obj.maxViewportDimensions[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -7324,8 +7373,13 @@ static void print_VkPhysicalDeviceLimits(VkPhysicalDeviceLimits obj, const std::
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 2; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 2;
         print_float(obj.viewportBoundsRange[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 2;
+        print_float(obj.viewportBoundsRange[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -7400,8 +7454,13 @@ static void print_VkPhysicalDeviceLimits(VkPhysicalDeviceLimits obj, const std::
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 2; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 2;
         print_float(obj.pointSizeRange[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 2;
+        print_float(obj.pointSizeRange[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -7412,8 +7471,13 @@ static void print_VkPhysicalDeviceLimits(VkPhysicalDeviceLimits obj, const std::
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 2; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 2;
         print_float(obj.lineWidthRange[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 2;
+        print_float(obj.lineWidthRange[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -7554,8 +7618,13 @@ static void print_VkPhysicalDeviceLimits(const VkPhysicalDeviceLimits* obj, cons
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 3; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 3;
         print_uint32_t(obj->maxComputeWorkGroupCount[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 3;
+        print_uint32_t(obj->maxComputeWorkGroupCount[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -7568,8 +7637,13 @@ static void print_VkPhysicalDeviceLimits(const VkPhysicalDeviceLimits* obj, cons
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 3; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 3;
         print_uint32_t(obj->maxComputeWorkGroupSize[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 3;
+        print_uint32_t(obj->maxComputeWorkGroupSize[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -7596,8 +7670,13 @@ static void print_VkPhysicalDeviceLimits(const VkPhysicalDeviceLimits* obj, cons
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 2; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 2;
         print_uint32_t(obj->maxViewportDimensions[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 2;
+        print_uint32_t(obj->maxViewportDimensions[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -7608,8 +7687,13 @@ static void print_VkPhysicalDeviceLimits(const VkPhysicalDeviceLimits* obj, cons
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 2; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 2;
         print_float(obj->viewportBoundsRange[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 2;
+        print_float(obj->viewportBoundsRange[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -7684,8 +7768,13 @@ static void print_VkPhysicalDeviceLimits(const VkPhysicalDeviceLimits* obj, cons
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 2; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 2;
         print_float(obj->pointSizeRange[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 2;
+        print_float(obj->pointSizeRange[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -7696,8 +7785,13 @@ static void print_VkPhysicalDeviceLimits(const VkPhysicalDeviceLimits* obj, cons
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 2; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 2;
         print_float(obj->lineWidthRange[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 2;
+        print_float(obj->lineWidthRange[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -7738,8 +7832,13 @@ static void print_VkPhysicalDeviceMemoryProperties(VkPhysicalDeviceMemoryPropert
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_MEMORY_TYPES; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_MEMORY_TYPES;
         print_VkMemoryType(obj.memoryTypes[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_MEMORY_TYPES;
+        print_VkMemoryType(obj.memoryTypes[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -7752,8 +7851,13 @@ static void print_VkPhysicalDeviceMemoryProperties(VkPhysicalDeviceMemoryPropert
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_MEMORY_HEAPS; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_MEMORY_HEAPS;
         print_VkMemoryHeap(obj.memoryHeaps[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_MEMORY_HEAPS;
+        print_VkMemoryHeap(obj.memoryHeaps[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -7779,8 +7883,13 @@ static void print_VkPhysicalDeviceMemoryProperties(const VkPhysicalDeviceMemoryP
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_MEMORY_TYPES; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_MEMORY_TYPES;
         print_VkMemoryType(obj->memoryTypes[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_MEMORY_TYPES;
+        print_VkMemoryType(obj->memoryTypes[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -7793,8 +7902,13 @@ static void print_VkPhysicalDeviceMemoryProperties(const VkPhysicalDeviceMemoryP
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_MEMORY_HEAPS; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_MEMORY_HEAPS;
         print_VkMemoryHeap(obj->memoryHeaps[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_MEMORY_HEAPS;
+        print_VkMemoryHeap(obj->memoryHeaps[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -7875,8 +7989,13 @@ static void print_VkPhysicalDeviceProperties(VkPhysicalDeviceProperties obj, con
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_PHYSICAL_DEVICE_NAME_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_PHYSICAL_DEVICE_NAME_SIZE;
         print_char(obj.deviceName[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_PHYSICAL_DEVICE_NAME_SIZE;
+        print_char(obj.deviceName[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -7887,8 +8006,13 @@ static void print_VkPhysicalDeviceProperties(VkPhysicalDeviceProperties obj, con
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_UUID_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
         print_uint8_t(obj.pipelineCacheUUID[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
+        print_uint8_t(obj.pipelineCacheUUID[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -7929,8 +8053,13 @@ static void print_VkPhysicalDeviceProperties(const VkPhysicalDeviceProperties* o
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_PHYSICAL_DEVICE_NAME_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_PHYSICAL_DEVICE_NAME_SIZE;
         print_char(obj->deviceName[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_PHYSICAL_DEVICE_NAME_SIZE;
+        print_char(obj->deviceName[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -7941,8 +8070,13 @@ static void print_VkPhysicalDeviceProperties(const VkPhysicalDeviceProperties* o
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_UUID_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
         print_uint8_t(obj->pipelineCacheUUID[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
+        print_uint8_t(obj->pipelineCacheUUID[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -8037,8 +8171,13 @@ static void print_VkDeviceQueueCreateInfo(VkDeviceQueueCreateInfo obj, const std
     if (obj.pQueuePriorities) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.queueCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.queueCount;
             print_float(obj.pQueuePriorities[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.queueCount;
+            print_float(obj.pQueuePriorities[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -8083,8 +8222,13 @@ static void print_VkDeviceQueueCreateInfo(const VkDeviceQueueCreateInfo* obj, co
     if (obj->pQueuePriorities) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->queueCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->queueCount;
             print_float(obj->pQueuePriorities[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->queueCount;
+            print_float(obj->pQueuePriorities[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -8237,8 +8381,13 @@ static void print_VkExtensionProperties(VkExtensionProperties obj, const std::st
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_EXTENSION_NAME_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_EXTENSION_NAME_SIZE;
         print_char(obj.extensionName[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_EXTENSION_NAME_SIZE;
+        print_char(obj.extensionName[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -8263,8 +8412,13 @@ static void print_VkExtensionProperties(const VkExtensionProperties* obj, const 
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_EXTENSION_NAME_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_EXTENSION_NAME_SIZE;
         print_char(obj->extensionName[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_EXTENSION_NAME_SIZE;
+        print_char(obj->extensionName[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -8290,8 +8444,13 @@ static void print_VkLayerProperties(VkLayerProperties obj, const std::string& s,
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_EXTENSION_NAME_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_EXTENSION_NAME_SIZE;
         print_char(obj.layerName[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_EXTENSION_NAME_SIZE;
+        print_char(obj.layerName[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -8306,8 +8465,13 @@ static void print_VkLayerProperties(VkLayerProperties obj, const std::string& s,
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_DESCRIPTION_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_DESCRIPTION_SIZE;
         print_char(obj.description[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_DESCRIPTION_SIZE;
+        print_char(obj.description[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -8330,8 +8494,13 @@ static void print_VkLayerProperties(const VkLayerProperties* obj, const std::str
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_EXTENSION_NAME_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_EXTENSION_NAME_SIZE;
         print_char(obj->layerName[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_EXTENSION_NAME_SIZE;
+        print_char(obj->layerName[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -8346,8 +8515,13 @@ static void print_VkLayerProperties(const VkLayerProperties* obj, const std::str
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_DESCRIPTION_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_DESCRIPTION_SIZE;
         print_char(obj->description[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_DESCRIPTION_SIZE;
+        print_char(obj->description[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -8385,11 +8559,19 @@ static void print_VkSubmitInfo(VkSubmitInfo obj, const std::string& s, bool comm
     if (obj.pWaitSemaphores) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.waitSemaphoreCount; i++) {
+#ifdef VULKAN_JSON_CTS
             std::stringstream tmp;
             tmp << "pWaitSemaphores"
                 << "_" << i;
             bool isCommaNeeded = (i + 1) != obj.waitSemaphoreCount;
             print_VkSemaphore(obj.pWaitSemaphores[i], tmp.str(), isCommaNeeded);
+#else
+            std::stringstream tmp;
+            tmp << "pWaitSemaphores"
+                << "_" << i;
+            bool isCommaNeeded = (i + 1) != obj.waitSemaphoreCount;
+            print_VkSemaphore(obj.pWaitSemaphores[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -8405,8 +8587,13 @@ static void print_VkSubmitInfo(VkSubmitInfo obj, const std::string& s, bool comm
     if (obj.pWaitDstStageMask) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.waitSemaphoreCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.waitSemaphoreCount;
             print_VkPipelineStageFlags(obj.pWaitDstStageMask[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.waitSemaphoreCount;
+            print_VkPipelineStageFlags(obj.pWaitDstStageMask[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -8424,11 +8611,19 @@ static void print_VkSubmitInfo(VkSubmitInfo obj, const std::string& s, bool comm
     if (obj.pCommandBuffers) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.commandBufferCount; i++) {
+#ifdef VULKAN_JSON_CTS
             std::stringstream tmp;
             tmp << "pCommandBuffers"
                 << "_" << i;
             bool isCommaNeeded = (i + 1) != obj.commandBufferCount;
             print_VkCommandBuffer(obj.pCommandBuffers[i], tmp.str(), isCommaNeeded);
+#else
+            std::stringstream tmp;
+            tmp << "pCommandBuffers"
+                << "_" << i;
+            bool isCommaNeeded = (i + 1) != obj.commandBufferCount;
+            print_VkCommandBuffer(obj.pCommandBuffers[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -8446,11 +8641,19 @@ static void print_VkSubmitInfo(VkSubmitInfo obj, const std::string& s, bool comm
     if (obj.pSignalSemaphores) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.signalSemaphoreCount; i++) {
+#ifdef VULKAN_JSON_CTS
             std::stringstream tmp;
             tmp << "pSignalSemaphores"
                 << "_" << i;
             bool isCommaNeeded = (i + 1) != obj.signalSemaphoreCount;
             print_VkSemaphore(obj.pSignalSemaphores[i], tmp.str(), isCommaNeeded);
+#else
+            std::stringstream tmp;
+            tmp << "pSignalSemaphores"
+                << "_" << i;
+            bool isCommaNeeded = (i + 1) != obj.signalSemaphoreCount;
+            print_VkSemaphore(obj.pSignalSemaphores[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -8491,11 +8694,19 @@ static void print_VkSubmitInfo(const VkSubmitInfo* obj, const std::string& s, bo
     if (obj->pWaitSemaphores) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->waitSemaphoreCount; i++) {
+#ifdef VULKAN_JSON_CTS
             std::stringstream tmp;
             tmp << "pWaitSemaphores"
                 << "_" << i;
             bool isCommaNeeded = (i + 1) != obj->waitSemaphoreCount;
             print_VkSemaphore(obj->pWaitSemaphores[i], tmp.str(), isCommaNeeded);
+#else
+            std::stringstream tmp;
+            tmp << "pWaitSemaphores"
+                << "_" << i;
+            bool isCommaNeeded = (i + 1) != obj->waitSemaphoreCount;
+            print_VkSemaphore(obj->pWaitSemaphores[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -8511,8 +8722,13 @@ static void print_VkSubmitInfo(const VkSubmitInfo* obj, const std::string& s, bo
     if (obj->pWaitDstStageMask) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->waitSemaphoreCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->waitSemaphoreCount;
             print_VkPipelineStageFlags(obj->pWaitDstStageMask[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->waitSemaphoreCount;
+            print_VkPipelineStageFlags(obj->pWaitDstStageMask[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -8530,11 +8746,19 @@ static void print_VkSubmitInfo(const VkSubmitInfo* obj, const std::string& s, bo
     if (obj->pCommandBuffers) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->commandBufferCount; i++) {
+#ifdef VULKAN_JSON_CTS
             std::stringstream tmp;
             tmp << "pCommandBuffers"
                 << "_" << i;
             bool isCommaNeeded = (i + 1) != obj->commandBufferCount;
             print_VkCommandBuffer(obj->pCommandBuffers[i], tmp.str(), isCommaNeeded);
+#else
+            std::stringstream tmp;
+            tmp << "pCommandBuffers"
+                << "_" << i;
+            bool isCommaNeeded = (i + 1) != obj->commandBufferCount;
+            print_VkCommandBuffer(obj->pCommandBuffers[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -8552,11 +8776,19 @@ static void print_VkSubmitInfo(const VkSubmitInfo* obj, const std::string& s, bo
     if (obj->pSignalSemaphores) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->signalSemaphoreCount; i++) {
+#ifdef VULKAN_JSON_CTS
             std::stringstream tmp;
             tmp << "pSignalSemaphores"
                 << "_" << i;
             bool isCommaNeeded = (i + 1) != obj->signalSemaphoreCount;
             print_VkSemaphore(obj->pSignalSemaphores[i], tmp.str(), isCommaNeeded);
+#else
+            std::stringstream tmp;
+            tmp << "pSignalSemaphores"
+                << "_" << i;
+            bool isCommaNeeded = (i + 1) != obj->signalSemaphoreCount;
+            print_VkSemaphore(obj->pSignalSemaphores[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -8590,13 +8822,7 @@ static void print_VkMappedMemoryRange(VkMappedMemoryRange obj, const std::string
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "memory"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("memory", true);
 
     print_VkDeviceSize(obj.offset, "offset", 1);
 
@@ -8625,13 +8851,7 @@ static void print_VkMappedMemoryRange(const VkMappedMemoryRange* obj, const std:
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "memory"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("memory", true);
 
     print_VkDeviceSize(obj->offset, "offset", 1);
 
@@ -8746,13 +8966,7 @@ static void print_VkSparseMemoryBind(VkSparseMemoryBind obj, const std::string& 
 
     print_VkDeviceSize(obj.size, "size", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "memory"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("memory", true);
 
     print_VkDeviceSize(obj.memoryOffset, "memoryOffset", 1);
 
@@ -8774,13 +8988,7 @@ static void print_VkSparseMemoryBind(const VkSparseMemoryBind* obj, const std::s
 
     print_VkDeviceSize(obj->size, "size", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "memory"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("memory", true);
 
     print_VkDeviceSize(obj->memoryOffset, "memoryOffset", 1);
 
@@ -8799,13 +9007,7 @@ static void print_VkSparseBufferMemoryBindInfo(VkSparseBufferMemoryBindInfo obj,
     _OUT << "{" << std::endl;
     INDENT(4);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "buffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("buffer", true);
 
     print_uint32_t(obj.bindCount, "bindCount", 1);
 
@@ -8840,13 +9042,7 @@ static void print_VkSparseBufferMemoryBindInfo(const VkSparseBufferMemoryBindInf
     _OUT << "{" << std::endl;
     INDENT(4);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "buffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("buffer", true);
 
     print_uint32_t(obj->bindCount, "bindCount", 1);
 
@@ -8882,13 +9078,7 @@ static void print_VkSparseImageOpaqueMemoryBindInfo(VkSparseImageOpaqueMemoryBin
     _OUT << "{" << std::endl;
     INDENT(4);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "image"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("image", true);
 
     print_uint32_t(obj.bindCount, "bindCount", 1);
 
@@ -8923,13 +9113,7 @@ static void print_VkSparseImageOpaqueMemoryBindInfo(const VkSparseImageOpaqueMem
     _OUT << "{" << std::endl;
     INDENT(4);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "image"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("image", true);
 
     print_uint32_t(obj->bindCount, "bindCount", 1);
 
@@ -9013,13 +9197,7 @@ static void print_VkSparseImageMemoryBind(VkSparseImageMemoryBind obj, const std
     _OUT << "\"extent\": " << std::endl;
     { print_VkExtent3D(obj.extent, "extent", 1); }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "memory"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("memory", true);
 
     print_VkDeviceSize(obj.memoryOffset, "memoryOffset", 1);
 
@@ -9049,13 +9227,7 @@ static void print_VkSparseImageMemoryBind(const VkSparseImageMemoryBind* obj, co
     _OUT << "\"extent\": " << std::endl;
     { print_VkExtent3D(obj->extent, "extent", 1); }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "memory"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("memory", true);
 
     print_VkDeviceSize(obj->memoryOffset, "memoryOffset", 1);
 
@@ -9074,13 +9246,7 @@ static void print_VkSparseImageMemoryBindInfo(VkSparseImageMemoryBindInfo obj, c
     _OUT << "{" << std::endl;
     INDENT(4);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "image"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("image", true);
 
     print_uint32_t(obj.bindCount, "bindCount", 1);
 
@@ -9115,13 +9281,7 @@ static void print_VkSparseImageMemoryBindInfo(const VkSparseImageMemoryBindInfo*
     _OUT << "{" << std::endl;
     INDENT(4);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "image"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("image", true);
 
     print_uint32_t(obj->bindCount, "bindCount", 1);
 
@@ -9175,11 +9335,19 @@ static void print_VkBindSparseInfo(VkBindSparseInfo obj, const std::string& s, b
     if (obj.pWaitSemaphores) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.waitSemaphoreCount; i++) {
+#ifdef VULKAN_JSON_CTS
             std::stringstream tmp;
             tmp << "pWaitSemaphores"
                 << "_" << i;
             bool isCommaNeeded = (i + 1) != obj.waitSemaphoreCount;
             print_VkSemaphore(obj.pWaitSemaphores[i], tmp.str(), isCommaNeeded);
+#else
+            std::stringstream tmp;
+            tmp << "pWaitSemaphores"
+                << "_" << i;
+            bool isCommaNeeded = (i + 1) != obj.waitSemaphoreCount;
+            print_VkSemaphore(obj.pWaitSemaphores[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -9257,11 +9425,19 @@ static void print_VkBindSparseInfo(VkBindSparseInfo obj, const std::string& s, b
     if (obj.pSignalSemaphores) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.signalSemaphoreCount; i++) {
+#ifdef VULKAN_JSON_CTS
             std::stringstream tmp;
             tmp << "pSignalSemaphores"
                 << "_" << i;
             bool isCommaNeeded = (i + 1) != obj.signalSemaphoreCount;
             print_VkSemaphore(obj.pSignalSemaphores[i], tmp.str(), isCommaNeeded);
+#else
+            std::stringstream tmp;
+            tmp << "pSignalSemaphores"
+                << "_" << i;
+            bool isCommaNeeded = (i + 1) != obj.signalSemaphoreCount;
+            print_VkSemaphore(obj.pSignalSemaphores[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -9302,11 +9478,19 @@ static void print_VkBindSparseInfo(const VkBindSparseInfo* obj, const std::strin
     if (obj->pWaitSemaphores) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->waitSemaphoreCount; i++) {
+#ifdef VULKAN_JSON_CTS
             std::stringstream tmp;
             tmp << "pWaitSemaphores"
                 << "_" << i;
             bool isCommaNeeded = (i + 1) != obj->waitSemaphoreCount;
             print_VkSemaphore(obj->pWaitSemaphores[i], tmp.str(), isCommaNeeded);
+#else
+            std::stringstream tmp;
+            tmp << "pWaitSemaphores"
+                << "_" << i;
+            bool isCommaNeeded = (i + 1) != obj->waitSemaphoreCount;
+            print_VkSemaphore(obj->pWaitSemaphores[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -9384,11 +9568,19 @@ static void print_VkBindSparseInfo(const VkBindSparseInfo* obj, const std::strin
     if (obj->pSignalSemaphores) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->signalSemaphoreCount; i++) {
+#ifdef VULKAN_JSON_CTS
             std::stringstream tmp;
             tmp << "pSignalSemaphores"
                 << "_" << i;
             bool isCommaNeeded = (i + 1) != obj->signalSemaphoreCount;
             print_VkSemaphore(obj->pSignalSemaphores[i], tmp.str(), isCommaNeeded);
+#else
+            std::stringstream tmp;
+            tmp << "pSignalSemaphores"
+                << "_" << i;
+            bool isCommaNeeded = (i + 1) != obj->signalSemaphoreCount;
+            print_VkSemaphore(obj->pSignalSemaphores[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -9747,8 +9939,13 @@ static void print_VkBufferCreateInfo(VkBufferCreateInfo obj, const std::string& 
     if (obj.pQueueFamilyIndices) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.queueFamilyIndexCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.queueFamilyIndexCount;
             print_uint32_t(obj.pQueueFamilyIndices[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.queueFamilyIndexCount;
+            print_uint32_t(obj.pQueueFamilyIndices[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -9797,8 +9994,13 @@ static void print_VkBufferCreateInfo(const VkBufferCreateInfo* obj, const std::s
     if (obj->pQueueFamilyIndices) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->queueFamilyIndexCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->queueFamilyIndexCount;
             print_uint32_t(obj->pQueueFamilyIndices[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->queueFamilyIndexCount;
+            print_uint32_t(obj->pQueueFamilyIndices[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -9834,13 +10036,7 @@ static void print_VkBufferViewCreateInfo(VkBufferViewCreateInfo obj, const std::
 
     print_VkBufferViewCreateFlags(obj.flags, "flags", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "buffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("buffer", true);
 
     print_VkFormat(obj.format, "format", 1);
 
@@ -9873,13 +10069,7 @@ static void print_VkBufferViewCreateInfo(const VkBufferViewCreateInfo* obj, cons
 
     print_VkBufferViewCreateFlags(obj->flags, "flags", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "buffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("buffer", true);
 
     print_VkFormat(obj->format, "format", 1);
 
@@ -9941,8 +10131,13 @@ static void print_VkImageCreateInfo(VkImageCreateInfo obj, const std::string& s,
     if (obj.pQueueFamilyIndices) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.queueFamilyIndexCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.queueFamilyIndexCount;
             print_uint32_t(obj.pQueueFamilyIndices[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.queueFamilyIndexCount;
+            print_uint32_t(obj.pQueueFamilyIndices[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -10007,8 +10202,13 @@ static void print_VkImageCreateInfo(const VkImageCreateInfo* obj, const std::str
     if (obj->pQueueFamilyIndices) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->queueFamilyIndexCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->queueFamilyIndexCount;
             print_uint32_t(obj->pQueueFamilyIndices[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->queueFamilyIndexCount;
+            print_uint32_t(obj->pQueueFamilyIndices[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -10132,13 +10332,7 @@ static void print_VkImageViewCreateInfo(VkImageViewCreateInfo obj, const std::st
 
     print_VkImageViewCreateFlags(obj.flags, "flags", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "image"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("image", true);
 
     print_VkImageViewType(obj.viewType, "viewType", 1);
 
@@ -10177,13 +10371,7 @@ static void print_VkImageViewCreateInfo(const VkImageViewCreateInfo* obj, const 
 
     print_VkImageViewCreateFlags(obj->flags, "flags", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "image"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("image", true);
 
     print_VkImageViewType(obj->viewType, "viewType", 1);
 
@@ -10284,7 +10472,11 @@ static void print_VkPipelineCacheCreateInfo(VkPipelineCacheCreateInfo obj, const
 
     print_size_t(obj.initialDataSize, "initialDataSize", 1);
 
+#ifdef VULKAN_JSON_CTS
+    print_void_data(obj.pInitialData, int(obj.initialDataSize), "pInitialData", 0);
+#else
     /** Note: Ignoring void* data. **/
+#endif  //  VULKAN_JSON_CTS
 
     INDENT(-4);
     PRINT_SPACE
@@ -10313,7 +10505,11 @@ static void print_VkPipelineCacheCreateInfo(const VkPipelineCacheCreateInfo* obj
 
     print_size_t(obj->initialDataSize, "initialDataSize", 1);
 
+#ifdef VULKAN_JSON_CTS
+    print_void_data(obj->pInitialData, int(obj->initialDataSize), "pInitialData", 0);
+#else
     /** Note: Ignoring void* data. **/
+#endif  //  VULKAN_JSON_CTS
 
     INDENT(-4);
     PRINT_SPACE
@@ -10454,13 +10650,7 @@ static void print_VkPipelineShaderStageCreateInfo(VkPipelineShaderStageCreateInf
 
     print_VkShaderStageFlagBits(obj.stage, "stage", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "module"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty_value_required_by_cts(module, obj., true);
 
     print_char(obj.pName, "pName", 1);
 
@@ -10501,13 +10691,7 @@ static void print_VkPipelineShaderStageCreateInfo(const VkPipelineShaderStageCre
 
     print_VkShaderStageFlagBits(obj->stage, "stage", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "module"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty_value_required_by_cts(module, obj->, true);
 
     print_char(obj->pName, "pName", 1);
 
@@ -10550,21 +10734,9 @@ static void print_VkComputePipelineCreateInfo(VkComputePipelineCreateInfo obj, c
     _OUT << "\"stage\": " << std::endl;
     { print_VkPipelineShaderStageCreateInfo(obj.stage, "stage", 1); }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "layout"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty_value_required_by_cts(layout, obj., true);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "basePipelineHandle"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("basePipelineHandle", true);
 
     print_int32_t(obj.basePipelineIndex, "basePipelineIndex", 0);
 
@@ -10598,21 +10770,9 @@ static void print_VkComputePipelineCreateInfo(const VkComputePipelineCreateInfo*
     _OUT << "\"stage\": " << std::endl;
     { print_VkPipelineShaderStageCreateInfo(obj->stage, "stage", 1); }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "layout"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty_value_required_by_cts(layout, obj->, true);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "basePipelineHandle"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("basePipelineHandle", true);
 
     print_int32_t(obj->basePipelineIndex, "basePipelineIndex", 0);
 
@@ -11264,8 +11424,13 @@ static void print_VkPipelineMultisampleStateCreateInfo(VkPipelineMultisampleStat
     if (obj.pSampleMask) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < sampleMaskSize; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != sampleMaskSize;
             print_uint32_t(obj.pSampleMask[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != sampleMaskSize;
+            print_uint32_t(obj.pSampleMask[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -11318,8 +11483,13 @@ static void print_VkPipelineMultisampleStateCreateInfo(const VkPipelineMultisamp
     if (obj->pSampleMask) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < sampleMaskSize; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != sampleMaskSize;
             print_uint32_t(obj->pSampleMask[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != sampleMaskSize;
+            print_uint32_t(obj->pSampleMask[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -11598,8 +11768,13 @@ static void print_VkPipelineColorBlendStateCreateInfo(VkPipelineColorBlendStateC
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 4; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 4;
         print_float(obj.blendConstants[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 4;
+        print_float(obj.blendConstants[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -11660,8 +11835,13 @@ static void print_VkPipelineColorBlendStateCreateInfo(const VkPipelineColorBlend
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 4; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 4;
         print_float(obj->blendConstants[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 4;
+        print_float(obj->blendConstants[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -11702,8 +11882,13 @@ static void print_VkPipelineDynamicStateCreateInfo(VkPipelineDynamicStateCreateI
     if (obj.pDynamicStates) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.dynamicStateCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.dynamicStateCount;
             print_VkDynamicState(obj.pDynamicStates[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.dynamicStateCount;
+            print_VkDynamicState(obj.pDynamicStates[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -11747,8 +11932,13 @@ static void print_VkPipelineDynamicStateCreateInfo(const VkPipelineDynamicStateC
     if (obj->pDynamicStates) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->dynamicStateCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->dynamicStateCount;
             print_VkDynamicState(obj->pDynamicStates[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->dynamicStateCount;
+            print_VkDynamicState(obj->pDynamicStates[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -11885,31 +12075,13 @@ static void print_VkGraphicsPipelineCreateInfo(VkGraphicsPipelineCreateInfo obj,
                          << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "layout"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty_value_required_by_cts(layout, obj., true);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "renderPass"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty_value_required_by_cts(renderPass, obj., true);
 
     print_uint32_t(obj.subpass, "subpass", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "basePipelineHandle"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("basePipelineHandle", true);
 
     print_int32_t(obj.basePipelineIndex, "basePipelineIndex", 0);
 
@@ -12040,31 +12212,13 @@ static void print_VkGraphicsPipelineCreateInfo(const VkGraphicsPipelineCreateInf
                          << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "layout"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty_value_required_by_cts(layout, obj->, true);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "renderPass"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty_value_required_by_cts(renderPass, obj->, true);
 
     print_uint32_t(obj->subpass, "subpass", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "basePipelineHandle"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("basePipelineHandle", true);
 
     print_int32_t(obj->basePipelineIndex, "basePipelineIndex", 0);
 
@@ -12139,11 +12293,22 @@ static void print_VkPipelineLayoutCreateInfo(VkPipelineLayoutCreateInfo obj, con
     if (obj.pSetLayouts) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.setLayoutCount; i++) {
+#ifdef VULKAN_JSON_CTS
+            bool isCommaNeeded = (i + 1) != obj.setLayoutCount;
+            if (isCommaNeeded) {
+                PRINT_SPACE
+                _OUT << obj.pSetLayouts[i].getInternal() << "," << std::endl;
+            } else {
+                PRINT_SPACE
+                _OUT << obj.pSetLayouts[i].getInternal() << std::endl;
+            }
+#else
             std::stringstream tmp;
             tmp << "pSetLayouts"
                 << "_" << i;
             bool isCommaNeeded = (i + 1) != obj.setLayoutCount;
             print_VkDescriptorSetLayout(obj.pSetLayouts[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -12206,11 +12371,22 @@ static void print_VkPipelineLayoutCreateInfo(const VkPipelineLayoutCreateInfo* o
     if (obj->pSetLayouts) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->setLayoutCount; i++) {
+#ifdef VULKAN_JSON_CTS
+            bool isCommaNeeded = (i + 1) != obj->setLayoutCount;
+            if (isCommaNeeded) {
+                PRINT_SPACE
+                _OUT << obj->pSetLayouts[i].getInternal() << "," << std::endl;
+            } else {
+                PRINT_SPACE
+                _OUT << obj->pSetLayouts[i].getInternal() << std::endl;
+            }
+#else
             std::stringstream tmp;
             tmp << "pSetLayouts"
                 << "_" << i;
             bool isCommaNeeded = (i + 1) != obj->setLayoutCount;
             print_VkDescriptorSetLayout(obj->pSetLayouts[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -12375,25 +12551,13 @@ static void print_VkCopyDescriptorSet(VkCopyDescriptorSet obj, const std::string
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "srcSet"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("srcSet", true);
 
     print_uint32_t(obj.srcBinding, "srcBinding", 1);
 
     print_uint32_t(obj.srcArrayElement, "srcArrayElement", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "dstSet"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("dstSet", true);
 
     print_uint32_t(obj.dstBinding, "dstBinding", 1);
 
@@ -12424,25 +12588,13 @@ static void print_VkCopyDescriptorSet(const VkCopyDescriptorSet* obj, const std:
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "srcSet"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("srcSet", true);
 
     print_uint32_t(obj->srcBinding, "srcBinding", 1);
 
     print_uint32_t(obj->srcArrayElement, "srcArrayElement", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "dstSet"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("dstSet", true);
 
     print_uint32_t(obj->dstBinding, "dstBinding", 1);
 
@@ -12463,13 +12615,7 @@ static void print_VkDescriptorBufferInfo(VkDescriptorBufferInfo obj, const std::
     _OUT << "{" << std::endl;
     INDENT(4);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "buffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("buffer", true);
 
     print_VkDeviceSize(obj.offset, "offset", 1);
 
@@ -12487,13 +12633,7 @@ static void print_VkDescriptorBufferInfo(const VkDescriptorBufferInfo* obj, cons
     _OUT << "{" << std::endl;
     INDENT(4);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "buffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("buffer", true);
 
     print_VkDeviceSize(obj->offset, "offset", 1);
 
@@ -12512,21 +12652,9 @@ static void print_VkDescriptorImageInfo(VkDescriptorImageInfo obj, const std::st
     _OUT << "{" << std::endl;
     INDENT(4);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "sampler"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("sampler", true);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "imageView"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("imageView", true);
 
     print_VkImageLayout(obj.imageLayout, "imageLayout", 0);
 
@@ -12542,21 +12670,9 @@ static void print_VkDescriptorImageInfo(const VkDescriptorImageInfo* obj, const 
     _OUT << "{" << std::endl;
     INDENT(4);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "sampler"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("sampler", true);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "imageView"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("imageView", true);
 
     print_VkImageLayout(obj->imageLayout, "imageLayout", 0);
 
@@ -12712,13 +12828,7 @@ static void print_VkDescriptorSetAllocateInfo(VkDescriptorSetAllocateInfo obj, c
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "descriptorPool"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("descriptorPool", true);
 
     print_uint32_t(obj.descriptorSetCount, "descriptorSetCount", 1);
 
@@ -12728,11 +12838,19 @@ static void print_VkDescriptorSetAllocateInfo(VkDescriptorSetAllocateInfo obj, c
     if (obj.pSetLayouts) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.descriptorSetCount; i++) {
+#ifdef VULKAN_JSON_CTS
             std::stringstream tmp;
             tmp << "pSetLayouts"
                 << "_" << i;
             bool isCommaNeeded = (i + 1) != obj.descriptorSetCount;
             print_VkDescriptorSetLayout(obj.pSetLayouts[i], tmp.str(), isCommaNeeded);
+#else
+            std::stringstream tmp;
+            tmp << "pSetLayouts"
+                << "_" << i;
+            bool isCommaNeeded = (i + 1) != obj.descriptorSetCount;
+            print_VkDescriptorSetLayout(obj.pSetLayouts[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -12766,13 +12884,7 @@ static void print_VkDescriptorSetAllocateInfo(const VkDescriptorSetAllocateInfo*
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "descriptorPool"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("descriptorPool", true);
 
     print_uint32_t(obj->descriptorSetCount, "descriptorSetCount", 1);
 
@@ -12782,11 +12894,19 @@ static void print_VkDescriptorSetAllocateInfo(const VkDescriptorSetAllocateInfo*
     if (obj->pSetLayouts) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->descriptorSetCount; i++) {
+#ifdef VULKAN_JSON_CTS
             std::stringstream tmp;
             tmp << "pSetLayouts"
                 << "_" << i;
             bool isCommaNeeded = (i + 1) != obj->descriptorSetCount;
             print_VkDescriptorSetLayout(obj->pSetLayouts[i], tmp.str(), isCommaNeeded);
+#else
+            std::stringstream tmp;
+            tmp << "pSetLayouts"
+                << "_" << i;
+            bool isCommaNeeded = (i + 1) != obj->descriptorSetCount;
+            print_VkDescriptorSetLayout(obj->pSetLayouts[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -12823,11 +12943,22 @@ static void print_VkDescriptorSetLayoutBinding(VkDescriptorSetLayoutBinding obj,
     if (obj.pImmutableSamplers) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.descriptorCount; i++) {
+#ifdef VULKAN_JSON_CTS
+            bool isCommaNeeded = (i + 1) != obj.descriptorCount;
+            if (isCommaNeeded) {
+                PRINT_SPACE
+                _OUT << obj.pImmutableSamplers[i].getInternal() << "," << std::endl;
+            } else {
+                PRINT_SPACE
+                _OUT << obj.pImmutableSamplers[i].getInternal() << std::endl;
+            }
+#else
             std::stringstream tmp;
             tmp << "pImmutableSamplers"
                 << "_" << (obj.binding) << "_" << i;
             bool isCommaNeeded = (i + 1) != obj.descriptorCount;
             print_VkSampler(obj.pImmutableSamplers[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -12864,11 +12995,22 @@ static void print_VkDescriptorSetLayoutBinding(const VkDescriptorSetLayoutBindin
     if (obj->pImmutableSamplers) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->descriptorCount; i++) {
+#ifdef VULKAN_JSON_CTS
+            bool isCommaNeeded = (i + 1) != obj->descriptorCount;
+            if (isCommaNeeded) {
+                PRINT_SPACE
+                _OUT << obj->pImmutableSamplers[i].getInternal() << "," << std::endl;
+            } else {
+                PRINT_SPACE
+                _OUT << obj->pImmutableSamplers[i].getInternal() << std::endl;
+            }
+#else
             std::stringstream tmp;
             tmp << "pImmutableSamplers"
                 << "_" << (obj->binding) << "_" << i;
             bool isCommaNeeded = (i + 1) != obj->descriptorCount;
             print_VkSampler(obj->pImmutableSamplers[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -12995,13 +13137,7 @@ static void print_VkWriteDescriptorSet(VkWriteDescriptorSet obj, const std::stri
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "dstSet"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("dstSet", true);
 
     print_uint32_t(obj.dstBinding, "dstBinding", 1);
 
@@ -13053,11 +13189,19 @@ static void print_VkWriteDescriptorSet(VkWriteDescriptorSet obj, const std::stri
     if (obj.pTexelBufferView) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.descriptorCount; i++) {
+#ifdef VULKAN_JSON_CTS
             std::stringstream tmp;
             tmp << "pTexelBufferView"
                 << "_" << i;
             bool isCommaNeeded = (i + 1) != obj.descriptorCount;
             print_VkBufferView(obj.pTexelBufferView[i], tmp.str(), isCommaNeeded);
+#else
+            std::stringstream tmp;
+            tmp << "pTexelBufferView"
+                << "_" << i;
+            bool isCommaNeeded = (i + 1) != obj.descriptorCount;
+            print_VkBufferView(obj.pTexelBufferView[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -13090,13 +13234,7 @@ static void print_VkWriteDescriptorSet(const VkWriteDescriptorSet* obj, const st
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "dstSet"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("dstSet", true);
 
     print_uint32_t(obj->dstBinding, "dstBinding", 1);
 
@@ -13148,11 +13286,19 @@ static void print_VkWriteDescriptorSet(const VkWriteDescriptorSet* obj, const st
     if (obj->pTexelBufferView) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->descriptorCount; i++) {
+#ifdef VULKAN_JSON_CTS
             std::stringstream tmp;
             tmp << "pTexelBufferView"
                 << "_" << i;
             bool isCommaNeeded = (i + 1) != obj->descriptorCount;
             print_VkBufferView(obj->pTexelBufferView[i], tmp.str(), isCommaNeeded);
+#else
+            std::stringstream tmp;
+            tmp << "pTexelBufferView"
+                << "_" << i;
+            bool isCommaNeeded = (i + 1) != obj->descriptorCount;
+            print_VkBufferView(obj->pTexelBufferView[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -13282,13 +13428,7 @@ static void print_VkFramebufferCreateInfo(VkFramebufferCreateInfo obj, const std
 
     print_VkFramebufferCreateFlags(obj.flags, "flags", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "renderPass"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty_value_required_by_cts(renderPass, obj., true);
 
     print_uint32_t(obj.attachmentCount, "attachmentCount", 1);
 
@@ -13298,11 +13438,19 @@ static void print_VkFramebufferCreateInfo(VkFramebufferCreateInfo obj, const std
     if (obj.pAttachments) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.attachmentCount; i++) {
+#ifdef VULKAN_JSON_CTS
             std::stringstream tmp;
             tmp << "pAttachments"
                 << "_" << i;
             bool isCommaNeeded = (i + 1) != obj.attachmentCount;
             print_VkImageView(obj.pAttachments[i], tmp.str(), isCommaNeeded);
+#else
+            std::stringstream tmp;
+            tmp << "pAttachments"
+                << "_" << i;
+            bool isCommaNeeded = (i + 1) != obj.attachmentCount;
+            print_VkImageView(obj.pAttachments[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -13343,13 +13491,7 @@ static void print_VkFramebufferCreateInfo(const VkFramebufferCreateInfo* obj, co
 
     print_VkFramebufferCreateFlags(obj->flags, "flags", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "renderPass"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty_value_required_by_cts(renderPass, obj->, true);
 
     print_uint32_t(obj->attachmentCount, "attachmentCount", 1);
 
@@ -13359,11 +13501,19 @@ static void print_VkFramebufferCreateInfo(const VkFramebufferCreateInfo* obj, co
     if (obj->pAttachments) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->attachmentCount; i++) {
+#ifdef VULKAN_JSON_CTS
             std::stringstream tmp;
             tmp << "pAttachments"
                 << "_" << i;
             bool isCommaNeeded = (i + 1) != obj->attachmentCount;
             print_VkImageView(obj->pAttachments[i], tmp.str(), isCommaNeeded);
+#else
+            std::stringstream tmp;
+            tmp << "pAttachments"
+                << "_" << i;
+            bool isCommaNeeded = (i + 1) != obj->attachmentCount;
+            print_VkImageView(obj->pAttachments[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -13471,8 +13621,13 @@ static void print_VkSubpassDescription(VkSubpassDescription obj, const std::stri
     if (obj.pPreserveAttachments) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.preserveAttachmentCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.preserveAttachmentCount;
             print_uint32_t(obj.pPreserveAttachments[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.preserveAttachmentCount;
+            print_uint32_t(obj.pPreserveAttachments[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -13573,8 +13728,13 @@ static void print_VkSubpassDescription(const VkSubpassDescription* obj, const st
     if (obj->pPreserveAttachments) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->preserveAttachmentCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->preserveAttachmentCount;
             print_uint32_t(obj->pPreserveAttachments[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->preserveAttachmentCount;
+            print_uint32_t(obj->pPreserveAttachments[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -13887,13 +14047,7 @@ static void print_VkCommandBufferAllocateInfo(VkCommandBufferAllocateInfo obj, c
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "commandPool"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("commandPool", true);
 
     print_VkCommandBufferLevel(obj.level, "level", 1);
 
@@ -13923,13 +14077,7 @@ static void print_VkCommandBufferAllocateInfo(const VkCommandBufferAllocateInfo*
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "commandPool"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("commandPool", true);
 
     print_VkCommandBufferLevel(obj->level, "level", 1);
 
@@ -13960,23 +14108,11 @@ static void print_VkCommandBufferInheritanceInfo(VkCommandBufferInheritanceInfo 
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "renderPass"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty_value_required_by_cts(renderPass, obj., true);
 
     print_uint32_t(obj.subpass, "subpass", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "framebuffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("framebuffer", true);
 
     print_VkBool32(obj.occlusionQueryEnable, "occlusionQueryEnable", 1);
 
@@ -14008,23 +14144,11 @@ static void print_VkCommandBufferInheritanceInfo(const VkCommandBufferInheritanc
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "renderPass"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty_value_required_by_cts(renderPass, obj->, true);
 
     print_uint32_t(obj->subpass, "subpass", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "framebuffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("framebuffer", true);
 
     print_VkBool32(obj->occlusionQueryEnable, "occlusionQueryEnable", 1);
 
@@ -14258,8 +14382,13 @@ static void print_VkClearColorValue(VkClearColorValue obj, const std::string& s,
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 4; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 4;
         print_float(obj.float32[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 4;
+        print_float(obj.float32[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -14270,8 +14399,13 @@ static void print_VkClearColorValue(VkClearColorValue obj, const std::string& s,
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 4; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 4;
         print_int32_t(obj.int32[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 4;
+        print_int32_t(obj.int32[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -14282,8 +14416,13 @@ static void print_VkClearColorValue(VkClearColorValue obj, const std::string& s,
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 4; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 4;
         print_uint32_t(obj.uint32[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 4;
+        print_uint32_t(obj.uint32[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -14306,8 +14445,13 @@ static void print_VkClearColorValue(const VkClearColorValue* obj, const std::str
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 4; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 4;
         print_float(obj->float32[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 4;
+        print_float(obj->float32[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -14318,8 +14462,13 @@ static void print_VkClearColorValue(const VkClearColorValue* obj, const std::str
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 4; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 4;
         print_int32_t(obj->int32[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 4;
+        print_int32_t(obj->int32[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -14330,8 +14479,13 @@ static void print_VkClearColorValue(const VkClearColorValue* obj, const std::str
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 4; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 4;
         print_uint32_t(obj->uint32[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 4;
+        print_uint32_t(obj->uint32[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -14507,8 +14661,13 @@ static void print_VkImageBlit(VkImageBlit obj, const std::string& s, bool commaN
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 2; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 2;
         print_VkOffset3D(obj.srcOffsets[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 2;
+        print_VkOffset3D(obj.srcOffsets[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -14523,8 +14682,13 @@ static void print_VkImageBlit(VkImageBlit obj, const std::string& s, bool commaN
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 2; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 2;
         print_VkOffset3D(obj.dstOffsets[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 2;
+        print_VkOffset3D(obj.dstOffsets[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -14551,8 +14715,13 @@ static void print_VkImageBlit(const VkImageBlit* obj, const std::string& s, bool
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 2; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 2;
         print_VkOffset3D(obj->srcOffsets[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 2;
+        print_VkOffset3D(obj->srcOffsets[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -14567,8 +14736,13 @@ static void print_VkImageBlit(const VkImageBlit* obj, const std::string& s, bool
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 2; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 2;
         print_VkOffset3D(obj->dstOffsets[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 2;
+        print_VkOffset3D(obj->dstOffsets[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -14728,21 +14902,9 @@ static void print_VkRenderPassBeginInfo(VkRenderPassBeginInfo obj, const std::st
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "renderPass"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty_value_required_by_cts(renderPass, obj., true);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "framebuffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("framebuffer", true);
 
     PRINT_SPACE
     _OUT << "\"renderArea\": " << std::endl;
@@ -14756,8 +14918,13 @@ static void print_VkRenderPassBeginInfo(VkRenderPassBeginInfo obj, const std::st
     if (obj.pClearValues) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.clearValueCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.clearValueCount;
             print_VkClearValue(obj.pClearValues[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.clearValueCount;
+            print_VkClearValue(obj.pClearValues[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -14790,21 +14957,9 @@ static void print_VkRenderPassBeginInfo(const VkRenderPassBeginInfo* obj, const 
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "renderPass"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty_value_required_by_cts(renderPass, obj->, true);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "framebuffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("framebuffer", true);
 
     PRINT_SPACE
     _OUT << "\"renderArea\": " << std::endl;
@@ -14818,8 +14973,13 @@ static void print_VkRenderPassBeginInfo(const VkRenderPassBeginInfo* obj, const 
     if (obj->pClearValues) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->clearValueCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->clearValueCount;
             print_VkClearValue(obj->pClearValues[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->clearValueCount;
+            print_VkClearValue(obj->pClearValues[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -15743,21 +15903,9 @@ static void print_VkBindBufferMemoryInfo(VkBindBufferMemoryInfo obj, const std::
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "buffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("buffer", true);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "memory"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("memory", true);
 
     print_VkDeviceSize(obj.memoryOffset, "memoryOffset", 0);
 
@@ -15784,21 +15932,9 @@ static void print_VkBindBufferMemoryInfo(const VkBindBufferMemoryInfo* obj, cons
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "buffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("buffer", true);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "memory"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("memory", true);
 
     print_VkDeviceSize(obj->memoryOffset, "memoryOffset", 0);
 
@@ -15826,21 +15962,9 @@ static void print_VkBindImageMemoryInfo(VkBindImageMemoryInfo obj, const std::st
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "image"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("image", true);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "memory"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("memory", true);
 
     print_VkDeviceSize(obj.memoryOffset, "memoryOffset", 0);
 
@@ -15867,21 +15991,9 @@ static void print_VkBindImageMemoryInfo(const VkBindImageMemoryInfo* obj, const 
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "image"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("image", true);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "memory"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("memory", true);
 
     print_VkDeviceSize(obj->memoryOffset, "memoryOffset", 0);
 
@@ -16030,21 +16142,9 @@ static void print_VkMemoryDedicatedAllocateInfo(VkMemoryDedicatedAllocateInfo ob
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "image"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("image", true);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "buffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"" << std::endl;
+    print_empty("buffer", false);
 
     INDENT(-4);
     PRINT_SPACE
@@ -16070,21 +16170,9 @@ static void print_VkMemoryDedicatedAllocateInfo(const VkMemoryDedicatedAllocateI
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "image"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("image", true);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "buffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"" << std::endl;
+    print_empty("buffer", false);
 
     INDENT(-4);
     PRINT_SPACE
@@ -16319,8 +16407,13 @@ static void print_VkDeviceGroupSubmitInfo(VkDeviceGroupSubmitInfo obj, const std
     if (obj.pWaitSemaphoreDeviceIndices) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.waitSemaphoreCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.waitSemaphoreCount;
             print_uint32_t(obj.pWaitSemaphoreDeviceIndices[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.waitSemaphoreCount;
+            print_uint32_t(obj.pWaitSemaphoreDeviceIndices[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -16338,8 +16431,13 @@ static void print_VkDeviceGroupSubmitInfo(VkDeviceGroupSubmitInfo obj, const std
     if (obj.pCommandBufferDeviceMasks) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.commandBufferCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.commandBufferCount;
             print_uint32_t(obj.pCommandBufferDeviceMasks[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.commandBufferCount;
+            print_uint32_t(obj.pCommandBufferDeviceMasks[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -16357,8 +16455,13 @@ static void print_VkDeviceGroupSubmitInfo(VkDeviceGroupSubmitInfo obj, const std
     if (obj.pSignalSemaphoreDeviceIndices) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.signalSemaphoreCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.signalSemaphoreCount;
             print_uint32_t(obj.pSignalSemaphoreDeviceIndices[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.signalSemaphoreCount;
+            print_uint32_t(obj.pSignalSemaphoreDeviceIndices[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -16399,8 +16502,13 @@ static void print_VkDeviceGroupSubmitInfo(const VkDeviceGroupSubmitInfo* obj, co
     if (obj->pWaitSemaphoreDeviceIndices) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->waitSemaphoreCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->waitSemaphoreCount;
             print_uint32_t(obj->pWaitSemaphoreDeviceIndices[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->waitSemaphoreCount;
+            print_uint32_t(obj->pWaitSemaphoreDeviceIndices[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -16418,8 +16526,13 @@ static void print_VkDeviceGroupSubmitInfo(const VkDeviceGroupSubmitInfo* obj, co
     if (obj->pCommandBufferDeviceMasks) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->commandBufferCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->commandBufferCount;
             print_uint32_t(obj->pCommandBufferDeviceMasks[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->commandBufferCount;
+            print_uint32_t(obj->pCommandBufferDeviceMasks[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -16437,8 +16550,13 @@ static void print_VkDeviceGroupSubmitInfo(const VkDeviceGroupSubmitInfo* obj, co
     if (obj->pSignalSemaphoreDeviceIndices) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->signalSemaphoreCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->signalSemaphoreCount;
             print_uint32_t(obj->pSignalSemaphoreDeviceIndices[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->signalSemaphoreCount;
+            print_uint32_t(obj->pSignalSemaphoreDeviceIndices[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -16537,8 +16655,13 @@ static void print_VkBindBufferMemoryDeviceGroupInfo(VkBindBufferMemoryDeviceGrou
     if (obj.pDeviceIndices) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.deviceIndexCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.deviceIndexCount;
             print_uint32_t(obj.pDeviceIndices[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.deviceIndexCount;
+            print_uint32_t(obj.pDeviceIndices[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -16580,8 +16703,13 @@ static void print_VkBindBufferMemoryDeviceGroupInfo(const VkBindBufferMemoryDevi
     if (obj->pDeviceIndices) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->deviceIndexCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->deviceIndexCount;
             print_uint32_t(obj->pDeviceIndices[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->deviceIndexCount;
+            print_uint32_t(obj->pDeviceIndices[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -16624,8 +16752,13 @@ static void print_VkBindImageMemoryDeviceGroupInfo(VkBindImageMemoryDeviceGroupI
     if (obj.pDeviceIndices) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.deviceIndexCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.deviceIndexCount;
             print_uint32_t(obj.pDeviceIndices[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.deviceIndexCount;
+            print_uint32_t(obj.pDeviceIndices[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -16687,8 +16820,13 @@ static void print_VkBindImageMemoryDeviceGroupInfo(const VkBindImageMemoryDevice
     if (obj->pDeviceIndices) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->deviceIndexCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->deviceIndexCount;
             print_uint32_t(obj->pDeviceIndices[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->deviceIndexCount;
+            print_uint32_t(obj->pDeviceIndices[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -16750,11 +16888,19 @@ static void print_VkPhysicalDeviceGroupProperties(VkPhysicalDeviceGroupPropertie
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_DEVICE_GROUP_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         std::stringstream tmp;
         tmp << "physicalDevices"
             << "_" << i;
         bool isCommaNeeded = (i + 1) != VK_MAX_DEVICE_GROUP_SIZE;
         print_VkPhysicalDevice(obj.physicalDevices[i], tmp.str(), isCommaNeeded);
+#else
+        std::stringstream tmp;
+        tmp << "physicalDevices"
+            << "_" << i;
+        bool isCommaNeeded = (i + 1) != VK_MAX_DEVICE_GROUP_SIZE;
+        print_VkPhysicalDevice(obj.physicalDevices[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -16793,11 +16939,19 @@ static void print_VkPhysicalDeviceGroupProperties(const VkPhysicalDeviceGroupPro
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_DEVICE_GROUP_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         std::stringstream tmp;
         tmp << "physicalDevices"
             << "_" << i;
         bool isCommaNeeded = (i + 1) != VK_MAX_DEVICE_GROUP_SIZE;
         print_VkPhysicalDevice(obj->physicalDevices[i], tmp.str(), isCommaNeeded);
+#else
+        std::stringstream tmp;
+        tmp << "physicalDevices"
+            << "_" << i;
+        bool isCommaNeeded = (i + 1) != VK_MAX_DEVICE_GROUP_SIZE;
+        print_VkPhysicalDevice(obj->physicalDevices[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -16837,11 +16991,19 @@ static void print_VkDeviceGroupDeviceCreateInfo(VkDeviceGroupDeviceCreateInfo ob
     if (obj.pPhysicalDevices) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.physicalDeviceCount; i++) {
+#ifdef VULKAN_JSON_CTS
             std::stringstream tmp;
             tmp << "pPhysicalDevices"
                 << "_" << i;
             bool isCommaNeeded = (i + 1) != obj.physicalDeviceCount;
             print_VkPhysicalDevice(obj.pPhysicalDevices[i], tmp.str(), isCommaNeeded);
+#else
+            std::stringstream tmp;
+            tmp << "pPhysicalDevices"
+                << "_" << i;
+            bool isCommaNeeded = (i + 1) != obj.physicalDeviceCount;
+            print_VkPhysicalDevice(obj.pPhysicalDevices[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -16883,11 +17045,19 @@ static void print_VkDeviceGroupDeviceCreateInfo(const VkDeviceGroupDeviceCreateI
     if (obj->pPhysicalDevices) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->physicalDeviceCount; i++) {
+#ifdef VULKAN_JSON_CTS
             std::stringstream tmp;
             tmp << "pPhysicalDevices"
                 << "_" << i;
             bool isCommaNeeded = (i + 1) != obj->physicalDeviceCount;
             print_VkPhysicalDevice(obj->pPhysicalDevices[i], tmp.str(), isCommaNeeded);
+#else
+            std::stringstream tmp;
+            tmp << "pPhysicalDevices"
+                << "_" << i;
+            bool isCommaNeeded = (i + 1) != obj->physicalDeviceCount;
+            print_VkPhysicalDevice(obj->pPhysicalDevices[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -16922,13 +17092,7 @@ static void print_VkBufferMemoryRequirementsInfo2(VkBufferMemoryRequirementsInfo
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "buffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"" << std::endl;
+    print_empty("buffer", false);
 
     INDENT(-4);
     PRINT_SPACE
@@ -16954,13 +17118,7 @@ static void print_VkBufferMemoryRequirementsInfo2(const VkBufferMemoryRequiremen
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "buffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"" << std::endl;
+    print_empty("buffer", false);
 
     INDENT(-4);
     PRINT_SPACE
@@ -16987,13 +17145,7 @@ static void print_VkImageMemoryRequirementsInfo2(VkImageMemoryRequirementsInfo2 
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "image"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"" << std::endl;
+    print_empty("image", false);
 
     INDENT(-4);
     PRINT_SPACE
@@ -17019,13 +17171,7 @@ static void print_VkImageMemoryRequirementsInfo2(const VkImageMemoryRequirements
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "image"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"" << std::endl;
+    print_empty("image", false);
 
     INDENT(-4);
     PRINT_SPACE
@@ -17052,13 +17198,7 @@ static void print_VkImageSparseMemoryRequirementsInfo2(VkImageSparseMemoryRequir
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "image"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"" << std::endl;
+    print_empty("image", false);
 
     INDENT(-4);
     PRINT_SPACE
@@ -17084,13 +17224,7 @@ static void print_VkImageSparseMemoryRequirementsInfo2(const VkImageSparseMemory
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "image"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"" << std::endl;
+    print_empty("image", false);
 
     INDENT(-4);
     PRINT_SPACE
@@ -18050,8 +18184,13 @@ static void print_VkRenderPassMultiviewCreateInfo(VkRenderPassMultiviewCreateInf
     if (obj.pViewMasks) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.subpassCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.subpassCount;
             print_uint32_t(obj.pViewMasks[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.subpassCount;
+            print_uint32_t(obj.pViewMasks[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -18069,8 +18208,13 @@ static void print_VkRenderPassMultiviewCreateInfo(VkRenderPassMultiviewCreateInf
     if (obj.pViewOffsets) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.dependencyCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.dependencyCount;
             print_int32_t(obj.pViewOffsets[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.dependencyCount;
+            print_int32_t(obj.pViewOffsets[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -18088,8 +18232,13 @@ static void print_VkRenderPassMultiviewCreateInfo(VkRenderPassMultiviewCreateInf
     if (obj.pCorrelationMasks) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.correlationMaskCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.correlationMaskCount;
             print_uint32_t(obj.pCorrelationMasks[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.correlationMaskCount;
+            print_uint32_t(obj.pCorrelationMasks[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -18131,8 +18280,13 @@ static void print_VkRenderPassMultiviewCreateInfo(const VkRenderPassMultiviewCre
     if (obj->pViewMasks) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->subpassCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->subpassCount;
             print_uint32_t(obj->pViewMasks[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->subpassCount;
+            print_uint32_t(obj->pViewMasks[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -18150,8 +18304,13 @@ static void print_VkRenderPassMultiviewCreateInfo(const VkRenderPassMultiviewCre
     if (obj->pViewOffsets) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->dependencyCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->dependencyCount;
             print_int32_t(obj->pViewOffsets[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->dependencyCount;
+            print_int32_t(obj->pViewOffsets[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -18169,8 +18328,13 @@ static void print_VkRenderPassMultiviewCreateInfo(const VkRenderPassMultiviewCre
     if (obj->pCorrelationMasks) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->correlationMaskCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->correlationMaskCount;
             print_uint32_t(obj->pCorrelationMasks[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->correlationMaskCount;
+            print_uint32_t(obj->pCorrelationMasks[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -18682,13 +18846,7 @@ static void print_VkSamplerYcbcrConversionInfo(VkSamplerYcbcrConversionInfo obj,
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "conversion"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"" << std::endl;
+    print_empty_value_required_by_cts(conversion, obj., false);
 
     INDENT(-4);
     PRINT_SPACE
@@ -18714,13 +18872,7 @@ static void print_VkSamplerYcbcrConversionInfo(const VkSamplerYcbcrConversionInf
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "conversion"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"" << std::endl;
+    print_empty_value_required_by_cts(conversion, obj->, false);
 
     INDENT(-4);
     PRINT_SPACE
@@ -19032,23 +19184,11 @@ static void print_VkDescriptorUpdateTemplateCreateInfo(VkDescriptorUpdateTemplat
 
     print_VkDescriptorUpdateTemplateType(obj.templateType, "templateType", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "descriptorSetLayout"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("descriptorSetLayout", true);
 
     print_VkPipelineBindPoint(obj.pipelineBindPoint, "pipelineBindPoint", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "pipelineLayout"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("pipelineLayout", true);
 
     print_uint32_t(obj.set, "set", 0);
 
@@ -19100,23 +19240,11 @@ static void print_VkDescriptorUpdateTemplateCreateInfo(const VkDescriptorUpdateT
 
     print_VkDescriptorUpdateTemplateType(obj->templateType, "templateType", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "descriptorSetLayout"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("descriptorSetLayout", true);
 
     print_VkPipelineBindPoint(obj->pipelineBindPoint, "pipelineBindPoint", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "pipelineLayout"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("pipelineLayout", true);
 
     print_uint32_t(obj->set, "set", 0);
 
@@ -19412,8 +19540,13 @@ static void print_VkPhysicalDeviceIDProperties(VkPhysicalDeviceIDProperties obj,
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_UUID_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
         print_uint8_t(obj.deviceUUID[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
+        print_uint8_t(obj.deviceUUID[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -19424,8 +19557,13 @@ static void print_VkPhysicalDeviceIDProperties(VkPhysicalDeviceIDProperties obj,
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_UUID_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
         print_uint8_t(obj.driverUUID[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
+        print_uint8_t(obj.driverUUID[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -19436,8 +19574,13 @@ static void print_VkPhysicalDeviceIDProperties(VkPhysicalDeviceIDProperties obj,
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_LUID_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_LUID_SIZE;
         print_uint8_t(obj.deviceLUID[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_LUID_SIZE;
+        print_uint8_t(obj.deviceLUID[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -19476,8 +19619,13 @@ static void print_VkPhysicalDeviceIDProperties(const VkPhysicalDeviceIDPropertie
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_UUID_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
         print_uint8_t(obj->deviceUUID[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
+        print_uint8_t(obj->deviceUUID[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -19488,8 +19636,13 @@ static void print_VkPhysicalDeviceIDProperties(const VkPhysicalDeviceIDPropertie
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_UUID_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
         print_uint8_t(obj->driverUUID[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
+        print_uint8_t(obj->driverUUID[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -19500,8 +19653,13 @@ static void print_VkPhysicalDeviceIDProperties(const VkPhysicalDeviceIDPropertie
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_LUID_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_LUID_SIZE;
         print_uint8_t(obj->deviceLUID[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_LUID_SIZE;
+        print_uint8_t(obj->deviceLUID[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -20580,8 +20738,13 @@ static void print_VkPhysicalDeviceVulkan11Properties(VkPhysicalDeviceVulkan11Pro
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_UUID_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
         print_uint8_t(obj.deviceUUID[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
+        print_uint8_t(obj.deviceUUID[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -20592,8 +20755,13 @@ static void print_VkPhysicalDeviceVulkan11Properties(VkPhysicalDeviceVulkan11Pro
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_UUID_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
         print_uint8_t(obj.driverUUID[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
+        print_uint8_t(obj.driverUUID[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -20604,8 +20772,13 @@ static void print_VkPhysicalDeviceVulkan11Properties(VkPhysicalDeviceVulkan11Pro
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_LUID_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_LUID_SIZE;
         print_uint8_t(obj.deviceLUID[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_LUID_SIZE;
+        print_uint8_t(obj.deviceLUID[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -20664,8 +20837,13 @@ static void print_VkPhysicalDeviceVulkan11Properties(const VkPhysicalDeviceVulka
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_UUID_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
         print_uint8_t(obj->deviceUUID[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
+        print_uint8_t(obj->deviceUUID[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -20676,8 +20854,13 @@ static void print_VkPhysicalDeviceVulkan11Properties(const VkPhysicalDeviceVulka
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_UUID_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
         print_uint8_t(obj->driverUUID[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
+        print_uint8_t(obj->driverUUID[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -20688,8 +20871,13 @@ static void print_VkPhysicalDeviceVulkan11Properties(const VkPhysicalDeviceVulka
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_LUID_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_LUID_SIZE;
         print_uint8_t(obj->deviceLUID[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_LUID_SIZE;
+        print_uint8_t(obj->deviceLUID[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -21031,8 +21219,13 @@ static void print_VkPhysicalDeviceVulkan12Properties(VkPhysicalDeviceVulkan12Pro
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_DRIVER_NAME_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_DRIVER_NAME_SIZE;
         print_char(obj.driverName[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_DRIVER_NAME_SIZE;
+        print_char(obj.driverName[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -21043,8 +21236,13 @@ static void print_VkPhysicalDeviceVulkan12Properties(VkPhysicalDeviceVulkan12Pro
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_DRIVER_INFO_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_DRIVER_INFO_SIZE;
         print_char(obj.driverInfo[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_DRIVER_INFO_SIZE;
+        print_char(obj.driverInfo[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -21184,8 +21382,13 @@ static void print_VkPhysicalDeviceVulkan12Properties(const VkPhysicalDeviceVulka
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_DRIVER_NAME_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_DRIVER_NAME_SIZE;
         print_char(obj->driverName[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_DRIVER_NAME_SIZE;
+        print_char(obj->driverName[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -21196,8 +21399,13 @@ static void print_VkPhysicalDeviceVulkan12Properties(const VkPhysicalDeviceVulka
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_DRIVER_INFO_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_DRIVER_INFO_SIZE;
         print_char(obj->driverInfo[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_DRIVER_INFO_SIZE;
+        print_char(obj->driverInfo[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -21341,8 +21549,13 @@ static void print_VkImageFormatListCreateInfo(VkImageFormatListCreateInfo obj, c
     if (obj.pViewFormats) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.viewFormatCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.viewFormatCount;
             print_VkFormat(obj.pViewFormats[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.viewFormatCount;
+            print_VkFormat(obj.pViewFormats[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -21384,8 +21597,13 @@ static void print_VkImageFormatListCreateInfo(const VkImageFormatListCreateInfo*
     if (obj->pViewFormats) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->viewFormatCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->viewFormatCount;
             print_VkFormat(obj->pViewFormats[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->viewFormatCount;
+            print_VkFormat(obj->pViewFormats[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -21642,8 +21860,13 @@ static void print_VkSubpassDescription2(VkSubpassDescription2 obj, const std::st
     if (obj.pPreserveAttachments) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.preserveAttachmentCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.preserveAttachmentCount;
             print_uint32_t(obj.pPreserveAttachments[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.preserveAttachmentCount;
+            print_uint32_t(obj.pPreserveAttachments[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -21757,8 +21980,13 @@ static void print_VkSubpassDescription2(const VkSubpassDescription2* obj, const 
     if (obj->pPreserveAttachments) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->preserveAttachmentCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->preserveAttachmentCount;
             print_uint32_t(obj->pPreserveAttachments[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->preserveAttachmentCount;
+            print_uint32_t(obj->pPreserveAttachments[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -21941,8 +22169,13 @@ static void print_VkRenderPassCreateInfo2(VkRenderPassCreateInfo2 obj, const std
     if (obj.pCorrelatedViewMasks) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.correlatedViewMaskCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.correlatedViewMaskCount;
             print_uint32_t(obj.pCorrelatedViewMasks[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.correlatedViewMaskCount;
+            print_uint32_t(obj.pCorrelatedViewMasks[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -22045,8 +22278,13 @@ static void print_VkRenderPassCreateInfo2(const VkRenderPassCreateInfo2* obj, co
     if (obj->pCorrelatedViewMasks) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->correlatedViewMaskCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->correlatedViewMaskCount;
             print_uint32_t(obj->pCorrelatedViewMasks[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->correlatedViewMaskCount;
+            print_uint32_t(obj->pCorrelatedViewMasks[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -22247,8 +22485,13 @@ static void print_VkPhysicalDeviceDriverProperties(VkPhysicalDeviceDriverPropert
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_DRIVER_NAME_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_DRIVER_NAME_SIZE;
         print_char(obj.driverName[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_DRIVER_NAME_SIZE;
+        print_char(obj.driverName[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -22259,8 +22502,13 @@ static void print_VkPhysicalDeviceDriverProperties(VkPhysicalDeviceDriverPropert
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_DRIVER_INFO_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_DRIVER_INFO_SIZE;
         print_char(obj.driverInfo[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_DRIVER_INFO_SIZE;
+        print_char(obj.driverInfo[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -22301,8 +22549,13 @@ static void print_VkPhysicalDeviceDriverProperties(const VkPhysicalDeviceDriverP
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_DRIVER_NAME_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_DRIVER_NAME_SIZE;
         print_char(obj->driverName[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_DRIVER_NAME_SIZE;
+        print_char(obj->driverName[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -22313,8 +22566,13 @@ static void print_VkPhysicalDeviceDriverProperties(const VkPhysicalDeviceDriverP
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_DRIVER_INFO_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_DRIVER_INFO_SIZE;
         print_char(obj->driverInfo[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_DRIVER_INFO_SIZE;
+        print_char(obj->driverInfo[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -22588,8 +22846,13 @@ static void print_VkDescriptorSetLayoutBindingFlagsCreateInfo(VkDescriptorSetLay
     if (obj.pBindingFlags) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.bindingCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.bindingCount;
             print_VkDescriptorBindingFlags(obj.pBindingFlags[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.bindingCount;
+            print_VkDescriptorBindingFlags(obj.pBindingFlags[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -22631,8 +22894,13 @@ static void print_VkDescriptorSetLayoutBindingFlagsCreateInfo(const VkDescriptor
     if (obj->pBindingFlags) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->bindingCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->bindingCount;
             print_VkDescriptorBindingFlags(obj->pBindingFlags[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->bindingCount;
+            print_VkDescriptorBindingFlags(obj->pBindingFlags[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -22956,8 +23224,13 @@ static void print_VkDescriptorSetVariableDescriptorCountAllocateInfo(VkDescripto
     if (obj.pDescriptorCounts) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.descriptorSetCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.descriptorSetCount;
             print_uint32_t(obj.pDescriptorCounts[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.descriptorSetCount;
+            print_uint32_t(obj.pDescriptorCounts[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -22999,8 +23272,13 @@ static void print_VkDescriptorSetVariableDescriptorCountAllocateInfo(const VkDes
     if (obj->pDescriptorCounts) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->descriptorSetCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->descriptorSetCount;
             print_uint32_t(obj->pDescriptorCounts[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->descriptorSetCount;
+            print_uint32_t(obj->pDescriptorCounts[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -23575,8 +23853,13 @@ static void print_VkFramebufferAttachmentImageInfo(VkFramebufferAttachmentImageI
     if (obj.pViewFormats) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.viewFormatCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.viewFormatCount;
             print_VkFormat(obj.pViewFormats[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.viewFormatCount;
+            print_VkFormat(obj.pViewFormats[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -23628,8 +23911,13 @@ static void print_VkFramebufferAttachmentImageInfo(const VkFramebufferAttachment
     if (obj->pViewFormats) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->viewFormatCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->viewFormatCount;
             print_VkFormat(obj->pViewFormats[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->viewFormatCount;
+            print_VkFormat(obj->pViewFormats[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -23761,11 +24049,19 @@ static void print_VkRenderPassAttachmentBeginInfo(VkRenderPassAttachmentBeginInf
     if (obj.pAttachments) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.attachmentCount; i++) {
+#ifdef VULKAN_JSON_CTS
             std::stringstream tmp;
             tmp << "pAttachments"
                 << "_" << i;
             bool isCommaNeeded = (i + 1) != obj.attachmentCount;
             print_VkImageView(obj.pAttachments[i], tmp.str(), isCommaNeeded);
+#else
+            std::stringstream tmp;
+            tmp << "pAttachments"
+                << "_" << i;
+            bool isCommaNeeded = (i + 1) != obj.attachmentCount;
+            print_VkImageView(obj.pAttachments[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -23807,11 +24103,19 @@ static void print_VkRenderPassAttachmentBeginInfo(const VkRenderPassAttachmentBe
     if (obj->pAttachments) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->attachmentCount; i++) {
+#ifdef VULKAN_JSON_CTS
             std::stringstream tmp;
             tmp << "pAttachments"
                 << "_" << i;
             bool isCommaNeeded = (i + 1) != obj->attachmentCount;
             print_VkImageView(obj->pAttachments[i], tmp.str(), isCommaNeeded);
+#else
+            std::stringstream tmp;
+            tmp << "pAttachments"
+                << "_" << i;
+            bool isCommaNeeded = (i + 1) != obj->attachmentCount;
+            print_VkImageView(obj->pAttachments[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -24336,8 +24640,13 @@ static void print_VkTimelineSemaphoreSubmitInfo(VkTimelineSemaphoreSubmitInfo ob
     if (obj.pWaitSemaphoreValues) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.waitSemaphoreValueCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.waitSemaphoreValueCount;
             print_uint64_t(obj.pWaitSemaphoreValues[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.waitSemaphoreValueCount;
+            print_uint64_t(obj.pWaitSemaphoreValues[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -24355,8 +24664,13 @@ static void print_VkTimelineSemaphoreSubmitInfo(VkTimelineSemaphoreSubmitInfo ob
     if (obj.pSignalSemaphoreValues) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.signalSemaphoreValueCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.signalSemaphoreValueCount;
             print_uint64_t(obj.pSignalSemaphoreValues[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.signalSemaphoreValueCount;
+            print_uint64_t(obj.pSignalSemaphoreValues[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -24398,8 +24712,13 @@ static void print_VkTimelineSemaphoreSubmitInfo(const VkTimelineSemaphoreSubmitI
     if (obj->pWaitSemaphoreValues) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->waitSemaphoreValueCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->waitSemaphoreValueCount;
             print_uint64_t(obj->pWaitSemaphoreValues[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->waitSemaphoreValueCount;
+            print_uint64_t(obj->pWaitSemaphoreValues[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -24417,8 +24736,13 @@ static void print_VkTimelineSemaphoreSubmitInfo(const VkTimelineSemaphoreSubmitI
     if (obj->pSignalSemaphoreValues) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->signalSemaphoreValueCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->signalSemaphoreValueCount;
             print_uint64_t(obj->pSignalSemaphoreValues[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->signalSemaphoreValueCount;
+            print_uint64_t(obj->pSignalSemaphoreValues[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -24462,11 +24786,19 @@ static void print_VkSemaphoreWaitInfo(VkSemaphoreWaitInfo obj, const std::string
     if (obj.pSemaphores) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.semaphoreCount; i++) {
+#ifdef VULKAN_JSON_CTS
             std::stringstream tmp;
             tmp << "pSemaphores"
                 << "_" << i;
             bool isCommaNeeded = (i + 1) != obj.semaphoreCount;
             print_VkSemaphore(obj.pSemaphores[i], tmp.str(), isCommaNeeded);
+#else
+            std::stringstream tmp;
+            tmp << "pSemaphores"
+                << "_" << i;
+            bool isCommaNeeded = (i + 1) != obj.semaphoreCount;
+            print_VkSemaphore(obj.pSemaphores[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -24482,8 +24814,13 @@ static void print_VkSemaphoreWaitInfo(VkSemaphoreWaitInfo obj, const std::string
     if (obj.pValues) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.semaphoreCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.semaphoreCount;
             print_uint64_t(obj.pValues[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.semaphoreCount;
+            print_uint64_t(obj.pValues[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -24526,11 +24863,19 @@ static void print_VkSemaphoreWaitInfo(const VkSemaphoreWaitInfo* obj, const std:
     if (obj->pSemaphores) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->semaphoreCount; i++) {
+#ifdef VULKAN_JSON_CTS
             std::stringstream tmp;
             tmp << "pSemaphores"
                 << "_" << i;
             bool isCommaNeeded = (i + 1) != obj->semaphoreCount;
             print_VkSemaphore(obj->pSemaphores[i], tmp.str(), isCommaNeeded);
+#else
+            std::stringstream tmp;
+            tmp << "pSemaphores"
+                << "_" << i;
+            bool isCommaNeeded = (i + 1) != obj->semaphoreCount;
+            print_VkSemaphore(obj->pSemaphores[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -24546,8 +24891,13 @@ static void print_VkSemaphoreWaitInfo(const VkSemaphoreWaitInfo* obj, const std:
     if (obj->pValues) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->semaphoreCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->semaphoreCount;
             print_uint64_t(obj->pValues[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->semaphoreCount;
+            print_uint64_t(obj->pValues[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -24581,13 +24931,7 @@ static void print_VkSemaphoreSignalInfo(VkSemaphoreSignalInfo obj, const std::st
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "semaphore"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("semaphore", true);
 
     print_uint64_t(obj.value, "value", 0);
 
@@ -24614,13 +24958,7 @@ static void print_VkSemaphoreSignalInfo(const VkSemaphoreSignalInfo* obj, const 
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "semaphore"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("semaphore", true);
 
     print_uint64_t(obj->value, "value", 0);
 
@@ -24709,13 +25047,7 @@ static void print_VkBufferDeviceAddressInfo(VkBufferDeviceAddressInfo obj, const
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "buffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"" << std::endl;
+    print_empty("buffer", false);
 
     INDENT(-4);
     PRINT_SPACE
@@ -24740,13 +25072,7 @@ static void print_VkBufferDeviceAddressInfo(const VkBufferDeviceAddressInfo* obj
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "buffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"" << std::endl;
+    print_empty("buffer", false);
 
     INDENT(-4);
     PRINT_SPACE
@@ -24879,13 +25205,7 @@ static void print_VkDeviceMemoryOpaqueCaptureAddressInfo(VkDeviceMemoryOpaqueCap
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "memory"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"" << std::endl;
+    print_empty("memory", false);
 
     INDENT(-4);
     PRINT_SPACE
@@ -24911,13 +25231,7 @@ static void print_VkDeviceMemoryOpaqueCaptureAddressInfo(const VkDeviceMemoryOpa
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "memory"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"" << std::endl;
+    print_empty("memory", false);
 
     INDENT(-4);
     PRINT_SPACE
@@ -26017,8 +26331,13 @@ static void print_VkPhysicalDeviceToolProperties(VkPhysicalDeviceToolProperties 
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_EXTENSION_NAME_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_EXTENSION_NAME_SIZE;
         print_char(obj.name[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_EXTENSION_NAME_SIZE;
+        print_char(obj.name[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -26029,8 +26348,13 @@ static void print_VkPhysicalDeviceToolProperties(VkPhysicalDeviceToolProperties 
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_EXTENSION_NAME_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_EXTENSION_NAME_SIZE;
         print_char(obj.version[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_EXTENSION_NAME_SIZE;
+        print_char(obj.version[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -26043,8 +26367,13 @@ static void print_VkPhysicalDeviceToolProperties(VkPhysicalDeviceToolProperties 
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_DESCRIPTION_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_DESCRIPTION_SIZE;
         print_char(obj.description[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_DESCRIPTION_SIZE;
+        print_char(obj.description[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -26055,8 +26384,13 @@ static void print_VkPhysicalDeviceToolProperties(VkPhysicalDeviceToolProperties 
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_EXTENSION_NAME_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_EXTENSION_NAME_SIZE;
         print_char(obj.layer[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_EXTENSION_NAME_SIZE;
+        print_char(obj.layer[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -26091,8 +26425,13 @@ static void print_VkPhysicalDeviceToolProperties(const VkPhysicalDeviceToolPrope
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_EXTENSION_NAME_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_EXTENSION_NAME_SIZE;
         print_char(obj->name[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_EXTENSION_NAME_SIZE;
+        print_char(obj->name[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -26103,8 +26442,13 @@ static void print_VkPhysicalDeviceToolProperties(const VkPhysicalDeviceToolPrope
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_EXTENSION_NAME_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_EXTENSION_NAME_SIZE;
         print_char(obj->version[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_EXTENSION_NAME_SIZE;
+        print_char(obj->version[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -26117,8 +26461,13 @@ static void print_VkPhysicalDeviceToolProperties(const VkPhysicalDeviceToolPrope
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_DESCRIPTION_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_DESCRIPTION_SIZE;
         print_char(obj->description[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_DESCRIPTION_SIZE;
+        print_char(obj->description[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -26129,8 +26478,13 @@ static void print_VkPhysicalDeviceToolProperties(const VkPhysicalDeviceToolPrope
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_EXTENSION_NAME_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_EXTENSION_NAME_SIZE;
         print_char(obj->layer[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_EXTENSION_NAME_SIZE;
+        print_char(obj->layer[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -26498,13 +26852,7 @@ static void print_VkBufferMemoryBarrier2(VkBufferMemoryBarrier2 obj, const std::
 
     print_uint32_t(obj.dstQueueFamilyIndex, "dstQueueFamilyIndex", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "buffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("buffer", true);
 
     print_VkDeviceSize(obj.offset, "offset", 1);
 
@@ -26545,13 +26893,7 @@ static void print_VkBufferMemoryBarrier2(const VkBufferMemoryBarrier2* obj, cons
 
     print_uint32_t(obj->dstQueueFamilyIndex, "dstQueueFamilyIndex", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "buffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("buffer", true);
 
     print_VkDeviceSize(obj->offset, "offset", 1);
 
@@ -26597,13 +26939,7 @@ static void print_VkImageMemoryBarrier2(VkImageMemoryBarrier2 obj, const std::st
 
     print_uint32_t(obj.dstQueueFamilyIndex, "dstQueueFamilyIndex", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "image"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("image", true);
 
     PRINT_SPACE
     _OUT << "\"subresourceRange\": " << std::endl;
@@ -26648,13 +26984,7 @@ static void print_VkImageMemoryBarrier2(const VkImageMemoryBarrier2* obj, const 
 
     print_uint32_t(obj->dstQueueFamilyIndex, "dstQueueFamilyIndex", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "image"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("image", true);
 
     PRINT_SPACE
     _OUT << "\"subresourceRange\": " << std::endl;
@@ -26855,13 +27185,7 @@ static void print_VkSemaphoreSubmitInfo(VkSemaphoreSubmitInfo obj, const std::st
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "semaphore"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("semaphore", true);
 
     print_uint64_t(obj.value, "value", 1);
 
@@ -26892,13 +27216,7 @@ static void print_VkSemaphoreSubmitInfo(const VkSemaphoreSubmitInfo* obj, const 
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "semaphore"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("semaphore", true);
 
     print_uint64_t(obj->value, "value", 1);
 
@@ -26930,13 +27248,7 @@ static void print_VkCommandBufferSubmitInfo(VkCommandBufferSubmitInfo obj, const
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "commandBuffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("commandBuffer", true);
 
     print_uint32_t(obj.deviceMask, "deviceMask", 0);
 
@@ -26963,13 +27275,7 @@ static void print_VkCommandBufferSubmitInfo(const VkCommandBufferSubmitInfo* obj
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "commandBuffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("commandBuffer", true);
 
     print_uint32_t(obj->deviceMask, "deviceMask", 0);
 
@@ -27386,21 +27692,9 @@ static void print_VkCopyBufferInfo2(VkCopyBufferInfo2 obj, const std::string& s,
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "srcBuffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("srcBuffer", true);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "dstBuffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("dstBuffer", true);
 
     print_uint32_t(obj.regionCount, "regionCount", 1);
 
@@ -27445,21 +27739,9 @@ static void print_VkCopyBufferInfo2(const VkCopyBufferInfo2* obj, const std::str
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "srcBuffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("srcBuffer", true);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "dstBuffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("dstBuffer", true);
 
     print_uint32_t(obj->regionCount, "regionCount", 1);
 
@@ -27592,23 +27874,11 @@ static void print_VkCopyImageInfo2(VkCopyImageInfo2 obj, const std::string& s, b
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "srcImage"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("srcImage", true);
 
     print_VkImageLayout(obj.srcImageLayout, "srcImageLayout", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "dstImage"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("dstImage", true);
 
     print_VkImageLayout(obj.dstImageLayout, "dstImageLayout", 1);
 
@@ -27655,23 +27925,11 @@ static void print_VkCopyImageInfo2(const VkCopyImageInfo2* obj, const std::strin
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "srcImage"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("srcImage", true);
 
     print_VkImageLayout(obj->srcImageLayout, "srcImageLayout", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "dstImage"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("dstImage", true);
 
     print_VkImageLayout(obj->dstImageLayout, "dstImageLayout", 1);
 
@@ -27802,21 +28060,9 @@ static void print_VkCopyBufferToImageInfo2(VkCopyBufferToImageInfo2 obj, const s
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "srcBuffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("srcBuffer", true);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "dstImage"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("dstImage", true);
 
     print_VkImageLayout(obj.dstImageLayout, "dstImageLayout", 1);
 
@@ -27863,21 +28109,9 @@ static void print_VkCopyBufferToImageInfo2(const VkCopyBufferToImageInfo2* obj, 
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "srcBuffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("srcBuffer", true);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "dstImage"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("dstImage", true);
 
     print_VkImageLayout(obj->dstImageLayout, "dstImageLayout", 1);
 
@@ -27925,23 +28159,11 @@ static void print_VkCopyImageToBufferInfo2(VkCopyImageToBufferInfo2 obj, const s
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "srcImage"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("srcImage", true);
 
     print_VkImageLayout(obj.srcImageLayout, "srcImageLayout", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "dstBuffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("dstBuffer", true);
 
     print_uint32_t(obj.regionCount, "regionCount", 1);
 
@@ -27986,23 +28208,11 @@ static void print_VkCopyImageToBufferInfo2(const VkCopyImageToBufferInfo2* obj, 
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "srcImage"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("srcImage", true);
 
     print_VkImageLayout(obj->srcImageLayout, "srcImageLayout", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "dstBuffer"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("dstBuffer", true);
 
     print_uint32_t(obj->regionCount, "regionCount", 1);
 
@@ -28057,8 +28267,13 @@ static void print_VkImageBlit2(VkImageBlit2 obj, const std::string& s, bool comm
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 2; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 2;
         print_VkOffset3D(obj.srcOffsets[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 2;
+        print_VkOffset3D(obj.srcOffsets[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -28073,8 +28288,13 @@ static void print_VkImageBlit2(VkImageBlit2 obj, const std::string& s, bool comm
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 2; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 2;
         print_VkOffset3D(obj.dstOffsets[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 2;
+        print_VkOffset3D(obj.dstOffsets[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -28112,8 +28332,13 @@ static void print_VkImageBlit2(const VkImageBlit2* obj, const std::string& s, bo
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 2; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 2;
         print_VkOffset3D(obj->srcOffsets[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 2;
+        print_VkOffset3D(obj->srcOffsets[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -28128,8 +28353,13 @@ static void print_VkImageBlit2(const VkImageBlit2* obj, const std::string& s, bo
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < 2; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != 2;
         print_VkOffset3D(obj->dstOffsets[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != 2;
+        print_VkOffset3D(obj->dstOffsets[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -28159,23 +28389,11 @@ static void print_VkBlitImageInfo2(VkBlitImageInfo2 obj, const std::string& s, b
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "srcImage"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("srcImage", true);
 
     print_VkImageLayout(obj.srcImageLayout, "srcImageLayout", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "dstImage"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("dstImage", true);
 
     print_VkImageLayout(obj.dstImageLayout, "dstImageLayout", 1);
 
@@ -28224,23 +28442,11 @@ static void print_VkBlitImageInfo2(const VkBlitImageInfo2* obj, const std::strin
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "srcImage"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("srcImage", true);
 
     print_VkImageLayout(obj->srcImageLayout, "srcImageLayout", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "dstImage"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("dstImage", true);
 
     print_VkImageLayout(obj->dstImageLayout, "dstImageLayout", 1);
 
@@ -28377,23 +28583,11 @@ static void print_VkResolveImageInfo2(VkResolveImageInfo2 obj, const std::string
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "srcImage"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("srcImage", true);
 
     print_VkImageLayout(obj.srcImageLayout, "srcImageLayout", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "dstImage"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("dstImage", true);
 
     print_VkImageLayout(obj.dstImageLayout, "dstImageLayout", 1);
 
@@ -28440,23 +28634,11 @@ static void print_VkResolveImageInfo2(const VkResolveImageInfo2* obj, const std:
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "srcImage"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("srcImage", true);
 
     print_VkImageLayout(obj->srcImageLayout, "srcImageLayout", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "dstImage"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("dstImage", true);
 
     print_VkImageLayout(obj->dstImageLayout, "dstImageLayout", 1);
 
@@ -28972,25 +29154,13 @@ static void print_VkRenderingAttachmentInfo(VkRenderingAttachmentInfo obj, const
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "imageView"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("imageView", true);
 
     print_VkImageLayout(obj.imageLayout, "imageLayout", 1);
 
     print_VkResolveModeFlagBits(obj.resolveMode, "resolveMode", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "resolveImageView"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("resolveImageView", true);
 
     print_VkImageLayout(obj.resolveImageLayout, "resolveImageLayout", 1);
 
@@ -29023,25 +29193,13 @@ static void print_VkRenderingAttachmentInfo(const VkRenderingAttachmentInfo* obj
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "imageView"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("imageView", true);
 
     print_VkImageLayout(obj->imageLayout, "imageLayout", 1);
 
     print_VkResolveModeFlagBits(obj->resolveMode, "resolveMode", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "resolveImageView"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("resolveImageView", true);
 
     print_VkImageLayout(obj->resolveImageLayout, "resolveImageLayout", 1);
 
@@ -29228,8 +29386,13 @@ static void print_VkPipelineRenderingCreateInfo(VkPipelineRenderingCreateInfo ob
     if (obj.pColorAttachmentFormats) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.colorAttachmentCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.colorAttachmentCount;
             print_VkFormat(obj.pColorAttachmentFormats[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.colorAttachmentCount;
+            print_VkFormat(obj.pColorAttachmentFormats[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -29277,8 +29440,13 @@ static void print_VkPipelineRenderingCreateInfo(const VkPipelineRenderingCreateI
     if (obj->pColorAttachmentFormats) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->colorAttachmentCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->colorAttachmentCount;
             print_VkFormat(obj->pColorAttachmentFormats[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->colorAttachmentCount;
+            print_VkFormat(obj->pColorAttachmentFormats[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -29382,8 +29550,13 @@ static void print_VkCommandBufferInheritanceRenderingInfo(VkCommandBufferInherit
     if (obj.pColorAttachmentFormats) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.colorAttachmentCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.colorAttachmentCount;
             print_VkFormat(obj.pColorAttachmentFormats[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.colorAttachmentCount;
+            print_VkFormat(obj.pColorAttachmentFormats[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -29435,8 +29608,13 @@ static void print_VkCommandBufferInheritanceRenderingInfo(const VkCommandBufferI
     if (obj->pColorAttachmentFormats) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->colorAttachmentCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->colorAttachmentCount;
             print_VkFormat(obj->pColorAttachmentFormats[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->colorAttachmentCount;
+            print_VkFormat(obj->pColorAttachmentFormats[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -30630,8 +30808,13 @@ static void print_VkPhysicalDeviceVulkan14Properties(VkPhysicalDeviceVulkan14Pro
     if (obj.pCopySrcLayouts) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.copySrcLayoutCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.copySrcLayoutCount;
             print_VkImageLayout(obj.pCopySrcLayouts[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.copySrcLayoutCount;
+            print_VkImageLayout(obj.pCopySrcLayouts[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -30649,8 +30832,13 @@ static void print_VkPhysicalDeviceVulkan14Properties(VkPhysicalDeviceVulkan14Pro
     if (obj.pCopyDstLayouts) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.copyDstLayoutCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.copyDstLayoutCount;
             print_VkImageLayout(obj.pCopyDstLayouts[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.copyDstLayoutCount;
+            print_VkImageLayout(obj.pCopyDstLayouts[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -30665,8 +30853,13 @@ static void print_VkPhysicalDeviceVulkan14Properties(VkPhysicalDeviceVulkan14Pro
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_UUID_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
         print_uint8_t(obj.optimalTilingLayoutUUID[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
+        print_uint8_t(obj.optimalTilingLayoutUUID[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -30745,8 +30938,13 @@ static void print_VkPhysicalDeviceVulkan14Properties(const VkPhysicalDeviceVulka
     if (obj->pCopySrcLayouts) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->copySrcLayoutCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->copySrcLayoutCount;
             print_VkImageLayout(obj->pCopySrcLayouts[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->copySrcLayoutCount;
+            print_VkImageLayout(obj->pCopySrcLayouts[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -30764,8 +30962,13 @@ static void print_VkPhysicalDeviceVulkan14Properties(const VkPhysicalDeviceVulka
     if (obj->pCopyDstLayouts) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->copyDstLayoutCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->copyDstLayoutCount;
             print_VkImageLayout(obj->pCopyDstLayouts[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->copyDstLayoutCount;
+            print_VkImageLayout(obj->pCopyDstLayouts[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -30780,8 +30983,13 @@ static void print_VkPhysicalDeviceVulkan14Properties(const VkPhysicalDeviceVulka
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_UUID_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
         print_uint8_t(obj->optimalTilingLayoutUUID[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
+        print_uint8_t(obj->optimalTilingLayoutUUID[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -30927,8 +31135,13 @@ static void print_VkQueueFamilyGlobalPriorityProperties(VkQueueFamilyGlobalPrior
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_GLOBAL_PRIORITY_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_GLOBAL_PRIORITY_SIZE;
         print_VkQueueGlobalPriority(obj.priorities[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_GLOBAL_PRIORITY_SIZE;
+        print_VkQueueGlobalPriority(obj.priorities[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -30965,8 +31178,13 @@ static void print_VkQueueFamilyGlobalPriorityProperties(const VkQueueFamilyGloba
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_MAX_GLOBAL_PRIORITY_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_MAX_GLOBAL_PRIORITY_SIZE;
         print_VkQueueGlobalPriority(obj->priorities[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_MAX_GLOBAL_PRIORITY_SIZE;
+        print_VkQueueGlobalPriority(obj->priorities[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -31643,13 +31861,7 @@ static void print_VkMemoryMapInfo(VkMemoryMapInfo obj, const std::string& s, boo
 
     print_VkMemoryMapFlags(obj.flags, "flags", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "memory"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("memory", true);
 
     print_VkDeviceSize(obj.offset, "offset", 1);
 
@@ -31680,13 +31892,7 @@ static void print_VkMemoryMapInfo(const VkMemoryMapInfo* obj, const std::string&
 
     print_VkMemoryMapFlags(obj->flags, "flags", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "memory"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("memory", true);
 
     print_VkDeviceSize(obj->offset, "offset", 1);
 
@@ -31718,13 +31924,7 @@ static void print_VkMemoryUnmapInfo(VkMemoryUnmapInfo obj, const std::string& s,
 
     print_VkMemoryUnmapFlags(obj.flags, "flags", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "memory"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"" << std::endl;
+    print_empty("memory", false);
 
     INDENT(-4);
     PRINT_SPACE
@@ -31751,13 +31951,7 @@ static void print_VkMemoryUnmapInfo(const VkMemoryUnmapInfo* obj, const std::str
 
     print_VkMemoryUnmapFlags(obj->flags, "flags", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "memory"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"" << std::endl;
+    print_empty("memory", false);
 
     INDENT(-4);
     PRINT_SPACE
@@ -31921,8 +32115,13 @@ static void print_VkRenderingAreaInfo(VkRenderingAreaInfo obj, const std::string
     if (obj.pColorAttachmentFormats) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.colorAttachmentCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.colorAttachmentCount;
             print_VkFormat(obj.pColorAttachmentFormats[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.colorAttachmentCount;
+            print_VkFormat(obj.pColorAttachmentFormats[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -31969,8 +32168,13 @@ static void print_VkRenderingAreaInfo(const VkRenderingAreaInfo* obj, const std:
     if (obj->pColorAttachmentFormats) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->colorAttachmentCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->colorAttachmentCount;
             print_VkFormat(obj->pColorAttachmentFormats[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->colorAttachmentCount;
+            print_VkFormat(obj->pColorAttachmentFormats[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -32422,8 +32626,13 @@ static void print_VkRenderingAttachmentLocationInfo(VkRenderingAttachmentLocatio
     if (obj.pColorAttachmentLocations) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.colorAttachmentCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.colorAttachmentCount;
             print_uint32_t(obj.pColorAttachmentLocations[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.colorAttachmentCount;
+            print_uint32_t(obj.pColorAttachmentLocations[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -32465,8 +32674,13 @@ static void print_VkRenderingAttachmentLocationInfo(const VkRenderingAttachmentL
     if (obj->pColorAttachmentLocations) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->colorAttachmentCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->colorAttachmentCount;
             print_uint32_t(obj->pColorAttachmentLocations[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->colorAttachmentCount;
+            print_uint32_t(obj->pColorAttachmentLocations[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -32509,8 +32723,13 @@ static void print_VkRenderingInputAttachmentIndexInfo(VkRenderingInputAttachment
     if (obj.pColorAttachmentInputIndices) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.colorAttachmentCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.colorAttachmentCount;
             print_uint32_t(obj.pColorAttachmentInputIndices[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.colorAttachmentCount;
+            print_uint32_t(obj.pColorAttachmentInputIndices[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -32556,8 +32775,13 @@ static void print_VkRenderingInputAttachmentIndexInfo(const VkRenderingInputAtta
     if (obj->pColorAttachmentInputIndices) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->colorAttachmentCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->colorAttachmentCount;
             print_uint32_t(obj->pColorAttachmentInputIndices[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->colorAttachmentCount;
+            print_uint32_t(obj->pColorAttachmentInputIndices[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -32762,13 +32986,7 @@ static void print_VkBindDescriptorSetsInfo(VkBindDescriptorSetsInfo obj, const s
 
     print_VkShaderStageFlags(obj.stageFlags, "stageFlags", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "layout"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty_value_required_by_cts(layout, obj., true);
 
     print_uint32_t(obj.firstSet, "firstSet", 1);
 
@@ -32780,11 +32998,19 @@ static void print_VkBindDescriptorSetsInfo(VkBindDescriptorSetsInfo obj, const s
     if (obj.pDescriptorSets) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.descriptorSetCount; i++) {
+#ifdef VULKAN_JSON_CTS
             std::stringstream tmp;
             tmp << "pDescriptorSets"
                 << "_" << i;
             bool isCommaNeeded = (i + 1) != obj.descriptorSetCount;
             print_VkDescriptorSet(obj.pDescriptorSets[i], tmp.str(), isCommaNeeded);
+#else
+            std::stringstream tmp;
+            tmp << "pDescriptorSets"
+                << "_" << i;
+            bool isCommaNeeded = (i + 1) != obj.descriptorSetCount;
+            print_VkDescriptorSet(obj.pDescriptorSets[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -32802,8 +33028,13 @@ static void print_VkBindDescriptorSetsInfo(VkBindDescriptorSetsInfo obj, const s
     if (obj.pDynamicOffsets) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.dynamicOffsetCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.dynamicOffsetCount;
             print_uint32_t(obj.pDynamicOffsets[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.dynamicOffsetCount;
+            print_uint32_t(obj.pDynamicOffsets[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -32838,13 +33069,7 @@ static void print_VkBindDescriptorSetsInfo(const VkBindDescriptorSetsInfo* obj, 
 
     print_VkShaderStageFlags(obj->stageFlags, "stageFlags", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "layout"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty_value_required_by_cts(layout, obj->, true);
 
     print_uint32_t(obj->firstSet, "firstSet", 1);
 
@@ -32856,11 +33081,19 @@ static void print_VkBindDescriptorSetsInfo(const VkBindDescriptorSetsInfo* obj, 
     if (obj->pDescriptorSets) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->descriptorSetCount; i++) {
+#ifdef VULKAN_JSON_CTS
             std::stringstream tmp;
             tmp << "pDescriptorSets"
                 << "_" << i;
             bool isCommaNeeded = (i + 1) != obj->descriptorSetCount;
             print_VkDescriptorSet(obj->pDescriptorSets[i], tmp.str(), isCommaNeeded);
+#else
+            std::stringstream tmp;
+            tmp << "pDescriptorSets"
+                << "_" << i;
+            bool isCommaNeeded = (i + 1) != obj->descriptorSetCount;
+            print_VkDescriptorSet(obj->pDescriptorSets[i], tmp.str(), isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -32878,8 +33111,13 @@ static void print_VkBindDescriptorSetsInfo(const VkBindDescriptorSetsInfo* obj, 
     if (obj->pDynamicOffsets) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->dynamicOffsetCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->dynamicOffsetCount;
             print_uint32_t(obj->pDynamicOffsets[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->dynamicOffsetCount;
+            print_uint32_t(obj->pDynamicOffsets[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -32913,13 +33151,7 @@ static void print_VkPushConstantsInfo(VkPushConstantsInfo obj, const std::string
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "layout"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty_value_required_by_cts(layout, obj., true);
 
     print_VkShaderStageFlags(obj.stageFlags, "stageFlags", 1);
 
@@ -32952,13 +33184,7 @@ static void print_VkPushConstantsInfo(const VkPushConstantsInfo* obj, const std:
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "layout"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty_value_required_by_cts(layout, obj->, true);
 
     print_VkShaderStageFlags(obj->stageFlags, "stageFlags", 1);
 
@@ -32994,13 +33220,7 @@ static void print_VkPushDescriptorSetInfo(VkPushDescriptorSetInfo obj, const std
 
     print_VkShaderStageFlags(obj.stageFlags, "stageFlags", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "layout"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty_value_required_by_cts(layout, obj., true);
 
     print_uint32_t(obj.set, "set", 1);
 
@@ -33049,13 +33269,7 @@ static void print_VkPushDescriptorSetInfo(const VkPushDescriptorSetInfo* obj, co
 
     print_VkShaderStageFlags(obj->stageFlags, "stageFlags", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "layout"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty_value_required_by_cts(layout, obj->, true);
 
     print_uint32_t(obj->set, "set", 1);
 
@@ -33104,21 +33318,9 @@ static void print_VkPushDescriptorSetWithTemplateInfo(VkPushDescriptorSetWithTem
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "descriptorUpdateTemplate"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("descriptorUpdateTemplate", true);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "layout"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty_value_required_by_cts(layout, obj., true);
 
     print_uint32_t(obj.set, "set", 1);
 
@@ -33148,21 +33350,9 @@ static void print_VkPushDescriptorSetWithTemplateInfo(const VkPushDescriptorSetW
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "descriptorUpdateTemplate"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("descriptorUpdateTemplate", true);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "layout"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty_value_required_by_cts(layout, obj->, true);
 
     print_uint32_t(obj->set, "set", 1);
 
@@ -33490,8 +33680,13 @@ static void print_VkPhysicalDeviceHostImageCopyProperties(VkPhysicalDeviceHostIm
     if (obj.pCopySrcLayouts) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.copySrcLayoutCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.copySrcLayoutCount;
             print_VkImageLayout(obj.pCopySrcLayouts[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.copySrcLayoutCount;
+            print_VkImageLayout(obj.pCopySrcLayouts[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -33509,8 +33704,13 @@ static void print_VkPhysicalDeviceHostImageCopyProperties(VkPhysicalDeviceHostIm
     if (obj.pCopyDstLayouts) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj.copyDstLayoutCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj.copyDstLayoutCount;
             print_VkImageLayout(obj.pCopyDstLayouts[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj.copyDstLayoutCount;
+            print_VkImageLayout(obj.pCopyDstLayouts[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -33525,8 +33725,13 @@ static void print_VkPhysicalDeviceHostImageCopyProperties(VkPhysicalDeviceHostIm
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_UUID_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
         print_uint8_t(obj.optimalTilingLayoutUUID[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
+        print_uint8_t(obj.optimalTilingLayoutUUID[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -33566,8 +33771,13 @@ static void print_VkPhysicalDeviceHostImageCopyProperties(const VkPhysicalDevice
     if (obj->pCopySrcLayouts) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->copySrcLayoutCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->copySrcLayoutCount;
             print_VkImageLayout(obj->pCopySrcLayouts[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->copySrcLayoutCount;
+            print_VkImageLayout(obj->pCopySrcLayouts[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -33585,8 +33795,13 @@ static void print_VkPhysicalDeviceHostImageCopyProperties(const VkPhysicalDevice
     if (obj->pCopyDstLayouts) {
         _OUT << "[" << std::endl;
         for (unsigned int i = 0; i < obj->copyDstLayoutCount; i++) {
+#ifdef VULKAN_JSON_CTS
             bool isCommaNeeded = (i + 1) != obj->copyDstLayoutCount;
             print_VkImageLayout(obj->pCopyDstLayouts[i], "", isCommaNeeded);
+#else
+            bool isCommaNeeded = (i + 1) != obj->copyDstLayoutCount;
+            print_VkImageLayout(obj->pCopyDstLayouts[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
         }
         PRINT_SPACE
         _OUT << "]"
@@ -33601,8 +33816,13 @@ static void print_VkPhysicalDeviceHostImageCopyProperties(const VkPhysicalDevice
     PRINT_SPACE
     _OUT << "[" << std::endl;
     for (unsigned int i = 0; i < VK_UUID_SIZE; i++) {
+#ifdef VULKAN_JSON_CTS
         bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
         print_uint8_t(obj->optimalTilingLayoutUUID[i], "", isCommaNeeded);
+#else
+        bool isCommaNeeded = (i + 1) != VK_UUID_SIZE;
+        print_uint8_t(obj->optimalTilingLayoutUUID[i], "", isCommaNeeded);
+#endif  //  VULKAN_JSON_CTS
     }
     PRINT_SPACE
     _OUT << "]"
@@ -33802,13 +34022,7 @@ static void print_VkCopyMemoryToImageInfo(VkCopyMemoryToImageInfo obj, const std
 
     print_VkHostImageCopyFlags(obj.flags, "flags", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "dstImage"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("dstImage", true);
 
     print_VkImageLayout(obj.dstImageLayout, "dstImageLayout", 1);
 
@@ -33857,13 +34071,7 @@ static void print_VkCopyMemoryToImageInfo(const VkCopyMemoryToImageInfo* obj, co
 
     print_VkHostImageCopyFlags(obj->flags, "flags", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "dstImage"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("dstImage", true);
 
     print_VkImageLayout(obj->dstImageLayout, "dstImageLayout", 1);
 
@@ -33913,13 +34121,7 @@ static void print_VkCopyImageToMemoryInfo(VkCopyImageToMemoryInfo obj, const std
 
     print_VkHostImageCopyFlags(obj.flags, "flags", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "srcImage"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("srcImage", true);
 
     print_VkImageLayout(obj.srcImageLayout, "srcImageLayout", 1);
 
@@ -33968,13 +34170,7 @@ static void print_VkCopyImageToMemoryInfo(const VkCopyImageToMemoryInfo* obj, co
 
     print_VkHostImageCopyFlags(obj->flags, "flags", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "srcImage"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("srcImage", true);
 
     print_VkImageLayout(obj->srcImageLayout, "srcImageLayout", 1);
 
@@ -34024,23 +34220,11 @@ static void print_VkCopyImageToImageInfo(VkCopyImageToImageInfo obj, const std::
 
     print_VkHostImageCopyFlags(obj.flags, "flags", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "srcImage"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("srcImage", true);
 
     print_VkImageLayout(obj.srcImageLayout, "srcImageLayout", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "dstImage"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("dstImage", true);
 
     print_VkImageLayout(obj.dstImageLayout, "dstImageLayout", 1);
 
@@ -34089,23 +34273,11 @@ static void print_VkCopyImageToImageInfo(const VkCopyImageToImageInfo* obj, cons
 
     print_VkHostImageCopyFlags(obj->flags, "flags", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "srcImage"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("srcImage", true);
 
     print_VkImageLayout(obj->srcImageLayout, "srcImageLayout", 1);
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "dstImage"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("dstImage", true);
 
     print_VkImageLayout(obj->dstImageLayout, "dstImageLayout", 1);
 
@@ -34154,13 +34326,7 @@ static void print_VkHostImageLayoutTransitionInfo(VkHostImageLayoutTransitionInf
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "image"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("image", true);
 
     print_VkImageLayout(obj.oldLayout, "oldLayout", 1);
 
@@ -34194,13 +34360,7 @@ static void print_VkHostImageLayoutTransitionInfo(const VkHostImageLayoutTransit
              << "," << std::endl;
     }
 
-    /** Note: printing just an empty entry here **/
-    PRINT_SPACE _OUT << "\""
-                     << "image"
-                     << "\""
-                     << " : "
-                     << "\""
-                     << "\"," << std::endl;
+    print_empty("image", true);
 
     print_VkImageLayout(obj->oldLayout, "oldLayout", 1);
 

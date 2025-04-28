@@ -104,8 +104,6 @@ def makeGenOpts(args):
     from apiconventions import APIConventions
     conventions = APIConventions()
 
-    isCTS = args.isCTS
-
     # Platform extensions, in their own header files
     # Each element of the platforms[] array defines information for
     # generating a single platform:
@@ -280,7 +278,6 @@ def makeGenOpts(args):
             apicall           = 'VKAPI_ATTR ',
             apientry          = 'VKAPI_CALL ',
             apientryp         = 'VKAPI_PTR *',
-            isCTS             = isCTS,
             alignFuncParam    = 48)
         ]
 
@@ -366,7 +363,6 @@ def makeGenOpts(args):
                 apicall           = 'VKAPI_ATTR ',
                 apientry          = 'VKAPI_CALL ',
                 apientryp         = 'VKAPI_PTR *',
-                isCTS             = isCTS,
                 alignFuncParam    = 48)
             ]
 
@@ -503,8 +499,6 @@ if __name__ == '__main__':
                         help='Suppress script output during normal execution.')
     parser.add_argument('-verbose', action='store_false', dest='quiet', default=True,
                         help='Enable script output during normal execution.')
-    parser.add_argument('--iscts', action='store_true', dest='isCTS',
-                        help='Specify if this should generate CTS compatible code')
 
     # This argument tells us where to load the script from the Vulkan-Headers registry
     parser.add_argument('-scripts', action='store',

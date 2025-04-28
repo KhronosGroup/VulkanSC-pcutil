@@ -42,6 +42,7 @@ predefinedCode = """
 #include <sstream>
 #include <cassert>
 #include <limits>
+#include <type_traits>
 #include <json/json.h>
 
 namespace vk_json_parser {
@@ -144,76 +145,13 @@ static void parse_char(const Json::Value& obj, const char** o)
     *o = writePtr;
 }
 
-"""
-
-base64DecodeCodeCTS = """
-// base64 encoder taken from executor/xeTestResultParser.cpp
-
-static
-std::vector<deUint8> base64decode(const std::string& encoded)
-{
-	int base64DecodeOffset = 0;
-	std::vector<deUint8> result;
-
-	for (std::size_t inNdx = 0; inNdx < encoded.size(); inNdx++)
-	{
-		deUint8	byte = encoded[inNdx];
-		deUint8	decodedBits = 0;
-
-		if (de::inRange<deUint8>(byte, 'A', 'Z'))
-			decodedBits = (deUint8)(byte - 'A');
-		else if (de::inRange<deUint8>(byte, 'a', 'z'))
-			decodedBits = (deUint8)(('Z' - 'A' + 1) + (byte - 'a'));
-		else if (de::inRange<deUint8>(byte, '0', '9'))
-			decodedBits = (deUint8)(('Z' - 'A' + 1) + ('z' - 'a' + 1) + (byte - '0'));
-		else if (byte == '+')
-			decodedBits = ('Z' - 'A' + 1) + ('z' - 'a' + 1) + ('9' - '0' + 1);
-		else if (byte == '/')
-			decodedBits = ('Z' - 'A' + 1) + ('z' - 'a' + 1) + ('9' - '0' + 2);
-		else
-			continue; // Not an B64 input character.
-
-		int phase = base64DecodeOffset % 4;
-
-		if (phase == 0)
-			result.resize(result.size() + 3, 0);
-
-		//		if ((int)image->data.size() < (base64DecodeOffset >> 2) * 3 + 3)
-		//			throw TestResultParseError("Malformed base64 data");
-		deUint8* outPtr = result.data() + (base64DecodeOffset >> 2) * 3;
-
-		switch (phase)
-		{
-		case 0: outPtr[0] |= (deUint8)(decodedBits << 2);																								break;
-		case 1: outPtr[0] = (deUint8)(outPtr[0] | (deUint8)(decodedBits >> 4));	outPtr[1] = (deUint8)(outPtr[1] | (deUint8)((decodedBits & 0xF) << 4));	break;
-		case 2: outPtr[1] = (deUint8)(outPtr[1] | (deUint8)(decodedBits >> 2));	outPtr[2] = (deUint8)(outPtr[2] | (deUint8)((decodedBits & 0x3) << 6));	break;
-		case 3: outPtr[2] |= decodedBits;																												break;
-		default:
-			DE_ASSERT(false);
-		}
-
-		base64DecodeOffset++;
-	}
-	return result;
-}
-
-static void parse_void_data(const Json::Value& obj, void* o, int oSize)
-{
-	std::vector<deUint8> data;
-	if (obj.isString())
-	{
-		data = base64decode(obj.asString());
-	}
-	else
-	{
-		data.resize(oSize);
-		for (int i = 0; i < std::min(oSize, (int)obj.size()); i++)
-		{
-			parse_uint8_t(obj[i], const_cast<deUint8&>(data[i]));
-		}
-	}
-	memcpy(o, data.data(), oSize);
-}
+#ifdef VULKAN_JSON_CTS
+#define NVSCI_NS vk::pt
+constexpr bool is_cts = true;
+#else
+#define NVSCI_NS
+constexpr bool is_cts = false;
+#endif
 
 """
 
@@ -260,7 +198,11 @@ std::vector<uint8_t> base64decode(const std::string& encoded)
 		case 2: outPtr[1] = (uint8_t)(outPtr[1] | (uint8_t)(decodedBits >> 2));	outPtr[2] = (uint8_t)(outPtr[2] | (uint8_t)((decodedBits & 0x3) << 6));	break;
 		case 3: outPtr[2] |= decodedBits;																												break;
 		default:
+#ifdef VULKAN_JSON_CTS
+			DE_ASSERT(false);
+#else
 			assert(false);
+#endif
 		}
 
 		base64DecodeOffset++;
@@ -369,14 +311,14 @@ class JSONParserGenerator(OutputGenerator):
             if baseType == "uint8_t" or baseType == "uint16_t":
                 write("static void parse_%s(const Json::Value& obj, %s& o)\n" %(baseType, self.baseTypeListMap[baseType]) +
                     "{\n"
-                    "     o = static_cast<%s>(%s);\n" %(self.baseTypeListMap[baseType],printStr)                                                                                   +
+                    "     o = static_cast<%s>(%s);\n" %(self.baseTypeListMap[baseType],printStr) +
                     "}\n"
                     , file=self.outFile
                 )
             elif baseType.startswith('NvSci'):
-                write("static void parse_%s(const Json::Value& obj, %s& o)\n" %(baseType, self.nvSciTypeListMap[baseType]) +
+                write(f'static void parse_{baseType}(const Json::Value& obj, NVSCI_NS::{baseType}& o)\n'
                     "{\n"
-                    "     o = static_cast<%s>(%s);\n" %(self.nvSciTypeListMap[baseType],printStr)                                                                                   +
+                    f'     o = static_cast<NVSCI_NS::{baseType}>({printStr});\n'
                     "}\n"
                     , file=self.outFile
                 )
@@ -441,21 +383,15 @@ class JSONParserGenerator(OutputGenerator):
         self.createConstDict()
 
         self.baseTypeListMap  = {
-                                  "int32_t"   : "deInt32" if self.isCTS else "int32_t",
-                                  "uint32_t"  : "deUint32" if self.isCTS else "uint32_t",
-                                  "uint8_t"   : "deUint8" if self.isCTS else "uint8_t",
-                                  "uint64_t"  : "deUint64" if self.isCTS else "uint64_t",
+                                  "int32_t"   : "int32_t",
+                                  "uint32_t"  : "uint32_t",
+                                  "uint8_t"   : "uint8_t",
+                                  "uint64_t"  : "uint64_t",
                                   "float"     : "float",
                                   "int"       : "int",
                                   "double"    : "double",
-                                  "int64_t"   : "deInt64" if self.isCTS else "int64_t",
-                                  "uint16_t"  : "deUint16" if self.isCTS else "uint16_t"
-                                }
-        self.nvSciTypeListMap = {
-                                  "NvSciBufAttrList"  : "vk::pt::NvSciBufAttrList" if self.isCTS else "NvSciBufAttrList",
-                                  "NvSciBufObj"       : "vk::pt::NvSciBufObj" if self.isCTS else "NvSciBufObj",
-                                  "NvSciSyncAttrList" : "vk::pt::NvSciSyncAttrList" if self.isCTS else "NvSciSyncAttrList",
-                                  "NvSciSyncObj"      : "vk::pt::NvSciSyncObj" if self.isCTS else "NvSciSyncObj"
+                                  "int64_t"   : "int64_t",
+                                  "uint16_t"  : "uint16_t"
                                 }
 
         write(headerGuardTop, file=self.outFile, end='')
@@ -475,10 +411,7 @@ class JSONParserGenerator(OutputGenerator):
 
         write("static void* parsePNextChain(const Json::Value& obj);\n", file=self.outFile)
 
-        if self.isCTS:
-            write(base64DecodeCodeCTS, file=self.outFile)
-        else:
-            write(base64DecodeCode, file=self.outFile)
+        write(base64DecodeCode, file=self.outFile)
 
     def endFile(self):
         write(self.genStructExtensionCode(), file=self.outFile)
@@ -705,23 +638,24 @@ class JSONParserGenerator(OutputGenerator):
     def genArrayCode(self, structName, name, typeName, str2, arraySize, needStrPrint, isMallocNeeded):
         code = ""
         mappedType = self.baseTypeListMap[typeName] if self.baseTypeListMap.get(typeName) != None else typeName
-        if structName == "VkPipelineLayoutCreateInfo" and self.isCTS:
-            if isMallocNeeded:
-                code += "    %s* %sTab = (%s*)s_globalMem.allocate(%s, sizeof(%s));\n" %(mappedType, name, mappedType, arraySize, mappedType)
-            code += "    const Json::Value& obj_%s_arr = obj[\"%s\"];\n" %(name, name)
-            code += "    for (unsigned int i = 0; i < obj_%s_arr.size(); i++) {\n" %(name)
-            code += "        deUint64 %sInternal = 0;\n" %(name)
-            code += "        parse_uint64_t(obj_%s_arr[i], %sInternal);\n" %(name, name)
-            code += "        %sTab[i] = %s(%sInternal);\n" %(name, mappedType, name)
-            code += "    }\n"
-            code += "    %s%s = %sTab;\n" %(str2[1:], name, name)
-        else:
-            if isMallocNeeded:
-                code += "    %s%s) = (%s*)s_globalMem.allocate(%s, sizeof(%s));\n" %(str2, name, mappedType, arraySize, mappedType)
-            code += "    const Json::Value& obj_%s_arr = obj[\"%s\"];\n" %(name, name)
-            code += "    for (unsigned int i = 0; i < obj_%s_arr.size(); i++) {\n" %(name)
-            code += "        parse_%s(obj_%s_arr[i], const_cast<%s&>(%s%s[i])));\n" %(typeName, name, mappedType, str2, name)
-            code += "    }\n"
+        code += f'if constexpr (is_cts && std::is_same_v<{structName}, VkPipelineLayoutCreateInfo>) {{\n'
+        if isMallocNeeded:
+            code += "    %s* %sTab = (%s*)s_globalMem.allocate(%s, sizeof(%s));\n" %(mappedType, name, mappedType, arraySize, mappedType)
+        code += "    const Json::Value& obj_%s_arr = obj[\"%s\"];\n" %(name, name)
+        code += "    for (unsigned int i = 0; i < obj_%s_arr.size(); i++) {\n" %(name)
+        code += "        uint64_t %sInternal = 0;\n" %(name)
+        code += "        parse_uint64_t(obj_%s_arr[i], %sInternal);\n" %(name, name)
+        code += "        %sTab[i] = %s(%sInternal);\n" %(name, mappedType, name)
+        code += "    }\n"
+        code += "    %s%s = %sTab;\n" %(str2[1:], name, name)
+        code += "} else {\n"
+        if isMallocNeeded:
+            code += "    %s%s) = (%s*)s_globalMem.allocate(%s, sizeof(%s));\n" %(str2, name, mappedType, arraySize, mappedType)
+        code += "    const Json::Value& obj_%s_arr = obj[\"%s\"];\n" %(name, name)
+        code += "    for (unsigned int i = 0; i < obj_%s_arr.size(); i++) {\n" %(name)
+        code += "        parse_%s(obj_%s_arr[i], const_cast<%s&>(%s%s[i])));\n" %(typeName, name, mappedType, str2, name)
+        code += "    }\n"
+        code += "}"
 
         return code
 
@@ -732,7 +666,7 @@ class JSONParserGenerator(OutputGenerator):
 
     def genCTSHandleCode(self, memberName, typeName):
         code = ""
-        code += "    deUint64 %sInternal = 0;\n" %(memberName)
+        code += "    uint64_t %sInternal = 0;\n" %(memberName)
         code += "    parse_uint64_t(obj[\"%s\"], %sInternal);\n" %(memberName, memberName)
         code += "    o.%s = %s(%sInternal);\n" %(memberName, typeName, memberName)
         return code
@@ -779,18 +713,17 @@ class JSONParserGenerator(OutputGenerator):
                 code += "    else\n"
                 code += "        %s%s = NULL;\n" %(str2[1:], memberName)
                 return code
-            if self.isCTS:
-                if structName == "VkPipelineCacheCreateInfo":
-                    code += "    if (o.initialDataSize > 0U)\n"
-                    code += "    {\n"
-                    code += "        void* data = s_globalMem.allocate(%s(%sinitialDataSize));\n" %(self.baseTypeListMap["uint32_t"], str2[1:])
-                    code += "        parse_void_data(obj[\"%s\"], data, int(%sinitialDataSize));\n" %(memberName, str2[1:])
-                    code += "        %s%s = data;\n" %(str2[1:], memberName)
-                    code += "    }\n"
-                    code += "    else\n"
-                    code += "        %s%s = NULL;\n" %(str2[1:], memberName)
-                return code
-            return "    /** Note: Ignoring void* data. **/\n"
+            code += f'if constexpr (is_cts && is_same_v<{structName}, VkPipelineCacheCreateInfo>) {{\n'
+            code += "    if (o.initialDataSize > 0U)\n"
+            code += "    {\n"
+            code += "        void* data = s_globalMem.allocate(%s(%sinitialDataSize));\n" %(self.baseTypeListMap["uint32_t"], str2[1:])
+            code += "        parse_void_data(obj[\"%s\"], data, int(%sinitialDataSize));\n" %(memberName, str2[1:])
+            code += "        %s%s = data;\n" %(str2[1:], memberName)
+            code += "    }\n"
+            code += "    else\n"
+            code += "        %s%s = NULL;\n" %(str2[1:], memberName)
+            code += "} else { /** Note: Ignoring void* data. **/ }"
+            return code
 
         # For pointers where we have the 'len' field, dump them as arrays.
         elif self.paramIsPointer(param) and param.get('len') is not None and param.get('len').find('null-terminated') == -1 and param.get('len').find('latexmath') == -1:
@@ -798,23 +731,25 @@ class JSONParserGenerator(OutputGenerator):
             if param.get('optional') != 'true':
                 return self.genArrayCode(structName, memberName, typeName, str2, str2+param.get('len')+")", False, True)
             else:
-                if structName == "VkDescriptorSetLayoutBinding" and self.isCTS:
-                    code  = "    const Json::Value& obj_%s = obj[\"%s\"];\n" %(memberName, memberName)
-                    code += "    if (obj_%s.empty() || (obj_%s.isString() && obj_%s.asString() == \"NULL\"))\n" %(memberName, memberName, memberName)
-                    code += "        o.%s = nullptr;\n" %(memberName)
-                    code += "    else\n"
-                    code += "    {\n"
-                    code += "        %s* samplers = (%s*)s_globalMem.allocate((o.descriptorCount), sizeof(%s));\n" %(typeName, typeName, typeName)
-                    code += "        for (unsigned int i = 0; i < obj_%s.size(); i++)\n" %(memberName)
-                    code += "        {\n"
-                    code += "            deUint64 sInternal = 0;\n"
-                    code += "            parse_uint64_t(obj_%s[i], sInternal);\n" %(memberName)
-                    code += "            samplers[i] = %s(sInternal);\n" %(typeName)
-                    code += "        }\n"
-                    code += "        o.%s = samplers;\n" %(memberName)
-                    code += "    }"
-                    return code
-                return self.genEmptyCode(memberName, isCommaNeeded)
+                code += f'if constexpr (is_cts && is_same_v<{structName}, VkDescriptorSetLayoutBinding>) {{\n'
+                code  = "    const Json::Value& obj_%s = obj[\"%s\"];\n" %(memberName, memberName)
+                code += "    if (obj_%s.empty() || (obj_%s.isString() && obj_%s.asString() == \"NULL\"))\n" %(memberName, memberName, memberName)
+                code += "        o.%s = nullptr;\n" %(memberName)
+                code += "    else\n"
+                code += "    {\n"
+                code += "        %s* samplers = (%s*)s_globalMem.allocate((o.descriptorCount), sizeof(%s));\n" %(typeName, typeName, typeName)
+                code += "        for (unsigned int i = 0; i < obj_%s.size(); i++)\n" %(memberName)
+                code += "        {\n"
+                code += "            deUint64 sInternal = 0;\n"
+                code += "            parse_uint64_t(obj_%s[i], sInternal);\n" %(memberName)
+                code += "            samplers[i] = %s(sInternal);\n" %(typeName)
+                code += "        }\n"
+                code += "        o.%s = samplers;\n" %(memberName)
+                code += "    }\n"
+                code += "} else {\n"
+                code += self.genEmptyCode(memberName, isCommaNeeded)
+                code += "}\n" 
+                return code
 
         # Special handling for VkPipelineMultisampleStateCreateInfo::pSampleMask
         elif typeName in "VkSampleMask":
@@ -831,9 +766,17 @@ class JSONParserGenerator(OutputGenerator):
 
         # If a struct member is just a handle.
         elif str(self.getTypeCategory(typeName)) == 'handle':
-            if self.isCTS and (memberName == "module" or memberName == "layout" or memberName == "renderPass" or memberName == "conversion"):
-                return self.genCTSHandleCode(memberName, typeName)
-            return self.genEmptyCode(memberName, isCommaNeeded)
+            tmp_code = ""
+            tmp_code += "#ifdef VULKAN_JSON_CTS\n"
+            tmp_code
+            if memberName == "module" or memberName == "layout" or memberName == "renderPass" or memberName == "conversion":
+                tmp_code += self.genCTSHandleCode(memberName, typeName)
+            else:
+                tmp_code += self.genEmptyCode(memberName, isCommaNeeded)
+            tmp_code += "#else\n"
+            tmp_code += self.genEmptyCode(memberName, isCommaNeeded)
+            tmp_code += "#endif //  VULKAN_JSON_CTS\n"
+            return tmp_code
 
         elif typeName in "char":
             if self.paramIsCharStaticArrayWithMacroSize(param) == 0:

@@ -78,13 +78,27 @@ static void dumpPNextChain(const void* pNext);
 static void print_size_t(const size_t* o, const std::string& s, bool commaNeeded=true)
 {
     PRINT_SPACE
-    _OUT << \"\\\"\" << s << \"\\\"\" << \" : \" << static_cast<%s>(*o) << (commaNeeded ? \",\" : \"\") << std::endl;\\
+    _OUT << \"\\\"\" << s << \"\\\"\" << \" : \" << static_cast<uint32_t>(*o) << (commaNeeded ? \",\" : \"\") << std::endl;\\
 }
 static void print_size_t(size_t o, const std::string& s, bool commaNeeded=true)
 {
     PRINT_SPACE
-    _OUT << \"\\\"\" << s << \"\\\"\" << \" : \" << static_cast<%s>(o) << (commaNeeded ? \",\" : \"\") << std::endl;\\
+    _OUT << \"\\\"\" << s << \"\\\"\" << \" : \" << static_cast<uint32_t>(o) << (commaNeeded ? \",\" : \"\") << std::endl;\\
 }
+
+
+static void print_empty(const std::string& s, bool commaNeeded)
+{
+    PRINT_SPACE _OUT << \"\\\"\" << s << \"\\\"\" << \" : \" << \"\\\"\" << (commaNeeded ? \",\" : \"\") << std::endl;
+}
+#ifdef VULKAN_JSON_CTS
+#define print_empty_value_required_by_cts(memberName, instanceName, commaNeeded) \
+    PRINT_SPACE _OUT << \"\\\"\" << #memberName << \"\\\"\" << \" : \" << instanceName memberName.getInternal() << (commaNeeded ? \",\" : \"\") << std::endl
+constexpr bool is_cts = true;
+#else
+#define print_empty_value_required_by_cts(memberName, instanceName, commaNeeded) print_empty(#memberName, commaNeeded)
+constexpr bool is_cts = false;
+#endif
 """
 
 headerGuardTop = """#ifndef _VULKAN_JSON_DATA_HPP
@@ -93,75 +107,6 @@ headerGuardTop = """#ifndef _VULKAN_JSON_DATA_HPP
 
 headerGuardBottom = """#endif // _VULKAN_JSON_DATA_HPP"""
 
-encodeBase64CodeCTS = """
-// Base 64 formatter class from executor/xeTestLogWriter.cpp
-
-class Base64Formatter
-{
-public:
-	const deUint8*	data;
-	int				numBytes;
-
-	Base64Formatter(const deUint8* data_, int numBytes_) : data(data_), numBytes(numBytes_) {}
-};
-
-std::ostream& operator<< (std::ostream& str, const Base64Formatter& fmt)
-{
-	static const char s_base64Table[64] =
-	{
-		'A','B','C','D','E','F','G','H','I','J','K','L','M',
-		'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
-		'a','b','c','d','e','f','g','h','i','j','k','l','m',
-		'n','o','p','q','r','s','t','u','v','w','x','y','z',
-		'0','1','2','3','4','5','6','7','8','9','+','/'
-	};
-
-	const deUint8*	data = fmt.data;
-	int				numBytes = fmt.numBytes;
-	int				srcNdx = 0;
-
-	DE_ASSERT(data && (numBytes > 0));
-
-	/* Loop all input chars. */
-	while (srcNdx < numBytes)
-	{
-		int		numRead = de::min(3, numBytes - srcNdx);
-		deUint8	s0 = data[srcNdx];
-		deUint8	s1 = (numRead >= 2) ? data[srcNdx + 1] : 0;
-		deUint8	s2 = (numRead >= 3) ? data[srcNdx + 2] : 0;
-		char	d[4];
-
-		srcNdx += numRead;
-
-		d[0] = s_base64Table[s0 >> 2];
-		d[1] = s_base64Table[((s0 & 0x3) << 4) | (s1 >> 4)];
-		d[2] = s_base64Table[((s1 & 0xF) << 2) | (s2 >> 6)];
-		d[3] = s_base64Table[s2 & 0x3F];
-
-		if (numRead < 3) d[3] = '=';
-		if (numRead < 2) d[2] = '=';
-
-		/* Write data. */
-		str.write(&d[0], sizeof(d));
-	}
-
-	return str;
-}
-
-inline Base64Formatter toBase64(const deUint8* bytes, int numBytes) {return Base64Formatter(bytes, numBytes); }
-
-static void print_void_data(const void * o, int oSize, const std::string& s, bool commaNeeded=true)
-{
-	if (o != NULL && oSize != 0)
-	{
-		PRINT_SPACE _OUT << "\\\"" << s << "\\\"" << " : " << "\\\"" << toBase64((deUint8*)o, oSize) << "\\\"" << (commaNeeded ? "," : "") << std::endl;
-	}
-	else
-	{
-		PRINT_SPACE _OUT << "\\\"" << s << "\\\"" << " : " << "\\\"NULL\\\"" << (commaNeeded ? "," : "") << std::endl;
-	}
-}
-"""
 encodeBase64Code = """
 // Base 64 formatter class from executor/xeTestLogWriter.cpp
 
@@ -194,8 +139,15 @@ std::ostream& operator<< (std::ostream& str, const Base64Formatter& fmt)
 	/* Loop all input chars. */
 	while (srcNdx < numBytes)
 	{
-        #undef min
+#ifdef min
+#define min_bak min
+#undef min
+#endif
 		int		numRead = std::min(3, numBytes - srcNdx);
+#ifdef min_bak
+#define min min_bak
+#undef min_bak
+#endif
 		uint8_t	s0 = data[srcNdx];
 		uint8_t	s1 = (numRead >= 2) ? data[srcNdx + 1] : 0;
 		uint8_t	s2 = (numRead >= 3) ? data[srcNdx + 2] : 0;
@@ -322,8 +274,9 @@ class JSONOutputGenerator(OutputGenerator):
                   , file=self.outFile
                  )
 
-            if self.isCTS and baseType == "float":
-                printStr = "	if (std::isnan(o))\n"
+            if baseType == "float":
+                printStr = "	#ifdef VULKAN_JSON_CTS\n"
+                printStr +="	if (std::isnan(o))\n"
                 printStr +="	{\n"
                 printStr +="		PRINT_SPACE\n"
                 printStr +="		if (s != \"\")\n"
@@ -335,6 +288,7 @@ class JSONOutputGenerator(OutputGenerator):
                 printStr +="	{\n"
                 printStr +="		PRINT_VAL(commaNeeded)\n"
                 printStr +="	}\n"
+                printStr +="	#endif  // JSON_GEN_IN_CTS\n"
 
             write("static void print_%s(%s o, const std::string& s, bool commaNeeded=true)\n" %(baseType, self.baseTypeListMap[baseType]) +
                   "{\n"                                                                                        						 +
@@ -346,8 +300,9 @@ class JSONOutputGenerator(OutputGenerator):
             if baseType == 'char':
                 printStr = "    PRINT_STR(commaNeeded)\n"
 
-            if self.isCTS and baseType == "float":
-                printStr = "	if (std::isnan(*o))\n"
+            if baseType == "float":
+                printStr = "	#ifdef VULKAN_JSON_CTS\n"
+                printStr +="	if (std::isnan(*o))\n"
                 printStr +="	{\n"
                 printStr +="		PRINT_SPACE\n"
                 printStr +="		if (s != \"\")\n"
@@ -359,6 +314,7 @@ class JSONOutputGenerator(OutputGenerator):
                 printStr +="	{\n"
                 printStr +="		PRINT_VAL(commaNeeded)\n"
                 printStr +="	}\n"
+                printStr +="	#endif  // JSON_GEN_IN_CTS\n"
 
             write("static void print_%s(const %s * o, const std::string& s, bool commaNeeded=true)\n" %(baseType, self.baseTypeListMap[baseType]) +
                   "{\n"                                                                                                						 +
@@ -497,29 +453,23 @@ class JSONOutputGenerator(OutputGenerator):
         self.isCTS = genOpts.isCTS
 
         self.baseTypeListMap  = {
-                                  "int32_t"   : "deInt32" if self.isCTS else "int32_t",
-                                  "uint32_t"  : "deUint32" if self.isCTS else "uint32_t",
-                                  "uint8_t"   : "deUint8" if self.isCTS else "uint8_t",
-                                  "uint64_t"  : "deUint64" if self.isCTS else "uint64_t",
+                                  "int32_t"   : "int32_t",
+                                  "uint32_t"  : "uint32_t",
+                                  "uint8_t"   : "uint8_t",
+                                  "uint64_t"  : "uint64_t",
                                   "float"     : "float",
                                   "int"       : "int",
                                   "double"    : "double",
-                                  "int64_t"   : "deInt64" if self.isCTS else "int64_t",
-                                  "uint16_t"  : "deUint16" if self.isCTS else "uint16_t",
+                                  "int64_t"   : "int64_t",
+                                  "uint16_t"  : "uint16_t",
                                   "char"      : "char"
                                 }
 
         write(headerGuardTop, file=self.outFile, end='')
         write(copyright, file=self.outFile)
-        if self.isCTS:
-            write(predefinedCode % ("deUint32", "deUint32"), file=self.outFile)
-        else:
-            write(predefinedCode % ("uint32_t", "uint32_t"), file=self.outFile)
+        write(predefinedCode, file=self.outFile)
         self.printBaseTypes()
-        if self.isCTS:
-            write(encodeBase64CodeCTS, file=self.outFile)
-        else:
-            write(encodeBase64Code, file=self.outFile)
+        write(encodeBase64Code, file=self.outFile)
 
     def endFile(self):
         write(self.printPrototypesAndExtensionDump(), file=self.outFile)
@@ -755,23 +705,10 @@ class JSONOutputGenerator(OutputGenerator):
 
     # Prints out member name followed by empty string.
     def genEmptyCode(self, memberName, str2, isCommaNeeded):
-        code = ""
-        if not self.isCTS:
-            code +=  "     /** Note: printing just an empty entry here **/\n"
+        if memberName == "module" or memberName == "layout" or memberName == "renderPass" or memberName == "conversion":
+            return f'     print_empty_value_required_by_cts({memberName}, {str2}, {"true" if isCommaNeeded else "false"});\n'
         else:
-            code +=  "     // CTS : required value\n"
-        code +=  "     PRINT_SPACE"
-        if isCommaNeeded:
-            if self.isCTS and (memberName == "module" or memberName == "layout" or memberName == "renderPass" or memberName == "conversion"):
-                code +=  "    _OUT << \"\\\"\" << \"%s\" << \"\\\"\" << \" : \" << %s%s.getInternal() << \",\" << std::endl;\n" %(memberName, str2, memberName)
-            else:
-                code +=  "    _OUT << \"\\\"\" << \"%s\" << \"\\\"\" << \" : \" << \"\\\"\" << \"\\\",\" << std::endl;\n" %(memberName)
-        else:
-            if self.isCTS and (memberName == "module" or memberName == "layout" or memberName == "renderPass" or memberName == "conversion"):
-                code +=  "    _OUT << \"\\\"\" << \"%s\" << \"\\\"\" << \" : \" << %s%s.getInternal() << std::endl;\n" %(memberName, str2, memberName)
-            else:
-                code +=  "    _OUT << \"\\\"\" << \"%s\" << \"\\\"\" << \" : \" << \"\\\"\" << \"\\\"\" << std::endl;\n" %(memberName)
-        return code
+            return f'     print_empty("{memberName}", {"true" if isCommaNeeded else "false"});\n'
 
     def genArrayCode(self, structName, name, typeName, str2, arraySize, needStrPrint, isArrayType, isCommaNeeded):
             comma = "," if isCommaNeeded else ""
@@ -789,7 +726,8 @@ class JSONOutputGenerator(OutputGenerator):
                 code += "     if (%s%s) {\n" %(str2, name)
             code += "       _OUT << \"[\" << std::endl;\n"
             code += "       for (unsigned int i = 0; i < %s; i++) {\n" %(arraySize)
-            if self.isCTS and (structName == "VkPipelineLayoutCreateInfo" or structName == "VkDescriptorSetLayoutBinding"):
+            code += "#ifdef VULKAN_JSON_CTS\n"
+            if structName == "VkPipelineLayoutCreateInfo" or structName == "VkDescriptorSetLayoutBinding":
                 code += "           bool isCommaNeeded = (i+1) != %s;\n" %(arraySize)
                 code += "           if (isCommaNeeded)\n"
                 code += "           {\n"
@@ -817,10 +755,39 @@ class JSONOutputGenerator(OutputGenerator):
                 if str(self.getTypeCategory(typeName)) == 'handle':
                     code += "           print_%s(%s%s[i], tmp.str(), isCommaNeeded);\n" %(typeName, str2, name)
                 else:
-                    if self.isCTS and name == "pipelineIdentifier":
+                    if name == "pipelineIdentifier":
+                        code += "#ifdef VULKAN_JSON_CTS\n"
                         code += "           print_uint32_t((%s)%s%s[i], %s, isCommaNeeded);\n" %(self.baseTypeListMap["uint32_t"], str2, name, printStr)
+                        code += "#else\n"
+                        code += "           print_%s(%s%s[i], %s, isCommaNeeded);\n" %(typeName, str2, name, printStr)
+                        code += "#endif //  VULKAN_JSON_CTS\n"
                     else:
                         code += "           print_%s(%s%s[i], %s, isCommaNeeded);\n" %(typeName, str2, name, printStr)
+            code += "#else\n"
+            if needsTmp:
+                code += "           std:: stringstream tmp;\n"
+
+                # Special case handling for giving unique names for pImmutableSamplers if there are multiple
+                # bindings in the same Descriptor set layout.
+                if name == "pImmutableSamplers":
+                    code += "           tmp << \"%s\" << \"_\" << (%sbinding) << \"_\" << i;\n" %(name, str2)
+                else:
+                    code += "           tmp << \"%s\" << \"_\" << i;\n" %(name)
+
+            code += "           bool isCommaNeeded = (i+1) != %s;\n" %(arraySize)
+
+            if str(self.getTypeCategory(typeName)) == 'handle':
+                code += "           print_%s(%s%s[i], tmp.str(), isCommaNeeded);\n" %(typeName, str2, name)
+            else:
+                if name == "pipelineIdentifier":
+                    code += "#ifdef VULKAN_JSON_CTS\n"
+                    code += "           print_uint32_t((%s)%s%s[i], %s, isCommaNeeded);\n" %(self.baseTypeListMap["uint32_t"], str2, name, printStr)
+                    code += "#else\n"
+                    code += "           print_%s(%s%s[i], %s, isCommaNeeded);\n" %(typeName, str2, name, printStr)
+                    code += "#endif //  VULKAN_JSON_CTS\n"
+                else:
+                    code += "           print_%s(%s%s[i], %s, isCommaNeeded);\n" %(typeName, str2, name, printStr)
+            code += "#endif //  VULKAN_JSON_CTS\n"
             code += "       }\n"
             code += "       PRINT_SPACE\n"
             code += "       _OUT << \"]\" << \"%s\" << std::endl;\n" %(comma)
@@ -863,10 +830,15 @@ class JSONOutputGenerator(OutputGenerator):
         elif self.paramIsPointer(param) and typeName == 'void':
             if structName == "VkSpecializationInfo":
                     return "     print_void_data(%s%s, int(%sdataSize), \"%s\", 0);\n" %(str2, memberName, str2, memberName)
-            if self.isCTS:
-                if structName == "VkPipelineCacheCreateInfo":
-                    return "     print_void_data(%s%s, int(%sinitialDataSize), \"%s\", 0);\n" %(str2, memberName, str2, memberName)
-            return "     /** Note: Ignoring void* data. **/\n"
+            if structName == "VkPipelineCacheCreateInfo":
+                return ''.join(["#ifdef VULKAN_JSON_CTS\n",
+                        "     print_void_data(%s%s, int(%sinitialDataSize), \"%s\", 0);\n" %(str2, memberName, str2, memberName),
+                        "#else\n",
+                        "     /** Note: Ignoring void* data. **/\n",
+                        "#endif //  VULKAN_JSON_CTS\n"
+                        ])
+            else:
+                return "     /** Note: Ignoring void* data. **/\n"
 
         # For pointers where we have the 'len' field, dump them as arrays.
         elif self.paramIsPointer(param) and param.get('len') is not None and param.get('len').find('null-terminated') == -1 and param.get('len').find('latexmath') == -1:

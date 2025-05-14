@@ -4,19 +4,27 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 # ~~~
-add_library(VulkanPipelineCacheJSON)
-add_library(Vulkan::PipelineCacheJSON ALIAS VulkanPipelineCacheJSON)
+add_library(VulkanPCJson)
+add_library(Vulkan::PCJson ALIAS VulkanPCJson)
 
-target_sources(VulkanPipelineCacheJSON PRIVATE vulkan_json_gen.c)
+target_sources(VulkanPCJson PRIVATE
+    generated/vksc_pipeline_json_gen.hpp
+    generated/vksc_pipeline_json_parse.hpp
+    vksc_pipeline_json_base.hpp
+    vksc_pipeline_json_gen.cpp
+    vksc_pipeline_json_parse.cpp)
 
-target_include_directories(VulkanPipelineCacheJSON
+target_include_directories(VulkanPCJson
     PRIVATE
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/vulkan/pcjson>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/library/pcjson>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/library/pcjson/generated>
     PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(VulkanPipelineCacheJSON PUBLIC Vulkan::Headers)
+set_property(TARGET VulkanPCJson PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
-set_target_properties(VulkanPipelineCacheJSON PROPERTIES C_EXTENSIONS ON)
+find_package(jsoncpp REQUIRED CONFIG QUIET)
+target_link_libraries(VulkanPCJson PRIVATE jsoncpp_static Vulkan::Headers)

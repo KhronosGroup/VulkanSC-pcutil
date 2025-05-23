@@ -5,5 +5,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # ~~~
 
+add_subdirectory(json)
 add_subdirectory(pcutil)
 add_subdirectory(vkscpcinfo)

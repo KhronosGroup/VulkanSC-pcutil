@@ -8,8 +8,8 @@ cmake_minimum_required(VERSION 3.22.1)
 
 project(VulkanSC-Pipeline-Cache-Utils)
 
+option(BUILD_TESTS "Build pipeline cache utils unit tests of built" ${PROJECT_IS_TOP_LEVEL})
 option(PCU_BUILD_PCINFO "Build pcinfo" ON)
-option(PCU_TESTS "Build pipeline cache utils unit tests of built" ${PROJECT_IS_TOP_LEVEL})
 option(PCU_WERROR "Treat pipeline cache utils compiler warnings as errors" ${PROJECT_IS_TOP_LEVEL})
 option(ENABLE_ADDRESS_SANITIZER "Use address sanitization")
 

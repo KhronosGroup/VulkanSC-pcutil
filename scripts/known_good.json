@@ -13,7 +13,6 @@
         },
         {
             "name": "Vulkan-Utility-Libraries",
-            "api": "vulkansc",
             "url": "https://github.com/KhronosGroup/VulkanSC-Utility-Libraries.git",
             "sub_dir": "Vulkan-Utility-Libraries",
             "build_dir": "Vulkan-Utility-Libraries/build",
@@ -39,6 +38,7 @@
                 "-DJSONCPP_WITH_POST_BUILD_UNITTEST=OFF",
                 "-DJSONCPP_WITH_WARNING_AS_ERROR=OFF",
                 "-DJSONCPP_WITH_PKGCONFIG_SUPPORT=OFF",
+                "-DJSONCPP_STATIC_WINDOWS_RUNTIME=ON",
                 "-DBUILD_SHARED_LIBS=OFF",
                 "-DBUILD_STATIC_LIBS=ON",
                 "-DBUILD_OBJECT_LIBS=OFF"

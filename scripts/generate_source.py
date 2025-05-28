@@ -1,98 +1,148 @@
 #!/usr/bin/env python3
-# Copyright (c) 2019-2025 The Khronos Group Inc.
-# Copyright (c) 2019-2025 Valve Corporation
-# Copyright (c) 2019-2025 LunarG, Inc.
-# Copyright (c) 2019-2025 Google Inc.
-# Copyright (c) 2023-2025 RasterGrid Kft.
+# Copyright 2023-2025 The Khronos Group Inc.
+# Copyright 2023 Valve Corporation
+# Copyright 2023 LunarG, Inc.
+# Copyright 2023-2025 RasterGrid Kft.
 #
 # SPDX-License-Identifier: Apache-2.0
-#
-# Author: Mike Schuchardt <mikes@lunarg.com>
 
 import argparse
-import filecmp
 import os
-import json
+import sys
 import shutil
 import subprocess
-import sys
-import tempfile
+from xml.etree import ElementTree
 
-import common_codegen
+# Runs a command in a directory and returns its return code.
+# Directory is project root by default, or a relative path from project root
+def RunShellCmd(command):
+    # Flush stdout here. Helps when debugging on CI.
+    sys.stdout.flush()
+    cmd_list = command.split(" ")
+    print(cmd_list)
+    subprocess.check_call(cmd_list)
+
+
+def RunGenerators(api: str, registry: str, styleFile: str, targetFilter: str) -> None:
+
+    has_clang_format = shutil.which('clang-format') is not None
+    if not has_clang_format:
+        print("WARNING: Unable to find clang-format!")
+
+    # These live in the Vulkan-Docs repo, but are pulled in via the
+    # Vulkan-Headers/registry folder
+    # At runtime we inject python path to find these helper scripts
+    scripts = os.path.dirname(registry)
+    scripts_directory_path = os.path.dirname(os.path.abspath(__file__))
+    registry_headers_path = os.path.join(scripts_directory_path, scripts)
+    sys.path.insert(0, registry_headers_path)
+    try:
+        from reg import Registry
+    except:
+        print("ModuleNotFoundError: No module named 'reg'") # normal python error message
+        print(f'{registry_headers_path} is not pointing to the Vulkan-Headers registry directory.')
+        print("Inside Vulkan-Headers there is a registry/reg.py file that is used.")
+        sys.exit(1) # Return without call stack so easy to spot error
+
+    from base_generator import BaseGeneratorOptions
+    from generators.json_schema_generator import JsonSchemaGenerator
+    from generators.json_gen_generator import JsonGenGenerator
+    from generators.json_parse_generator import JsonParseGenerator
+
+    # These set fields that are needed by both OutputGenerator and BaseGenerator,
+    # but are uniform and don't need to be set at a per-generated file level
+    from base_generator import (SetTargetApiName, SetMergedApiNames)
+    SetTargetApiName(api)
+
+    # Build up a list of all generators and custom options
+    generators = {
+        'vksc_pipeline_schema.json' : {
+           'generator' : JsonSchemaGenerator,
+           'genCombined': False,
+           'directory' : f'json',
+        },
+        'vksc_pipeline_json_gen.hpp' : {
+           'generator' : JsonGenGenerator,
+           'genCombined': False,
+           'directory' : f'library/pcjson/generated',
+        },
+        'vksc_pipeline_json_parse.hpp' : {
+           'generator' : JsonParseGenerator,
+           'genCombined': False,
+           'directory' : f'library/pcjson/generated',
+        },
+    }
+
+    unknownTargets = [x for x in (targetFilter if targetFilter else []) if x not in generators.keys()]
+    if unknownTargets:
+        print(f'ERROR: No generator options for unknown target(s): {", ".join(unknownTargets)}', file=sys.stderr)
+        return 1
+
+    # Filter if --target is passed in
+    targets = [x for x in generators.keys() if not targetFilter or x in targetFilter]
+
+    for index, target in enumerate(targets, start=1):
+        print(f'[{index}|{len(targets)}] Generating {target}')
+
+        # First grab a class contructor object and create an instance
+        generator = generators[target]['generator']
+        gen = generator()
+
+        # This code and the 'genCombined' generator metadata is used by downstream
+        # users to generate code with all Vulkan APIs merged into the target API variant
+        # (e.g. Vulkan SC) when needed. The constructed apiList is also used to filter
+        # out non-applicable extensions later below.
+        apiList = [api]
+        if api != 'vulkan' and generators[target]['genCombined']:
+            SetMergedApiNames('vulkan')
+            apiList.append('vulkan')
+        else:
+            SetMergedApiNames(None)
+
+        outDirectory = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', generators[target]['directory']))
+        options = BaseGeneratorOptions(
+            customFileName  = target,
+            customDirectory = outDirectory)
+
+        # Create the registry object with the specified generator and generator
+        # options. The options are set before XML loading as they may affect it.
+        reg = Registry(gen, options)
+
+        # Parse the specified registry XML into an ElementTree object
+        tree = ElementTree.parse(registry)
+
+        # Filter out extensions that are not on the API list
+        [exts.remove(e) for exts in tree.findall('extensions') for e in exts.findall('extension') if (sup := e.get('supported')) is not None and all(api not in sup.split(',') for api in apiList)]
+
+        # Load the XML tree into the registry object
+        reg.loadElementTree(tree)
+
+        # Finally, use the output generator to create the requested target
+        reg.apiGen()
+
+        # Run clang-format on the file
+        if has_clang_format:
+            RunShellCmd(f'clang-format -i --style=file:{styleFile} {os.path.join(outDirectory, target)}')
 
 def main(argv):
     parser = argparse.ArgumentParser(description='Generate source code for this repository')
-    parser.add_argument('--clang-format',
-                        default='clang-format',
-                        help='Specify clang-format executable to use')
-    parser.add_argument('--generated-version', help='sets the header version used to generate the repo')
+    parser.add_argument('--api',
+                        default='vulkansc',
+                        choices=['vulkansc'],
+                        help='Specify API name to generate')
     parser.add_argument('registry', metavar='REGISTRY_PATH', help='path to the Vulkan-Headers registry directory')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--target', nargs='+', help='only generate file name passed in')
     args = parser.parse_args(argv)
 
-    # output paths and the list of files in the path
-    files_to_gen = {
-        'json': [
-            'vk.json'
-        ],
-        str(os.path.join('layers','json_gen')): [
-            'json_gen.cpp',
-            'vulkan_json_layer_data.hpp'
-        ],
-        str(os.path.join('include','vulkan','pcjson')): [
-            'vulkan_json_data.hpp',
-            'vulkan_json_parser.hpp',
-            'vulkan_json_gen.h'
-        ],
-        str(os.path.join('library','pcjson')): [
-            'vulkan_json_gen.c'
-        ]
-    }
-
-    # base directory for the source repository
-    repo_dir = common_codegen.repo_relative('')
-
-    # Update the api_version in the respective json files
-    if args.generated_version:
-        json_files = [common_codegen.repo_relative(os.path.join('layers','json_gen','VkLayer_json_gen.json.in'))]
-        for json_file in json_files:
-            with open(json_file) as f:
-                data = json.load(f)
-
-            data["layer"]["api_version"] = args.generated_version
-
-            with open(json_file, mode='w', encoding='utf-8', newline='\n') as f:
-                f.write(json.dumps(data, indent=4))
-
-    registry = os.path.abspath(os.path.join(args.registry, 'vk.xml'))
+    registry = os.path.abspath(os.path.join(args.registry,  'vk.xml'))
     if not os.path.isfile(registry):
         registry = os.path.abspath(os.path.join(args.registry, 'Vulkan-Headers/registry/vk.xml'))
         if not os.path.isfile(registry):
             print(f'cannot find vk.xml in {args.registry}')
             return -1
-        
-    clang_format = shutil.which(args.clang_format)
-    if clang_format is None:
-        print("WARNING: Unable to find clang-format!")
 
-    # run each code generator
-    for path, filenames in files_to_gen.items():
-        for filename in filenames:
-            output_path = common_codegen.repo_relative(path)
-
-            cmd = [common_codegen.repo_relative(os.path.join('scripts','pcutil_genvk.py')),
-                '-registry', registry,
-                '-quiet',
-                '-o', output_path, filename]
-            print(' '.join(cmd))
-            try:
-                subprocess.check_call([sys.executable] + cmd, cwd=repo_dir)
-
-                if clang_format:
-                    subprocess.check_call([clang_format, '-i', '--style=file', os.path.join(output_path, filename)], cwd=repo_dir)
-
-            except Exception as e:
-                print('ERROR:', str(e))
-                return 1
+    RunGenerators(args.api, registry, args.target)
 
     return 0
 

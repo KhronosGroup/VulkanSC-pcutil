@@ -97,12 +97,12 @@ class GeneratorBase : protected Base {
     Json::Value gen_VkRenderPassCreateInfo2(const VkRenderPassCreateInfo2 s, const LocationScope& l) { return {}; }
 
     // Note: there are 3 more special cases used by the CTS, so we include these too
-    // Void pointer data such as VkShaderModuleCreateInfo::pData is encoded as base64
-    // Also note that other struct chains (e.g. VkPipelineShaderStageCreateInfo) that are included in other struct chains
-    // need to be handled too
-    Json::Value gen_VkShaderModuleCreateInfo(const VkShaderModuleCreateInfo& s, const LocationScope& l) { return {}; }
+    // These two should be be generated as normal, even though they are not part of the pipeline JSON schema
     Json::Value gen_VkDeviceObjectReservationCreateInfo(const VkDeviceObjectReservationCreateInfo& s, const LocationScope& l) { return {}; }
     Json::Value gen_VkPipelineOfflineCreateInfo(const VkPipelineOfflineCreateInfo& s, const LocationScope& l) { return {}; }
+    // This one is special: VkShaderModuleCreateInfo is not part of the Vulkan SC API
+    // so we should just generate code manually for this
+    Json::Value gen_VkShaderModuleCreateInfo(const VkShaderModuleCreateInfo& s, const LocationScope& l) { return {}; }
 
   private:
     Json::Value gen_VkGraphicsPipelineCreateInfo_contents(const VkGraphicsPipelineCreateInfo& s, const LocationScope&) {

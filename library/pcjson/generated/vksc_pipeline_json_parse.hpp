@@ -230,12 +230,12 @@ class ParserBase : protected Base {
     VkRenderPassCreateInfo2 parse_VkRenderPassCreateInfo2(const Json::Value& json, const LocationScope& l) { return {}; }
 
     // Note: there are 3 more special cases used by the CTS, so we include these too
-    // Void pointer data such as VkShaderModuleCreateInfo::pData is encoded as base64
-    // Also note that other struct chains (e.g. VkPipelineShaderStageCreateInfo) that are included in other struct chains
-    // need to be handled too
-    VkShaderModuleCreateInfo parse_VkShaderModuleCreateInfo(const Json::Value& json, const LocationScope& l) { return {}; }
+    // These two should be be generated as normal, even though they are not part of the pipeline JSON schema
     VkDeviceObjectReservationCreateInfo parse_VkDeviceObjectReservationCreateInfo(const Json::Value& json, const LocationScope& l) { return {}; }
     VkPipelineOfflineCreateInfo parse_VkPipelineOfflineCreateInfo(const Json::Value& json, const LocationScope& l) { return {}; }
+    // This one is special: VkShaderModuleCreateInfo is not part of the Vulkan SC API
+    // so we should just generate code manually for this
+    VkShaderModuleCreateInfo parse_VkShaderModuleCreateInfo(const Json::Value& json, const LocationScope& l) { return {}; }
 
   private:
     VkGraphicsPipelineCreateInfo parse_VkGraphicsPipelineCreateInfo_contents(const Json::Value& json, const LocationScope&) {

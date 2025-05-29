@@ -385,7 +385,7 @@ public:
     // If the user wishes to store additional per-pipeline metadata in the index, the stride should be increased accordingly.
     void setPipelineIndexStride(uint32_t stride)
     {
-        m_PipelineIndexStride = std::min(static_cast<uint32_t>(sizeof(VkPipelineCacheSafetyCriticalIndexEntry)), stride);
+        m_PipelineIndexStride = std::max(static_cast<uint32_t>(sizeof(VkPipelineCacheSafetyCriticalIndexEntry)), stride);
     }
 
     // set the offset in bytes into the pipeline cache where the pipeline index should be written.
@@ -405,7 +405,7 @@ public:
     // If the user wishes to store additional per-stage metadata in the index, the stride should be increased accordingly.
     void setStageIndexStride(uint32_t stride)
     {
-        m_StageIndexStride = std::min(static_cast<uint32_t>(sizeof(VkPipelineCacheStageValidationIndexEntry)), stride);
+        m_StageIndexStride = std::max(static_cast<uint32_t>(sizeof(VkPipelineCacheStageValidationIndexEntry)), stride);
     }
 
     // set the vendorID

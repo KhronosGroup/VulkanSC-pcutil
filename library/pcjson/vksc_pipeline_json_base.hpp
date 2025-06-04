@@ -47,7 +47,7 @@ class Base {
         inline static const size_t kDefaultSize = 32768;
         inline static const size_t kDefaultAlignment = 64;
 
-        MemoryBlock(size_t size = kDefaultSize) : block_(new (std::align_val_t(kDefaultAlignment)) uint8_t[size]), size_(size), used_bytes_(0) {}
+        MemoryBlock(size_t size = kDefaultSize) : block_(static_cast<uint8_t*>(operator new[](kDefaultSize, std::align_val_t{kDefaultAlignment}))), size_(size), used_bytes_(0) {}
 
         void* Alloc(size_t alignment, size_t size) {
             const size_t aligned_alloc_offset = (used_bytes_ + alignment - 1) & ~(alignment - 1);

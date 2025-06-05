@@ -16,8 +16,8 @@ class JsonSchemaGenerator(BaseGenerator):
 
     def generate(self):
         self.schema = {
-            "$schema": "http://json-schema.org/draft-04/schema#",
-            "id": "https://schema.khronos.org/vulkan/vkpcc.json#",
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "id": f"https://schema.khronos.org/vulkan/{self.filename}#",
             "title": "JSON schema for Vulkan pipeline state",
             "description": "Schema for representing Vulkan pipeline state for use with the offline Pipeline Cache Compiler.",
             "type": "object",
@@ -25,10 +25,8 @@ class JsonSchemaGenerator(BaseGenerator):
 
             "definitions": {
                 "ShaderInfo" : {
-                    # TODO: stage should definitely not be URI but VkShaderStageFlagBits
-                    "stage" : {"type": "string", "format": "uri"},
-                    # TODO: unclear whether filename should be URI
-                    "filename" : {"type": "string", "format": "uri"}
+                    "stage" : {"$ref": "#/definitions/VkShaderStageFlagBits"},
+                    "filename" : {"type": "string", "format": "string"}
                 },
 
                 "GraphicsPipelineState": {
@@ -69,12 +67,9 @@ class JsonSchemaGenerator(BaseGenerator):
                 "GraphicsPipelineState"  : {"$ref": "#/definitions/GraphicsPipelineState"},
                 "ComputePipelineState"   : {"$ref": "#/definitions/ComputePipelineState"},
                 "PipelineUUID"           : {"type": "array", "minItems": 16, "maxItems": 16, "items": {"$ref": "#/definitions/uint8_t"}},
-                # TODO: should not be URI, maybe should include a regex pattern based on all extensions? e.g.:
-                # "EnabledExtensions"      : {"type": "array", "items": {"$ref": "#/definitions/ExtensionName"}} ?
-                "EnabledExtensions"      : {"type": "array", "items": {"type": "string", "format": "uri"}}
+                "EnabledExtensions"      : {"type": "array", "items": {"$ref": "#/definitions/ExtensionName"}}
             },
 
-            # TODO: Should PipelineUUID also be required?
             "anyOf": [
                 {"required": ["GraphicsPipelineState"]},
                 {"required": ["ComputePipelineState"]}
@@ -82,6 +77,9 @@ class JsonSchemaGenerator(BaseGenerator):
         }
 
         self.genBasicDefinitions()
+        self.schema["definitions"]["ExtensionName"] = { "enum" : list(self.vk.extensions.keys()) }
+
+        self.genVkPhysicalDeviceFeatures2pNext()
 
         for struct in [self.vk.structs[x] for x in PipelineJsonHelper.getPipelineJsonStructs()]:
             self.genStructDefinition(struct)
@@ -91,12 +89,27 @@ class JsonSchemaGenerator(BaseGenerator):
     def genBasicDefinitions(self):
         self.schema["definitions"].update({
             "uint8_t": {"type": "integer", "minimum": 0, "maximum": 255},
+            "uint16_t": {"type": "integer", "minimum": 0, "maximum": 65535},
             "int32_t": {"type": "integer", "minimum": -2147483648, "maximum": 2147483647},
             "uint32_t": {"type": "integer", "minimum": 0, "maximum": 4294967295},
-            "uint64_t": {"oneOf": [{"enum": [""]}, {"type": "integer"}]},
+            "char": {"type": "string" },
+            "binary": { "type": "string" }, # TODO: Maybe restrict to base64 characters
             "float": {"type": "number"},
+
+            "uint64_t": {"oneOf":
+                [
+                    { "type": "string", "pattern": "[0-9]*"},
+                    { "type": "string", "pattern": "VK_WHOLE_SIZE"},
+                    { "type": "integer"}
+                ]
+            },
+
             "size_t": {"$ref": "#/definitions/uint64_t"},
             "VkDeviceSize": {"$ref": "#/definitions/uint64_t"},
+
+            "subpass_id": {"oneOf": [{"enum": [ "VK_SUBPASS_EXTERNAL"] }, {"$ref": "#/definitions/uint32_t"}]},
+            "VkBool32": { "oneOf": [ { "$ref": "#/definitions/uint32_t" }, { "enum": [ "VK_TRUE", "VK_FALSE" ] } ] },
+            "VkSampleMask": { "$ref": "#/definitions/uint32_t" },
         })
 
     def genAliases(self, typeName: str, aliases: list[str]):
@@ -112,17 +125,11 @@ class JsonSchemaGenerator(BaseGenerator):
         elif typeName in self.vk.structs:
             self.genStructDefinition(self.vk.structs[typeName])
         elif typeName in self.vk.enums:
-            # TODO: self.genEnumDefinition(self.vk.enums[typeName])
-            pass
+            self.genEnumDefinition(self.vk.enums[typeName])
         elif typeName in self.vk.bitmasks:
-            # TODO: self.genBitmaskDefinition(self.vk.bitmasks[typeName])
-            pass
+            self.genBitmaskDefinition(self.vk.bitmasks[typeName])
         elif typeName in self.vk.flags:
-            # TODO: self.genFlagsDefinition(self.vk.flags[typeName])
-            # For flags we should probably validate with at least an ugly regex of form:
-            #   "(<flagbit1>|<flagbit2>|...)( *\| *(<flagbit1>|<flagbit2>|...))*"
-            # so that we accept |-separated flag bit values with optional spaces in between
-            pass
+            self.genFlagsDefinition(self.vk.flags[typeName])
         else:
             raise Exception(f'Unexpected type name "{typeName}"')
 
@@ -130,52 +137,124 @@ class JsonSchemaGenerator(BaseGenerator):
         self.schema["definitions"][handle.name] = {"$ref": "#/definitions/uint64_t"}
         self.genAliases(handle.name, handle.aliases)
 
-    def genStructDefinition(self, struct: Struct, extStructNames: list[str] = None):
+    def genEnumDefinition(self, enum: Enum):
+        enum_values = list(map(lambda x: x.name, enum.fields))
+        self.schema["definitions"][enum.name] = {"enum": enum_values}
+
+    def genBitmaskDefinition(self, bitmask: Bitmask):
+        flags = list(map(lambda x: x.name, bitmask.flags))
+        self.schema["definitions"][bitmask.name] = {"enum": flags}
+
+    def genFlagsDefinition(self, flags: Flags):
+        self.schema["definitions"][flags.name] = { "anyOf":
+            [
+                {"type": "string", "pattern" : "0"},
+                {"type": "integer", "minimum": 0, "maximum": 0},
+            ]
+        }
+        if flags.bitmaskName != None:
+            bitmask = self.vk.bitmasks[flags.bitmaskName]
+            flagList = '|'.join(map(lambda x: x.name, bitmask.flags))
+            flagType = {"type": "string", "pattern" : f"({flagList})( *| *{flagList})*"}
+            self.schema["definitions"][flags.name]["anyOf"].insert(0, flagType)
+
+    def genStructDefinition(self, struct: Struct, pNextRef: str = None):
         # Do not generate struct definition if it already exists
         if struct.name in self.schema["definitions"]:
             return
 
         props: dict = {}
 
+        self.schema["definitions"][struct.name] = {
+            "type": "object"
+        }
+
+        pNext = None
+
         for member in struct.members:
             if member.name == 'pNext':
+                # NOTE: workaround for generated invalid VkPhysicalDeviceFeatures2 by the CTS
+                if struct.name == "VkPhysicalDeviceFeatures2":
+                    pNext = { "$ref" : f"#/definitions/VkPhysicalDeviceFeatures2_pNext" }
+                    continue
+
                 # pNext has to be handled specially, we have to generate schema to allow accepting chained structs
-                oneOfList = [ "NULL" ]
+                if pNextRef is None:
+                    extStructNames = struct.extendedBy
 
-                # TODO: We try to propagate the extendedBy here so that each struct chained to the pNext actually
-                # get the same allowed extension structure list that the one coming from the base struct.
-                # This works as long as there are no structures that could be chained to multiple ones.
-                # We have to do these shenanigans because of the weird pNext chain representation in the pipeline JSON.
-                extStructNames = struct.extendedBy if extStructNames is None else extStructNames
-                # If this does not work out then we need to switch the alternative below:
-                # Because the pNext chains are recursively added, we do not know whether this struct is the first
-                # one in the chain, or this is already in the chain of another struct, so we have to relax the
-                # schema a bit to allow not just the extension structs of this struct, but also the extension
-                # structs of any struct that this extension extends.
-                # There is just no way around this because of the awkward way pNext chains are represented in
-                # pipeline JSONs.
-                #   extStructNames = set(struct.extendedBy)
-                #   for baseStructName in struct.extends:
-                #       extStructNames = extStructNames.union(set(self.vk.structs[baseStructName].extendedBy))
+                    # We try to propagate the extendedBy here so that each struct chained to the pNext actually
+                    # get the same allowed extension structure list that the one coming from the base struct.
+                    # This works as long as there are no structures that could be chained to multiple ones.
+                    # We have to do these shenanigans because of the weird pNext chain representation in the pipeline JSON.
 
-                for extStructName in extStructNames:
-                    # Generate definition of chained struct if not already done
-                    self.genStructDefinition(extStructName, extStructNames)
-                    # Add the definition to the list of possibilities
-                    oneOfList.append(f"#/definitions/{extStructName}")
-                props['pNext'] = { "oneOf": oneOfList }
+                    oneOfList = [ { "enum" : ["NULL"] } ]
+                    if extStructNames is not None:
+                        for extStructName in extStructNames:
+                            oneOfList.append({ "$ref" : f"#/definitions/{extStructName}" })
+
+                        self.schema["definitions"][f"{struct.name}_pNext"] = { "oneOf": oneOfList }
+                        pNextRef = { "$ref" : f"#/definitions/{struct.name}_pNext" }
+
+                        for extStructName in extStructNames:
+                            if extStructName != struct.name:
+                                self.genStructDefinition(self.vk.structs[extStructName], pNextRef)
+                    else:
+                        pNextRef = { "oneOf": oneOfList }
+                
+                pNext = pNextRef
+
+            elif member.name == "sType":
+                # NOTE: workaround for generated invalid VkPhysicalDeviceFeatures2 by the CTS
+                if struct.name == 'VkPhysicalDeviceFeatures2':
+                    props[member.name] = {
+                        "type": "string",
+                        "pattern": "(VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO|VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2)"
+                    }
+                else:
+                    props[member.name] = { "type": "string", "pattern": struct.sType }
+
+            elif (member.name == "srcSubpass" or member.name == "dstSubpass") and struct.name == "VkSubpassDependency":
+                props[member.name] = { "$ref": "#/definitions/subpass_id" }
+
             else:
+                if (member.fixedSizeArray or member.length or member.pointer) and  member.type == "void":
+                    props[member.name] = { "$ref": "#/definitions/binary" }
+                    continue
+
                 # Generate definition of member base type name
                 self.genTypeDefinition(member.type)
-                # TODO: generate definition for each member, typical case would be:
-                props[member.name] = { "$ref": f"#/definitions/{member.type}" }
-                # but need to handle arrays (with length, see member.length and member.fixedSizeArray)
-                # strings are a special case of arrays with char elements (fixed size or pointer)
-                # also need to handle optionality (see member.optional)
-                # if pointer (see member.pointer) or array, then optional means can be "NULL", otherwise it only means can be zero
-                # Note: member.optionalPointer should be ignored it is a special case we do not care about
-                # etc. etc.
+
+                if member.fixedSizeArray:
+                    props[member.name] = {"type": "array", "items": {"$ref": f"#/definitions/{member.type}"}}
+                elif member.length:
+                    props[member.name] = {
+                        "oneOf": [
+                            {
+                                "enum" : [ "NULL" ]
+                            },
+                            {
+                                "type": "array",
+                                "items": {"$ref": f"#/definitions/{member.type}"}
+                            }
+                        ]
+                    }
+                elif member.pointer or member.optional:
+                    props[member.name] = {
+                        "oneOf": [
+                            {
+                                "enum" : [ "NULL" ]
+                            },
+                            {
+                                "$ref": f"#/definitions/{member.type}"
+                            }
+                        ]
+                    }                    
+                else:
+                    props[member.name] = { "$ref": f"#/definitions/{member.type}" }
                 pass
+
+        if pNext != None:
+            props["pNext"] = pNext
 
         self.schema["definitions"][struct.name] = {
             "type": "object",
@@ -183,3 +262,26 @@ class JsonSchemaGenerator(BaseGenerator):
             "properties": props
         }
         self.genAliases(struct.name, struct.aliases)
+
+    def genVkPhysicalDeviceFeatures2pNext(self):
+        VkPhysicalDeviceFeatures2_pNext = {
+            "oneOf": [
+                {
+                    "enum": [
+                        "NULL"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "additionalProperties": True,
+                    "properties": {
+                        "sType" : {
+                            "type": "string",
+                        },
+                        "pNext" : { "$ref": "#/definitions/VkPhysicalDeviceFeatures2_pNext" }
+                    }
+                }
+            ]
+        }
+        self.schema["definitions"]["VkPhysicalDeviceFeatures2_pNext"] = VkPhysicalDeviceFeatures2_pNext
+

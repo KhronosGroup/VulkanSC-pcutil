@@ -9,7 +9,7 @@
             "cmake_options": [
                 "-DGEN_VULKANSC_COMBINED=ON"
             ],
-            "commit": "vksc1.0.18"
+            "commit": "8dc95dcb55ccd85c57c8c9ead4e2bb023815bc01"
         },
         {
             "name": "Vulkan-Utility-Libraries",
@@ -53,7 +53,7 @@
             "sub_dir": "valijson",
             "build_dir": "valijson/build",
             "install_dir": "valijson/build/install",
-            "commit": "v1.0.2"
+            "commit": "v1.0.6"
         },
         {
             "name": "googletest",

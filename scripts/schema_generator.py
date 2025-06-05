@@ -16,7 +16,7 @@ from generator import (GeneratorOptions, OutputGenerator, noneStr,
 
 headerString = "\
 {\n\
-\"$schema\": \"http://json-schema.org/draft-04/schema#\", \n\
+\"$schema\": \"http://json-schema.org/draft-07/schema#\", \n\
 \"id\": \"https://schema.khronos.org/vulkan/vk.json#\",\n\
 \"title\": \"JSON schema for Vulkan SC\",\n\
 \"description\": \"Schema for representing entire vk.xml as a schema.\",\n\

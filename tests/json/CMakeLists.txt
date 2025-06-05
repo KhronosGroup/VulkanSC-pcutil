@@ -11,6 +11,14 @@ find_package(GTest REQUIRED CONFIG)
 
 enable_testing()
 
-add_executable(json_test json_test.cpp json_validator.cpp)
+add_executable(json_test generated/json_test.cpp json_validator.cpp)
 target_link_libraries(json_test PRIVATE GTest::gtest GTest::gtest_main jsoncpp_static valijson)
+target_include_directories(json_test PRIVATE "${CMAKE_CURRENT_LIST_DIR}")
+
+set(SCHEMA_PATH "${CMAKE_CURRENT_LIST_DIR}/../../json/")
+set(JSON_DATA_PATH "${CMAKE_CURRENT_LIST_DIR}/data/")
+
+target_compile_definitions(json_test PRIVATE SCHEMA_PATH="${SCHEMA_PATH}")
+target_compile_definitions(json_test PRIVATE JSON_DATA_PATH="${JSON_DATA_PATH}")
+
 add_test(NAME json_test COMMAND json_test)

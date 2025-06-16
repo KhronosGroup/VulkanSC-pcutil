@@ -92,6 +92,12 @@ struct PCWriterTestData {
         pipeline_test_datas_[pipeline_entry_id].stages[shader_stage_id].code = code;
     }
 
+    void SetShaderStageCode(uint32_t pipeline_entry_id, uint32_t shader_stage_id, const std::vector<uint32_t> &code) {
+        auto &stage_code = pipeline_test_datas_[pipeline_entry_id].stages[shader_stage_id].code;
+        stage_code.resize(code.size() * 4);
+        memcpy(stage_code.data(), code.data(), stage_code.size());
+    }
+
     uint32_t seed_ = 0;
     uint32_t vendor_id_ = 0x10de;
     uint32_t device_id_ = 0xabcd;

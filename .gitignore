@@ -36,6 +36,7 @@ out64/*
 .vscode/
 .vs/
 .DS_Store
+.install
 
 # Chromium build artifacts
 .cipd/

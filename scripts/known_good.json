@@ -9,7 +9,7 @@
             "cmake_options": [
                 "-DGEN_VULKANSC_COMBINED=ON"
             ],
-            "commit": "8dc95dcb55ccd85c57c8c9ead4e2bb023815bc01"
+            "commit": "27ac1189d241d70b6190ebb06bac793e6b3007f1"
         },
         {
             "name": "Vulkan-Utility-Libraries",

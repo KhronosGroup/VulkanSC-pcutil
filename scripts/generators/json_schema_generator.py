@@ -79,8 +79,6 @@ class JsonSchemaGenerator(BaseGenerator):
         self.genBasicDefinitions()
         self.schema["definitions"]["ExtensionName"] = { "enum" : list(self.vk.extensions.keys()) }
 
-        self.genVkPhysicalDeviceFeatures2pNext()
-
         for struct in [self.vk.structs[x] for x in PipelineJsonHelper.getPipelineJsonStructs()]:
             self.genStructDefinition(struct)
 
@@ -134,7 +132,12 @@ class JsonSchemaGenerator(BaseGenerator):
             raise Exception(f'Unexpected type name "{typeName}"')
 
     def genHandleDefinition(self, handle: Handle):
-        self.schema["definitions"][handle.name] = {"$ref": "#/definitions/uint64_t"}
+        self.schema["definitions"][handle.name] = { "anyOf":
+            [
+                {"$ref": "#/definitions/uint64_t"},
+                {"type": "string"}
+            ]
+        }
         self.genAliases(handle.name, handle.aliases)
 
     def genEnumDefinition(self, enum: Enum):
@@ -158,66 +161,31 @@ class JsonSchemaGenerator(BaseGenerator):
             flagType = {"type": "string", "pattern" : f"({flagList})( *| *{flagList})*"}
             self.schema["definitions"][flags.name]["anyOf"].insert(0, flagType)
 
-    def genStructDefinition(self, struct: Struct, pNextRef: str = None):
-        # Do not generate struct definition if it already exists
-        if struct.name in self.schema["definitions"]:
-            return
-
+    def getStructProperties(self, struct: Struct):
         props: dict = {}
-
-        self.schema["definitions"][struct.name] = {
-            "type": "object"
-        }
-
-        pNext = None
 
         for member in struct.members:
             if member.name == 'pNext':
-                # NOTE: workaround for generated invalid VkPhysicalDeviceFeatures2 by the CTS
-                if struct.name == "VkPhysicalDeviceFeatures2":
-                    pNext = { "$ref" : f"#/definitions/VkPhysicalDeviceFeatures2_pNext" }
-                    continue
-
-                # pNext has to be handled specially, we have to generate schema to allow accepting chained structs
-                if pNextRef is None:
-                    extStructNames = struct.extendedBy
-
-                    # We try to propagate the extendedBy here so that each struct chained to the pNext actually
-                    # get the same allowed extension structure list that the one coming from the base struct.
-                    # This works as long as there are no structures that could be chained to multiple ones.
-                    # We have to do these shenanigans because of the weird pNext chain representation in the pipeline JSON.
-
-                    oneOfList = [ { "enum" : ["NULL"] } ]
-                    if extStructNames is not None:
-                        for extStructName in extStructNames:
-                            oneOfList.append({ "$ref" : f"#/definitions/{extStructName}" })
-
-                        self.schema["definitions"][f"{struct.name}_pNext"] = { "oneOf": oneOfList }
-                        pNextRef = { "$ref" : f"#/definitions/{struct.name}_pNext" }
-
-                        for extStructName in extStructNames:
-                            if extStructName != struct.name:
-                                self.genStructDefinition(self.vk.structs[extStructName], pNextRef)
-                    else:
-                        pNextRef = { "oneOf": oneOfList }
-                
-                pNext = pNextRef
+                continue
 
             elif member.name == "sType":
-                # NOTE: workaround for generated invalid VkPhysicalDeviceFeatures2 by the CTS
+                # TODO: workaround for generated invalid VkPhysicalDeviceFeatures2 by the CTS
                 if struct.name == 'VkPhysicalDeviceFeatures2':
                     props[member.name] = {
                         "type": "string",
                         "pattern": "(VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO|VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2)"
                     }
                 else:
-                    props[member.name] = { "type": "string", "pattern": struct.sType }
+                    sTypes = [ struct.sType ]
+                    sTypes += self.getSTypeAliases(struct.sType)
+                    sTypes = "|".join(sTypes)
+                    props[member.name] = { "type": "string", "pattern": f"{(sTypes)}" }
 
             elif (member.name == "srcSubpass" or member.name == "dstSubpass") and struct.name == "VkSubpassDependency":
                 props[member.name] = { "$ref": "#/definitions/subpass_id" }
 
             else:
-                if (member.fixedSizeArray or member.length or member.pointer) and  member.type == "void":
+                if member.type == "void" and (member.fixedSizeArray or member.length or member.pointer):
                     props[member.name] = { "$ref": "#/definitions/binary" }
                     continue
 
@@ -225,6 +193,7 @@ class JsonSchemaGenerator(BaseGenerator):
                 self.genTypeDefinition(member.type)
 
                 if member.fixedSizeArray:
+                    # TODO: add restriction for array size
                     props[member.name] = {"type": "array", "items": {"$ref": f"#/definitions/{member.type}"}}
                 elif member.length:
                     props[member.name] = {
@@ -251,20 +220,30 @@ class JsonSchemaGenerator(BaseGenerator):
                     }                    
                 else:
                     props[member.name] = { "$ref": f"#/definitions/{member.type}" }
-                pass
 
-        if pNext != None:
-            props["pNext"] = pNext
-
-        self.schema["definitions"][struct.name] = {
-            "type": "object",
+        return {
             "additionalProperties": False,
-            "properties": props
+            "properties": props,
+            "required": list(props.keys())
         }
-        self.genAliases(struct.name, struct.aliases)
-
-    def genVkPhysicalDeviceFeatures2pNext(self):
-        VkPhysicalDeviceFeatures2_pNext = {
+    
+    def genStructPNext(self, struct: Struct):
+        # Do not generate pnext definition if it already exists
+        if struct.name + "_pNext" in self.schema["definitions"]:
+            return
+        
+        extendedBy = struct.extendedBy
+        
+        # There is no pNext chain for this struct
+        if extendedBy is None:
+            return
+        
+        # TODO: workaround for generated invalid VkPhysicalDeviceFeatures2 by the CTS
+        # it has a chained instance of itself
+        if struct.name == "VkPhysicalDeviceFeatures2":
+            extendedBy.append("VkPhysicalDeviceFeatures2")
+        
+        pNextChain = {
             "oneOf": [
                 {
                     "enum": [
@@ -273,15 +252,62 @@ class JsonSchemaGenerator(BaseGenerator):
                 },
                 {
                     "type": "object",
-                    "additionalProperties": True,
-                    "properties": {
-                        "sType" : {
-                            "type": "string",
+                    "allOf" : [
+                        {
+                            "additionalProperties": True,
+                            "properties": {
+                                "pNext": {
+                                    "$ref": "#/definitions/VkPhysicalDeviceFeatures2_pNext"
+                                }
+                            }
                         },
-                        "pNext" : { "$ref": "#/definitions/VkPhysicalDeviceFeatures2_pNext" }
-                    }
+                        {
+                            "anyOf": [ ]
+                        }
+                    ]
                 }
             ]
         }
-        self.schema["definitions"]["VkPhysicalDeviceFeatures2_pNext"] = VkPhysicalDeviceFeatures2_pNext
+
+        anyOfList = pNextChain["oneOf"][1]["allOf"][1]["anyOf"]
+
+        for extStructName in extendedBy:
+            extStruct = self.vk.structs[extStructName]
+            extStructProperties = self.getStructProperties(extStruct)
+            extStructProperties["properties"]["pNext"] = {}
+            anyOfList.append(extStructProperties)
+
+        self.schema["definitions"][f"{struct.name}_pNext"] = pNextChain
+
+    def genStructDefinition(self, struct: Struct):
+        # Do not generate struct definition if it already exists
+        if struct.name in self.schema["definitions"]:
+            return
+
+        structDef = self.getStructProperties(struct)
+        structDef["type"] = "object"
+
+        for member in struct.members:
+            if member.name == 'pNext':
+                pNext = None
+
+                # pNext has to be handled specially, we have to generate schema to allow accepting chained structs
+                if struct.extendedBy is not None:
+                    self.genStructPNext(struct)
+                    pNext = { "$ref" : f"#/definitions/{struct.name}_pNext" }
+                else:
+                    oneOfList = [ { "enum" : ["NULL"] } ]
+                    pNext = { "oneOf": oneOfList }
+
+                structDef["properties"]["pNext"] = pNext
+
+        self.schema["definitions"][struct.name] = structDef
+        self.genAliases(struct.name, struct.aliases)
+
+    def getSTypeAliases(self, sType : str):
+        structureTypeFields = self.vk.enums["VkStructureType"].fields
+        for structTypeField in structureTypeFields:
+            if structTypeField.name == sType:
+                return structTypeField.aliases
+        return [ ]
 

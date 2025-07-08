@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import os
+import common_codegen
 
 from base_generator import BaseGenerator
 
@@ -62,7 +63,7 @@ class JsonTestGenerator(BaseGenerator):
         self.write(copyright)
         self.write(predefinedCode)
 
-        pipeline_jsons = os.listdir("../tests/json/data");
+        pipeline_jsons = os.listdir(common_codegen.repo_relative("tests/json/data"));
 
         for pipeline_json in pipeline_jsons:
             pipeline_json = pipeline_json[:-5]

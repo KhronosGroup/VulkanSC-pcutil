@@ -209,7 +209,7 @@ class JsonSchemaGenerator(BaseGenerator):
                     }
                 elif member.pointer or member.optional:
                     props[member.name] = {
-                        "oneOf": [
+                        "oneOf" if member.type != "char" else "anyOf": [
                             {
                                 "enum" : [ "NULL" ]
                             },
@@ -221,11 +221,10 @@ class JsonSchemaGenerator(BaseGenerator):
                 else:
                     props[member.name] = { "$ref": f"#/definitions/{member.type}" }
 
-        return {
-            "additionalProperties": False,
-            "properties": props,
-            "required": list(props.keys())
-        }
+        res = { "additionalProperties": False, "properties": props }
+        if not struct.union:
+            res["required"] = list(props.keys())
+        return res
     
     def genStructPNext(self, struct: Struct):
         # Do not generate pnext definition if it already exists
@@ -257,7 +256,7 @@ class JsonSchemaGenerator(BaseGenerator):
                             "additionalProperties": True,
                             "properties": {
                                 "pNext": {
-                                    "$ref": "#/definitions/VkPhysicalDeviceFeatures2_pNext"
+                                    "$ref": f"#/definitions/{struct.name}_pNext"
                                 }
                             }
                         },

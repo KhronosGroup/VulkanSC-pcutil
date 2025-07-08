@@ -29,12 +29,15 @@ typedef struct VpjGraphicsPipelineState {
     /// Optional pointer to array of VkSamplerYcbcrConversionCreateInfo structures and their pNext chains
     uint32_t ycbcrSamplerCount;
     const void* pYcbcrSamplers;
+    const char** ppYcbrSamplerNames;
     /// Optional pointer to array of VkSamplerCreateInfo structures and their pNext chains
     uint32_t immutableSamplerCount;
     const void* pImmutableSamplers;
+    const char** ppImmutableSamplerNames;
     /// Optional pointer to array of VkDescriptorSetLayoutCreateInfo structures and their pNext chains
     uint32_t descriptorSetLayoutCount;
     const void* pDescriptorSetLayouts;
+    const char** ppDescriptorSetLayoutNames;
     /// Pointer to a VkPipelineLayoutCreateInfo structure and its pNext chain
     const void* pPipelineLayout;
 
@@ -54,12 +57,15 @@ typedef struct VpjComputePipelineState {
     /// Optional pointer to array of VkSamplerYcbcrConversionCreateInfo structures and their pNext chains
     uint32_t ycbcrSamplerCount;
     const void* pYcbcrSamplers;
+    const char** ppYcbrSamplerNames;
     /// Optional pointer to array of VkSamplerCreateInfo structures and their pNext chains
     uint32_t immutableSamplerCount;
     const void* pImmutableSamplers;
+    const char** ppImmutableSamplerNames;
     /// Optional pointer to array of VkDescriptorSetLayoutCreateInfo structures and their pNext chains
     uint32_t descriptorSetLayoutCount;
     const void* pDescriptorSetLayouts;
+    const char** ppDescriptorSetLayoutNames;
     /// Pointer to a VkPipelineLayoutCreateInfo structure and its pNext chain
     const void* pPipelineLayout;
 

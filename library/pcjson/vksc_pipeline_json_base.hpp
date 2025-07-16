@@ -44,10 +44,11 @@ class Base {
 
     class MemoryBlock {
       public:
-        inline static const size_t kDefaultSize = 32768;
-        inline static const size_t kDefaultAlignment = 64;
+        static constexpr size_t kDefaultSize = 32768;
+        static constexpr size_t kDefaultAlignment = 64;
 
-        MemoryBlock(size_t size = kDefaultSize) : block_(static_cast<uint8_t*>(operator new[](kDefaultSize, std::align_val_t{kDefaultAlignment}))), size_(size), used_bytes_(0) {}
+        MemoryBlock(size_t size = kDefaultSize)
+            : block_(static_cast<uint8_t*>(operator new[](kDefaultSize, aligner_)), deleter_), size_(size), used_bytes_(0) {}
 
         void* Alloc(size_t alignment, size_t size) {
             const size_t aligned_alloc_offset = (used_bytes_ + alignment - 1) & ~(alignment - 1);
@@ -60,7 +61,10 @@ class Base {
         }
 
       private:
-        std::unique_ptr<uint8_t[]> block_;
+        static constexpr auto aligner_ = std::align_val_t{kDefaultAlignment};
+        static constexpr auto deleter_ = [](uint8_t arr[]) { operator delete[](arr, aligner_); };
+
+        std::unique_ptr<uint8_t[], decltype(deleter_)> block_;
         const size_t size_;
         size_t used_bytes_;
     };
@@ -89,6 +93,9 @@ class Base {
 
     template <typename T>
     T* AllocMem(size_t count = 1) {
+        if (memory_blocks_.empty()) {
+            memory_blocks_.emplace_back();
+        }
         void* ptr = memory_blocks_.back().Alloc(alignof(T), count * sizeof(T));
         if (ptr == nullptr) {
             memory_blocks_.emplace_back(std::max(MemoryBlock::kDefaultSize, count * sizeof(T)));
@@ -106,6 +113,7 @@ class Base {
             message_sink_ << std::endl;
         }
         message_sink_ << "[ERROR] ";
+        status_ = false;
         AddLocationInfo();
         return message_sink_;
     }

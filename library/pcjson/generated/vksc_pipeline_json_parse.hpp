@@ -2275,11 +2275,13 @@ class ParserBase : protected Base {
             return nullptr;
         }
 
-        auto src_buffer = json.asString();
-        size_t src_idx = 0;
-        uint8_t* dst_buffer = AllocMem<uint8_t>(src_buffer.size() * 3);
+        auto src_buffer = json.asCString();
+        size_t src_buffer_len = strlen(src_buffer);
+        size_t dst_idx = 0;
+        uint8_t* dst_buffer = AllocMem<uint8_t>(src_buffer_len * 3);
 
-        for (auto c : src_buffer) {
+        for (size_t src_idx = 0; src_idx < src_buffer_len; ++src_idx) {
+            char c = src_buffer[src_idx];
             uint8_t decoded_bits = 0;
             if ('A' <= c && c <= 'Z') {
                 decoded_bits = uint8_t(c - 'A');
@@ -2297,9 +2299,9 @@ class ParserBase : protected Base {
                 return nullptr;
             }
 
-            auto dst_ptr = &dst_buffer[(src_idx >> 2) * 3];
+            auto dst_ptr = &dst_buffer[(dst_idx >> 2) * 3];
 
-            switch (src_idx % 4) {
+            switch (dst_idx % 4) {
                 case 0:
                     dst_ptr[0] |= decoded_bits << 2;
                     break;
@@ -2318,7 +2320,7 @@ class ParserBase : protected Base {
                     break;
             }
 
-            src_idx++;
+            dst_idx++;
         }
 
         return dst_buffer;
@@ -2326,12 +2328,12 @@ class ParserBase : protected Base {
 
     VkBool32 parse_VkBool32(const Json::Value& v, const LocationScope&) {
         if (v.isString()) {
-            auto value = v.asString();
-            if (value == "VK_TRUE")
+            auto value = v.asCString();
+            if (strcmp(value, "VK_TRUE") == 0) {
                 return VK_TRUE;
-            else if (value == "VK_FALSE")
+            } else if (strcmp(value, "VK_FALSE") == 0) {
                 return VK_FALSE;
-            else {
+            } else {
                 Error() << "VKBool32 string is neither VK_TRUE nor VK_FALSE";
                 return 0;
             }
@@ -3416,7 +3418,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -3424,7 +3426,7 @@ class ParserBase : protected Base {
         }
 
         const auto& json_pnext = json["pNext"];
-        if (!json_pnext.isString() || json_pnext.asString() != "NULL") {
+        if (!json_pnext.isString() || strcmp(json_pnext.asCString(), "NULL") != 0) {
             Error() << "Unexpected non-NULL pNext";
         }
 
@@ -3444,7 +3446,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -3491,7 +3493,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -3503,7 +3505,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -3534,7 +3536,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -3546,7 +3548,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -3568,7 +3570,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -3580,7 +3582,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -3611,7 +3613,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -3622,7 +3624,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -3644,7 +3646,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -3656,7 +3658,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -3705,7 +3707,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -3716,7 +3718,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_SAMPLE_LOCATIONS_INFO_EXT") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_SAMPLE_LOCATIONS_INFO_EXT") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -3738,7 +3740,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -3750,7 +3752,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -3781,7 +3783,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -3793,7 +3795,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -3815,7 +3817,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -3826,7 +3828,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -3865,7 +3867,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -3876,7 +3878,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -3898,7 +3900,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -3909,7 +3911,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -4005,7 +4007,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -4016,7 +4018,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -4070,7 +4072,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -4081,7 +4083,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_CREATE_INFO") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_CREATE_INFO") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -4114,7 +4116,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -4125,7 +4127,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -4172,7 +4174,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -4183,7 +4185,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -4214,7 +4216,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -4225,7 +4227,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -4247,7 +4249,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -4258,7 +4260,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -4930,7 +4932,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -4941,7 +4943,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -4980,7 +4982,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -4991,7 +4993,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -5021,7 +5023,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -5032,7 +5034,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -5062,7 +5064,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -5073,7 +5075,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -5112,7 +5114,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -5123,7 +5125,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -5153,7 +5155,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -5164,7 +5166,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -5186,7 +5188,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -5197,7 +5199,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -5219,7 +5221,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -5230,7 +5232,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_PIPELINE_POOL_SIZE") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_POOL_SIZE") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -5252,7 +5254,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -5263,7 +5265,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -5285,7 +5287,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -5296,7 +5298,7 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (json_stype.asString() != "VK_STRUCTURE_TYPE_PIPELINE_OFFLINE_CREATE_INFO") {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_OFFLINE_CREATE_INFO") != 0) {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -5318,7 +5320,7 @@ class ParserBase : protected Base {
             if (prev->pNext != nullptr) prev = prev->pNext;
         }
 
-        if (!json_next->isString() || json_next->asString() != "NULL") {
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
             Error() << "Invalid pNext format";
         }
         return s;
@@ -5333,42 +5335,37 @@ class ParserBase : protected Base {
         return s;
     }
 
-    VkSpecializationMapEntry* parse_VkSpecializationMapEntry_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkSpecializationMapEntry>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkSpecializationMapEntry_contents(json[i], l);
-        }
-
-        return dst_buffer;
-    }
-
     VkSpecializationInfo parse_VkSpecializationInfo_contents(const Json::Value& json, const LocationScope& l) {
         VkSpecializationInfo s{};
         s.mapEntryCount = parse_uint32_t(json["mapEntryCount"], CreateScope("mapEntryCount"));
-        s.pMapEntries = parse_VkSpecializationMapEntry_array(json["pMapEntries"], CreateScope("pMapEntries"));
+        {
+            const Json::Value& json_member = json["pMapEntries"];
+
+            if (s.mapEntryCount == 0) {
+                s.pMapEntries = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pMapEntries is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.mapEntryCount) {
+                        auto dst_buffer = AllocMem<VkSpecializationMapEntry>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkSpecializationMapEntry_contents(json_member[i], CreateScope("pMapEntries", i));
+                        }
+                        s.pMapEntries = dst_buffer;
+                    } else {
+                        Error() << "pMapEntries array size (" << json_member.size() << ") does not match expected length ("
+                                << s.mapEntryCount << ")";
+                    }
+                } else {
+                    Error() << "pMapEntries is not an array";
+                }
+            }
+        }
         s.dataSize = parse_size_t(json["dataSize"], CreateScope("dataSize"));
         s.pData = parse_binary(json["pData"], CreateScope("pData"));
         return s;
-    }
-
-    VkSpecializationInfo* parse_VkSpecializationInfo_pointer(const Json::Value& json, const LocationScope& l) {
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-
-        auto dst_buffer = AllocMem<VkSpecializationInfo>(1);
-        dst_buffer[0] = parse_VkSpecializationInfo_contents(json, l);
-
-        return dst_buffer;
     }
 
     VkPipelineShaderStageCreateInfo parse_VkPipelineShaderStageCreateInfo_contents(const Json::Value& json,
@@ -5378,7 +5375,17 @@ class ParserBase : protected Base {
         s.stage = parse_VkShaderStageFlagBits(json["stage"], CreateScope("stage"));
         s.module = parse_VkShaderModule(json["module"], CreateScope("module"));
         s.pName = parse_string(json["pName"], CreateScope("pName"));
-        s.pSpecializationInfo = parse_VkSpecializationInfo_pointer(json["pSpecializationInfo"], CreateScope("pSpecializationInfo"));
+        {
+            const Json::Value& json_member = json["pSpecializationInfo"];
+            if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                s.pSpecializationInfo = nullptr;
+            } else {
+                auto dst_buffer = AllocMem<VkSpecializationInfo>();
+                *dst_buffer = parse_VkSpecializationInfo_contents(json_member, CreateScope("pSpecializationInfo", true));
+                s.pSpecializationInfo = dst_buffer;
+            }
+        }
+
         return s;
     }
 
@@ -5406,24 +5413,6 @@ class ParserBase : protected Base {
         return s;
     }
 
-    VkPipelineShaderStageCreateInfo* parse_VkPipelineShaderStageCreateInfo_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkPipelineShaderStageCreateInfo>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkPipelineShaderStageCreateInfo(json[i], l);
-        }
-
-        return dst_buffer;
-    }
-
     VkVertexInputBindingDescription parse_VkVertexInputBindingDescription_contents(const Json::Value& json,
                                                                                    const LocationScope& l) {
         VkVertexInputBindingDescription s{};
@@ -5431,24 +5420,6 @@ class ParserBase : protected Base {
         s.stride = parse_uint32_t(json["stride"], CreateScope("stride"));
         s.inputRate = parse_VkVertexInputRate(json["inputRate"], CreateScope("inputRate"));
         return s;
-    }
-
-    VkVertexInputBindingDescription* parse_VkVertexInputBindingDescription_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkVertexInputBindingDescription>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkVertexInputBindingDescription_contents(json[i], l);
-        }
-
-        return dst_buffer;
     }
 
     VkVertexInputAttributeDescription parse_VkVertexInputAttributeDescription_contents(const Json::Value& json,
@@ -5461,37 +5432,67 @@ class ParserBase : protected Base {
         return s;
     }
 
-    VkVertexInputAttributeDescription* parse_VkVertexInputAttributeDescription_array(const Json::Value& json,
-                                                                                     const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkVertexInputAttributeDescription>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkVertexInputAttributeDescription_contents(json[i], l);
-        }
-
-        return dst_buffer;
-    }
-
     VkPipelineVertexInputStateCreateInfo parse_VkPipelineVertexInputStateCreateInfo_contents(const Json::Value& json,
                                                                                              const LocationScope& l) {
         VkPipelineVertexInputStateCreateInfo s{};
         s.flags = parse_VkPipelineVertexInputStateCreateFlags(json["flags"], CreateScope("flags"));
         s.vertexBindingDescriptionCount =
             parse_uint32_t(json["vertexBindingDescriptionCount"], CreateScope("vertexBindingDescriptionCount"));
-        s.pVertexBindingDescriptions = parse_VkVertexInputBindingDescription_array(json["pVertexBindingDescriptions"],
-                                                                                   CreateScope("pVertexBindingDescriptions"));
+        {
+            const Json::Value& json_member = json["pVertexBindingDescriptions"];
+
+            if (s.vertexBindingDescriptionCount == 0) {
+                s.pVertexBindingDescriptions = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pVertexBindingDescriptions is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.vertexBindingDescriptionCount) {
+                        auto dst_buffer = AllocMem<VkVertexInputBindingDescription>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkVertexInputBindingDescription_contents(
+                                json_member[i], CreateScope("pVertexBindingDescriptions", i));
+                        }
+                        s.pVertexBindingDescriptions = dst_buffer;
+                    } else {
+                        Error() << "pVertexBindingDescriptions array size (" << json_member.size()
+                                << ") does not match expected length (" << s.vertexBindingDescriptionCount << ")";
+                    }
+                } else {
+                    Error() << "pVertexBindingDescriptions is not an array";
+                }
+            }
+        }
         s.vertexAttributeDescriptionCount =
             parse_uint32_t(json["vertexAttributeDescriptionCount"], CreateScope("vertexAttributeDescriptionCount"));
-        s.pVertexAttributeDescriptions = parse_VkVertexInputAttributeDescription_array(json["pVertexAttributeDescriptions"],
-                                                                                       CreateScope("pVertexAttributeDescriptions"));
+        {
+            const Json::Value& json_member = json["pVertexAttributeDescriptions"];
+
+            if (s.vertexAttributeDescriptionCount == 0) {
+                s.pVertexAttributeDescriptions = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pVertexAttributeDescriptions is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.vertexAttributeDescriptionCount) {
+                        auto dst_buffer = AllocMem<VkVertexInputAttributeDescription>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkVertexInputAttributeDescription_contents(
+                                json_member[i], CreateScope("pVertexAttributeDescriptions", i));
+                        }
+                        s.pVertexAttributeDescriptions = dst_buffer;
+                    } else {
+                        Error() << "pVertexAttributeDescriptions array size (" << json_member.size()
+                                << ") does not match expected length (" << s.vertexAttributeDescriptionCount << ")";
+                    }
+                } else {
+                    Error() << "pVertexAttributeDescriptions is not an array";
+                }
+            }
+        }
+
         return s;
     }
 
@@ -5503,44 +5504,38 @@ class ParserBase : protected Base {
         return s;
     }
 
-    VkVertexInputBindingDivisorDescription* parse_VkVertexInputBindingDivisorDescription_array(const Json::Value& json,
-                                                                                               const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkVertexInputBindingDivisorDescription>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkVertexInputBindingDivisorDescription_contents(json[i], l);
-        }
-
-        return dst_buffer;
-    }
-
     VkPipelineVertexInputDivisorStateCreateInfo parse_VkPipelineVertexInputDivisorStateCreateInfo_contents(const Json::Value& json,
                                                                                                            const LocationScope& l) {
         VkPipelineVertexInputDivisorStateCreateInfo s{};
         s.vertexBindingDivisorCount = parse_uint32_t(json["vertexBindingDivisorCount"], CreateScope("vertexBindingDivisorCount"));
-        s.pVertexBindingDivisors = parse_VkVertexInputBindingDivisorDescription_array(json["pVertexBindingDivisors"],
-                                                                                      CreateScope("pVertexBindingDivisors"));
-        return s;
-    }
+        {
+            const Json::Value& json_member = json["pVertexBindingDivisors"];
 
-    VkPipelineVertexInputStateCreateInfo* parse_VkPipelineVertexInputStateCreateInfo_pointer(const Json::Value& json,
-                                                                                             const LocationScope& l) {
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
+            if (s.vertexBindingDivisorCount == 0) {
+                s.pVertexBindingDivisors = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pVertexBindingDivisors is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.vertexBindingDivisorCount) {
+                        auto dst_buffer = AllocMem<VkVertexInputBindingDivisorDescription>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkVertexInputBindingDivisorDescription_contents(
+                                json_member[i], CreateScope("pVertexBindingDivisors", i));
+                        }
+                        s.pVertexBindingDivisors = dst_buffer;
+                    } else {
+                        Error() << "pVertexBindingDivisors array size (" << json_member.size()
+                                << ") does not match expected length (" << s.vertexBindingDivisorCount << ")";
+                    }
+                } else {
+                    Error() << "pVertexBindingDivisors is not an array";
+                }
+            }
         }
 
-        auto dst_buffer = AllocMem<VkPipelineVertexInputStateCreateInfo>(1);
-        dst_buffer[0] = parse_VkPipelineVertexInputStateCreateInfo(json, l);
-
-        return dst_buffer;
+        return s;
     }
 
     VkPipelineInputAssemblyStateCreateInfo parse_VkPipelineInputAssemblyStateCreateInfo_contents(const Json::Value& json,
@@ -5550,18 +5545,6 @@ class ParserBase : protected Base {
         s.topology = parse_VkPrimitiveTopology(json["topology"], CreateScope("topology"));
         s.primitiveRestartEnable = parse_VkBool32(json["primitiveRestartEnable"], CreateScope("primitiveRestartEnable"));
         return s;
-    }
-
-    VkPipelineInputAssemblyStateCreateInfo* parse_VkPipelineInputAssemblyStateCreateInfo_pointer(const Json::Value& json,
-                                                                                                 const LocationScope& l) {
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-
-        auto dst_buffer = AllocMem<VkPipelineInputAssemblyStateCreateInfo>(1);
-        dst_buffer[0] = parse_VkPipelineInputAssemblyStateCreateInfo(json, l);
-
-        return dst_buffer;
     }
 
     VkPipelineTessellationStateCreateInfo parse_VkPipelineTessellationStateCreateInfo_contents(const Json::Value& json,
@@ -5579,18 +5562,6 @@ class ParserBase : protected Base {
         return s;
     }
 
-    VkPipelineTessellationStateCreateInfo* parse_VkPipelineTessellationStateCreateInfo_pointer(const Json::Value& json,
-                                                                                               const LocationScope& l) {
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-
-        auto dst_buffer = AllocMem<VkPipelineTessellationStateCreateInfo>(1);
-        dst_buffer[0] = parse_VkPipelineTessellationStateCreateInfo(json, l);
-
-        return dst_buffer;
-    }
-
     VkViewport parse_VkViewport_contents(const Json::Value& json, const LocationScope& l) {
         VkViewport s{};
         s.x = parse_float(json["x"], CreateScope("x"));
@@ -5600,24 +5571,6 @@ class ParserBase : protected Base {
         s.minDepth = parse_float(json["minDepth"], CreateScope("minDepth"));
         s.maxDepth = parse_float(json["maxDepth"], CreateScope("maxDepth"));
         return s;
-    }
-
-    VkViewport* parse_VkViewport_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkViewport>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkViewport_contents(json[i], l);
-        }
-
-        return dst_buffer;
     }
 
     VkOffset2D parse_VkOffset2D_contents(const Json::Value& json, const LocationScope& l) {
@@ -5641,45 +5594,72 @@ class ParserBase : protected Base {
         return s;
     }
 
-    VkRect2D* parse_VkRect2D_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkRect2D>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkRect2D_contents(json[i], l);
-        }
-
-        return dst_buffer;
-    }
-
     VkPipelineViewportStateCreateInfo parse_VkPipelineViewportStateCreateInfo_contents(const Json::Value& json,
                                                                                        const LocationScope& l) {
         VkPipelineViewportStateCreateInfo s{};
         s.flags = parse_VkPipelineViewportStateCreateFlags(json["flags"], CreateScope("flags"));
         s.viewportCount = parse_uint32_t(json["viewportCount"], CreateScope("viewportCount"));
-        s.pViewports = parse_VkViewport_array(json["pViewports"], CreateScope("pViewports"));
-        s.scissorCount = parse_uint32_t(json["scissorCount"], CreateScope("scissorCount"));
-        s.pScissors = parse_VkRect2D_array(json["pScissors"], CreateScope("pScissors"));
-        return s;
-    }
+        {
+            const Json::Value& json_member = json["pViewports"];
 
-    VkPipelineViewportStateCreateInfo* parse_VkPipelineViewportStateCreateInfo_pointer(const Json::Value& json,
-                                                                                       const LocationScope& l) {
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
+            if (s.viewportCount == 0) {
+                s.pViewports = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pViewports is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.viewportCount) {
+                        auto dst_buffer = AllocMem<VkViewport>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkViewport_contents(json_member[i], CreateScope("pViewports", i));
+                        }
+                        s.pViewports = dst_buffer;
+                    } else {
+                        Error() << "pViewports array size (" << json_member.size() << ") does not match expected length ("
+                                << s.viewportCount << ")";
+                    }
+                } else {
+                    if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                        s.pViewports = nullptr;
+                    } else {
+                        Error() << "pViewports is not an array and is not NULL";
+                    }
+                }
+            }
+        }
+        s.scissorCount = parse_uint32_t(json["scissorCount"], CreateScope("scissorCount"));
+        {
+            const Json::Value& json_member = json["pScissors"];
+
+            if (s.scissorCount == 0) {
+                s.pScissors = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pScissors is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.scissorCount) {
+                        auto dst_buffer = AllocMem<VkRect2D>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkRect2D_contents(json_member[i], CreateScope("pScissors", i));
+                        }
+                        s.pScissors = dst_buffer;
+                    } else {
+                        Error() << "pScissors array size (" << json_member.size() << ") does not match expected length ("
+                                << s.scissorCount << ")";
+                    }
+                } else {
+                    if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                        s.pScissors = nullptr;
+                    } else {
+                        Error() << "pScissors is not an array and is not NULL";
+                    }
+                }
+            }
         }
 
-        auto dst_buffer = AllocMem<VkPipelineViewportStateCreateInfo>(1);
-        dst_buffer[0] = parse_VkPipelineViewportStateCreateInfo(json, l);
-
-        return dst_buffer;
+        return s;
     }
 
     VkPipelineRasterizationStateCreateInfo parse_VkPipelineRasterizationStateCreateInfo_contents(const Json::Value& json,
@@ -5729,36 +5709,6 @@ class ParserBase : protected Base {
         return s;
     }
 
-    VkPipelineRasterizationStateCreateInfo* parse_VkPipelineRasterizationStateCreateInfo_pointer(const Json::Value& json,
-                                                                                                 const LocationScope& l) {
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-
-        auto dst_buffer = AllocMem<VkPipelineRasterizationStateCreateInfo>(1);
-        dst_buffer[0] = parse_VkPipelineRasterizationStateCreateInfo(json, l);
-
-        return dst_buffer;
-    }
-
-    VkSampleMask* parse_VkSampleMask_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkSampleMask>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkSampleMask(json[i], l);
-        }
-
-        return dst_buffer;
-    }
-
     VkPipelineMultisampleStateCreateInfo parse_VkPipelineMultisampleStateCreateInfo_contents(const Json::Value& json,
                                                                                              const LocationScope& l) {
         VkPipelineMultisampleStateCreateInfo s{};
@@ -5766,7 +5716,31 @@ class ParserBase : protected Base {
         s.rasterizationSamples = parse_VkSampleCountFlagBits(json["rasterizationSamples"], CreateScope("rasterizationSamples"));
         s.sampleShadingEnable = parse_VkBool32(json["sampleShadingEnable"], CreateScope("sampleShadingEnable"));
         s.minSampleShading = parse_float(json["minSampleShading"], CreateScope("minSampleShading"));
-        s.pSampleMask = parse_VkSampleMask_array(json["pSampleMask"], CreateScope("pSampleMask"));
+        {
+            const Json::Value& json_member = json["pSampleMask"];
+
+            if (size_t((s.rasterizationSamples + 31) / 32) == 0) {
+                s.pSampleMask = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pSampleMask is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == size_t((s.rasterizationSamples + 31) / 32)) {
+                        auto dst_buffer = AllocMem<VkSampleMask>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkSampleMask(json_member[i], CreateScope("pSampleMask", i));
+                        }
+                        s.pSampleMask = dst_buffer;
+                    } else {
+                        Error() << "pSampleMask array size (" << json_member.size() << ") does not match expected length ("
+                                << size_t((s.rasterizationSamples + 31) / 32) << ")";
+                    }
+                } else {
+                    Error() << "pSampleMask is not an array";
+                }
+            }
+        }
         s.alphaToCoverageEnable = parse_VkBool32(json["alphaToCoverageEnable"], CreateScope("alphaToCoverageEnable"));
         s.alphaToOneEnable = parse_VkBool32(json["alphaToOneEnable"], CreateScope("alphaToOneEnable"));
         return s;
@@ -5779,31 +5753,38 @@ class ParserBase : protected Base {
         return s;
     }
 
-    VkSampleLocationEXT* parse_VkSampleLocationEXT_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkSampleLocationEXT>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkSampleLocationEXT_contents(json[i], l);
-        }
-
-        return dst_buffer;
-    }
-
     VkSampleLocationsInfoEXT parse_VkSampleLocationsInfoEXT_contents(const Json::Value& json, const LocationScope& l) {
         VkSampleLocationsInfoEXT s{};
         s.sampleLocationsPerPixel =
             parse_VkSampleCountFlagBits(json["sampleLocationsPerPixel"], CreateScope("sampleLocationsPerPixel"));
         s.sampleLocationGridSize = parse_VkExtent2D_contents(json["sampleLocationGridSize"], CreateScope("sampleLocationGridSize"));
         s.sampleLocationsCount = parse_uint32_t(json["sampleLocationsCount"], CreateScope("sampleLocationsCount"));
-        s.pSampleLocations = parse_VkSampleLocationEXT_array(json["pSampleLocations"], CreateScope("pSampleLocations"));
+        {
+            const Json::Value& json_member = json["pSampleLocations"];
+
+            if (s.sampleLocationsCount == 0) {
+                s.pSampleLocations = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pSampleLocations is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.sampleLocationsCount) {
+                        auto dst_buffer = AllocMem<VkSampleLocationEXT>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkSampleLocationEXT_contents(json_member[i], CreateScope("pSampleLocations", i));
+                        }
+                        s.pSampleLocations = dst_buffer;
+                    } else {
+                        Error() << "pSampleLocations array size (" << json_member.size() << ") does not match expected length ("
+                                << s.sampleLocationsCount << ")";
+                    }
+                } else {
+                    Error() << "pSampleLocations is not an array";
+                }
+            }
+        }
+
         return s;
     }
 
@@ -5813,18 +5794,6 @@ class ParserBase : protected Base {
         s.sampleLocationsEnable = parse_VkBool32(json["sampleLocationsEnable"], CreateScope("sampleLocationsEnable"));
         s.sampleLocationsInfo = parse_VkSampleLocationsInfoEXT(json["sampleLocationsInfo"], CreateScope("sampleLocationsInfo"));
         return s;
-    }
-
-    VkPipelineMultisampleStateCreateInfo* parse_VkPipelineMultisampleStateCreateInfo_pointer(const Json::Value& json,
-                                                                                             const LocationScope& l) {
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-
-        auto dst_buffer = AllocMem<VkPipelineMultisampleStateCreateInfo>(1);
-        dst_buffer[0] = parse_VkPipelineMultisampleStateCreateInfo(json, l);
-
-        return dst_buffer;
     }
 
     VkStencilOpState parse_VkStencilOpState_contents(const Json::Value& json, const LocationScope& l) {
@@ -5855,18 +5824,6 @@ class ParserBase : protected Base {
         return s;
     }
 
-    VkPipelineDepthStencilStateCreateInfo* parse_VkPipelineDepthStencilStateCreateInfo_pointer(const Json::Value& json,
-                                                                                               const LocationScope& l) {
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-
-        auto dst_buffer = AllocMem<VkPipelineDepthStencilStateCreateInfo>(1);
-        dst_buffer[0] = parse_VkPipelineDepthStencilStateCreateInfo(json, l);
-
-        return dst_buffer;
-    }
-
     VkPipelineColorBlendAttachmentState parse_VkPipelineColorBlendAttachmentState_contents(const Json::Value& json,
                                                                                            const LocationScope& l) {
         VkPipelineColorBlendAttachmentState s{};
@@ -5881,37 +5838,6 @@ class ParserBase : protected Base {
         return s;
     }
 
-    VkPipelineColorBlendAttachmentState* parse_VkPipelineColorBlendAttachmentState_array(const Json::Value& json,
-                                                                                         const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkPipelineColorBlendAttachmentState>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkPipelineColorBlendAttachmentState_contents(json[i], l);
-        }
-
-        return dst_buffer;
-    }
-
-    void parse_float_fixed_size_array(float* dst, const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray()) {
-            Error() << "Not an array";
-            return;
-        }
-
-        auto count = json.size();
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst[i] = parse_float(json[i], l);
-        }
-    }
-
     VkPipelineColorBlendStateCreateInfo parse_VkPipelineColorBlendStateCreateInfo_contents(const Json::Value& json,
                                                                                            const LocationScope& l) {
         VkPipelineColorBlendStateCreateInfo s{};
@@ -5919,8 +5845,51 @@ class ParserBase : protected Base {
         s.logicOpEnable = parse_VkBool32(json["logicOpEnable"], CreateScope("logicOpEnable"));
         s.logicOp = parse_VkLogicOp(json["logicOp"], CreateScope("logicOp"));
         s.attachmentCount = parse_uint32_t(json["attachmentCount"], CreateScope("attachmentCount"));
-        s.pAttachments = parse_VkPipelineColorBlendAttachmentState_array(json["pAttachments"], CreateScope("pAttachments"));
-        parse_float_fixed_size_array(s.blendConstants, json["blendConstants"], CreateScope("blendConstants"));
+        {
+            const Json::Value& json_member = json["pAttachments"];
+
+            if (s.attachmentCount == 0) {
+                s.pAttachments = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pAttachments is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.attachmentCount) {
+                        auto dst_buffer = AllocMem<VkPipelineColorBlendAttachmentState>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] =
+                                parse_VkPipelineColorBlendAttachmentState_contents(json_member[i], CreateScope("pAttachments", i));
+                        }
+                        s.pAttachments = dst_buffer;
+                    } else {
+                        Error() << "pAttachments array size (" << json_member.size() << ") does not match expected length ("
+                                << s.attachmentCount << ")";
+                    }
+                } else {
+                    Error() << "pAttachments is not an array";
+                }
+            }
+        }
+
+        {
+            const Json::Value& json_member = json["blendConstants"];
+            {
+                if (json_member.isArray()) {
+                    if (json_member.size() == 4) {
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            s.blendConstants[i] = parse_float(json_member[i], CreateScope("blendConstants", i));
+                        }
+                    } else {
+                        Error() << "blendConstants array size (" << json_member.size() << ") does not match expected length (" << 4
+                                << ")";
+                    }
+                } else {
+                    Error() << "blendConstants is not an array";
+                }
+            }
+        }
+
         return s;
     }
 
@@ -5933,60 +5902,37 @@ class ParserBase : protected Base {
         return s;
     }
 
-    VkBool32* parse_VkBool32_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkBool32>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkBool32(json[i], l);
-        }
-
-        return dst_buffer;
-    }
-
     VkPipelineColorWriteCreateInfoEXT parse_VkPipelineColorWriteCreateInfoEXT_contents(const Json::Value& json,
                                                                                        const LocationScope& l) {
         VkPipelineColorWriteCreateInfoEXT s{};
         s.attachmentCount = parse_uint32_t(json["attachmentCount"], CreateScope("attachmentCount"));
-        s.pColorWriteEnables = parse_VkBool32_array(json["pColorWriteEnables"], CreateScope("pColorWriteEnables"));
+        {
+            const Json::Value& json_member = json["pColorWriteEnables"];
+
+            if (s.attachmentCount == 0) {
+                s.pColorWriteEnables = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pColorWriteEnables is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.attachmentCount) {
+                        auto dst_buffer = AllocMem<VkBool32>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkBool32(json_member[i], CreateScope("pColorWriteEnables", i));
+                        }
+                        s.pColorWriteEnables = dst_buffer;
+                    } else {
+                        Error() << "pColorWriteEnables array size (" << json_member.size() << ") does not match expected length ("
+                                << s.attachmentCount << ")";
+                    }
+                } else {
+                    Error() << "pColorWriteEnables is not an array";
+                }
+            }
+        }
+
         return s;
-    }
-
-    VkPipelineColorBlendStateCreateInfo* parse_VkPipelineColorBlendStateCreateInfo_pointer(const Json::Value& json,
-                                                                                           const LocationScope& l) {
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-
-        auto dst_buffer = AllocMem<VkPipelineColorBlendStateCreateInfo>(1);
-        dst_buffer[0] = parse_VkPipelineColorBlendStateCreateInfo(json, l);
-
-        return dst_buffer;
-    }
-
-    VkDynamicState* parse_VkDynamicState_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkDynamicState>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkDynamicState(json[i], l);
-        }
-
-        return dst_buffer;
     }
 
     VkPipelineDynamicStateCreateInfo parse_VkPipelineDynamicStateCreateInfo_contents(const Json::Value& json,
@@ -5994,43 +5940,167 @@ class ParserBase : protected Base {
         VkPipelineDynamicStateCreateInfo s{};
         s.flags = parse_VkPipelineDynamicStateCreateFlags(json["flags"], CreateScope("flags"));
         s.dynamicStateCount = parse_uint32_t(json["dynamicStateCount"], CreateScope("dynamicStateCount"));
-        s.pDynamicStates = parse_VkDynamicState_array(json["pDynamicStates"], CreateScope("pDynamicStates"));
-        return s;
-    }
+        {
+            const Json::Value& json_member = json["pDynamicStates"];
 
-    VkPipelineDynamicStateCreateInfo* parse_VkPipelineDynamicStateCreateInfo_pointer(const Json::Value& json,
-                                                                                     const LocationScope& l) {
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
+            if (s.dynamicStateCount == 0) {
+                s.pDynamicStates = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pDynamicStates is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.dynamicStateCount) {
+                        auto dst_buffer = AllocMem<VkDynamicState>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkDynamicState(json_member[i], CreateScope("pDynamicStates", i));
+                        }
+                        s.pDynamicStates = dst_buffer;
+                    } else {
+                        Error() << "pDynamicStates array size (" << json_member.size() << ") does not match expected length ("
+                                << s.dynamicStateCount << ")";
+                    }
+                } else {
+                    Error() << "pDynamicStates is not an array";
+                }
+            }
         }
 
-        auto dst_buffer = AllocMem<VkPipelineDynamicStateCreateInfo>(1);
-        dst_buffer[0] = parse_VkPipelineDynamicStateCreateInfo(json, l);
-
-        return dst_buffer;
+        return s;
     }
 
     VkGraphicsPipelineCreateInfo parse_VkGraphicsPipelineCreateInfo_contents(const Json::Value& json, const LocationScope& l) {
         VkGraphicsPipelineCreateInfo s{};
         s.flags = parse_VkPipelineCreateFlags(json["flags"], CreateScope("flags"));
         s.stageCount = parse_uint32_t(json["stageCount"], CreateScope("stageCount"));
-        s.pStages = parse_VkPipelineShaderStageCreateInfo_array(json["pStages"], CreateScope("pStages"));
-        s.pVertexInputState =
-            parse_VkPipelineVertexInputStateCreateInfo_pointer(json["pVertexInputState"], CreateScope("pVertexInputState"));
-        s.pInputAssemblyState =
-            parse_VkPipelineInputAssemblyStateCreateInfo_pointer(json["pInputAssemblyState"], CreateScope("pInputAssemblyState"));
-        s.pTessellationState =
-            parse_VkPipelineTessellationStateCreateInfo_pointer(json["pTessellationState"], CreateScope("pTessellationState"));
-        s.pViewportState = parse_VkPipelineViewportStateCreateInfo_pointer(json["pViewportState"], CreateScope("pViewportState"));
-        s.pRasterizationState =
-            parse_VkPipelineRasterizationStateCreateInfo_pointer(json["pRasterizationState"], CreateScope("pRasterizationState"));
-        s.pMultisampleState =
-            parse_VkPipelineMultisampleStateCreateInfo_pointer(json["pMultisampleState"], CreateScope("pMultisampleState"));
-        s.pDepthStencilState =
-            parse_VkPipelineDepthStencilStateCreateInfo_pointer(json["pDepthStencilState"], CreateScope("pDepthStencilState"));
-        s.pColorBlendState =
-            parse_VkPipelineColorBlendStateCreateInfo_pointer(json["pColorBlendState"], CreateScope("pColorBlendState"));
-        s.pDynamicState = parse_VkPipelineDynamicStateCreateInfo_pointer(json["pDynamicState"], CreateScope("pDynamicState"));
+        {
+            const Json::Value& json_member = json["pStages"];
+
+            if (s.stageCount == 0) {
+                s.pStages = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pStages is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.stageCount) {
+                        auto dst_buffer = AllocMem<VkPipelineShaderStageCreateInfo>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkPipelineShaderStageCreateInfo(json_member[i], CreateScope("pStages", i));
+                        }
+                        s.pStages = dst_buffer;
+                    } else {
+                        Error() << "pStages array size (" << json_member.size() << ") does not match expected length ("
+                                << s.stageCount << ")";
+                    }
+                } else {
+                    if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                        s.pStages = nullptr;
+                    } else {
+                        Error() << "pStages is not an array and is not NULL";
+                    }
+                }
+            }
+        }
+
+        {
+            const Json::Value& json_member = json["pVertexInputState"];
+            if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                s.pVertexInputState = nullptr;
+            } else {
+                auto dst_buffer = AllocMem<VkPipelineVertexInputStateCreateInfo>();
+                *dst_buffer = parse_VkPipelineVertexInputStateCreateInfo(json_member, CreateScope("pVertexInputState", true));
+                s.pVertexInputState = dst_buffer;
+            }
+        }
+
+        {
+            const Json::Value& json_member = json["pInputAssemblyState"];
+            if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                s.pInputAssemblyState = nullptr;
+            } else {
+                auto dst_buffer = AllocMem<VkPipelineInputAssemblyStateCreateInfo>();
+                *dst_buffer = parse_VkPipelineInputAssemblyStateCreateInfo(json_member, CreateScope("pInputAssemblyState", true));
+                s.pInputAssemblyState = dst_buffer;
+            }
+        }
+
+        {
+            const Json::Value& json_member = json["pTessellationState"];
+            if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                s.pTessellationState = nullptr;
+            } else {
+                auto dst_buffer = AllocMem<VkPipelineTessellationStateCreateInfo>();
+                *dst_buffer = parse_VkPipelineTessellationStateCreateInfo(json_member, CreateScope("pTessellationState", true));
+                s.pTessellationState = dst_buffer;
+            }
+        }
+
+        {
+            const Json::Value& json_member = json["pViewportState"];
+            if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                s.pViewportState = nullptr;
+            } else {
+                auto dst_buffer = AllocMem<VkPipelineViewportStateCreateInfo>();
+                *dst_buffer = parse_VkPipelineViewportStateCreateInfo(json_member, CreateScope("pViewportState", true));
+                s.pViewportState = dst_buffer;
+            }
+        }
+
+        {
+            const Json::Value& json_member = json["pRasterizationState"];
+            if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                s.pRasterizationState = nullptr;
+            } else {
+                auto dst_buffer = AllocMem<VkPipelineRasterizationStateCreateInfo>();
+                *dst_buffer = parse_VkPipelineRasterizationStateCreateInfo(json_member, CreateScope("pRasterizationState", true));
+                s.pRasterizationState = dst_buffer;
+            }
+        }
+
+        {
+            const Json::Value& json_member = json["pMultisampleState"];
+            if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                s.pMultisampleState = nullptr;
+            } else {
+                auto dst_buffer = AllocMem<VkPipelineMultisampleStateCreateInfo>();
+                *dst_buffer = parse_VkPipelineMultisampleStateCreateInfo(json_member, CreateScope("pMultisampleState", true));
+                s.pMultisampleState = dst_buffer;
+            }
+        }
+
+        {
+            const Json::Value& json_member = json["pDepthStencilState"];
+            if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                s.pDepthStencilState = nullptr;
+            } else {
+                auto dst_buffer = AllocMem<VkPipelineDepthStencilStateCreateInfo>();
+                *dst_buffer = parse_VkPipelineDepthStencilStateCreateInfo(json_member, CreateScope("pDepthStencilState", true));
+                s.pDepthStencilState = dst_buffer;
+            }
+        }
+
+        {
+            const Json::Value& json_member = json["pColorBlendState"];
+            if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                s.pColorBlendState = nullptr;
+            } else {
+                auto dst_buffer = AllocMem<VkPipelineColorBlendStateCreateInfo>();
+                *dst_buffer = parse_VkPipelineColorBlendStateCreateInfo(json_member, CreateScope("pColorBlendState", true));
+                s.pColorBlendState = dst_buffer;
+            }
+        }
+
+        {
+            const Json::Value& json_member = json["pDynamicState"];
+            if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                s.pDynamicState = nullptr;
+            } else {
+                auto dst_buffer = AllocMem<VkPipelineDynamicStateCreateInfo>();
+                *dst_buffer = parse_VkPipelineDynamicStateCreateInfo(json_member, CreateScope("pDynamicState", true));
+                s.pDynamicState = dst_buffer;
+            }
+        }
         s.layout = parse_VkPipelineLayout(json["layout"], CreateScope("layout"));
         s.renderPass = parse_VkRenderPass(json["renderPass"], CreateScope("renderPass"));
         s.subpass = parse_uint32_t(json["subpass"], CreateScope("subpass"));
@@ -6053,44 +6123,50 @@ class ParserBase : protected Base {
         return s;
     }
 
-    VkPipelineCreationFeedback* parse_VkPipelineCreationFeedback_pointer(const Json::Value& json, const LocationScope& l) {
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-
-        auto dst_buffer = AllocMem<VkPipelineCreationFeedback>(1);
-        dst_buffer[0] = parse_VkPipelineCreationFeedback_contents(json, l);
-
-        return dst_buffer;
-    }
-
-    VkPipelineCreationFeedback* parse_VkPipelineCreationFeedback_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkPipelineCreationFeedback>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkPipelineCreationFeedback_contents(json[i], l);
-        }
-
-        return dst_buffer;
-    }
-
     VkPipelineCreationFeedbackCreateInfo parse_VkPipelineCreationFeedbackCreateInfo_contents(const Json::Value& json,
                                                                                              const LocationScope& l) {
         VkPipelineCreationFeedbackCreateInfo s{};
-        s.pPipelineCreationFeedback =
-            parse_VkPipelineCreationFeedback_pointer(json["pPipelineCreationFeedback"], CreateScope("pPipelineCreationFeedback"));
+
+        {
+            const Json::Value& json_member = json["pPipelineCreationFeedback"];
+            if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                s.pPipelineCreationFeedback = nullptr;
+            } else {
+                auto dst_buffer = AllocMem<VkPipelineCreationFeedback>();
+                *dst_buffer =
+                    parse_VkPipelineCreationFeedback_contents(json_member, CreateScope("pPipelineCreationFeedback", true));
+                s.pPipelineCreationFeedback = dst_buffer;
+            }
+        }
         s.pipelineStageCreationFeedbackCount =
             parse_uint32_t(json["pipelineStageCreationFeedbackCount"], CreateScope("pipelineStageCreationFeedbackCount"));
-        s.pPipelineStageCreationFeedbacks = parse_VkPipelineCreationFeedback_array(json["pPipelineStageCreationFeedbacks"],
-                                                                                   CreateScope("pPipelineStageCreationFeedbacks"));
+        {
+            const Json::Value& json_member = json["pPipelineStageCreationFeedbacks"];
+
+            if (s.pipelineStageCreationFeedbackCount == 0) {
+                s.pPipelineStageCreationFeedbacks = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pPipelineStageCreationFeedbacks is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.pipelineStageCreationFeedbackCount) {
+                        auto dst_buffer = AllocMem<VkPipelineCreationFeedback>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkPipelineCreationFeedback_contents(
+                                json_member[i], CreateScope("pPipelineStageCreationFeedbacks", i));
+                        }
+                        s.pPipelineStageCreationFeedbacks = dst_buffer;
+                    } else {
+                        Error() << "pPipelineStageCreationFeedbacks array size (" << json_member.size()
+                                << ") does not match expected length (" << s.pipelineStageCreationFeedbackCount << ")";
+                    }
+                } else {
+                    Error() << "pPipelineStageCreationFeedbacks is not an array";
+                }
+            }
+        }
+
         return s;
     }
 
@@ -6100,127 +6176,217 @@ class ParserBase : protected Base {
         s.flags = parse_VkPipelineDiscardRectangleStateCreateFlagsEXT(json["flags"], CreateScope("flags"));
         s.discardRectangleMode = parse_VkDiscardRectangleModeEXT(json["discardRectangleMode"], CreateScope("discardRectangleMode"));
         s.discardRectangleCount = parse_uint32_t(json["discardRectangleCount"], CreateScope("discardRectangleCount"));
-        s.pDiscardRectangles = parse_VkRect2D_array(json["pDiscardRectangles"], CreateScope("pDiscardRectangles"));
+        {
+            const Json::Value& json_member = json["pDiscardRectangles"];
+
+            if (s.discardRectangleCount == 0) {
+                s.pDiscardRectangles = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pDiscardRectangles is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.discardRectangleCount) {
+                        auto dst_buffer = AllocMem<VkRect2D>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkRect2D_contents(json_member[i], CreateScope("pDiscardRectangles", i));
+                        }
+                        s.pDiscardRectangles = dst_buffer;
+                    } else {
+                        Error() << "pDiscardRectangles array size (" << json_member.size() << ") does not match expected length ("
+                                << s.discardRectangleCount << ")";
+                    }
+                } else {
+                    if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                        s.pDiscardRectangles = nullptr;
+                    } else {
+                        Error() << "pDiscardRectangles is not an array and is not NULL";
+                    }
+                }
+            }
+        }
+
         return s;
-    }
-
-    void parse_VkFragmentShadingRateCombinerOpKHR_fixed_size_array(VkFragmentShadingRateCombinerOpKHR* dst, const Json::Value& json,
-                                                                   const LocationScope& l) {
-        if (!json.isArray()) {
-            Error() << "Not an array";
-            return;
-        }
-
-        auto count = json.size();
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst[i] = parse_VkFragmentShadingRateCombinerOpKHR(json[i], l);
-        }
     }
 
     VkPipelineFragmentShadingRateStateCreateInfoKHR parse_VkPipelineFragmentShadingRateStateCreateInfoKHR_contents(
         const Json::Value& json, const LocationScope& l) {
         VkPipelineFragmentShadingRateStateCreateInfoKHR s{};
         s.fragmentSize = parse_VkExtent2D_contents(json["fragmentSize"], CreateScope("fragmentSize"));
-        parse_VkFragmentShadingRateCombinerOpKHR_fixed_size_array(s.combinerOps, json["combinerOps"], CreateScope("combinerOps"));
+        {
+            const Json::Value& json_member = json["combinerOps"];
+            {
+                if (json_member.isArray()) {
+                    if (json_member.size() == 2) {
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            s.combinerOps[i] =
+                                parse_VkFragmentShadingRateCombinerOpKHR(json_member[i], CreateScope("combinerOps", i));
+                        }
+                    } else {
+                        Error() << "combinerOps array size (" << json_member.size() << ") does not match expected length (" << 2
+                                << ")";
+                    }
+                } else {
+                    Error() << "combinerOps is not an array";
+                }
+            }
+        }
+
         return s;
-    }
-
-    void parse_uint8_t_fixed_size_array(uint8_t* dst, const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray()) {
-            Error() << "Not an array";
-            return;
-        }
-
-        auto count = json.size();
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst[i] = parse_uint8_t(json[i], l);
-        }
     }
 
     VkPipelineOfflineCreateInfo parse_VkPipelineOfflineCreateInfo_contents(const Json::Value& json, const LocationScope& l) {
         VkPipelineOfflineCreateInfo s{};
-        parse_uint8_t_fixed_size_array(s.pipelineIdentifier, json["pipelineIdentifier"], CreateScope("pipelineIdentifier"));
+
+        {
+            const Json::Value& json_member = json["pipelineIdentifier"];
+            {
+                if (json_member.isArray()) {
+                    if (json_member.size() == VK_UUID_SIZE) {
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            s.pipelineIdentifier[i] = parse_uint8_t(json_member[i], CreateScope("pipelineIdentifier", i));
+                        }
+                    } else {
+                        Error() << "pipelineIdentifier array size (" << json_member.size() << ") does not match expected length ("
+                                << VK_UUID_SIZE << ")";
+                    }
+                } else {
+                    Error() << "pipelineIdentifier is not an array";
+                }
+            }
+        }
         s.matchControl = parse_VkPipelineMatchControl(json["matchControl"], CreateScope("matchControl"));
         s.poolEntrySize = parse_VkDeviceSize(json["poolEntrySize"], CreateScope("poolEntrySize"));
         return s;
-    }
-
-    VkFormat* parse_VkFormat_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkFormat>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkFormat(json[i], l);
-        }
-
-        return dst_buffer;
     }
 
     VkPipelineRenderingCreateInfo parse_VkPipelineRenderingCreateInfo_contents(const Json::Value& json, const LocationScope& l) {
         VkPipelineRenderingCreateInfo s{};
         s.viewMask = parse_uint32_t(json["viewMask"], CreateScope("viewMask"));
         s.colorAttachmentCount = parse_uint32_t(json["colorAttachmentCount"], CreateScope("colorAttachmentCount"));
-        s.pColorAttachmentFormats = parse_VkFormat_array(json["pColorAttachmentFormats"], CreateScope("pColorAttachmentFormats"));
+        {
+            const Json::Value& json_member = json["pColorAttachmentFormats"];
+
+            if (s.colorAttachmentCount == 0) {
+                s.pColorAttachmentFormats = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pColorAttachmentFormats is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.colorAttachmentCount) {
+                        auto dst_buffer = AllocMem<VkFormat>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkFormat(json_member[i], CreateScope("pColorAttachmentFormats", i));
+                        }
+                        s.pColorAttachmentFormats = dst_buffer;
+                    } else {
+                        Error() << "pColorAttachmentFormats array size (" << json_member.size()
+                                << ") does not match expected length (" << s.colorAttachmentCount << ")";
+                    }
+                } else {
+                    if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                        s.pColorAttachmentFormats = nullptr;
+                    } else {
+                        Error() << "pColorAttachmentFormats is not an array and is not NULL";
+                    }
+                }
+            }
+        }
         s.depthAttachmentFormat = parse_VkFormat(json["depthAttachmentFormat"], CreateScope("depthAttachmentFormat"));
         s.stencilAttachmentFormat = parse_VkFormat(json["stencilAttachmentFormat"], CreateScope("stencilAttachmentFormat"));
         return s;
-    }
-
-    uint32_t* parse_uint32_t_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<uint32_t>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_uint32_t(json[i], l);
-        }
-
-        return dst_buffer;
     }
 
     VkRenderingAttachmentLocationInfo parse_VkRenderingAttachmentLocationInfo_contents(const Json::Value& json,
                                                                                        const LocationScope& l) {
         VkRenderingAttachmentLocationInfo s{};
         s.colorAttachmentCount = parse_uint32_t(json["colorAttachmentCount"], CreateScope("colorAttachmentCount"));
-        s.pColorAttachmentLocations =
-            parse_uint32_t_array(json["pColorAttachmentLocations"], CreateScope("pColorAttachmentLocations"));
-        return s;
-    }
+        {
+            const Json::Value& json_member = json["pColorAttachmentLocations"];
 
-    uint32_t* parse_uint32_t_pointer(const Json::Value& json, const LocationScope& l) {
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
+            if (s.colorAttachmentCount == 0) {
+                s.pColorAttachmentLocations = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pColorAttachmentLocations is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.colorAttachmentCount) {
+                        auto dst_buffer = AllocMem<uint32_t>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_uint32_t(json_member[i], CreateScope("pColorAttachmentLocations", i));
+                        }
+                        s.pColorAttachmentLocations = dst_buffer;
+                    } else {
+                        Error() << "pColorAttachmentLocations array size (" << json_member.size()
+                                << ") does not match expected length (" << s.colorAttachmentCount << ")";
+                    }
+                } else {
+                    if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                        s.pColorAttachmentLocations = nullptr;
+                    } else {
+                        Error() << "pColorAttachmentLocations is not an array and is not NULL";
+                    }
+                }
+            }
         }
 
-        auto dst_buffer = AllocMem<uint32_t>(1);
-        dst_buffer[0] = parse_uint32_t(json, l);
-
-        return dst_buffer;
+        return s;
     }
 
     VkRenderingInputAttachmentIndexInfo parse_VkRenderingInputAttachmentIndexInfo_contents(const Json::Value& json,
                                                                                            const LocationScope& l) {
         VkRenderingInputAttachmentIndexInfo s{};
         s.colorAttachmentCount = parse_uint32_t(json["colorAttachmentCount"], CreateScope("colorAttachmentCount"));
-        s.pColorAttachmentInputIndices =
-            parse_uint32_t_array(json["pColorAttachmentInputIndices"], CreateScope("pColorAttachmentInputIndices"));
-        s.pDepthInputAttachmentIndex =
-            parse_uint32_t_pointer(json["pDepthInputAttachmentIndex"], CreateScope("pDepthInputAttachmentIndex"));
-        s.pStencilInputAttachmentIndex =
-            parse_uint32_t_pointer(json["pStencilInputAttachmentIndex"], CreateScope("pStencilInputAttachmentIndex"));
+        {
+            const Json::Value& json_member = json["pColorAttachmentInputIndices"];
+
+            if (s.colorAttachmentCount == 0) {
+                s.pColorAttachmentInputIndices = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pColorAttachmentInputIndices is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.colorAttachmentCount) {
+                        auto dst_buffer = AllocMem<uint32_t>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_uint32_t(json_member[i], CreateScope("pColorAttachmentInputIndices", i));
+                        }
+                        s.pColorAttachmentInputIndices = dst_buffer;
+                    } else {
+                        Error() << "pColorAttachmentInputIndices array size (" << json_member.size()
+                                << ") does not match expected length (" << s.colorAttachmentCount << ")";
+                    }
+                } else {
+                    Error() << "pColorAttachmentInputIndices is not an array";
+                }
+            }
+        }
+
+        {
+            const Json::Value& json_member = json["pDepthInputAttachmentIndex"];
+            if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                s.pDepthInputAttachmentIndex = nullptr;
+            } else {
+                auto dst_buffer = AllocMem<uint32_t>();
+                *dst_buffer = parse_uint32_t(json_member, CreateScope("pDepthInputAttachmentIndex", true));
+                s.pDepthInputAttachmentIndex = dst_buffer;
+            }
+        }
+
+        {
+            const Json::Value& json_member = json["pStencilInputAttachmentIndex"];
+            if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                s.pStencilInputAttachmentIndex = nullptr;
+            } else {
+                auto dst_buffer = AllocMem<uint32_t>();
+                *dst_buffer = parse_uint32_t(json_member, CreateScope("pStencilInputAttachmentIndex", true));
+                s.pStencilInputAttachmentIndex = dst_buffer;
+            }
+        }
+
         return s;
     }
 
@@ -6257,7 +6423,6 @@ class ParserBase : protected Base {
             parse_VkBool32(json["forceExplicitReconstruction"], CreateScope("forceExplicitReconstruction"));
         return s;
     }
-
 #ifdef VK_USE_PLATFORM_SCREEN_QNX
 
     VkExternalFormatQNX parse_VkExternalFormatQNX_contents(const Json::Value& json, const LocationScope& l) {
@@ -6288,35 +6453,60 @@ class ParserBase : protected Base {
         return s;
     }
 
-    void parse_int32_t_fixed_size_array(int32_t* dst, const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray()) {
-            Error() << "Not an array";
-            return;
-        }
-
-        auto count = json.size();
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst[i] = parse_int32_t(json[i], l);
-        }
-    }
-
-    void parse_uint32_t_fixed_size_array(uint32_t* dst, const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray()) {
-            Error() << "Not an array";
-            return;
-        }
-
-        auto count = json.size();
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst[i] = parse_uint32_t(json[i], l);
-        }
-    }
-
     VkClearColorValue parse_VkClearColorValue_contents(const Json::Value& json, const LocationScope& l) {
         VkClearColorValue s{};
-        parse_float_fixed_size_array(s.float32, json["float32"], CreateScope("float32"));
-        parse_int32_t_fixed_size_array(s.int32, json["int32"], CreateScope("int32"));
-        parse_uint32_t_fixed_size_array(s.uint32, json["uint32"], CreateScope("uint32"));
+
+        {
+            const Json::Value& json_member = json["float32"];
+            {
+                if (json_member.isArray()) {
+                    if (json_member.size() == 4) {
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            s.float32[i] = parse_float(json_member[i], CreateScope("float32", i));
+                        }
+                    } else {
+                        Error() << "float32 array size (" << json_member.size() << ") does not match expected length (" << 4 << ")";
+                    }
+                } else {
+                    Error() << "float32 is not an array";
+                }
+            }
+        }
+
+        {
+            const Json::Value& json_member = json["int32"];
+            {
+                if (json_member.isArray()) {
+                    if (json_member.size() == 4) {
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            s.int32[i] = parse_int32_t(json_member[i], CreateScope("int32", i));
+                        }
+                    } else {
+                        Error() << "int32 array size (" << json_member.size() << ") does not match expected length (" << 4 << ")";
+                    }
+                } else {
+                    Error() << "int32 is not an array";
+                }
+            }
+        }
+
+        {
+            const Json::Value& json_member = json["uint32"];
+            {
+                if (json_member.isArray()) {
+                    if (json_member.size() == 4) {
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            s.uint32[i] = parse_uint32_t(json_member[i], CreateScope("uint32", i));
+                        }
+                    } else {
+                        Error() << "uint32 array size (" << json_member.size() << ") does not match expected length (" << 4 << ")";
+                    }
+                } else {
+                    Error() << "uint32 is not an array";
+                }
+            }
+        }
+
         return s;
     }
 
@@ -6341,50 +6531,43 @@ class ParserBase : protected Base {
         return s;
     }
 
-    VkSampler* parse_VkSampler_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkSampler>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkSampler(json[i], l);
-        }
-
-        return dst_buffer;
-    }
-
     VkDescriptorSetLayoutBinding parse_VkDescriptorSetLayoutBinding_contents(const Json::Value& json, const LocationScope& l) {
         VkDescriptorSetLayoutBinding s{};
         s.binding = parse_uint32_t(json["binding"], CreateScope("binding"));
         s.descriptorType = parse_VkDescriptorType(json["descriptorType"], CreateScope("descriptorType"));
         s.descriptorCount = parse_uint32_t(json["descriptorCount"], CreateScope("descriptorCount"));
         s.stageFlags = parse_VkShaderStageFlags(json["stageFlags"], CreateScope("stageFlags"));
-        s.pImmutableSamplers = parse_VkSampler_array(json["pImmutableSamplers"], CreateScope("pImmutableSamplers"));
+        {
+            const Json::Value& json_member = json["pImmutableSamplers"];
+
+            if (s.descriptorCount == 0) {
+                s.pImmutableSamplers = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pImmutableSamplers is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.descriptorCount) {
+                        auto dst_buffer = AllocMem<VkSampler>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkSampler(json_member[i], CreateScope("pImmutableSamplers", i));
+                        }
+                        s.pImmutableSamplers = dst_buffer;
+                    } else {
+                        Error() << "pImmutableSamplers array size (" << json_member.size() << ") does not match expected length ("
+                                << s.descriptorCount << ")";
+                    }
+                } else {
+                    if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                        s.pImmutableSamplers = nullptr;
+                    } else {
+                        Error() << "pImmutableSamplers is not an array and is not NULL";
+                    }
+                }
+            }
+        }
+
         return s;
-    }
-
-    VkDescriptorSetLayoutBinding* parse_VkDescriptorSetLayoutBinding_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkDescriptorSetLayoutBinding>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkDescriptorSetLayoutBinding_contents(json[i], l);
-        }
-
-        return dst_buffer;
     }
 
     VkDescriptorSetLayoutCreateInfo parse_VkDescriptorSetLayoutCreateInfo_contents(const Json::Value& json,
@@ -6392,52 +6575,67 @@ class ParserBase : protected Base {
         VkDescriptorSetLayoutCreateInfo s{};
         s.flags = parse_VkDescriptorSetLayoutCreateFlags(json["flags"], CreateScope("flags"));
         s.bindingCount = parse_uint32_t(json["bindingCount"], CreateScope("bindingCount"));
-        s.pBindings = parse_VkDescriptorSetLayoutBinding_array(json["pBindings"], CreateScope("pBindings"));
+        {
+            const Json::Value& json_member = json["pBindings"];
+
+            if (s.bindingCount == 0) {
+                s.pBindings = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pBindings is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.bindingCount) {
+                        auto dst_buffer = AllocMem<VkDescriptorSetLayoutBinding>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] =
+                                parse_VkDescriptorSetLayoutBinding_contents(json_member[i], CreateScope("pBindings", i));
+                        }
+                        s.pBindings = dst_buffer;
+                    } else {
+                        Error() << "pBindings array size (" << json_member.size() << ") does not match expected length ("
+                                << s.bindingCount << ")";
+                    }
+                } else {
+                    Error() << "pBindings is not an array";
+                }
+            }
+        }
+
         return s;
-    }
-
-    VkDescriptorBindingFlags* parse_VkDescriptorBindingFlags_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkDescriptorBindingFlags>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkDescriptorBindingFlags(json[i], l);
-        }
-
-        return dst_buffer;
     }
 
     VkDescriptorSetLayoutBindingFlagsCreateInfo parse_VkDescriptorSetLayoutBindingFlagsCreateInfo_contents(const Json::Value& json,
                                                                                                            const LocationScope& l) {
         VkDescriptorSetLayoutBindingFlagsCreateInfo s{};
         s.bindingCount = parse_uint32_t(json["bindingCount"], CreateScope("bindingCount"));
-        s.pBindingFlags = parse_VkDescriptorBindingFlags_array(json["pBindingFlags"], CreateScope("pBindingFlags"));
+        {
+            const Json::Value& json_member = json["pBindingFlags"];
+
+            if (s.bindingCount == 0) {
+                s.pBindingFlags = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pBindingFlags is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.bindingCount) {
+                        auto dst_buffer = AllocMem<VkDescriptorBindingFlags>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkDescriptorBindingFlags(json_member[i], CreateScope("pBindingFlags", i));
+                        }
+                        s.pBindingFlags = dst_buffer;
+                    } else {
+                        Error() << "pBindingFlags array size (" << json_member.size() << ") does not match expected length ("
+                                << s.bindingCount << ")";
+                    }
+                } else {
+                    Error() << "pBindingFlags is not an array";
+                }
+            }
+        }
+
         return s;
-    }
-
-    VkDescriptorSetLayout* parse_VkDescriptorSetLayout_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkDescriptorSetLayout>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkDescriptorSetLayout(json[i], l);
-        }
-
-        return dst_buffer;
     }
 
     VkPushConstantRange parse_VkPushConstantRange_contents(const Json::Value& json, const LocationScope& l) {
@@ -6448,31 +6646,63 @@ class ParserBase : protected Base {
         return s;
     }
 
-    VkPushConstantRange* parse_VkPushConstantRange_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkPushConstantRange>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkPushConstantRange_contents(json[i], l);
-        }
-
-        return dst_buffer;
-    }
-
     VkPipelineLayoutCreateInfo parse_VkPipelineLayoutCreateInfo_contents(const Json::Value& json, const LocationScope& l) {
         VkPipelineLayoutCreateInfo s{};
         s.flags = parse_VkPipelineLayoutCreateFlags(json["flags"], CreateScope("flags"));
         s.setLayoutCount = parse_uint32_t(json["setLayoutCount"], CreateScope("setLayoutCount"));
-        s.pSetLayouts = parse_VkDescriptorSetLayout_array(json["pSetLayouts"], CreateScope("pSetLayouts"));
+        {
+            const Json::Value& json_member = json["pSetLayouts"];
+
+            if (s.setLayoutCount == 0) {
+                s.pSetLayouts = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pSetLayouts is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.setLayoutCount) {
+                        auto dst_buffer = AllocMem<VkDescriptorSetLayout>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkDescriptorSetLayout(json_member[i], CreateScope("pSetLayouts", i));
+                        }
+                        s.pSetLayouts = dst_buffer;
+                    } else {
+                        Error() << "pSetLayouts array size (" << json_member.size() << ") does not match expected length ("
+                                << s.setLayoutCount << ")";
+                    }
+                } else {
+                    Error() << "pSetLayouts is not an array";
+                }
+            }
+        }
         s.pushConstantRangeCount = parse_uint32_t(json["pushConstantRangeCount"], CreateScope("pushConstantRangeCount"));
-        s.pPushConstantRanges = parse_VkPushConstantRange_array(json["pPushConstantRanges"], CreateScope("pPushConstantRanges"));
+        {
+            const Json::Value& json_member = json["pPushConstantRanges"];
+
+            if (s.pushConstantRangeCount == 0) {
+                s.pPushConstantRanges = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pPushConstantRanges is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.pushConstantRangeCount) {
+                        auto dst_buffer = AllocMem<VkPushConstantRange>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] =
+                                parse_VkPushConstantRange_contents(json_member[i], CreateScope("pPushConstantRanges", i));
+                        }
+                        s.pPushConstantRanges = dst_buffer;
+                    } else {
+                        Error() << "pPushConstantRanges array size (" << json_member.size() << ") does not match expected length ("
+                                << s.pushConstantRangeCount << ")";
+                    }
+                } else {
+                    Error() << "pPushConstantRanges is not an array";
+                }
+            }
+        }
+
         return s;
     }
 
@@ -6711,7 +6941,6 @@ class ParserBase : protected Base {
         s.extendedDynamicState = parse_VkBool32(json["extendedDynamicState"], CreateScope("extendedDynamicState"));
         return s;
     }
-
 #ifdef VK_USE_PLATFORM_SCI
 
     VkPhysicalDeviceExternalMemorySciBufFeaturesNV parse_VkPhysicalDeviceExternalMemorySciBufFeaturesNV_contents(
@@ -6722,7 +6951,6 @@ class ParserBase : protected Base {
         return s;
     }
 #endif  // VK_USE_PLATFORM_SCI
-
 #ifdef VK_USE_PLATFORM_SCREEN_QNX
 
     VkPhysicalDeviceExternalMemoryScreenBufferFeaturesQNX parse_VkPhysicalDeviceExternalMemoryScreenBufferFeaturesQNX_contents(
@@ -6732,7 +6960,6 @@ class ParserBase : protected Base {
         return s;
     }
 #endif  // VK_USE_PLATFORM_SCREEN_QNX
-
 #ifdef VK_USE_PLATFORM_SCI
 
     VkPhysicalDeviceExternalSciSync2FeaturesNV parse_VkPhysicalDeviceExternalSciSync2FeaturesNV_contents(const Json::Value& json,
@@ -6745,7 +6972,6 @@ class ParserBase : protected Base {
         return s;
     }
 #endif  // VK_USE_PLATFORM_SCI
-
 #ifdef VK_USE_PLATFORM_SCI
 
     VkPhysicalDeviceExternalSciSyncFeaturesNV parse_VkPhysicalDeviceExternalSciSyncFeaturesNV_contents(const Json::Value& json,
@@ -7363,24 +7589,6 @@ class ParserBase : protected Base {
         return s;
     }
 
-    VkAttachmentDescription* parse_VkAttachmentDescription_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkAttachmentDescription>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkAttachmentDescription_contents(json[i], l);
-        }
-
-        return dst_buffer;
-    }
-
     VkAttachmentReference parse_VkAttachmentReference_contents(const Json::Value& json, const LocationScope& l) {
         VkAttachmentReference s{};
         s.attachment = parse_uint32_t(json["attachment"], CreateScope("attachment"));
@@ -7388,67 +7596,130 @@ class ParserBase : protected Base {
         return s;
     }
 
-    VkAttachmentReference* parse_VkAttachmentReference_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkAttachmentReference>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkAttachmentReference_contents(json[i], l);
-        }
-
-        return dst_buffer;
-    }
-
-    VkAttachmentReference* parse_VkAttachmentReference_pointer(const Json::Value& json, const LocationScope& l) {
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-
-        auto dst_buffer = AllocMem<VkAttachmentReference>(1);
-        dst_buffer[0] = parse_VkAttachmentReference_contents(json, l);
-
-        return dst_buffer;
-    }
-
     VkSubpassDescription parse_VkSubpassDescription_contents(const Json::Value& json, const LocationScope& l) {
         VkSubpassDescription s{};
         s.flags = parse_VkSubpassDescriptionFlags(json["flags"], CreateScope("flags"));
         s.pipelineBindPoint = parse_VkPipelineBindPoint(json["pipelineBindPoint"], CreateScope("pipelineBindPoint"));
         s.inputAttachmentCount = parse_uint32_t(json["inputAttachmentCount"], CreateScope("inputAttachmentCount"));
-        s.pInputAttachments = parse_VkAttachmentReference_array(json["pInputAttachments"], CreateScope("pInputAttachments"));
+        {
+            const Json::Value& json_member = json["pInputAttachments"];
+
+            if (s.inputAttachmentCount == 0) {
+                s.pInputAttachments = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pInputAttachments is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.inputAttachmentCount) {
+                        auto dst_buffer = AllocMem<VkAttachmentReference>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] =
+                                parse_VkAttachmentReference_contents(json_member[i], CreateScope("pInputAttachments", i));
+                        }
+                        s.pInputAttachments = dst_buffer;
+                    } else {
+                        Error() << "pInputAttachments array size (" << json_member.size() << ") does not match expected length ("
+                                << s.inputAttachmentCount << ")";
+                    }
+                } else {
+                    Error() << "pInputAttachments is not an array";
+                }
+            }
+        }
         s.colorAttachmentCount = parse_uint32_t(json["colorAttachmentCount"], CreateScope("colorAttachmentCount"));
-        s.pColorAttachments = parse_VkAttachmentReference_array(json["pColorAttachments"], CreateScope("pColorAttachments"));
-        s.pResolveAttachments = parse_VkAttachmentReference_array(json["pResolveAttachments"], CreateScope("pResolveAttachments"));
-        s.pDepthStencilAttachment =
-            parse_VkAttachmentReference_pointer(json["pDepthStencilAttachment"], CreateScope("pDepthStencilAttachment"));
+        {
+            const Json::Value& json_member = json["pColorAttachments"];
+
+            if (s.colorAttachmentCount == 0) {
+                s.pColorAttachments = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pColorAttachments is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.colorAttachmentCount) {
+                        auto dst_buffer = AllocMem<VkAttachmentReference>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] =
+                                parse_VkAttachmentReference_contents(json_member[i], CreateScope("pColorAttachments", i));
+                        }
+                        s.pColorAttachments = dst_buffer;
+                    } else {
+                        Error() << "pColorAttachments array size (" << json_member.size() << ") does not match expected length ("
+                                << s.colorAttachmentCount << ")";
+                    }
+                } else {
+                    Error() << "pColorAttachments is not an array";
+                }
+            }
+        }
+
+        {
+            const Json::Value& json_member = json["pResolveAttachments"];
+
+            if (s.colorAttachmentCount == 0) {
+                s.pResolveAttachments = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pResolveAttachments is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.colorAttachmentCount) {
+                        auto dst_buffer = AllocMem<VkAttachmentReference>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] =
+                                parse_VkAttachmentReference_contents(json_member[i], CreateScope("pResolveAttachments", i));
+                        }
+                        s.pResolveAttachments = dst_buffer;
+                    } else {
+                        Error() << "pResolveAttachments array size (" << json_member.size() << ") does not match expected length ("
+                                << s.colorAttachmentCount << ")";
+                    }
+                } else {
+                    Error() << "pResolveAttachments is not an array";
+                }
+            }
+        }
+
+        {
+            const Json::Value& json_member = json["pDepthStencilAttachment"];
+            if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                s.pDepthStencilAttachment = nullptr;
+            } else {
+                auto dst_buffer = AllocMem<VkAttachmentReference>();
+                *dst_buffer = parse_VkAttachmentReference_contents(json_member, CreateScope("pDepthStencilAttachment", true));
+                s.pDepthStencilAttachment = dst_buffer;
+            }
+        }
         s.preserveAttachmentCount = parse_uint32_t(json["preserveAttachmentCount"], CreateScope("preserveAttachmentCount"));
-        s.pPreserveAttachments = parse_uint32_t_array(json["pPreserveAttachments"], CreateScope("pPreserveAttachments"));
+        {
+            const Json::Value& json_member = json["pPreserveAttachments"];
+
+            if (s.preserveAttachmentCount == 0) {
+                s.pPreserveAttachments = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pPreserveAttachments is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.preserveAttachmentCount) {
+                        auto dst_buffer = AllocMem<uint32_t>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_uint32_t(json_member[i], CreateScope("pPreserveAttachments", i));
+                        }
+                        s.pPreserveAttachments = dst_buffer;
+                    } else {
+                        Error() << "pPreserveAttachments array size (" << json_member.size() << ") does not match expected length ("
+                                << s.preserveAttachmentCount << ")";
+                    }
+                } else {
+                    Error() << "pPreserveAttachments is not an array";
+                }
+            }
+        }
+
         return s;
-    }
-
-    VkSubpassDescription* parse_VkSubpassDescription_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkSubpassDescription>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkSubpassDescription_contents(json[i], l);
-        }
-
-        return dst_buffer;
     }
 
     VkSubpassDependency parse_VkSubpassDependency_contents(const Json::Value& json, const LocationScope& l) {
@@ -7463,33 +7734,88 @@ class ParserBase : protected Base {
         return s;
     }
 
-    VkSubpassDependency* parse_VkSubpassDependency_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkSubpassDependency>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkSubpassDependency_contents(json[i], l);
-        }
-
-        return dst_buffer;
-    }
-
     VkRenderPassCreateInfo parse_VkRenderPassCreateInfo_contents(const Json::Value& json, const LocationScope& l) {
         VkRenderPassCreateInfo s{};
         s.flags = parse_VkRenderPassCreateFlags(json["flags"], CreateScope("flags"));
         s.attachmentCount = parse_uint32_t(json["attachmentCount"], CreateScope("attachmentCount"));
-        s.pAttachments = parse_VkAttachmentDescription_array(json["pAttachments"], CreateScope("pAttachments"));
+        {
+            const Json::Value& json_member = json["pAttachments"];
+
+            if (s.attachmentCount == 0) {
+                s.pAttachments = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pAttachments is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.attachmentCount) {
+                        auto dst_buffer = AllocMem<VkAttachmentDescription>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkAttachmentDescription_contents(json_member[i], CreateScope("pAttachments", i));
+                        }
+                        s.pAttachments = dst_buffer;
+                    } else {
+                        Error() << "pAttachments array size (" << json_member.size() << ") does not match expected length ("
+                                << s.attachmentCount << ")";
+                    }
+                } else {
+                    Error() << "pAttachments is not an array";
+                }
+            }
+        }
         s.subpassCount = parse_uint32_t(json["subpassCount"], CreateScope("subpassCount"));
-        s.pSubpasses = parse_VkSubpassDescription_array(json["pSubpasses"], CreateScope("pSubpasses"));
+        {
+            const Json::Value& json_member = json["pSubpasses"];
+
+            if (s.subpassCount == 0) {
+                s.pSubpasses = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pSubpasses is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.subpassCount) {
+                        auto dst_buffer = AllocMem<VkSubpassDescription>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkSubpassDescription_contents(json_member[i], CreateScope("pSubpasses", i));
+                        }
+                        s.pSubpasses = dst_buffer;
+                    } else {
+                        Error() << "pSubpasses array size (" << json_member.size() << ") does not match expected length ("
+                                << s.subpassCount << ")";
+                    }
+                } else {
+                    Error() << "pSubpasses is not an array";
+                }
+            }
+        }
         s.dependencyCount = parse_uint32_t(json["dependencyCount"], CreateScope("dependencyCount"));
-        s.pDependencies = parse_VkSubpassDependency_array(json["pDependencies"], CreateScope("pDependencies"));
+        {
+            const Json::Value& json_member = json["pDependencies"];
+
+            if (s.dependencyCount == 0) {
+                s.pDependencies = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pDependencies is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.dependencyCount) {
+                        auto dst_buffer = AllocMem<VkSubpassDependency>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkSubpassDependency_contents(json_member[i], CreateScope("pDependencies", i));
+                        }
+                        s.pDependencies = dst_buffer;
+                    } else {
+                        Error() << "pDependencies array size (" << json_member.size() << ") does not match expected length ("
+                                << s.dependencyCount << ")";
+                    }
+                } else {
+                    Error() << "pDependencies is not an array";
+                }
+            }
+        }
+
         return s;
     }
 
@@ -7502,61 +7828,122 @@ class ParserBase : protected Base {
         return s;
     }
 
-    VkInputAttachmentAspectReference* parse_VkInputAttachmentAspectReference_array(const Json::Value& json,
-                                                                                   const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkInputAttachmentAspectReference>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkInputAttachmentAspectReference_contents(json[i], l);
-        }
-
-        return dst_buffer;
-    }
-
     VkRenderPassInputAttachmentAspectCreateInfo parse_VkRenderPassInputAttachmentAspectCreateInfo_contents(const Json::Value& json,
                                                                                                            const LocationScope& l) {
         VkRenderPassInputAttachmentAspectCreateInfo s{};
         s.aspectReferenceCount = parse_uint32_t(json["aspectReferenceCount"], CreateScope("aspectReferenceCount"));
-        s.pAspectReferences =
-            parse_VkInputAttachmentAspectReference_array(json["pAspectReferences"], CreateScope("pAspectReferences"));
+        {
+            const Json::Value& json_member = json["pAspectReferences"];
+
+            if (s.aspectReferenceCount == 0) {
+                s.pAspectReferences = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pAspectReferences is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.aspectReferenceCount) {
+                        auto dst_buffer = AllocMem<VkInputAttachmentAspectReference>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkInputAttachmentAspectReference_contents(json_member[i],
+                                                                                            CreateScope("pAspectReferences", i));
+                        }
+                        s.pAspectReferences = dst_buffer;
+                    } else {
+                        Error() << "pAspectReferences array size (" << json_member.size() << ") does not match expected length ("
+                                << s.aspectReferenceCount << ")";
+                    }
+                } else {
+                    Error() << "pAspectReferences is not an array";
+                }
+            }
+        }
+
         return s;
-    }
-
-    int32_t* parse_int32_t_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<int32_t>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_int32_t(json[i], l);
-        }
-
-        return dst_buffer;
     }
 
     VkRenderPassMultiviewCreateInfo parse_VkRenderPassMultiviewCreateInfo_contents(const Json::Value& json,
                                                                                    const LocationScope& l) {
         VkRenderPassMultiviewCreateInfo s{};
         s.subpassCount = parse_uint32_t(json["subpassCount"], CreateScope("subpassCount"));
-        s.pViewMasks = parse_uint32_t_array(json["pViewMasks"], CreateScope("pViewMasks"));
+        {
+            const Json::Value& json_member = json["pViewMasks"];
+
+            if (s.subpassCount == 0) {
+                s.pViewMasks = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pViewMasks is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.subpassCount) {
+                        auto dst_buffer = AllocMem<uint32_t>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_uint32_t(json_member[i], CreateScope("pViewMasks", i));
+                        }
+                        s.pViewMasks = dst_buffer;
+                    } else {
+                        Error() << "pViewMasks array size (" << json_member.size() << ") does not match expected length ("
+                                << s.subpassCount << ")";
+                    }
+                } else {
+                    Error() << "pViewMasks is not an array";
+                }
+            }
+        }
         s.dependencyCount = parse_uint32_t(json["dependencyCount"], CreateScope("dependencyCount"));
-        s.pViewOffsets = parse_int32_t_array(json["pViewOffsets"], CreateScope("pViewOffsets"));
+        {
+            const Json::Value& json_member = json["pViewOffsets"];
+
+            if (s.dependencyCount == 0) {
+                s.pViewOffsets = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pViewOffsets is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.dependencyCount) {
+                        auto dst_buffer = AllocMem<int32_t>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_int32_t(json_member[i], CreateScope("pViewOffsets", i));
+                        }
+                        s.pViewOffsets = dst_buffer;
+                    } else {
+                        Error() << "pViewOffsets array size (" << json_member.size() << ") does not match expected length ("
+                                << s.dependencyCount << ")";
+                    }
+                } else {
+                    Error() << "pViewOffsets is not an array";
+                }
+            }
+        }
         s.correlationMaskCount = parse_uint32_t(json["correlationMaskCount"], CreateScope("correlationMaskCount"));
-        s.pCorrelationMasks = parse_uint32_t_array(json["pCorrelationMasks"], CreateScope("pCorrelationMasks"));
+        {
+            const Json::Value& json_member = json["pCorrelationMasks"];
+
+            if (s.correlationMaskCount == 0) {
+                s.pCorrelationMasks = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pCorrelationMasks is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.correlationMaskCount) {
+                        auto dst_buffer = AllocMem<uint32_t>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_uint32_t(json_member[i], CreateScope("pCorrelationMasks", i));
+                        }
+                        s.pCorrelationMasks = dst_buffer;
+                    } else {
+                        Error() << "pCorrelationMasks array size (" << json_member.size() << ") does not match expected length ("
+                                << s.correlationMaskCount << ")";
+                    }
+                } else {
+                    Error() << "pCorrelationMasks is not an array";
+                }
+            }
+        }
+
         return s;
     }
 
@@ -7582,24 +7969,6 @@ class ParserBase : protected Base {
         return s;
     }
 
-    VkAttachmentDescription2* parse_VkAttachmentDescription2_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkAttachmentDescription2>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkAttachmentDescription2(json[i], l);
-        }
-
-        return dst_buffer;
-    }
-
     VkAttachmentReference2 parse_VkAttachmentReference2_contents(const Json::Value& json, const LocationScope& l) {
         VkAttachmentReference2 s{};
         s.attachment = parse_uint32_t(json["attachment"], CreateScope("attachment"));
@@ -7615,57 +7984,144 @@ class ParserBase : protected Base {
         return s;
     }
 
-    VkAttachmentReference2* parse_VkAttachmentReference2_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkAttachmentReference2>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkAttachmentReference2(json[i], l);
-        }
-
-        return dst_buffer;
-    }
-
-    VkAttachmentReference2* parse_VkAttachmentReference2_pointer(const Json::Value& json, const LocationScope& l) {
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-
-        auto dst_buffer = AllocMem<VkAttachmentReference2>(1);
-        dst_buffer[0] = parse_VkAttachmentReference2(json, l);
-
-        return dst_buffer;
-    }
-
     VkSubpassDescription2 parse_VkSubpassDescription2_contents(const Json::Value& json, const LocationScope& l) {
         VkSubpassDescription2 s{};
         s.flags = parse_VkSubpassDescriptionFlags(json["flags"], CreateScope("flags"));
         s.pipelineBindPoint = parse_VkPipelineBindPoint(json["pipelineBindPoint"], CreateScope("pipelineBindPoint"));
         s.viewMask = parse_uint32_t(json["viewMask"], CreateScope("viewMask"));
         s.inputAttachmentCount = parse_uint32_t(json["inputAttachmentCount"], CreateScope("inputAttachmentCount"));
-        s.pInputAttachments = parse_VkAttachmentReference2_array(json["pInputAttachments"], CreateScope("pInputAttachments"));
+        {
+            const Json::Value& json_member = json["pInputAttachments"];
+
+            if (s.inputAttachmentCount == 0) {
+                s.pInputAttachments = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pInputAttachments is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.inputAttachmentCount) {
+                        auto dst_buffer = AllocMem<VkAttachmentReference2>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkAttachmentReference2(json_member[i], CreateScope("pInputAttachments", i));
+                        }
+                        s.pInputAttachments = dst_buffer;
+                    } else {
+                        Error() << "pInputAttachments array size (" << json_member.size() << ") does not match expected length ("
+                                << s.inputAttachmentCount << ")";
+                    }
+                } else {
+                    Error() << "pInputAttachments is not an array";
+                }
+            }
+        }
         s.colorAttachmentCount = parse_uint32_t(json["colorAttachmentCount"], CreateScope("colorAttachmentCount"));
-        s.pColorAttachments = parse_VkAttachmentReference2_array(json["pColorAttachments"], CreateScope("pColorAttachments"));
-        s.pResolveAttachments = parse_VkAttachmentReference2_array(json["pResolveAttachments"], CreateScope("pResolveAttachments"));
-        s.pDepthStencilAttachment =
-            parse_VkAttachmentReference2_pointer(json["pDepthStencilAttachment"], CreateScope("pDepthStencilAttachment"));
+        {
+            const Json::Value& json_member = json["pColorAttachments"];
+
+            if (s.colorAttachmentCount == 0) {
+                s.pColorAttachments = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pColorAttachments is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.colorAttachmentCount) {
+                        auto dst_buffer = AllocMem<VkAttachmentReference2>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkAttachmentReference2(json_member[i], CreateScope("pColorAttachments", i));
+                        }
+                        s.pColorAttachments = dst_buffer;
+                    } else {
+                        Error() << "pColorAttachments array size (" << json_member.size() << ") does not match expected length ("
+                                << s.colorAttachmentCount << ")";
+                    }
+                } else {
+                    Error() << "pColorAttachments is not an array";
+                }
+            }
+        }
+
+        {
+            const Json::Value& json_member = json["pResolveAttachments"];
+
+            if (s.colorAttachmentCount == 0) {
+                s.pResolveAttachments = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pResolveAttachments is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.colorAttachmentCount) {
+                        auto dst_buffer = AllocMem<VkAttachmentReference2>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkAttachmentReference2(json_member[i], CreateScope("pResolveAttachments", i));
+                        }
+                        s.pResolveAttachments = dst_buffer;
+                    } else {
+                        Error() << "pResolveAttachments array size (" << json_member.size() << ") does not match expected length ("
+                                << s.colorAttachmentCount << ")";
+                    }
+                } else {
+                    Error() << "pResolveAttachments is not an array";
+                }
+            }
+        }
+
+        {
+            const Json::Value& json_member = json["pDepthStencilAttachment"];
+            if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                s.pDepthStencilAttachment = nullptr;
+            } else {
+                auto dst_buffer = AllocMem<VkAttachmentReference2>();
+                *dst_buffer = parse_VkAttachmentReference2(json_member, CreateScope("pDepthStencilAttachment", true));
+                s.pDepthStencilAttachment = dst_buffer;
+            }
+        }
         s.preserveAttachmentCount = parse_uint32_t(json["preserveAttachmentCount"], CreateScope("preserveAttachmentCount"));
-        s.pPreserveAttachments = parse_uint32_t_array(json["pPreserveAttachments"], CreateScope("pPreserveAttachments"));
+        {
+            const Json::Value& json_member = json["pPreserveAttachments"];
+
+            if (s.preserveAttachmentCount == 0) {
+                s.pPreserveAttachments = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pPreserveAttachments is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.preserveAttachmentCount) {
+                        auto dst_buffer = AllocMem<uint32_t>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_uint32_t(json_member[i], CreateScope("pPreserveAttachments", i));
+                        }
+                        s.pPreserveAttachments = dst_buffer;
+                    } else {
+                        Error() << "pPreserveAttachments array size (" << json_member.size() << ") does not match expected length ("
+                                << s.preserveAttachmentCount << ")";
+                    }
+                } else {
+                    Error() << "pPreserveAttachments is not an array";
+                }
+            }
+        }
+
         return s;
     }
 
     VkFragmentShadingRateAttachmentInfoKHR parse_VkFragmentShadingRateAttachmentInfoKHR_contents(const Json::Value& json,
                                                                                                  const LocationScope& l) {
         VkFragmentShadingRateAttachmentInfoKHR s{};
-        s.pFragmentShadingRateAttachment = parse_VkAttachmentReference2_pointer(json["pFragmentShadingRateAttachment"],
-                                                                                CreateScope("pFragmentShadingRateAttachment"));
+
+        {
+            const Json::Value& json_member = json["pFragmentShadingRateAttachment"];
+            if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                s.pFragmentShadingRateAttachment = nullptr;
+            } else {
+                auto dst_buffer = AllocMem<VkAttachmentReference2>();
+                *dst_buffer = parse_VkAttachmentReference2(json_member, CreateScope("pFragmentShadingRateAttachment", true));
+                s.pFragmentShadingRateAttachment = dst_buffer;
+            }
+        }
         s.shadingRateAttachmentTexelSize =
             parse_VkExtent2D_contents(json["shadingRateAttachmentTexelSize"], CreateScope("shadingRateAttachmentTexelSize"));
         return s;
@@ -7676,27 +8132,18 @@ class ParserBase : protected Base {
         VkSubpassDescriptionDepthStencilResolve s{};
         s.depthResolveMode = parse_VkResolveModeFlagBits(json["depthResolveMode"], CreateScope("depthResolveMode"));
         s.stencilResolveMode = parse_VkResolveModeFlagBits(json["stencilResolveMode"], CreateScope("stencilResolveMode"));
-        s.pDepthStencilResolveAttachment = parse_VkAttachmentReference2_pointer(json["pDepthStencilResolveAttachment"],
-                                                                                CreateScope("pDepthStencilResolveAttachment"));
+        {
+            const Json::Value& json_member = json["pDepthStencilResolveAttachment"];
+            if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                s.pDepthStencilResolveAttachment = nullptr;
+            } else {
+                auto dst_buffer = AllocMem<VkAttachmentReference2>();
+                *dst_buffer = parse_VkAttachmentReference2(json_member, CreateScope("pDepthStencilResolveAttachment", true));
+                s.pDepthStencilResolveAttachment = dst_buffer;
+            }
+        }
+
         return s;
-    }
-
-    VkSubpassDescription2* parse_VkSubpassDescription2_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkSubpassDescription2>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkSubpassDescription2(json[i], l);
-        }
-
-        return dst_buffer;
     }
 
     VkSubpassDependency2 parse_VkSubpassDependency2_contents(const Json::Value& json, const LocationScope& l) {
@@ -7721,35 +8168,114 @@ class ParserBase : protected Base {
         return s;
     }
 
-    VkSubpassDependency2* parse_VkSubpassDependency2_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkSubpassDependency2>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkSubpassDependency2(json[i], l);
-        }
-
-        return dst_buffer;
-    }
-
     VkRenderPassCreateInfo2 parse_VkRenderPassCreateInfo2_contents(const Json::Value& json, const LocationScope& l) {
         VkRenderPassCreateInfo2 s{};
         s.flags = parse_VkRenderPassCreateFlags(json["flags"], CreateScope("flags"));
         s.attachmentCount = parse_uint32_t(json["attachmentCount"], CreateScope("attachmentCount"));
-        s.pAttachments = parse_VkAttachmentDescription2_array(json["pAttachments"], CreateScope("pAttachments"));
+        {
+            const Json::Value& json_member = json["pAttachments"];
+
+            if (s.attachmentCount == 0) {
+                s.pAttachments = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pAttachments is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.attachmentCount) {
+                        auto dst_buffer = AllocMem<VkAttachmentDescription2>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkAttachmentDescription2(json_member[i], CreateScope("pAttachments", i));
+                        }
+                        s.pAttachments = dst_buffer;
+                    } else {
+                        Error() << "pAttachments array size (" << json_member.size() << ") does not match expected length ("
+                                << s.attachmentCount << ")";
+                    }
+                } else {
+                    Error() << "pAttachments is not an array";
+                }
+            }
+        }
         s.subpassCount = parse_uint32_t(json["subpassCount"], CreateScope("subpassCount"));
-        s.pSubpasses = parse_VkSubpassDescription2_array(json["pSubpasses"], CreateScope("pSubpasses"));
+        {
+            const Json::Value& json_member = json["pSubpasses"];
+
+            if (s.subpassCount == 0) {
+                s.pSubpasses = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pSubpasses is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.subpassCount) {
+                        auto dst_buffer = AllocMem<VkSubpassDescription2>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkSubpassDescription2(json_member[i], CreateScope("pSubpasses", i));
+                        }
+                        s.pSubpasses = dst_buffer;
+                    } else {
+                        Error() << "pSubpasses array size (" << json_member.size() << ") does not match expected length ("
+                                << s.subpassCount << ")";
+                    }
+                } else {
+                    Error() << "pSubpasses is not an array";
+                }
+            }
+        }
         s.dependencyCount = parse_uint32_t(json["dependencyCount"], CreateScope("dependencyCount"));
-        s.pDependencies = parse_VkSubpassDependency2_array(json["pDependencies"], CreateScope("pDependencies"));
+        {
+            const Json::Value& json_member = json["pDependencies"];
+
+            if (s.dependencyCount == 0) {
+                s.pDependencies = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pDependencies is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.dependencyCount) {
+                        auto dst_buffer = AllocMem<VkSubpassDependency2>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkSubpassDependency2(json_member[i], CreateScope("pDependencies", i));
+                        }
+                        s.pDependencies = dst_buffer;
+                    } else {
+                        Error() << "pDependencies array size (" << json_member.size() << ") does not match expected length ("
+                                << s.dependencyCount << ")";
+                    }
+                } else {
+                    Error() << "pDependencies is not an array";
+                }
+            }
+        }
         s.correlatedViewMaskCount = parse_uint32_t(json["correlatedViewMaskCount"], CreateScope("correlatedViewMaskCount"));
-        s.pCorrelatedViewMasks = parse_uint32_t_array(json["pCorrelatedViewMasks"], CreateScope("pCorrelatedViewMasks"));
+        {
+            const Json::Value& json_member = json["pCorrelatedViewMasks"];
+
+            if (s.correlatedViewMaskCount == 0) {
+                s.pCorrelatedViewMasks = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pCorrelatedViewMasks is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.correlatedViewMaskCount) {
+                        auto dst_buffer = AllocMem<uint32_t>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_uint32_t(json_member[i], CreateScope("pCorrelatedViewMasks", i));
+                        }
+                        s.pCorrelatedViewMasks = dst_buffer;
+                    } else {
+                        Error() << "pCorrelatedViewMasks array size (" << json_member.size() << ") does not match expected length ("
+                                << s.correlatedViewMaskCount << ")";
+                    }
+                } else {
+                    Error() << "pCorrelatedViewMasks is not an array";
+                }
+            }
+        }
+
         return s;
     }
 
@@ -7761,24 +8287,6 @@ class ParserBase : protected Base {
         return s;
     }
 
-    VkPipelineCacheCreateInfo* parse_VkPipelineCacheCreateInfo_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkPipelineCacheCreateInfo>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkPipelineCacheCreateInfo(json[i], l);
-        }
-
-        return dst_buffer;
-    }
-
     VkPipelinePoolSize parse_VkPipelinePoolSize_contents(const Json::Value& json, const LocationScope& l) {
         VkPipelinePoolSize s{};
         s.poolEntrySize = parse_VkDeviceSize(json["poolEntrySize"], CreateScope("poolEntrySize"));
@@ -7786,33 +8294,63 @@ class ParserBase : protected Base {
         return s;
     }
 
-    VkPipelinePoolSize* parse_VkPipelinePoolSize_array(const Json::Value& json, const LocationScope& l) {
-        if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {
-            Error() << "Not an array";
-            return nullptr;
-        }
-
-        if (json.isString() && json.asString() == "NULL") {
-            return nullptr;
-        }
-        auto count = json.size();
-        auto dst_buffer = AllocMem<VkPipelinePoolSize>(count);
-        for (Json::Value::ArrayIndex i = 0; i < count; ++i) {
-            dst_buffer[i] = parse_VkPipelinePoolSize(json[i], l);
-        }
-
-        return dst_buffer;
-    }
-
     VkDeviceObjectReservationCreateInfo parse_VkDeviceObjectReservationCreateInfo_contents(const Json::Value& json,
                                                                                            const LocationScope& l) {
         VkDeviceObjectReservationCreateInfo s{};
         s.pipelineCacheCreateInfoCount =
             parse_uint32_t(json["pipelineCacheCreateInfoCount"], CreateScope("pipelineCacheCreateInfoCount"));
-        s.pPipelineCacheCreateInfos =
-            parse_VkPipelineCacheCreateInfo_array(json["pPipelineCacheCreateInfos"], CreateScope("pPipelineCacheCreateInfos"));
+        {
+            const Json::Value& json_member = json["pPipelineCacheCreateInfos"];
+
+            if (s.pipelineCacheCreateInfoCount == 0) {
+                s.pPipelineCacheCreateInfos = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pPipelineCacheCreateInfos is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.pipelineCacheCreateInfoCount) {
+                        auto dst_buffer = AllocMem<VkPipelineCacheCreateInfo>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] =
+                                parse_VkPipelineCacheCreateInfo(json_member[i], CreateScope("pPipelineCacheCreateInfos", i));
+                        }
+                        s.pPipelineCacheCreateInfos = dst_buffer;
+                    } else {
+                        Error() << "pPipelineCacheCreateInfos array size (" << json_member.size()
+                                << ") does not match expected length (" << s.pipelineCacheCreateInfoCount << ")";
+                    }
+                } else {
+                    Error() << "pPipelineCacheCreateInfos is not an array";
+                }
+            }
+        }
         s.pipelinePoolSizeCount = parse_uint32_t(json["pipelinePoolSizeCount"], CreateScope("pipelinePoolSizeCount"));
-        s.pPipelinePoolSizes = parse_VkPipelinePoolSize_array(json["pPipelinePoolSizes"], CreateScope("pPipelinePoolSizes"));
+        {
+            const Json::Value& json_member = json["pPipelinePoolSizes"];
+
+            if (s.pipelinePoolSizeCount == 0) {
+                s.pPipelinePoolSizes = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pPipelinePoolSizes is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.pipelinePoolSizeCount) {
+                        auto dst_buffer = AllocMem<VkPipelinePoolSize>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkPipelinePoolSize(json_member[i], CreateScope("pPipelinePoolSizes", i));
+                        }
+                        s.pPipelinePoolSizes = dst_buffer;
+                    } else {
+                        Error() << "pPipelinePoolSizes array size (" << json_member.size() << ") does not match expected length ("
+                                << s.pipelinePoolSizeCount << ")";
+                    }
+                } else {
+                    Error() << "pPipelinePoolSizes is not an array";
+                }
+            }
+        }
         s.semaphoreRequestCount = parse_uint32_t(json["semaphoreRequestCount"], CreateScope("semaphoreRequestCount"));
         s.commandBufferRequestCount = parse_uint32_t(json["commandBufferRequestCount"], CreateScope("commandBufferRequestCount"));
         s.fenceRequestCount = parse_uint32_t(json["fenceRequestCount"], CreateScope("fenceRequestCount"));

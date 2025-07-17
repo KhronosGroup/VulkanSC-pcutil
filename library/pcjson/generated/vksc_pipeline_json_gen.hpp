@@ -33,10 +33,11 @@ class GeneratorBase : protected Base {
     Json::Value gen_uint64_t(const uint64_t v, const LocationScope&) { return v; }
     Json::Value gen_float(const float v, const LocationScope&) { return v; }
     Json::Value gen_size_t(const size_t v, const LocationScope&) { return v; }
-    Json::Value gen_char(const char v, const LocationScope&) { return v; }
     Json::Value gen_VkBool32(const VkBool32 v, const LocationScope&) { return v; }
     Json::Value gen_VkDeviceSize(const VkDeviceSize v, const LocationScope&) { return v; }
     Json::Value gen_VkSampleMask(const VkSampleMask v, const LocationScope&) { return v; }
+
+    std::string gen_string(const char* str) { return str; }
 
     std::string gen_binary(const void* ptr, const size_t size) {
         static const char base64_table[64] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
@@ -4316,11 +4317,15 @@ class GeneratorBase : protected Base {
 
         if (s.mapEntryCount != 0) {
             Json::Value json_array_pMapEntries;
-            for (size_t i = 0; i < s.mapEntryCount; i++) {
-                json_array_pMapEntries[Json::Value::ArrayIndex(i)] =
-                    gen_VkSpecializationMapEntry_contents(s.pMapEntries[i], CreateScope("pMapEntries"));
+            if (s.pMapEntries != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.mapEntryCount; i++) {
+                    json_array_pMapEntries[i] =
+                        gen_VkSpecializationMapEntry_contents(s.pMapEntries[i], CreateScope("pMapEntries", i));
+                }
+                json["pMapEntries"] = json_array_pMapEntries;
+            } else {
+                Error() << "pMapEntries is NULL but its length is " << s.mapEntryCount;
             }
-            json["pMapEntries"] = json_array_pMapEntries;
         } else {
             json["pMapEntries"] = "NULL";
         }
@@ -4335,10 +4340,10 @@ class GeneratorBase : protected Base {
         json["flags"] = gen_VkPipelineShaderStageCreateFlags(s.flags, CreateScope("flags"));
         json["stage"] = gen_VkShaderStageFlagBits(s.stage, CreateScope("stage"));
         json["module"] = gen_VkShaderModule(s.module, CreateScope("module"));
-        json["pName"] = s.pName ? gen_char(*s.pName, CreateScope("pName")) : "NULL";
-        json["pSpecializationInfo"] =
-            s.pSpecializationInfo ? gen_VkSpecializationInfo_contents(*s.pSpecializationInfo, CreateScope("pSpecializationInfo"))
-                                  : "NULL";
+        json["pName"] = gen_string(s.pName);
+        json["pSpecializationInfo"] = s.pSpecializationInfo ? gen_VkSpecializationInfo_contents(
+                                                                  *s.pSpecializationInfo, CreateScope("pSpecializationInfo", true))
+                                                            : "NULL";
         return json;
     }
 
@@ -4347,7 +4352,7 @@ class GeneratorBase : protected Base {
 
         json["objectType"] = gen_VkObjectType(s.objectType, CreateScope("objectType"));
         json["objectHandle"] = gen_uint64_t(s.objectHandle, CreateScope("objectHandle"));
-        json["pObjectName"] = s.pObjectName ? gen_char(*s.pObjectName, CreateScope("pObjectName")) : "NULL";
+        json["pObjectName"] = gen_string(s.pObjectName);
         return json;
     }
 
@@ -4402,11 +4407,15 @@ class GeneratorBase : protected Base {
 
         if (s.vertexBindingDescriptionCount != 0) {
             Json::Value json_array_pVertexBindingDescriptions;
-            for (size_t i = 0; i < s.vertexBindingDescriptionCount; i++) {
-                json_array_pVertexBindingDescriptions[Json::Value::ArrayIndex(i)] = gen_VkVertexInputBindingDescription_contents(
-                    s.pVertexBindingDescriptions[i], CreateScope("pVertexBindingDescriptions"));
+            if (s.pVertexBindingDescriptions != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.vertexBindingDescriptionCount; i++) {
+                    json_array_pVertexBindingDescriptions[i] = gen_VkVertexInputBindingDescription_contents(
+                        s.pVertexBindingDescriptions[i], CreateScope("pVertexBindingDescriptions", i));
+                }
+                json["pVertexBindingDescriptions"] = json_array_pVertexBindingDescriptions;
+            } else {
+                Error() << "pVertexBindingDescriptions is NULL but its length is " << s.vertexBindingDescriptionCount;
             }
-            json["pVertexBindingDescriptions"] = json_array_pVertexBindingDescriptions;
         } else {
             json["pVertexBindingDescriptions"] = "NULL";
         }
@@ -4415,12 +4424,15 @@ class GeneratorBase : protected Base {
 
         if (s.vertexAttributeDescriptionCount != 0) {
             Json::Value json_array_pVertexAttributeDescriptions;
-            for (size_t i = 0; i < s.vertexAttributeDescriptionCount; i++) {
-                json_array_pVertexAttributeDescriptions[Json::Value::ArrayIndex(i)] =
-                    gen_VkVertexInputAttributeDescription_contents(s.pVertexAttributeDescriptions[i],
-                                                                   CreateScope("pVertexAttributeDescriptions"));
+            if (s.pVertexAttributeDescriptions != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.vertexAttributeDescriptionCount; i++) {
+                    json_array_pVertexAttributeDescriptions[i] = gen_VkVertexInputAttributeDescription_contents(
+                        s.pVertexAttributeDescriptions[i], CreateScope("pVertexAttributeDescriptions", i));
+                }
+                json["pVertexAttributeDescriptions"] = json_array_pVertexAttributeDescriptions;
+            } else {
+                Error() << "pVertexAttributeDescriptions is NULL but its length is " << s.vertexAttributeDescriptionCount;
             }
-            json["pVertexAttributeDescriptions"] = json_array_pVertexAttributeDescriptions;
         } else {
             json["pVertexAttributeDescriptions"] = "NULL";
         }
@@ -4446,11 +4458,15 @@ class GeneratorBase : protected Base {
 
         if (s.vertexBindingDivisorCount != 0) {
             Json::Value json_array_pVertexBindingDivisors;
-            for (size_t i = 0; i < s.vertexBindingDivisorCount; i++) {
-                json_array_pVertexBindingDivisors[Json::Value::ArrayIndex(i)] = gen_VkVertexInputBindingDivisorDescription_contents(
-                    s.pVertexBindingDivisors[i], CreateScope("pVertexBindingDivisors"));
+            if (s.pVertexBindingDivisors != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.vertexBindingDivisorCount; i++) {
+                    json_array_pVertexBindingDivisors[i] = gen_VkVertexInputBindingDivisorDescription_contents(
+                        s.pVertexBindingDivisors[i], CreateScope("pVertexBindingDivisors", i));
+                }
+                json["pVertexBindingDivisors"] = json_array_pVertexBindingDivisors;
+            } else {
+                Error() << "pVertexBindingDivisors is NULL but its length is " << s.vertexBindingDivisorCount;
             }
-            json["pVertexBindingDivisors"] = json_array_pVertexBindingDivisors;
         } else {
             json["pVertexBindingDivisors"] = "NULL";
         }
@@ -4536,11 +4552,14 @@ class GeneratorBase : protected Base {
 
         if (s.viewportCount != 0) {
             Json::Value json_array_pViewports;
-            for (size_t i = 0; i < s.viewportCount; i++) {
-                json_array_pViewports[Json::Value::ArrayIndex(i)] =
-                    gen_VkViewport_contents(s.pViewports[i], CreateScope("pViewports"));
+            if (s.pViewports != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.viewportCount; i++) {
+                    json_array_pViewports[i] = gen_VkViewport_contents(s.pViewports[i], CreateScope("pViewports", i));
+                }
+                json["pViewports"] = json_array_pViewports;
+            } else {
+                json["pViewports"] = "NULL";
             }
-            json["pViewports"] = json_array_pViewports;
         } else {
             json["pViewports"] = "NULL";
         }
@@ -4548,10 +4567,14 @@ class GeneratorBase : protected Base {
 
         if (s.scissorCount != 0) {
             Json::Value json_array_pScissors;
-            for (size_t i = 0; i < s.scissorCount; i++) {
-                json_array_pScissors[Json::Value::ArrayIndex(i)] = gen_VkRect2D_contents(s.pScissors[i], CreateScope("pScissors"));
+            if (s.pScissors != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.scissorCount; i++) {
+                    json_array_pScissors[i] = gen_VkRect2D_contents(s.pScissors[i], CreateScope("pScissors", i));
+                }
+                json["pScissors"] = json_array_pScissors;
+            } else {
+                json["pScissors"] = "NULL";
             }
-            json["pScissors"] = json_array_pScissors;
         } else {
             json["pScissors"] = "NULL";
         }
@@ -4624,10 +4647,14 @@ class GeneratorBase : protected Base {
 
         if (size_t((s.rasterizationSamples + 31) / 32) != 0) {
             Json::Value json_array_pSampleMask;
-            for (size_t i = 0; i < size_t((s.rasterizationSamples + 31) / 32); i++) {
-                json_array_pSampleMask[Json::Value::ArrayIndex(i)] = gen_VkSampleMask(s.pSampleMask[i], CreateScope("pSampleMask"));
+            if (s.pSampleMask != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < size_t((s.rasterizationSamples + 31) / 32); i++) {
+                    json_array_pSampleMask[i] = gen_VkSampleMask(s.pSampleMask[i], CreateScope("pSampleMask", i));
+                }
+                json["pSampleMask"] = json_array_pSampleMask;
+            } else {
+                Error() << "pSampleMask is NULL but its length is " << size_t((s.rasterizationSamples + 31) / 32);
             }
-            json["pSampleMask"] = json_array_pSampleMask;
         } else {
             json["pSampleMask"] = "NULL";
         }
@@ -4656,11 +4683,15 @@ class GeneratorBase : protected Base {
 
         if (s.sampleLocationsCount != 0) {
             Json::Value json_array_pSampleLocations;
-            for (size_t i = 0; i < s.sampleLocationsCount; i++) {
-                json_array_pSampleLocations[Json::Value::ArrayIndex(i)] =
-                    gen_VkSampleLocationEXT_contents(s.pSampleLocations[i], CreateScope("pSampleLocations"));
+            if (s.pSampleLocations != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.sampleLocationsCount; i++) {
+                    json_array_pSampleLocations[i] =
+                        gen_VkSampleLocationEXT_contents(s.pSampleLocations[i], CreateScope("pSampleLocations", i));
+                }
+                json["pSampleLocations"] = json_array_pSampleLocations;
+            } else {
+                Error() << "pSampleLocations is NULL but its length is " << s.sampleLocationsCount;
             }
-            json["pSampleLocations"] = json_array_pSampleLocations;
         } else {
             json["pSampleLocations"] = "NULL";
         }
@@ -4737,22 +4768,27 @@ class GeneratorBase : protected Base {
 
         if (s.attachmentCount != 0) {
             Json::Value json_array_pAttachments;
-            for (size_t i = 0; i < s.attachmentCount; i++) {
-                json_array_pAttachments[Json::Value::ArrayIndex(i)] =
-                    gen_VkPipelineColorBlendAttachmentState_contents(s.pAttachments[i], CreateScope("pAttachments"));
+            if (s.pAttachments != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.attachmentCount; i++) {
+                    json_array_pAttachments[i] =
+                        gen_VkPipelineColorBlendAttachmentState_contents(s.pAttachments[i], CreateScope("pAttachments", i));
+                }
+                json["pAttachments"] = json_array_pAttachments;
+            } else {
+                Error() << "pAttachments is NULL but its length is " << s.attachmentCount;
             }
-            json["pAttachments"] = json_array_pAttachments;
         } else {
             json["pAttachments"] = "NULL";
         }
 
         if (4 != 0) {
             Json::Value json_array_blendConstants;
-            for (size_t i = 0; i < 4; i++) {
-                json_array_blendConstants[Json::Value::ArrayIndex(i)] =
-                    gen_float(s.blendConstants[i], CreateScope("blendConstants"));
+            {
+                for (Json::Value::ArrayIndex i = 0; i < 4; i++) {
+                    json_array_blendConstants[i] = gen_float(s.blendConstants[i], CreateScope("blendConstants", i));
+                }
+                json["blendConstants"] = json_array_blendConstants;
             }
-            json["blendConstants"] = json_array_blendConstants;
         } else {
             json["blendConstants"] = "NULL";
         }
@@ -4778,11 +4814,14 @@ class GeneratorBase : protected Base {
 
         if (s.attachmentCount != 0) {
             Json::Value json_array_pColorWriteEnables;
-            for (size_t i = 0; i < s.attachmentCount; i++) {
-                json_array_pColorWriteEnables[Json::Value::ArrayIndex(i)] =
-                    gen_VkBool32(s.pColorWriteEnables[i], CreateScope("pColorWriteEnables"));
+            if (s.pColorWriteEnables != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.attachmentCount; i++) {
+                    json_array_pColorWriteEnables[i] = gen_VkBool32(s.pColorWriteEnables[i], CreateScope("pColorWriteEnables", i));
+                }
+                json["pColorWriteEnables"] = json_array_pColorWriteEnables;
+            } else {
+                Error() << "pColorWriteEnables is NULL but its length is " << s.attachmentCount;
             }
-            json["pColorWriteEnables"] = json_array_pColorWriteEnables;
         } else {
             json["pColorWriteEnables"] = "NULL";
         }
@@ -4798,11 +4837,14 @@ class GeneratorBase : protected Base {
 
         if (s.dynamicStateCount != 0) {
             Json::Value json_array_pDynamicStates;
-            for (size_t i = 0; i < s.dynamicStateCount; i++) {
-                json_array_pDynamicStates[Json::Value::ArrayIndex(i)] =
-                    gen_VkDynamicState(s.pDynamicStates[i], CreateScope("pDynamicStates"));
+            if (s.pDynamicStates != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.dynamicStateCount; i++) {
+                    json_array_pDynamicStates[i] = gen_VkDynamicState(s.pDynamicStates[i], CreateScope("pDynamicStates", i));
+                }
+                json["pDynamicStates"] = json_array_pDynamicStates;
+            } else {
+                Error() << "pDynamicStates is NULL but its length is " << s.dynamicStateCount;
             }
-            json["pDynamicStates"] = json_array_pDynamicStates;
         } else {
             json["pDynamicStates"] = "NULL";
         }
@@ -4818,39 +4860,43 @@ class GeneratorBase : protected Base {
 
         if (s.stageCount != 0) {
             Json::Value json_array_pStages;
-            for (size_t i = 0; i < s.stageCount; i++) {
-                json_array_pStages[Json::Value::ArrayIndex(i)] =
-                    gen_VkPipelineShaderStageCreateInfo(s.pStages[i], CreateScope("pStages"));
+            if (s.pStages != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.stageCount; i++) {
+                    json_array_pStages[i] = gen_VkPipelineShaderStageCreateInfo(s.pStages[i], CreateScope("pStages", i));
+                }
+                json["pStages"] = json_array_pStages;
+            } else {
+                json["pStages"] = "NULL";
             }
-            json["pStages"] = json_array_pStages;
         } else {
             json["pStages"] = "NULL";
         }
-        json["pVertexInputState"] =
-            s.pVertexInputState ? gen_VkPipelineVertexInputStateCreateInfo(*s.pVertexInputState, CreateScope("pVertexInputState"))
-                                : "NULL";
+        json["pVertexInputState"] = s.pVertexInputState ? gen_VkPipelineVertexInputStateCreateInfo(
+                                                              *s.pVertexInputState, CreateScope("pVertexInputState", true))
+                                                        : "NULL";
         json["pInputAssemblyState"] = s.pInputAssemblyState ? gen_VkPipelineInputAssemblyStateCreateInfo(
-                                                                  *s.pInputAssemblyState, CreateScope("pInputAssemblyState"))
+                                                                  *s.pInputAssemblyState, CreateScope("pInputAssemblyState", true))
                                                             : "NULL";
         json["pTessellationState"] = s.pTessellationState ? gen_VkPipelineTessellationStateCreateInfo(
-                                                                *s.pTessellationState, CreateScope("pTessellationState"))
+                                                                *s.pTessellationState, CreateScope("pTessellationState", true))
                                                           : "NULL";
-        json["pViewportState"] =
-            s.pViewportState ? gen_VkPipelineViewportStateCreateInfo(*s.pViewportState, CreateScope("pViewportState")) : "NULL";
+        json["pViewportState"] = s.pViewportState
+                                     ? gen_VkPipelineViewportStateCreateInfo(*s.pViewportState, CreateScope("pViewportState", true))
+                                     : "NULL";
         json["pRasterizationState"] = s.pRasterizationState ? gen_VkPipelineRasterizationStateCreateInfo(
-                                                                  *s.pRasterizationState, CreateScope("pRasterizationState"))
+                                                                  *s.pRasterizationState, CreateScope("pRasterizationState", true))
                                                             : "NULL";
-        json["pMultisampleState"] =
-            s.pMultisampleState ? gen_VkPipelineMultisampleStateCreateInfo(*s.pMultisampleState, CreateScope("pMultisampleState"))
-                                : "NULL";
+        json["pMultisampleState"] = s.pMultisampleState ? gen_VkPipelineMultisampleStateCreateInfo(
+                                                              *s.pMultisampleState, CreateScope("pMultisampleState", true))
+                                                        : "NULL";
         json["pDepthStencilState"] = s.pDepthStencilState ? gen_VkPipelineDepthStencilStateCreateInfo(
-                                                                *s.pDepthStencilState, CreateScope("pDepthStencilState"))
+                                                                *s.pDepthStencilState, CreateScope("pDepthStencilState", true))
                                                           : "NULL";
         json["pColorBlendState"] =
-            s.pColorBlendState ? gen_VkPipelineColorBlendStateCreateInfo(*s.pColorBlendState, CreateScope("pColorBlendState"))
+            s.pColorBlendState ? gen_VkPipelineColorBlendStateCreateInfo(*s.pColorBlendState, CreateScope("pColorBlendState", true))
                                : "NULL";
         json["pDynamicState"] =
-            s.pDynamicState ? gen_VkPipelineDynamicStateCreateInfo(*s.pDynamicState, CreateScope("pDynamicState")) : "NULL";
+            s.pDynamicState ? gen_VkPipelineDynamicStateCreateInfo(*s.pDynamicState, CreateScope("pDynamicState", true)) : "NULL";
         json["layout"] = gen_VkPipelineLayout(s.layout, CreateScope("layout"));
         json["renderPass"] = gen_VkRenderPass(s.renderPass, CreateScope("renderPass"));
         json["subpass"] = gen_uint32_t(s.subpass, CreateScope("subpass"));
@@ -4881,20 +4927,24 @@ class GeneratorBase : protected Base {
                                                                   const LocationScope& l) {
         Json::Value json;
 
-        json["pPipelineCreationFeedback"] =
-            s.pPipelineCreationFeedback
-                ? gen_VkPipelineCreationFeedback_contents(*s.pPipelineCreationFeedback, CreateScope("pPipelineCreationFeedback"))
-                : "NULL";
+        json["pPipelineCreationFeedback"] = s.pPipelineCreationFeedback
+                                                ? gen_VkPipelineCreationFeedback_contents(
+                                                      *s.pPipelineCreationFeedback, CreateScope("pPipelineCreationFeedback", true))
+                                                : "NULL";
         json["pipelineStageCreationFeedbackCount"] =
             gen_uint32_t(s.pipelineStageCreationFeedbackCount, CreateScope("pipelineStageCreationFeedbackCount"));
 
         if (s.pipelineStageCreationFeedbackCount != 0) {
             Json::Value json_array_pPipelineStageCreationFeedbacks;
-            for (size_t i = 0; i < s.pipelineStageCreationFeedbackCount; i++) {
-                json_array_pPipelineStageCreationFeedbacks[Json::Value::ArrayIndex(i)] = gen_VkPipelineCreationFeedback_contents(
-                    s.pPipelineStageCreationFeedbacks[i], CreateScope("pPipelineStageCreationFeedbacks"));
+            if (s.pPipelineStageCreationFeedbacks != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.pipelineStageCreationFeedbackCount; i++) {
+                    json_array_pPipelineStageCreationFeedbacks[i] = gen_VkPipelineCreationFeedback_contents(
+                        s.pPipelineStageCreationFeedbacks[i], CreateScope("pPipelineStageCreationFeedbacks", i));
+                }
+                json["pPipelineStageCreationFeedbacks"] = json_array_pPipelineStageCreationFeedbacks;
+            } else {
+                Error() << "pPipelineStageCreationFeedbacks is NULL but its length is " << s.pipelineStageCreationFeedbackCount;
             }
-            json["pPipelineStageCreationFeedbacks"] = json_array_pPipelineStageCreationFeedbacks;
         } else {
             json["pPipelineStageCreationFeedbacks"] = "NULL";
         }
@@ -4912,11 +4962,15 @@ class GeneratorBase : protected Base {
 
         if (s.discardRectangleCount != 0) {
             Json::Value json_array_pDiscardRectangles;
-            for (size_t i = 0; i < s.discardRectangleCount; i++) {
-                json_array_pDiscardRectangles[Json::Value::ArrayIndex(i)] =
-                    gen_VkRect2D_contents(s.pDiscardRectangles[i], CreateScope("pDiscardRectangles"));
+            if (s.pDiscardRectangles != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.discardRectangleCount; i++) {
+                    json_array_pDiscardRectangles[i] =
+                        gen_VkRect2D_contents(s.pDiscardRectangles[i], CreateScope("pDiscardRectangles", i));
+                }
+                json["pDiscardRectangles"] = json_array_pDiscardRectangles;
+            } else {
+                json["pDiscardRectangles"] = "NULL";
             }
-            json["pDiscardRectangles"] = json_array_pDiscardRectangles;
         } else {
             json["pDiscardRectangles"] = "NULL";
         }
@@ -4932,11 +4986,13 @@ class GeneratorBase : protected Base {
 
         if (2 != 0) {
             Json::Value json_array_combinerOps;
-            for (size_t i = 0; i < 2; i++) {
-                json_array_combinerOps[Json::Value::ArrayIndex(i)] =
-                    gen_VkFragmentShadingRateCombinerOpKHR(s.combinerOps[i], CreateScope("combinerOps"));
+            {
+                for (Json::Value::ArrayIndex i = 0; i < 2; i++) {
+                    json_array_combinerOps[i] =
+                        gen_VkFragmentShadingRateCombinerOpKHR(s.combinerOps[i], CreateScope("combinerOps", i));
+                }
+                json["combinerOps"] = json_array_combinerOps;
             }
-            json["combinerOps"] = json_array_combinerOps;
         } else {
             json["combinerOps"] = "NULL";
         }
@@ -4949,11 +5005,12 @@ class GeneratorBase : protected Base {
 
         if (VK_UUID_SIZE != 0) {
             Json::Value json_array_pipelineIdentifier;
-            for (size_t i = 0; i < VK_UUID_SIZE; i++) {
-                json_array_pipelineIdentifier[Json::Value::ArrayIndex(i)] =
-                    gen_uint8_t(s.pipelineIdentifier[i], CreateScope("pipelineIdentifier"));
+            {
+                for (Json::Value::ArrayIndex i = 0; i < VK_UUID_SIZE; i++) {
+                    json_array_pipelineIdentifier[i] = gen_uint8_t(s.pipelineIdentifier[i], CreateScope("pipelineIdentifier", i));
+                }
+                json["pipelineIdentifier"] = json_array_pipelineIdentifier;
             }
-            json["pipelineIdentifier"] = json_array_pipelineIdentifier;
         } else {
             json["pipelineIdentifier"] = "NULL";
         }
@@ -4971,11 +5028,15 @@ class GeneratorBase : protected Base {
 
         if (s.colorAttachmentCount != 0) {
             Json::Value json_array_pColorAttachmentFormats;
-            for (size_t i = 0; i < s.colorAttachmentCount; i++) {
-                json_array_pColorAttachmentFormats[Json::Value::ArrayIndex(i)] =
-                    gen_VkFormat(s.pColorAttachmentFormats[i], CreateScope("pColorAttachmentFormats"));
+            if (s.pColorAttachmentFormats != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.colorAttachmentCount; i++) {
+                    json_array_pColorAttachmentFormats[i] =
+                        gen_VkFormat(s.pColorAttachmentFormats[i], CreateScope("pColorAttachmentFormats", i));
+                }
+                json["pColorAttachmentFormats"] = json_array_pColorAttachmentFormats;
+            } else {
+                json["pColorAttachmentFormats"] = "NULL";
             }
-            json["pColorAttachmentFormats"] = json_array_pColorAttachmentFormats;
         } else {
             json["pColorAttachmentFormats"] = "NULL";
         }
@@ -4992,11 +5053,15 @@ class GeneratorBase : protected Base {
 
         if (s.colorAttachmentCount != 0) {
             Json::Value json_array_pColorAttachmentLocations;
-            for (size_t i = 0; i < s.colorAttachmentCount; i++) {
-                json_array_pColorAttachmentLocations[Json::Value::ArrayIndex(i)] =
-                    gen_uint32_t(s.pColorAttachmentLocations[i], CreateScope("pColorAttachmentLocations"));
+            if (s.pColorAttachmentLocations != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.colorAttachmentCount; i++) {
+                    json_array_pColorAttachmentLocations[i] =
+                        gen_uint32_t(s.pColorAttachmentLocations[i], CreateScope("pColorAttachmentLocations", i));
+                }
+                json["pColorAttachmentLocations"] = json_array_pColorAttachmentLocations;
+            } else {
+                json["pColorAttachmentLocations"] = "NULL";
             }
-            json["pColorAttachmentLocations"] = json_array_pColorAttachmentLocations;
         } else {
             json["pColorAttachmentLocations"] = "NULL";
         }
@@ -5012,20 +5077,25 @@ class GeneratorBase : protected Base {
 
         if (s.colorAttachmentCount != 0) {
             Json::Value json_array_pColorAttachmentInputIndices;
-            for (size_t i = 0; i < s.colorAttachmentCount; i++) {
-                json_array_pColorAttachmentInputIndices[Json::Value::ArrayIndex(i)] =
-                    gen_uint32_t(s.pColorAttachmentInputIndices[i], CreateScope("pColorAttachmentInputIndices"));
+            if (s.pColorAttachmentInputIndices != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.colorAttachmentCount; i++) {
+                    json_array_pColorAttachmentInputIndices[i] =
+                        gen_uint32_t(s.pColorAttachmentInputIndices[i], CreateScope("pColorAttachmentInputIndices", i));
+                }
+                json["pColorAttachmentInputIndices"] = json_array_pColorAttachmentInputIndices;
+            } else {
+                Error() << "pColorAttachmentInputIndices is NULL but its length is " << s.colorAttachmentCount;
             }
-            json["pColorAttachmentInputIndices"] = json_array_pColorAttachmentInputIndices;
         } else {
             json["pColorAttachmentInputIndices"] = "NULL";
         }
         json["pDepthInputAttachmentIndex"] =
-            s.pDepthInputAttachmentIndex ? gen_uint32_t(*s.pDepthInputAttachmentIndex, CreateScope("pDepthInputAttachmentIndex"))
-                                         : "NULL";
+            s.pDepthInputAttachmentIndex
+                ? gen_uint32_t(*s.pDepthInputAttachmentIndex, CreateScope("pDepthInputAttachmentIndex", true))
+                : "NULL";
         json["pStencilInputAttachmentIndex"] =
             s.pStencilInputAttachmentIndex
-                ? gen_uint32_t(*s.pStencilInputAttachmentIndex, CreateScope("pStencilInputAttachmentIndex"))
+                ? gen_uint32_t(*s.pStencilInputAttachmentIndex, CreateScope("pStencilInputAttachmentIndex", true))
                 : "NULL";
         return json;
     }
@@ -5108,30 +5178,36 @@ class GeneratorBase : protected Base {
 
         if (4 != 0) {
             Json::Value json_array_float32;
-            for (size_t i = 0; i < 4; i++) {
-                json_array_float32[Json::Value::ArrayIndex(i)] = gen_float(s.float32[i], CreateScope("float32"));
+            {
+                for (Json::Value::ArrayIndex i = 0; i < 4; i++) {
+                    json_array_float32[i] = gen_float(s.float32[i], CreateScope("float32", i));
+                }
+                json["float32"] = json_array_float32;
             }
-            json["float32"] = json_array_float32;
         } else {
             json["float32"] = "NULL";
         }
 
         if (4 != 0) {
             Json::Value json_array_int32;
-            for (size_t i = 0; i < 4; i++) {
-                json_array_int32[Json::Value::ArrayIndex(i)] = gen_int32_t(s.int32[i], CreateScope("int32"));
+            {
+                for (Json::Value::ArrayIndex i = 0; i < 4; i++) {
+                    json_array_int32[i] = gen_int32_t(s.int32[i], CreateScope("int32", i));
+                }
+                json["int32"] = json_array_int32;
             }
-            json["int32"] = json_array_int32;
         } else {
             json["int32"] = "NULL";
         }
 
         if (4 != 0) {
             Json::Value json_array_uint32;
-            for (size_t i = 0; i < 4; i++) {
-                json_array_uint32[Json::Value::ArrayIndex(i)] = gen_uint32_t(s.uint32[i], CreateScope("uint32"));
+            {
+                for (Json::Value::ArrayIndex i = 0; i < 4; i++) {
+                    json_array_uint32[i] = gen_uint32_t(s.uint32[i], CreateScope("uint32", i));
+                }
+                json["uint32"] = json_array_uint32;
             }
-            json["uint32"] = json_array_uint32;
         } else {
             json["uint32"] = "NULL";
         }
@@ -5175,11 +5251,14 @@ class GeneratorBase : protected Base {
 
         if (s.descriptorCount != 0) {
             Json::Value json_array_pImmutableSamplers;
-            for (size_t i = 0; i < s.descriptorCount; i++) {
-                json_array_pImmutableSamplers[Json::Value::ArrayIndex(i)] =
-                    gen_VkSampler(s.pImmutableSamplers[i], CreateScope("pImmutableSamplers"));
+            if (s.pImmutableSamplers != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.descriptorCount; i++) {
+                    json_array_pImmutableSamplers[i] = gen_VkSampler(s.pImmutableSamplers[i], CreateScope("pImmutableSamplers", i));
+                }
+                json["pImmutableSamplers"] = json_array_pImmutableSamplers;
+            } else {
+                json["pImmutableSamplers"] = "NULL";
             }
-            json["pImmutableSamplers"] = json_array_pImmutableSamplers;
         } else {
             json["pImmutableSamplers"] = "NULL";
         }
@@ -5195,11 +5274,15 @@ class GeneratorBase : protected Base {
 
         if (s.bindingCount != 0) {
             Json::Value json_array_pBindings;
-            for (size_t i = 0; i < s.bindingCount; i++) {
-                json_array_pBindings[Json::Value::ArrayIndex(i)] =
-                    gen_VkDescriptorSetLayoutBinding_contents(s.pBindings[i], CreateScope("pBindings"));
+            if (s.pBindings != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.bindingCount; i++) {
+                    json_array_pBindings[i] =
+                        gen_VkDescriptorSetLayoutBinding_contents(s.pBindings[i], CreateScope("pBindings", i));
+                }
+                json["pBindings"] = json_array_pBindings;
+            } else {
+                Error() << "pBindings is NULL but its length is " << s.bindingCount;
             }
-            json["pBindings"] = json_array_pBindings;
         } else {
             json["pBindings"] = "NULL";
         }
@@ -5215,11 +5298,14 @@ class GeneratorBase : protected Base {
 
         if (s.bindingCount != 0) {
             Json::Value json_array_pBindingFlags;
-            for (size_t i = 0; i < s.bindingCount; i++) {
-                json_array_pBindingFlags[Json::Value::ArrayIndex(i)] =
-                    gen_VkDescriptorBindingFlags(s.pBindingFlags[i], CreateScope("pBindingFlags"));
+            if (s.pBindingFlags != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.bindingCount; i++) {
+                    json_array_pBindingFlags[i] = gen_VkDescriptorBindingFlags(s.pBindingFlags[i], CreateScope("pBindingFlags", i));
+                }
+                json["pBindingFlags"] = json_array_pBindingFlags;
+            } else {
+                Error() << "pBindingFlags is NULL but its length is " << s.bindingCount;
             }
-            json["pBindingFlags"] = json_array_pBindingFlags;
         } else {
             json["pBindingFlags"] = "NULL";
         }
@@ -5245,11 +5331,14 @@ class GeneratorBase : protected Base {
 
         if (s.setLayoutCount != 0) {
             Json::Value json_array_pSetLayouts;
-            for (size_t i = 0; i < s.setLayoutCount; i++) {
-                json_array_pSetLayouts[Json::Value::ArrayIndex(i)] =
-                    gen_VkDescriptorSetLayout(s.pSetLayouts[i], CreateScope("pSetLayouts"));
+            if (s.pSetLayouts != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.setLayoutCount; i++) {
+                    json_array_pSetLayouts[i] = gen_VkDescriptorSetLayout(s.pSetLayouts[i], CreateScope("pSetLayouts", i));
+                }
+                json["pSetLayouts"] = json_array_pSetLayouts;
+            } else {
+                Error() << "pSetLayouts is NULL but its length is " << s.setLayoutCount;
             }
-            json["pSetLayouts"] = json_array_pSetLayouts;
         } else {
             json["pSetLayouts"] = "NULL";
         }
@@ -5257,11 +5346,15 @@ class GeneratorBase : protected Base {
 
         if (s.pushConstantRangeCount != 0) {
             Json::Value json_array_pPushConstantRanges;
-            for (size_t i = 0; i < s.pushConstantRangeCount; i++) {
-                json_array_pPushConstantRanges[Json::Value::ArrayIndex(i)] =
-                    gen_VkPushConstantRange_contents(s.pPushConstantRanges[i], CreateScope("pPushConstantRanges"));
+            if (s.pPushConstantRanges != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.pushConstantRangeCount; i++) {
+                    json_array_pPushConstantRanges[i] =
+                        gen_VkPushConstantRange_contents(s.pPushConstantRanges[i], CreateScope("pPushConstantRanges", i));
+                }
+                json["pPushConstantRanges"] = json_array_pPushConstantRanges;
+            } else {
+                Error() << "pPushConstantRanges is NULL but its length is " << s.pushConstantRangeCount;
             }
-            json["pPushConstantRanges"] = json_array_pPushConstantRanges;
         } else {
             json["pPushConstantRanges"] = "NULL";
         }
@@ -6305,11 +6398,15 @@ class GeneratorBase : protected Base {
 
         if (s.inputAttachmentCount != 0) {
             Json::Value json_array_pInputAttachments;
-            for (size_t i = 0; i < s.inputAttachmentCount; i++) {
-                json_array_pInputAttachments[Json::Value::ArrayIndex(i)] =
-                    gen_VkAttachmentReference_contents(s.pInputAttachments[i], CreateScope("pInputAttachments"));
+            if (s.pInputAttachments != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.inputAttachmentCount; i++) {
+                    json_array_pInputAttachments[i] =
+                        gen_VkAttachmentReference_contents(s.pInputAttachments[i], CreateScope("pInputAttachments", i));
+                }
+                json["pInputAttachments"] = json_array_pInputAttachments;
+            } else {
+                Error() << "pInputAttachments is NULL but its length is " << s.inputAttachmentCount;
             }
-            json["pInputAttachments"] = json_array_pInputAttachments;
         } else {
             json["pInputAttachments"] = "NULL";
         }
@@ -6317,38 +6414,50 @@ class GeneratorBase : protected Base {
 
         if (s.colorAttachmentCount != 0) {
             Json::Value json_array_pColorAttachments;
-            for (size_t i = 0; i < s.colorAttachmentCount; i++) {
-                json_array_pColorAttachments[Json::Value::ArrayIndex(i)] =
-                    gen_VkAttachmentReference_contents(s.pColorAttachments[i], CreateScope("pColorAttachments"));
+            if (s.pColorAttachments != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.colorAttachmentCount; i++) {
+                    json_array_pColorAttachments[i] =
+                        gen_VkAttachmentReference_contents(s.pColorAttachments[i], CreateScope("pColorAttachments", i));
+                }
+                json["pColorAttachments"] = json_array_pColorAttachments;
+            } else {
+                Error() << "pColorAttachments is NULL but its length is " << s.colorAttachmentCount;
             }
-            json["pColorAttachments"] = json_array_pColorAttachments;
         } else {
             json["pColorAttachments"] = "NULL";
         }
 
         if (s.colorAttachmentCount != 0) {
             Json::Value json_array_pResolveAttachments;
-            for (size_t i = 0; i < s.colorAttachmentCount; i++) {
-                json_array_pResolveAttachments[Json::Value::ArrayIndex(i)] =
-                    gen_VkAttachmentReference_contents(s.pResolveAttachments[i], CreateScope("pResolveAttachments"));
+            if (s.pResolveAttachments != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.colorAttachmentCount; i++) {
+                    json_array_pResolveAttachments[i] =
+                        gen_VkAttachmentReference_contents(s.pResolveAttachments[i], CreateScope("pResolveAttachments", i));
+                }
+                json["pResolveAttachments"] = json_array_pResolveAttachments;
+            } else {
+                Error() << "pResolveAttachments is NULL but its length is " << s.colorAttachmentCount;
             }
-            json["pResolveAttachments"] = json_array_pResolveAttachments;
         } else {
             json["pResolveAttachments"] = "NULL";
         }
         json["pDepthStencilAttachment"] =
             s.pDepthStencilAttachment
-                ? gen_VkAttachmentReference_contents(*s.pDepthStencilAttachment, CreateScope("pDepthStencilAttachment"))
+                ? gen_VkAttachmentReference_contents(*s.pDepthStencilAttachment, CreateScope("pDepthStencilAttachment", true))
                 : "NULL";
         json["preserveAttachmentCount"] = gen_uint32_t(s.preserveAttachmentCount, CreateScope("preserveAttachmentCount"));
 
         if (s.preserveAttachmentCount != 0) {
             Json::Value json_array_pPreserveAttachments;
-            for (size_t i = 0; i < s.preserveAttachmentCount; i++) {
-                json_array_pPreserveAttachments[Json::Value::ArrayIndex(i)] =
-                    gen_uint32_t(s.pPreserveAttachments[i], CreateScope("pPreserveAttachments"));
+            if (s.pPreserveAttachments != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.preserveAttachmentCount; i++) {
+                    json_array_pPreserveAttachments[i] =
+                        gen_uint32_t(s.pPreserveAttachments[i], CreateScope("pPreserveAttachments", i));
+                }
+                json["pPreserveAttachments"] = json_array_pPreserveAttachments;
+            } else {
+                Error() << "pPreserveAttachments is NULL but its length is " << s.preserveAttachmentCount;
             }
-            json["pPreserveAttachments"] = json_array_pPreserveAttachments;
         } else {
             json["pPreserveAttachments"] = "NULL";
         }
@@ -6378,11 +6487,15 @@ class GeneratorBase : protected Base {
 
         if (s.attachmentCount != 0) {
             Json::Value json_array_pAttachments;
-            for (size_t i = 0; i < s.attachmentCount; i++) {
-                json_array_pAttachments[Json::Value::ArrayIndex(i)] =
-                    gen_VkAttachmentDescription_contents(s.pAttachments[i], CreateScope("pAttachments"));
+            if (s.pAttachments != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.attachmentCount; i++) {
+                    json_array_pAttachments[i] =
+                        gen_VkAttachmentDescription_contents(s.pAttachments[i], CreateScope("pAttachments", i));
+                }
+                json["pAttachments"] = json_array_pAttachments;
+            } else {
+                Error() << "pAttachments is NULL but its length is " << s.attachmentCount;
             }
-            json["pAttachments"] = json_array_pAttachments;
         } else {
             json["pAttachments"] = "NULL";
         }
@@ -6390,11 +6503,14 @@ class GeneratorBase : protected Base {
 
         if (s.subpassCount != 0) {
             Json::Value json_array_pSubpasses;
-            for (size_t i = 0; i < s.subpassCount; i++) {
-                json_array_pSubpasses[Json::Value::ArrayIndex(i)] =
-                    gen_VkSubpassDescription_contents(s.pSubpasses[i], CreateScope("pSubpasses"));
+            if (s.pSubpasses != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.subpassCount; i++) {
+                    json_array_pSubpasses[i] = gen_VkSubpassDescription_contents(s.pSubpasses[i], CreateScope("pSubpasses", i));
+                }
+                json["pSubpasses"] = json_array_pSubpasses;
+            } else {
+                Error() << "pSubpasses is NULL but its length is " << s.subpassCount;
             }
-            json["pSubpasses"] = json_array_pSubpasses;
         } else {
             json["pSubpasses"] = "NULL";
         }
@@ -6402,11 +6518,15 @@ class GeneratorBase : protected Base {
 
         if (s.dependencyCount != 0) {
             Json::Value json_array_pDependencies;
-            for (size_t i = 0; i < s.dependencyCount; i++) {
-                json_array_pDependencies[Json::Value::ArrayIndex(i)] =
-                    gen_VkSubpassDependency_contents(s.pDependencies[i], CreateScope("pDependencies"));
+            if (s.pDependencies != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.dependencyCount; i++) {
+                    json_array_pDependencies[i] =
+                        gen_VkSubpassDependency_contents(s.pDependencies[i], CreateScope("pDependencies", i));
+                }
+                json["pDependencies"] = json_array_pDependencies;
+            } else {
+                Error() << "pDependencies is NULL but its length is " << s.dependencyCount;
             }
-            json["pDependencies"] = json_array_pDependencies;
         } else {
             json["pDependencies"] = "NULL";
         }
@@ -6432,11 +6552,15 @@ class GeneratorBase : protected Base {
 
         if (s.aspectReferenceCount != 0) {
             Json::Value json_array_pAspectReferences;
-            for (size_t i = 0; i < s.aspectReferenceCount; i++) {
-                json_array_pAspectReferences[Json::Value::ArrayIndex(i)] =
-                    gen_VkInputAttachmentAspectReference_contents(s.pAspectReferences[i], CreateScope("pAspectReferences"));
+            if (s.pAspectReferences != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.aspectReferenceCount; i++) {
+                    json_array_pAspectReferences[i] =
+                        gen_VkInputAttachmentAspectReference_contents(s.pAspectReferences[i], CreateScope("pAspectReferences", i));
+                }
+                json["pAspectReferences"] = json_array_pAspectReferences;
+            } else {
+                Error() << "pAspectReferences is NULL but its length is " << s.aspectReferenceCount;
             }
-            json["pAspectReferences"] = json_array_pAspectReferences;
         } else {
             json["pAspectReferences"] = "NULL";
         }
@@ -6451,10 +6575,14 @@ class GeneratorBase : protected Base {
 
         if (s.subpassCount != 0) {
             Json::Value json_array_pViewMasks;
-            for (size_t i = 0; i < s.subpassCount; i++) {
-                json_array_pViewMasks[Json::Value::ArrayIndex(i)] = gen_uint32_t(s.pViewMasks[i], CreateScope("pViewMasks"));
+            if (s.pViewMasks != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.subpassCount; i++) {
+                    json_array_pViewMasks[i] = gen_uint32_t(s.pViewMasks[i], CreateScope("pViewMasks", i));
+                }
+                json["pViewMasks"] = json_array_pViewMasks;
+            } else {
+                Error() << "pViewMasks is NULL but its length is " << s.subpassCount;
             }
-            json["pViewMasks"] = json_array_pViewMasks;
         } else {
             json["pViewMasks"] = "NULL";
         }
@@ -6462,10 +6590,14 @@ class GeneratorBase : protected Base {
 
         if (s.dependencyCount != 0) {
             Json::Value json_array_pViewOffsets;
-            for (size_t i = 0; i < s.dependencyCount; i++) {
-                json_array_pViewOffsets[Json::Value::ArrayIndex(i)] = gen_int32_t(s.pViewOffsets[i], CreateScope("pViewOffsets"));
+            if (s.pViewOffsets != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.dependencyCount; i++) {
+                    json_array_pViewOffsets[i] = gen_int32_t(s.pViewOffsets[i], CreateScope("pViewOffsets", i));
+                }
+                json["pViewOffsets"] = json_array_pViewOffsets;
+            } else {
+                Error() << "pViewOffsets is NULL but its length is " << s.dependencyCount;
             }
-            json["pViewOffsets"] = json_array_pViewOffsets;
         } else {
             json["pViewOffsets"] = "NULL";
         }
@@ -6473,11 +6605,14 @@ class GeneratorBase : protected Base {
 
         if (s.correlationMaskCount != 0) {
             Json::Value json_array_pCorrelationMasks;
-            for (size_t i = 0; i < s.correlationMaskCount; i++) {
-                json_array_pCorrelationMasks[Json::Value::ArrayIndex(i)] =
-                    gen_uint32_t(s.pCorrelationMasks[i], CreateScope("pCorrelationMasks"));
+            if (s.pCorrelationMasks != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.correlationMaskCount; i++) {
+                    json_array_pCorrelationMasks[i] = gen_uint32_t(s.pCorrelationMasks[i], CreateScope("pCorrelationMasks", i));
+                }
+                json["pCorrelationMasks"] = json_array_pCorrelationMasks;
+            } else {
+                Error() << "pCorrelationMasks is NULL but its length is " << s.correlationMaskCount;
             }
-            json["pCorrelationMasks"] = json_array_pCorrelationMasks;
         } else {
             json["pCorrelationMasks"] = "NULL";
         }
@@ -6540,11 +6675,15 @@ class GeneratorBase : protected Base {
 
         if (s.inputAttachmentCount != 0) {
             Json::Value json_array_pInputAttachments;
-            for (size_t i = 0; i < s.inputAttachmentCount; i++) {
-                json_array_pInputAttachments[Json::Value::ArrayIndex(i)] =
-                    gen_VkAttachmentReference2(s.pInputAttachments[i], CreateScope("pInputAttachments"));
+            if (s.pInputAttachments != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.inputAttachmentCount; i++) {
+                    json_array_pInputAttachments[i] =
+                        gen_VkAttachmentReference2(s.pInputAttachments[i], CreateScope("pInputAttachments", i));
+                }
+                json["pInputAttachments"] = json_array_pInputAttachments;
+            } else {
+                Error() << "pInputAttachments is NULL but its length is " << s.inputAttachmentCount;
             }
-            json["pInputAttachments"] = json_array_pInputAttachments;
         } else {
             json["pInputAttachments"] = "NULL";
         }
@@ -6552,38 +6691,50 @@ class GeneratorBase : protected Base {
 
         if (s.colorAttachmentCount != 0) {
             Json::Value json_array_pColorAttachments;
-            for (size_t i = 0; i < s.colorAttachmentCount; i++) {
-                json_array_pColorAttachments[Json::Value::ArrayIndex(i)] =
-                    gen_VkAttachmentReference2(s.pColorAttachments[i], CreateScope("pColorAttachments"));
+            if (s.pColorAttachments != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.colorAttachmentCount; i++) {
+                    json_array_pColorAttachments[i] =
+                        gen_VkAttachmentReference2(s.pColorAttachments[i], CreateScope("pColorAttachments", i));
+                }
+                json["pColorAttachments"] = json_array_pColorAttachments;
+            } else {
+                Error() << "pColorAttachments is NULL but its length is " << s.colorAttachmentCount;
             }
-            json["pColorAttachments"] = json_array_pColorAttachments;
         } else {
             json["pColorAttachments"] = "NULL";
         }
 
         if (s.colorAttachmentCount != 0) {
             Json::Value json_array_pResolveAttachments;
-            for (size_t i = 0; i < s.colorAttachmentCount; i++) {
-                json_array_pResolveAttachments[Json::Value::ArrayIndex(i)] =
-                    gen_VkAttachmentReference2(s.pResolveAttachments[i], CreateScope("pResolveAttachments"));
+            if (s.pResolveAttachments != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.colorAttachmentCount; i++) {
+                    json_array_pResolveAttachments[i] =
+                        gen_VkAttachmentReference2(s.pResolveAttachments[i], CreateScope("pResolveAttachments", i));
+                }
+                json["pResolveAttachments"] = json_array_pResolveAttachments;
+            } else {
+                Error() << "pResolveAttachments is NULL but its length is " << s.colorAttachmentCount;
             }
-            json["pResolveAttachments"] = json_array_pResolveAttachments;
         } else {
             json["pResolveAttachments"] = "NULL";
         }
         json["pDepthStencilAttachment"] =
             s.pDepthStencilAttachment
-                ? gen_VkAttachmentReference2(*s.pDepthStencilAttachment, CreateScope("pDepthStencilAttachment"))
+                ? gen_VkAttachmentReference2(*s.pDepthStencilAttachment, CreateScope("pDepthStencilAttachment", true))
                 : "NULL";
         json["preserveAttachmentCount"] = gen_uint32_t(s.preserveAttachmentCount, CreateScope("preserveAttachmentCount"));
 
         if (s.preserveAttachmentCount != 0) {
             Json::Value json_array_pPreserveAttachments;
-            for (size_t i = 0; i < s.preserveAttachmentCount; i++) {
-                json_array_pPreserveAttachments[Json::Value::ArrayIndex(i)] =
-                    gen_uint32_t(s.pPreserveAttachments[i], CreateScope("pPreserveAttachments"));
+            if (s.pPreserveAttachments != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.preserveAttachmentCount; i++) {
+                    json_array_pPreserveAttachments[i] =
+                        gen_uint32_t(s.pPreserveAttachments[i], CreateScope("pPreserveAttachments", i));
+                }
+                json["pPreserveAttachments"] = json_array_pPreserveAttachments;
+            } else {
+                Error() << "pPreserveAttachments is NULL but its length is " << s.preserveAttachmentCount;
             }
-            json["pPreserveAttachments"] = json_array_pPreserveAttachments;
         } else {
             json["pPreserveAttachments"] = "NULL";
         }
@@ -6597,7 +6748,7 @@ class GeneratorBase : protected Base {
 
         json["pFragmentShadingRateAttachment"] =
             s.pFragmentShadingRateAttachment
-                ? gen_VkAttachmentReference2(*s.pFragmentShadingRateAttachment, CreateScope("pFragmentShadingRateAttachment"))
+                ? gen_VkAttachmentReference2(*s.pFragmentShadingRateAttachment, CreateScope("pFragmentShadingRateAttachment", true))
                 : "NULL";
         json["shadingRateAttachmentTexelSize"] =
             gen_VkExtent2D_contents(s.shadingRateAttachmentTexelSize, CreateScope("shadingRateAttachmentTexelSize"));
@@ -6613,7 +6764,7 @@ class GeneratorBase : protected Base {
         json["stencilResolveMode"] = gen_VkResolveModeFlagBits(s.stencilResolveMode, CreateScope("stencilResolveMode"));
         json["pDepthStencilResolveAttachment"] =
             s.pDepthStencilResolveAttachment
-                ? gen_VkAttachmentReference2(*s.pDepthStencilResolveAttachment, CreateScope("pDepthStencilResolveAttachment"))
+                ? gen_VkAttachmentReference2(*s.pDepthStencilResolveAttachment, CreateScope("pDepthStencilResolveAttachment", true))
                 : "NULL";
         return json;
     }
@@ -6652,11 +6803,14 @@ class GeneratorBase : protected Base {
 
         if (s.attachmentCount != 0) {
             Json::Value json_array_pAttachments;
-            for (size_t i = 0; i < s.attachmentCount; i++) {
-                json_array_pAttachments[Json::Value::ArrayIndex(i)] =
-                    gen_VkAttachmentDescription2(s.pAttachments[i], CreateScope("pAttachments"));
+            if (s.pAttachments != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.attachmentCount; i++) {
+                    json_array_pAttachments[i] = gen_VkAttachmentDescription2(s.pAttachments[i], CreateScope("pAttachments", i));
+                }
+                json["pAttachments"] = json_array_pAttachments;
+            } else {
+                Error() << "pAttachments is NULL but its length is " << s.attachmentCount;
             }
-            json["pAttachments"] = json_array_pAttachments;
         } else {
             json["pAttachments"] = "NULL";
         }
@@ -6664,11 +6818,14 @@ class GeneratorBase : protected Base {
 
         if (s.subpassCount != 0) {
             Json::Value json_array_pSubpasses;
-            for (size_t i = 0; i < s.subpassCount; i++) {
-                json_array_pSubpasses[Json::Value::ArrayIndex(i)] =
-                    gen_VkSubpassDescription2(s.pSubpasses[i], CreateScope("pSubpasses"));
+            if (s.pSubpasses != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.subpassCount; i++) {
+                    json_array_pSubpasses[i] = gen_VkSubpassDescription2(s.pSubpasses[i], CreateScope("pSubpasses", i));
+                }
+                json["pSubpasses"] = json_array_pSubpasses;
+            } else {
+                Error() << "pSubpasses is NULL but its length is " << s.subpassCount;
             }
-            json["pSubpasses"] = json_array_pSubpasses;
         } else {
             json["pSubpasses"] = "NULL";
         }
@@ -6676,11 +6833,14 @@ class GeneratorBase : protected Base {
 
         if (s.dependencyCount != 0) {
             Json::Value json_array_pDependencies;
-            for (size_t i = 0; i < s.dependencyCount; i++) {
-                json_array_pDependencies[Json::Value::ArrayIndex(i)] =
-                    gen_VkSubpassDependency2(s.pDependencies[i], CreateScope("pDependencies"));
+            if (s.pDependencies != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.dependencyCount; i++) {
+                    json_array_pDependencies[i] = gen_VkSubpassDependency2(s.pDependencies[i], CreateScope("pDependencies", i));
+                }
+                json["pDependencies"] = json_array_pDependencies;
+            } else {
+                Error() << "pDependencies is NULL but its length is " << s.dependencyCount;
             }
-            json["pDependencies"] = json_array_pDependencies;
         } else {
             json["pDependencies"] = "NULL";
         }
@@ -6688,11 +6848,15 @@ class GeneratorBase : protected Base {
 
         if (s.correlatedViewMaskCount != 0) {
             Json::Value json_array_pCorrelatedViewMasks;
-            for (size_t i = 0; i < s.correlatedViewMaskCount; i++) {
-                json_array_pCorrelatedViewMasks[Json::Value::ArrayIndex(i)] =
-                    gen_uint32_t(s.pCorrelatedViewMasks[i], CreateScope("pCorrelatedViewMasks"));
+            if (s.pCorrelatedViewMasks != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.correlatedViewMaskCount; i++) {
+                    json_array_pCorrelatedViewMasks[i] =
+                        gen_uint32_t(s.pCorrelatedViewMasks[i], CreateScope("pCorrelatedViewMasks", i));
+                }
+                json["pCorrelatedViewMasks"] = json_array_pCorrelatedViewMasks;
+            } else {
+                Error() << "pCorrelatedViewMasks is NULL but its length is " << s.correlatedViewMaskCount;
             }
-            json["pCorrelatedViewMasks"] = json_array_pCorrelatedViewMasks;
         } else {
             json["pCorrelatedViewMasks"] = "NULL";
         }
@@ -6727,11 +6891,15 @@ class GeneratorBase : protected Base {
 
         if (s.pipelineCacheCreateInfoCount != 0) {
             Json::Value json_array_pPipelineCacheCreateInfos;
-            for (size_t i = 0; i < s.pipelineCacheCreateInfoCount; i++) {
-                json_array_pPipelineCacheCreateInfos[Json::Value::ArrayIndex(i)] =
-                    gen_VkPipelineCacheCreateInfo(s.pPipelineCacheCreateInfos[i], CreateScope("pPipelineCacheCreateInfos"));
+            if (s.pPipelineCacheCreateInfos != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.pipelineCacheCreateInfoCount; i++) {
+                    json_array_pPipelineCacheCreateInfos[i] =
+                        gen_VkPipelineCacheCreateInfo(s.pPipelineCacheCreateInfos[i], CreateScope("pPipelineCacheCreateInfos", i));
+                }
+                json["pPipelineCacheCreateInfos"] = json_array_pPipelineCacheCreateInfos;
+            } else {
+                Error() << "pPipelineCacheCreateInfos is NULL but its length is " << s.pipelineCacheCreateInfoCount;
             }
-            json["pPipelineCacheCreateInfos"] = json_array_pPipelineCacheCreateInfos;
         } else {
             json["pPipelineCacheCreateInfos"] = "NULL";
         }
@@ -6739,11 +6907,15 @@ class GeneratorBase : protected Base {
 
         if (s.pipelinePoolSizeCount != 0) {
             Json::Value json_array_pPipelinePoolSizes;
-            for (size_t i = 0; i < s.pipelinePoolSizeCount; i++) {
-                json_array_pPipelinePoolSizes[Json::Value::ArrayIndex(i)] =
-                    gen_VkPipelinePoolSize(s.pPipelinePoolSizes[i], CreateScope("pPipelinePoolSizes"));
+            if (s.pPipelinePoolSizes != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.pipelinePoolSizeCount; i++) {
+                    json_array_pPipelinePoolSizes[i] =
+                        gen_VkPipelinePoolSize(s.pPipelinePoolSizes[i], CreateScope("pPipelinePoolSizes", i));
+                }
+                json["pPipelinePoolSizes"] = json_array_pPipelinePoolSizes;
+            } else {
+                Error() << "pPipelinePoolSizes is NULL but its length is " << s.pipelinePoolSizeCount;
             }
-            json["pPipelinePoolSizes"] = json_array_pPipelinePoolSizes;
         } else {
             json["pPipelinePoolSizes"] = "NULL";
         }

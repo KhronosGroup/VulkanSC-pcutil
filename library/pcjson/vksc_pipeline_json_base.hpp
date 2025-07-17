@@ -9,6 +9,7 @@
 
 #include <string>
 #include <sstream>
+#include <stdlib.h>
 
 namespace pcjson {
 
@@ -47,8 +48,21 @@ class Base {
         static constexpr size_t kDefaultSize = 32768;
         static constexpr size_t kDefaultAlignment = 64;
 
-        MemoryBlock(size_t size = kDefaultSize)
-            : block_(static_cast<uint8_t*>(operator new[](kDefaultSize, aligner_)), deleter_), size_(size), used_bytes_(0) {}
+        MemoryBlock(size_t size = kDefaultSize) : size_(size), used_bytes_(0) {
+#ifdef _WIN32
+            block_ = reinterpret_cast<uint8_t*>(_aligned_malloc(size, kDefaultAlignment));
+#else
+            block_ = reinterpret_cast<uint8_t*>(aligned_alloc(kDefaultAlignment, size));
+#endif
+        }
+
+        ~MemoryBlock() {
+#ifdef _WIN32
+            _aligned_free(block_);
+#else
+            free(block_);
+#endif
+        }
 
         void* Alloc(size_t alignment, size_t size) {
             const size_t aligned_alloc_offset = (used_bytes_ + alignment - 1) & ~(alignment - 1);
@@ -61,10 +75,7 @@ class Base {
         }
 
       private:
-        static constexpr auto aligner_ = std::align_val_t{kDefaultAlignment};
-        static constexpr auto deleter_ = [](uint8_t arr[]) { operator delete[](arr, aligner_); };
-
-        std::unique_ptr<uint8_t[], decltype(deleter_)> block_;
+        uint8_t* block_{nullptr};
         const size_t size_;
         size_t used_bytes_;
     };

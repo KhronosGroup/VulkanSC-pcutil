@@ -9,38 +9,13 @@ import os
 from base_generator import BaseGenerator
 from generators.generator_utils import PlatformGuardHelper
 from vulkan_object import (Handle, Struct, Enum, Bitmask, Flags, Member)
-from generators.generator_utils import PipelineJsonHelper
+from generators.generator_utils import PipelineJsonHelper, StructMemberHelper, TypeCategory
 
 class JsonParseGenerator(BaseGenerator):
     def __init__(self):
         BaseGenerator.__init__(self)
 
     def generate(self):
-        self.generatedMethods: dict[str] = {}
-        self.generatedContentsMethods: dict[str] = {}
-        self.generatedArrayMethods: dict[str] = {}
-        self.generatedFixedSizeArrayMethods: dict[str] = {}
-        self.generatedPointerMethods: dict[str] = {}
-
-        self.parse_basic_methods: list[str] = []
-        self.parse_Handle_methods: list[str] = []
-        self.parse_Enum_c_str_methods: list[str] = []
-        self.parse_Enum_methods: list[str] = []
-        self.parse_Flags_methods: list[str] = []
-        self.parse_Bitmask_methods: list[str] = []
-        self.parse_structChain_methods: list[str] = []
-
-        self.parse_struct_contents_methods: list[str] = []
-
-        self.basicTypes: list[str] = []
-
-        self.genManualMethods()
-        self.genBasicMethods()
-        self.genTypeMethod('VkStructureType')
-
-        for struct in [self.vk.structs[x] for x in PipelineJsonHelper.getAllParseGenStructs()]:
-            self.genStructChainMethod(struct)
-
         out = []
         out.append(f'''
             // *** THIS FILE IS GENERATED - DO NOT EDIT ***
@@ -73,8 +48,25 @@ class JsonParseGenerator(BaseGenerator):
             class ParserBase : protected Base {
             ''')
 
-        guard_helper = PlatformGuardHelper()
-        out.extend(guard_helper.add_guard(None))
+        self.generatedMethods: dict[str] = {}
+
+        self.parse_basic_methods: list[str] = []
+        self.parse_Handle_methods: list[str] = []
+        self.parse_Enum_c_str_methods: list[str] = []
+        self.parse_Enum_methods: list[str] = []
+        self.parse_Flags_methods: list[str] = []
+        self.parse_Bitmask_methods: list[str] = []
+        self.parse_structChain_methods: list[str] = []
+        self.parse_struct_contents_methods: list[str] = []
+
+        self.basicTypes: list[str] = []
+
+        self.genManualMethods()
+        self.genBasicMethods()
+        self.genTypeMethod('VkStructureType')
+
+        for struct in [self.vk.structs[x] for x in PipelineJsonHelper.getAllParseGenStructs()]:
+            self.genStructChainMethod(struct)
 
         out.append(f'''
               private:
@@ -104,7 +96,7 @@ class JsonParseGenerator(BaseGenerator):
 
                 const auto& json_stype = json["sType"];
                 if (json_stype.isString()) {
-                    if (json_stype.asString() != "VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO") {
+                    if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO") != 0) {
                         Error() << "Invalid sType value: " << json_stype.asCString();
                     }
                 } else {
@@ -112,7 +104,7 @@ class JsonParseGenerator(BaseGenerator):
                 }
 
                 const auto& json_pnext = json["pNext"];
-                if (!json_pnext.isString() || json_pnext.asString() != "NULL") {
+                if (!json_pnext.isString() || strcmp(json_pnext.asCString(), "NULL") != 0) {
                     Error() << "Unexpected non-NULL pNext";
                 }
 
@@ -245,11 +237,13 @@ class JsonParseGenerator(BaseGenerator):
                     return nullptr;
                 }
 
-                auto src_buffer = json.asString();
-                size_t src_idx = 0;
-                uint8_t* dst_buffer = AllocMem<uint8_t>(src_buffer.size() * 3);
+                auto src_buffer = json.asCString();
+                size_t src_buffer_len = strlen(src_buffer);
+                size_t dst_idx = 0;
+                uint8_t* dst_buffer = AllocMem<uint8_t>(src_buffer_len * 3);
 
-                for (auto c : src_buffer) {
+                for (size_t src_idx = 0; src_idx < src_buffer_len; ++src_idx) {
+                    char c = src_buffer[src_idx];
                     uint8_t decoded_bits = 0;
                     if ('A' <= c && c <= 'Z') {
                         decoded_bits = uint8_t(c - 'A');
@@ -266,9 +260,9 @@ class JsonParseGenerator(BaseGenerator):
                         return nullptr;
                     }
 
-                    auto dst_ptr = &dst_buffer[(src_idx >> 2) * 3];
+                    auto dst_ptr = &dst_buffer[(dst_idx >> 2) * 3];
 
-                    switch (src_idx % 4) {
+                    switch (dst_idx % 4) {
                         case 0:
                             dst_ptr[0] |= decoded_bits << 2;
                             break;
@@ -287,7 +281,7 @@ class JsonParseGenerator(BaseGenerator):
                             break;
                     }
 
-                    src_idx++;
+                    dst_idx++;
                 }
 
                 return dst_buffer;
@@ -295,10 +289,12 @@ class JsonParseGenerator(BaseGenerator):
 
             VkBool32 parse_VkBool32(const Json::Value& v, const LocationScope&) {
                 if (v.isString()) {
-                    auto value = v.asString();
-                    if (value == "VK_TRUE") return VK_TRUE;
-                    else if (value == "VK_FALSE") return VK_FALSE;
-                    else {
+                    auto value = v.asCString();
+                    if (strcmp(value, "VK_TRUE") == 0) {
+                        return VK_TRUE;
+                    } else if (strcmp(value, "VK_FALSE") == 0) {
+                        return VK_FALSE;
+                    } else {
                         Error() << "VKBool32 string is neither VK_TRUE nor VK_FALSE";
                         return 0;
                     }
@@ -315,76 +311,6 @@ class JsonParseGenerator(BaseGenerator):
                 return parse_uint32_t(v, l);
             }
             ''')
-
-    def genArrayMethod(self, typeName: str) -> str:
-        if typeName in self.generatedArrayMethods:
-            return self.generatedArrayMethods[typeName]
-
-        guard_helper = PlatformGuardHelper()
-        self.parse_struct_contents_methods.append(f'''
-            {''.join(guard_helper.add_guard(self.vk.structs[typeName].protect)) if typeName in self.vk.structs else ''}
-            {typeName}* parse_{typeName}_array(const Json::Value& json, const LocationScope& l) {{
-                if (!json.isArray() && !(json.isString() && json.asString() == "NULL")) {{
-                    Error() << "Not an array";
-                    return nullptr;
-                }}
-
-                if (json.isString() && json.asString() == "NULL") {{
-                    return nullptr;
-                }}
-                auto count = json.size();
-                auto dst_buffer = AllocMem<{typeName}>(count);
-                for (Json::Value::ArrayIndex i = 0; i < count; ++i)
-                {{
-                    dst_buffer[i] = {self.genTypeMethod(typeName)}(json[i], l);
-                }}
-
-                return dst_buffer;
-            }}
-            {''.join(guard_helper.add_guard(None))}
-        ''')
-        self.generatedArrayMethods[typeName] = f'parse_{typeName}_array'
-        return self.generatedArrayMethods[typeName]
-
-    def genFixedSizeArrayMethod(self, typeName: str) -> str:
-        if typeName in self.generatedFixedSizeArrayMethods:
-            return self.generatedFixedSizeArrayMethods[typeName]
-
-        self.parse_struct_contents_methods.append(f'''
-            void parse_{typeName}_fixed_size_array({typeName}* dst, const Json::Value& json, const LocationScope& l) {{
-                if (!json.isArray()) {{
-                    Error() << "Not an array";
-                    return;
-                }}
-
-                auto count = json.size();
-                for (Json::Value::ArrayIndex i = 0; i < count; ++i)
-                {{
-                    dst[i] = {self.genTypeMethod(typeName)}(json[i], l);
-                }}
-            }}
-        ''')
-        self.generatedFixedSizeArrayMethods[typeName] = f'parse_{typeName}_fixed_size_array'
-        return self.generatedFixedSizeArrayMethods[typeName]
-
-    def genPointerMethod(self, typeName: str) -> str:
-        if typeName in self.generatedPointerMethods:
-            return self.generatedPointerMethods[typeName]
-
-        self.parse_struct_contents_methods.append(f'''
-            {typeName}* parse_{typeName}_pointer(const Json::Value& json, const LocationScope& l) {{
-                if (json.isString() && json.asString() == "NULL") {{
-                    return nullptr;
-                }}
-
-                auto dst_buffer = AllocMem<{typeName}>(1);
-                dst_buffer[0] = {self.genTypeMethod(typeName)}(json, l);
-
-                return dst_buffer;
-            }}
-        ''')
-        self.generatedPointerMethods[typeName] = f'parse_{typeName}_pointer'
-        return self.generatedPointerMethods[typeName]
 
     def genTypeMethod(self, typeName: str) -> str:
         if typeName in self.generatedMethods:
@@ -524,8 +450,7 @@ class JsonParseGenerator(BaseGenerator):
         return self.generatedMethods[bitmask.name]
 
     def genStructChainMethod(self, struct: Struct) -> str:
-        if struct.name in self.generatedMethods:
-            return self.generatedMethods[struct.name]
+        self.genStructContentsMethod(struct)
 
         extStructs = [self.vk.structs[x] for x in struct.extendedBy] if struct.extendedBy else []
         guard_helper = PlatformGuardHelper()
@@ -535,7 +460,7 @@ class JsonParseGenerator(BaseGenerator):
 
                 const auto& json_stype = json["sType"];
                 if (json_stype.isString()) {{
-                    if (json_stype.asString() != "{struct.sType}") {{
+                    if (strcmp(json_stype.asCString(), "{struct.sType}") != 0) {{
                         Error() << "Invalid sType value: " << json_stype.asCString();
                     }}
                 }} else {{
@@ -548,7 +473,7 @@ class JsonParseGenerator(BaseGenerator):
                 while (json_next->isObject()) {{
                     auto next_stype = parse_VkStructureType((*json_next)["sType"], CreateScope(current_pnext_ref));
                     switch (next_stype) {{
-                        {''.join([f'''
+                        {''.join([f"""
                         {''.join(guard_helper.add_guard(extStruct.protect))}
                         case {extStruct.sType}: {{
                             auto next = AllocMem<{extStruct.name}>();
@@ -558,7 +483,7 @@ class JsonParseGenerator(BaseGenerator):
                             break;
                             }}
                         {''.join(guard_helper.add_guard(None))}
-                        ''' for extStruct in extStructs]) if struct.extendedBy else ''}
+                        """ for extStruct in extStructs]) if struct.extendedBy else ''}
                         default:
                                 Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: " << (*json_next)["sType"].asCString();
                                 break;
@@ -567,7 +492,7 @@ class JsonParseGenerator(BaseGenerator):
                     if (prev->pNext != nullptr) prev = prev->pNext;
                 }}
 
-                if (!json_next->isString() || json_next->asString() != "NULL") {{
+                if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {{
                     Error() << "Invalid pNext format";
                 }}
                 return s;
@@ -579,48 +504,128 @@ class JsonParseGenerator(BaseGenerator):
 
 
     def genStructContentsMethod(self, struct: Struct):
-        if struct.name in self.generatedContentsMethods:
-            return self.generatedContentsMethods[struct.name]
-
-        def handle_member(self, member: Member):
-            if member.const and member.pointer and member.type == 'char': # handle strings <const char*>
-                return f's.{member.name} = parse_string(json["{member.name}"], CreateScope("{member.name}"));'
-            elif member.pointer and member.type == 'void': # handle binary <void*>
-                return f's.{member.name} = parse_binary(json["{member.name}"], CreateScope("{member.name}"));'
-            elif member.fixedSizeArray: # handle fix-sized arrays
-                return f'{self.genFixedSizeArrayMethod(member.type)}(s.{member.name}, json["{member.name}"], CreateScope("{member.name}"));'
-            elif member.pointer and member.length is not None: # handle arrays
-                return f's.{member.name} = {self.genArrayMethod(member.type)}(json["{member.name}"], CreateScope("{member.name}"));'
-            elif member.pointer and member.length is None: # handle non-array pointer
-                return f's.{member.name} = {self.genPointerMethod(member.type)}(json["{member.name}"], CreateScope("{member.name}"));'
-            elif member.type in self.vk.flags: # handle flags
-                return f's.{member.name} = {self.genTypeMethod(member.type)}(json["{member.name}"], CreateScope("{member.name}"));'
-            elif member.type in self.vk.enums: # enums flags
-                return f's.{member.name} = {self.genTypeMethod(member.type)}(json["{member.name}"], CreateScope("{member.name}"));'
-            elif member.type in self.vk.bitmasks: # bitmasks flags
-                return f's.{member.name} = {self.genTypeMethod(member.type)}(json["{member.name}"], CreateScope("{member.name}"));'
-            elif member.type in self.basicTypes: # basic types
-                return f's.{member.name} = {self.genTypeMethod(member.type)}(json["{member.name}"], CreateScope("{member.name}"));'
-            elif member.type in self.vk.handles: # handle handles
-                return f's.{member.name} = {self.genTypeMethod(member.type)}(json["{member.name}"], CreateScope("{member.name}"));'
-            elif member.type in self.vk.structs: # handle all structs
-                return f's.{member.name} = {self.genTypeMethod(member.type)}(json["{member.name}"], CreateScope("{member.name}"));'
-            else: # TODO: Unclear how to handle unions
-                raise Exception(f'Unexpected memeber type "{member.fullType}"')
-
-        members = filter(lambda m: m.name not in ['sType', 'pNext'], struct.members)
-        members_list = list(members)
-        handled_members = [handle_member(self, member) for member in members_list]
+        if struct.name in self.generatedMethods:
+            return f'parse_{struct.name}_contents'
 
         guard_helper = PlatformGuardHelper()
-        self.parse_struct_contents_methods.append(f'''
-            {''.join(guard_helper.add_guard(struct.protect))}
+
+        out = []
+        out.extend(guard_helper.add_guard(struct.protect))
+
+        # TODO: Unions have to be handled as struct for lack of a better option
+        out.append(f'''
             {struct.name} parse_{struct.name}_contents(const Json::Value& json, const LocationScope& l) {{
                 {struct.name} s{{}};
-                {'\n'.join(handled_members)}
+        ''')
+
+        for member in struct.members:
+            if member.name in ['sType', 'pNext']:
+                # Do not handle sType and pNext here as it is already handled in genStructChainMethod
+                continue
+
+            match StructMemberHelper.getMemberType(self.vk, self.basicTypes, member):
+                case TypeCategory.STRING:
+                    out.append(f's.{member.name} = parse_string(json["{member.name}"], CreateScope("{member.name}"));')
+
+                case TypeCategory.STRING_FIXED_SIZE_ARRAY | TypeCategory.STRING_ARRAY:
+                    raise Exception(f"Unhandled string array")
+
+                case TypeCategory.BINARY:
+                    out.append(f's.{member.name} = parse_binary(json["{member.name}"], CreateScope("{member.name}"));')
+
+                case TypeCategory.POINTER:
+                    out.append(f'''
+                        {{
+                            const Json::Value& json_member = json["{member.name}"];
+                            if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {{
+                                s.{member.name} = nullptr;
+                            }} else {{
+                                auto dst_buffer = AllocMem<{member.type}>();
+                                *dst_buffer = {self.genTypeMethod(member.type)}(json_member, CreateScope("{member.name}", true));
+                                s.{member.name} = dst_buffer;
+                            }}
+                        }}
+                    ''')
+
+                case TypeCategory.FIXED_SIZE_ARRAY | TypeCategory.ARRAY:
+                    if member.fixedSizeArray and (len(member.fixedSizeArray) != 1 or member.length != member.fixedSizeArray[0]):
+                        raise Exception(f"Unhandled fixedSizedArray: {struct.name}.{member.name} size: {member.fixedSizeArray}")
+
+                    lengthExpr = member.length
+                    if "rasterizationSamples" in lengthExpr:
+                        lengthExpr = "size_t(" + lengthExpr.replace("rasterizationSamples", "s.rasterizationSamples") + ")"
+                    elif lengthExpr.isdigit():
+                        pass
+                    elif lengthExpr == "VK_UUID_SIZE":
+                        # TODO: Add constant handling once we have constants
+                        pass
+                    else:
+                        lengthExpr = "s." + lengthExpr
+
+                    out.append(f'''
+                        {{
+                            const Json::Value& json_member = json["{member.name}"];
+                        ''')
+
+                    if not member.fixedSizeArray:
+                        out.append(f'''
+                            if ({lengthExpr} == 0) {{
+                                s.{member.name} = nullptr;
+                                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {{
+                                    Warn() << "{member.name} is not NULL but its length is zero";
+                                }}
+                            }} else ''')
+                    
+                    out.append(f'''{{
+                                if (json_member.isArray()) {{
+                                    if (json_member.size() == {lengthExpr}) {{
+                        ''')
+
+                    if member.fixedSizeArray:
+                        out.append(f''' for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {{
+                                            s.{member.name}[i] = {self.genTypeMethod(member.type)}(json_member[i], CreateScope("{member.name}", i));
+                                        }}
+                            ''')
+                    else:
+                        out.append(f''' auto dst_buffer = AllocMem<{member.type}>(json_member.size());
+                                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {{
+                                            dst_buffer[i] = {self.genTypeMethod(member.type)}(json_member[i], CreateScope("{member.name}", i));
+                                        }}
+                                        s.{member.name} = dst_buffer;
+                            ''')
+
+                    out.append(f''' }} else {{
+                                        Error() << "{member.name} array size (" << json_member.size() << ") does not match expected length (" << {lengthExpr} << ")";
+                                    }}
+                                }} else {{
+                        ''')
+
+                    if not member.fixedSizeArray and member.noAutoValidity:
+                        out.append(f'''
+                                    if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {{
+                                        s.{member.name} = nullptr;
+                                    }} else {{
+                                        Error() << "{member.name} is not an array and is not NULL";
+                                    }}
+                            ''')
+                    else:
+                        out.append(f'Error() << "{member.name} is not an array";')
+
+                    out.append(f'''}}
+                            }}
+                        }}
+                        ''')
+
+                case TypeCategory.HANDLE | TypeCategory.ENUM | TypeCategory.FLAGS | TypeCategory.BITMASK | TypeCategory.BASIC | TypeCategory.STRUCT:
+                    out.append(f's.{member.name} = {self.genTypeMethod(member.type)}(json["{member.name}"], CreateScope("{member.name}"));')
+
+        out.append(f'''
                 return s;
             }}
-            {''.join(guard_helper.add_guard(None))}
         ''')
-        self.generatedContentsMethods[struct.name] = f'parse_{struct.name}_contents'
-        return self.generatedContentsMethods[struct.name]
+
+        out.extend(guard_helper.add_guard(None))
+
+        self.parse_struct_contents_methods.extend(out)
+        self.generatedMethods[struct.name] = f'parse_{struct.name}_contents'
+        return self.generatedMethods[struct.name]

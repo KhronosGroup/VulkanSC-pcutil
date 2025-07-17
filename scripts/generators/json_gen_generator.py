@@ -9,7 +9,7 @@ import os
 from base_generator import BaseGenerator
 from generators.generator_utils import PlatformGuardHelper
 from vulkan_object import (Handle, Struct, Enum, Bitmask, Flags)
-from generators.generator_utils import PipelineJsonHelper
+from generators.generator_utils import PipelineJsonHelper, StructMemberHelper, TypeCategory
 
 class JsonGenGenerator(BaseGenerator):
     def __init__(self):
@@ -55,6 +55,8 @@ class JsonGenGenerator(BaseGenerator):
         self.gen_structChain_methods: list[str] = []
         self.gen_struct_contents_methods: list[str] = []
 
+        self.basicTypes: list[str] = []
+
         self.genManualMethods()
         self.genBasicMethods()
 
@@ -99,15 +101,19 @@ class JsonGenGenerator(BaseGenerator):
 
     def genBasicMethods(self):
         # For basic types we generate simple wrappers
-        basicTypes = ['int8_t', 'uint8_t', 'int16_t', 'uint16_t', 'int32_t', 'uint32_t', 'int64_t', 'uint64_t', 'float', 'size_t', 'char']
-        basicTypes.extend(['VkBool32', 'VkDeviceSize', 'VkSampleMask'])
+        self.basicTypes = ['int8_t', 'uint8_t', 'int16_t', 'uint16_t', 'int32_t', 'uint32_t', 'int64_t', 'uint64_t', 'float', 'size_t']
+        self.basicTypes.extend(['VkBool32', 'VkDeviceSize', 'VkSampleMask'])
 
-        for typeName in basicTypes:
+        for typeName in self.basicTypes:
             self.generatedMethods[typeName] = f'gen_{typeName}'
             self.gen_basic_methods.append(f'Json::Value gen_{typeName}(const {typeName} v, const LocationScope&) {{ return v; }}\n')
 
         # We also need to add a base64 encoder for encoding binary data
         self.gen_basic_methods.append('''
+            std::string gen_string(const char* str) {
+                return str;
+            }
+
             std::string gen_binary(const void* ptr, const size_t size) {
                 static const char base64_table[64] = {
                     'A','B','C','D','E','F','G','H','I','J','K','L','M',
@@ -223,7 +229,7 @@ class JsonGenGenerator(BaseGenerator):
         out.append(f'''
             const char* gen_{enum.name}_c_str(const {enum.name} v) {{
                 switch (v) {{
-                    {'\n'.join([f'case {enumField.name}: return "{enumField.name}";' for enumField in enum.fields])}
+                    {''.join([f'case {enumField.name}: return "{enumField.name}";' for enumField in enum.fields])}
                         default:
                             break;
                     }}
@@ -246,13 +252,12 @@ class JsonGenGenerator(BaseGenerator):
     def genBitmaskMethod(self, bitmask: Bitmask) -> str:
         if bitmask.name in self.generatedMethods:
             return self.generatedMethods[bitmask.name]
-        
-        
+
         out = []
         out.append(f'''
             const char* gen_{bitmask.name}_c_str(const {bitmask.name} v) {{
                 switch (v) {{
-                    {'\n'.join([f'case {flag.name}: return "{flag.name}";' for flag in bitmask.flags])}
+                    {''.join([f'case {flag.name}: return "{flag.name}";' for flag in bitmask.flags])}
                         default:
                             break;
                     }}
@@ -336,10 +341,9 @@ class JsonGenGenerator(BaseGenerator):
         guard_helper = PlatformGuardHelper()
 
         out = []
-
         out.extend(guard_helper.add_guard(struct.protect))
 
-        # TODO: Unclear how to handle unions
+        # TODO: Unions have to be handled as struct for lack of a better option
 
         out.append(f'''
             Json::Value gen_{struct.name}_contents (const {struct.name}& s, const LocationScope& l) {{
@@ -352,41 +356,65 @@ class JsonGenGenerator(BaseGenerator):
                 # Do not handle sType and pNext here as it is already handled in genStructChainMethod
                 continue
 
-            if member.length and member.type == "void":
-                out.append(f'json["{member.name}"] = gen_binary(s.{member.name}, s.{member.length});')
-            
-            elif member.length:
-                if member.fixedSizeArray and (len(member.fixedSizeArray) != 1 or member.length != member.fixedSizeArray[0]):
-                    raise Exception(f"Unhandled fixedSizedArray: {struct.name}.{member.name} size: {member.fixedSizeArray}")
+            match StructMemberHelper.getMemberType(self.vk, self.basicTypes, member):
+                case TypeCategory.STRING:
+                    out.append(f'json["{member.name}"] = gen_string(s.{member.name});')
 
-                lengthExpr = member.length
-                if "rasterizationSamples" in lengthExpr:
-                    lengthExpr = "size_t(" + lengthExpr.replace("rasterizationSamples", "s.rasterizationSamples") + ")"
-                elif lengthExpr.isdigit():
-                    pass
-                elif lengthExpr == "VK_UUID_SIZE":
-                    pass
-                else:
-                    lengthExpr = "s." + lengthExpr
+                case TypeCategory.STRING_FIXED_SIZE_ARRAY | TypeCategory.STRING_ARRAY:
+                    raise Exception(f"Unhandled string array")
 
-                out.append(f'''
-                    if ({lengthExpr} != 0) {{
-                        Json::Value json_array_{member.name};  
-                        for (size_t i = 0; i < {lengthExpr}; i++)
-                        {{
-                            json_array_{member.name}[Json::Value::ArrayIndex(i)] = {self.genTypeMethod(member.type)}(s.{member.name}[i], CreateScope("{member.name}"));
+                case TypeCategory.BINARY:
+                    out.append(f'json["{member.name}"] = gen_binary(s.{member.name}, s.{member.length});')
+
+                case TypeCategory.POINTER:
+                    out.append(f'json["{member.name}"] = s.{member.name} ? {self.genTypeMethod(member.type)}(*s.{member.name}, CreateScope("{member.name}", true)) : "NULL";')
+
+                case TypeCategory.FIXED_SIZE_ARRAY | TypeCategory.ARRAY:
+                    if member.fixedSizeArray and (len(member.fixedSizeArray) != 1 or member.length != member.fixedSizeArray[0]):
+                        raise Exception(f"Unhandled fixedSizedArray: {struct.name}.{member.name} size: {member.fixedSizeArray}")
+
+                    lengthExpr = member.length
+                    if "rasterizationSamples" in lengthExpr:
+                        lengthExpr = "size_t(" + lengthExpr.replace("rasterizationSamples", "s.rasterizationSamples") + ")"
+                    elif lengthExpr.isdigit():
+                        pass
+                    elif lengthExpr == "VK_UUID_SIZE":
+                        # TODO: Add constant handling once we have constants
+                        pass
+                    else:
+                        lengthExpr = "s." + lengthExpr
+
+                    out.append(f'''
+                        if ({lengthExpr} != 0) {{
+                            Json::Value json_array_{member.name};
+                        ''')
+
+                    if not member.fixedSizeArray:
+                        out.append(f'if (s.{member.name} != nullptr)')
+
+                    out.append(f'''{{
+                                for (Json::Value::ArrayIndex i = 0; i < {lengthExpr}; i++) {{
+                                    json_array_{member.name}[i] = {self.genTypeMethod(member.type)}(s.{member.name}[i], CreateScope("{member.name}", i));
+                                }}
+                                json["{member.name}"] = json_array_{member.name};
+                        ''')
+
+                    if not member.fixedSizeArray:
+                        out.append('} else {')
+                        if member.noAutoValidity:
+                            out.append(f'json["{member.name}"] = "NULL";\n')
+                        else:
+                            out.append(f'Error() << "{member.name} is NULL but its length is " << {lengthExpr};\n')
+
+                    out.append(f'''
+                            }}
+                        }} else {{
+                            json["{member.name}"] = "NULL";
                         }}
-                        json["{member.name}"] = json_array_{member.name};
-                    }} else {{
-                        json["{member.name}"] = "NULL";
-                    }}
-                ''')
-            elif member.pointer:
-                out.append(f'json["{member.name}"] = s.{member.name} ? {self.genTypeMethod(member.type)}(*s.{member.name}, CreateScope("{member.name}")) : "NULL";')
-            elif member.fixedSizeArray:
-                raise Exception(f"Unhandled fixedSizedArray: {struct.name}.{member.name} size: {member.fixedSizeArray}")
-            else:
-                out.append(f'json["{member.name}"] = {self.genTypeMethod(member.type)}(s.{member.name}, CreateScope("{member.name}"));\n')
+                    ''')
+
+                case TypeCategory.HANDLE | TypeCategory.ENUM | TypeCategory.FLAGS | TypeCategory.BITMASK | TypeCategory.BASIC | TypeCategory.STRUCT:
+                    out.append(f'json["{member.name}"] = {self.genTypeMethod(member.type)}(s.{member.name}, CreateScope("{member.name}"));\n')
 
         out.append(f'''
                 return json;

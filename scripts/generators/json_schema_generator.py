@@ -90,7 +90,6 @@ class JsonSchemaGenerator(BaseGenerator):
             "uint16_t": {"type": "integer", "minimum": 0, "maximum": 65535},
             "int32_t": {"type": "integer", "minimum": -2147483648, "maximum": 2147483647},
             "uint32_t": {"type": "integer", "minimum": 0, "maximum": 4294967295},
-            "char": {"type": "string" },
             "binary": { "type": "string" }, # TODO: Maybe restrict to base64 characters
             "float": {"type": "number"},
 
@@ -190,12 +189,18 @@ class JsonSchemaGenerator(BaseGenerator):
                     continue
 
                 # Generate definition of member base type name
-                self.genTypeDefinition(member.type)
+                if not member.nullTerminated:
+                    self.genTypeDefinition(member.type)
 
-                # NOTE: strings (i.e. const char*) and arrays of them do not need special handling
-                # as char itself maps to JSON string type therefore the current logic will work out
-                # as expected
-                if member.fixedSizeArray:
+                if member.nullTerminated:
+                    if member.fixedSizeArray:
+                        # TODO: add restriction for array size
+                        props[member.name] = {"type": "array", "items": {"type": "string"}}
+                    elif member.length:
+                        props[member.name] = {"type": "array", "items": {"type": "string"}}
+                    else:
+                        props[member.name] = {"type": "string"}
+                elif member.fixedSizeArray:
                     # TODO: add restriction for array size
                     props[member.name] = {"type": "array", "items": {"$ref": f"#/definitions/{member.type}"}}
                 elif member.length:

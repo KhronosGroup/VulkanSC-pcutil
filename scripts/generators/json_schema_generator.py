@@ -192,6 +192,9 @@ class JsonSchemaGenerator(BaseGenerator):
                 # Generate definition of member base type name
                 self.genTypeDefinition(member.type)
 
+                # NOTE: strings (i.e. const char*) and arrays of them do not need special handling
+                # as char itself maps to JSON string type therefore the current logic will work out
+                # as expected
                 if member.fixedSizeArray:
                     # TODO: add restriction for array size
                     props[member.name] = {"type": "array", "items": {"$ref": f"#/definitions/{member.type}"}}
@@ -217,7 +220,7 @@ class JsonSchemaGenerator(BaseGenerator):
                                 "$ref": f"#/definitions/{member.type}"
                             }
                         ]
-                    }                    
+                    }
                 else:
                     props[member.name] = { "$ref": f"#/definitions/{member.type}" }
 
@@ -226,23 +229,23 @@ class JsonSchemaGenerator(BaseGenerator):
             "properties": props,
             "required": list(props.keys())
         }
-    
+
     def genStructPNext(self, struct: Struct):
         # Do not generate pnext definition if it already exists
         if struct.name + "_pNext" in self.schema["definitions"]:
             return
-        
+
         extendedBy = struct.extendedBy
-        
+
         # There is no pNext chain for this struct
         if extendedBy is None:
             return
-        
+
         # TODO: workaround for generated invalid VkPhysicalDeviceFeatures2 by the CTS
         # it has a chained instance of itself
         if struct.name == "VkPhysicalDeviceFeatures2":
             extendedBy.append("VkPhysicalDeviceFeatures2")
-        
+
         pNextChain = {
             "oneOf": [
                 {
@@ -310,4 +313,3 @@ class JsonSchemaGenerator(BaseGenerator):
             if structTypeField.name == sType:
                 return structTypeField.aliases
         return [ ]
-

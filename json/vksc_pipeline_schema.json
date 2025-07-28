@@ -182,9 +182,6 @@
             "minimum": 0,
             "maximum": 4294967295
         },
-        "char": {
-            "type": "string"
-        },
         "binary": {
             "type": "string"
         },
@@ -519,7 +516,7 @@
                             "additionalProperties": true,
                             "properties": {
                                 "pNext": {
-                                    "$ref": "#/definitions/VkPhysicalDeviceFeatures2_pNext"
+                                    "$ref": "#/definitions/VkPipelineShaderStageCreateInfo_pNext"
                                 }
                             }
                         },
@@ -539,16 +536,7 @@
                                             "$ref": "#/definitions/uint64_t"
                                         },
                                         "pObjectName": {
-                                            "oneOf": [
-                                                {
-                                                    "enum": [
-                                                        "NULL"
-                                                    ]
-                                                },
-                                                {
-                                                    "$ref": "#/definitions/char"
-                                                }
-                                            ]
+                                            "type": "string"
                                         },
                                         "pNext": {}
                                     },
@@ -647,16 +635,7 @@
                     ]
                 },
                 "pName": {
-                    "oneOf": [
-                        {
-                            "enum": [
-                                "NULL"
-                            ]
-                        },
-                        {
-                            "$ref": "#/definitions/char"
-                        }
-                    ]
+                    "type": "string"
                 },
                 "pSpecializationInfo": {
                     "oneOf": [
@@ -1025,7 +1004,7 @@
                             "additionalProperties": true,
                             "properties": {
                                 "pNext": {
-                                    "$ref": "#/definitions/VkPhysicalDeviceFeatures2_pNext"
+                                    "$ref": "#/definitions/VkPipelineVertexInputStateCreateInfo_pNext"
                                 }
                             }
                         },
@@ -1262,7 +1241,7 @@
                             "additionalProperties": true,
                             "properties": {
                                 "pNext": {
-                                    "$ref": "#/definitions/VkPhysicalDeviceFeatures2_pNext"
+                                    "$ref": "#/definitions/VkPipelineTessellationStateCreateInfo_pNext"
                                 }
                             }
                         },
@@ -1609,7 +1588,7 @@
                             "additionalProperties": true,
                             "properties": {
                                 "pNext": {
-                                    "$ref": "#/definitions/VkPhysicalDeviceFeatures2_pNext"
+                                    "$ref": "#/definitions/VkPipelineRasterizationStateCreateInfo_pNext"
                                 }
                             }
                         },
@@ -1906,7 +1885,7 @@
                             "additionalProperties": true,
                             "properties": {
                                 "pNext": {
-                                    "$ref": "#/definitions/VkPhysicalDeviceFeatures2_pNext"
+                                    "$ref": "#/definitions/VkPipelineMultisampleStateCreateInfo_pNext"
                                 }
                             }
                         },
@@ -2347,7 +2326,7 @@
                             "additionalProperties": true,
                             "properties": {
                                 "pNext": {
-                                    "$ref": "#/definitions/VkPhysicalDeviceFeatures2_pNext"
+                                    "$ref": "#/definitions/VkPipelineColorBlendStateCreateInfo_pNext"
                                 }
                             }
                         },
@@ -2743,7 +2722,7 @@
                             "additionalProperties": true,
                             "properties": {
                                 "pNext": {
-                                    "$ref": "#/definitions/VkPhysicalDeviceFeatures2_pNext"
+                                    "$ref": "#/definitions/VkGraphicsPipelineCreateInfo_pNext"
                                 }
                             }
                         },
@@ -3367,7 +3346,7 @@
                             "additionalProperties": true,
                             "properties": {
                                 "pNext": {
-                                    "$ref": "#/definitions/VkPhysicalDeviceFeatures2_pNext"
+                                    "$ref": "#/definitions/VkComputePipelineCreateInfo_pNext"
                                 }
                             }
                         },
@@ -3639,7 +3618,7 @@
                             "additionalProperties": true,
                             "properties": {
                                 "pNext": {
-                                    "$ref": "#/definitions/VkPhysicalDeviceFeatures2_pNext"
+                                    "$ref": "#/definitions/VkSamplerYcbcrConversionCreateInfo_pNext"
                                 }
                             }
                         },
@@ -3782,11 +3761,6 @@
                     }
                 }
             },
-            "required": [
-                "float32",
-                "int32",
-                "uint32"
-            ],
             "type": "object"
         },
         "VkSamplerReductionMode": {
@@ -3820,7 +3794,7 @@
                             "additionalProperties": true,
                             "properties": {
                                 "pNext": {
-                                    "$ref": "#/definitions/VkPhysicalDeviceFeatures2_pNext"
+                                    "$ref": "#/definitions/VkSamplerCreateInfo_pNext"
                                 }
                             }
                         },
@@ -4119,7 +4093,7 @@
                             "additionalProperties": true,
                             "properties": {
                                 "pNext": {
-                                    "$ref": "#/definitions/VkPhysicalDeviceFeatures2_pNext"
+                                    "$ref": "#/definitions/VkDescriptorSetLayoutCreateInfo_pNext"
                                 }
                             }
                         },
@@ -7068,7 +7042,7 @@
                             "additionalProperties": true,
                             "properties": {
                                 "pNext": {
-                                    "$ref": "#/definitions/VkPhysicalDeviceFeatures2_pNext"
+                                    "$ref": "#/definitions/VkRenderPassCreateInfo_pNext"
                                 }
                             }
                         },
@@ -7334,7 +7308,7 @@
                             "additionalProperties": true,
                             "properties": {
                                 "pNext": {
-                                    "$ref": "#/definitions/VkPhysicalDeviceFeatures2_pNext"
+                                    "$ref": "#/definitions/VkAttachmentDescription2_pNext"
                                 }
                             }
                         },
@@ -7442,7 +7416,7 @@
                             "additionalProperties": true,
                             "properties": {
                                 "pNext": {
-                                    "$ref": "#/definitions/VkPhysicalDeviceFeatures2_pNext"
+                                    "$ref": "#/definitions/VkAttachmentReference2_pNext"
                                 }
                             }
                         },
@@ -7522,7 +7496,7 @@
                             "additionalProperties": true,
                             "properties": {
                                 "pNext": {
-                                    "$ref": "#/definitions/VkPhysicalDeviceFeatures2_pNext"
+                                    "$ref": "#/definitions/VkSubpassDescription2_pNext"
                                 }
                             }
                         },
@@ -7801,7 +7775,7 @@
                             "additionalProperties": true,
                             "properties": {
                                 "pNext": {
-                                    "$ref": "#/definitions/VkPhysicalDeviceFeatures2_pNext"
+                                    "$ref": "#/definitions/VkSubpassDependency2_pNext"
                                 }
                             }
                         },

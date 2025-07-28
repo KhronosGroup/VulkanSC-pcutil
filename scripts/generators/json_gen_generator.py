@@ -9,7 +9,7 @@ import os
 from base_generator import BaseGenerator
 from generators.generator_utils import PlatformGuardHelper
 from vulkan_object import (Handle, Struct, Enum, Bitmask, Flags)
-from generators.generator_utils import PipelineJsonHelper
+from generators.generator_utils import PipelineJsonHelper, StructMemberHelper, TypeCategory
 
 class JsonGenGenerator(BaseGenerator):
     def __init__(self):
@@ -45,7 +45,7 @@ class JsonGenGenerator(BaseGenerator):
             class GeneratorBase : protected Base {
             ''')
 
-        self.generatedMethods: dict[str] = []
+        self.generatedMethods: dict[str] = dict()
 
         self.gen_basic_methods: list[str] = []
         self.gen_Handle_methods: list[str] = []
@@ -54,6 +54,14 @@ class JsonGenGenerator(BaseGenerator):
         self.gen_Flags_methods: list[str] = []
         self.gen_structChain_methods: list[str] = []
         self.gen_struct_contents_methods: list[str] = []
+
+        self.basicTypes: list[str] = []
+
+        self.genManualMethods()
+        self.genBasicMethods()
+
+        for struct in [self.vk.structs[x] for x in PipelineJsonHelper.getAllParseGenStructs()]:
+            self.genStructChainMethod(struct)
 
         out.append(f'''
               private:
@@ -74,12 +82,6 @@ class JsonGenGenerator(BaseGenerator):
         out.append('// NOLINTEND') # Wrap for clang-tidy to ignore
         self.write("".join(out))
 
-        self.genManualMethods()
-        self.genBasicMethods()
-
-        for struct in [self.vk.structs[x] for x in PipelineJsonHelper.getAllParseGenStructs()]:
-            self.genStructChainMethod(struct)
-
         guard_helper = PlatformGuardHelper()
         out.extend(guard_helper.add_guard(None))
 
@@ -99,13 +101,19 @@ class JsonGenGenerator(BaseGenerator):
 
     def genBasicMethods(self):
         # For basic types we generate simple wrappers
-        basicTypes = ['int8_t', 'uint8_t', 'int16_t', 'uint16_t', 'int32_t', 'uint32_t', 'int64_t', 'uint64_t', 'float', 'size_t', 'VkDeviceSize']
-        for typeName in basicTypes:
+        self.basicTypes = ['int8_t', 'uint8_t', 'int16_t', 'uint16_t', 'int32_t', 'uint32_t', 'int64_t', 'uint64_t', 'float', 'size_t']
+        self.basicTypes.extend(['VkBool32', 'VkDeviceSize', 'VkSampleMask'])
+
+        for typeName in self.basicTypes:
             self.generatedMethods[typeName] = f'gen_{typeName}'
-            self.gen_basic_methods.append(f'Json::Value gen_{typeName}(const {typeName} v, const LocationScope&) {{ return v; }}')
+            self.gen_basic_methods.append(f'Json::Value gen_{typeName}(const {typeName} v, const LocationScope&) {{ return v; }}\n')
 
         # We also need to add a base64 encoder for encoding binary data
         self.gen_basic_methods.append('''
+            std::string gen_string(const char* str) {
+                return str;
+            }
+
             std::string gen_binary(const void* ptr, const size_t size) {
                 static const char base64_table[64] = {
                     'A','B','C','D','E','F','G','H','I','J','K','L','M',
@@ -121,7 +129,7 @@ class JsonGenGenerator(BaseGenerator):
                 result.reserve(size * 4);
 
                 while (src_idx < size) {
-                    size_t num_read = std::min(3, size - src_idx);
+                    size_t num_read = std::min(size_t(3), size - src_idx);
 
                     uint8_t	s0 = data[src_idx];
                     uint8_t	s1 = (num_read >= 2) ? data[src_idx + 1] : 0;
@@ -148,21 +156,19 @@ class JsonGenGenerator(BaseGenerator):
         elif typeName in self.vk.handles:
             return self.genHandleMethod(self.vk.handles[typeName])
         elif typeName in self.vk.structs:
-            if self.vk.structs[typeName].sType is not None:
+            struct = self.vk.structs[typeName]
+            if struct.sType is not None:
                 # This is an extensible structure, generate struct chain method for it
-                return self.genStructChainMethod()
+                return self.genStructChainMethod(struct)
             else:
                 # Otherwise generate the regular struct content method
-                return self.genStructContentsMethod()
+                return self.genStructContentsMethod(struct)
         elif typeName in self.vk.enums:
-            # TODO: return self.genEnumMethod(self.vk.enums[typeName])
-            return None
+            return self.genEnumMethod(self.vk.enums[typeName])
         elif typeName in self.vk.bitmasks:
-            # TODO: return self.genBitmaskMethod(self.vk.bitmasks[typeName])
-            return None
+            return self.genBitmaskMethod(self.vk.bitmasks[typeName])
         elif typeName in self.vk.flags:
-            # TODO: return self.genFlagsMethod(self.vk.flags[typeName])
-            return None
+            return self.genFlagsMethod(self.vk.flags[typeName])
         else:
             raise Exception(f'Unexpected type name "{typeName}"')
 
@@ -171,9 +177,108 @@ class JsonGenGenerator(BaseGenerator):
         self.gen_Handle_methods.append(f'Json::Value gen_{handle.name}(const {handle.name} v, const LocationScope&) {{ return uint64_t(v); }}')
         self.generatedMethods[handle.name] = f'gen_{handle.name}'
         return self.generatedMethods[handle.name]
+    
+    def genFlagsMethod(self, flags: Flags) -> str:
+        if flags.bitmaskName:
+            self.genBitmaskMethod(self.vk.bitmasks[flags.bitmaskName])
+
+        out = []
+        out.append(f'''
+            Json::Value gen_{flags.name}(const {flags.name} v, const LocationScope&) {{
+        ''')
+
+        if flags.bitmaskName:
+            base_type = "uint32_t" if flags.bitWidth == 32 else "uint64_t"
+            out.append(f'''
+                if (!v) {{
+                    return 0;
+                }}
+
+                std::stringstream strm;
+                for ({base_type} bit = 0; bit < ({base_type}(1) << {flags.bitWidth - 1}); bit <<= 1) {{
+                    if ((v & bit) != 0) {{
+                        if (strm.rdbuf()->in_avail() > 0) {{
+                            strm << " | ";
+                        }}
+                        strm << gen_{flags.bitmaskName}_c_str(static_cast<{flags.bitmaskName}>(bit));
+                    }}
+                }}
+
+                return strm.str();
+            ''')
+        else:
+            out.append(f'''
+                if (!v) {{
+                    return 0;
+                }}
+
+                Error() << "Invalid flags value";
+                return "Invalid flags value";   
+            ''')
+        
+        out.append(f'''
+            }}
+        ''')
+
+        self.gen_Flags_methods.extend(out)
+        self.generatedMethods[flags.name] = f'gen_{flags.name}'
+        return self.generatedMethods[flags.name]
+    
+    def genEnumMethod(self, enum: Enum) -> str:
+        out = []
+        out.append(f'''
+            const char* gen_{enum.name}_c_str(const {enum.name} v) {{
+                switch (v) {{
+                    {''.join([f'case {enumField.name}: return "{enumField.name}";' for enumField in enum.fields])}
+                        default:
+                            break;
+                    }}
+                    Error() << "Invalid enum value";
+                    return "Invalid enum value";
+                }}
+        ''')
+
+        self.gen_Enum_c_str_methods.extend(out)
+
+        self.gen_Enum_methods.append(f'''
+            Json::Value gen_{enum.name}(const {enum.name} v, const LocationScope&) {{
+                return gen_{enum.name}_c_str(v);
+            }}
+        ''')
+
+        self.generatedMethods[enum.name] = f'gen_{enum.name}'
+        return self.generatedMethods[enum.name]
+    
+    def genBitmaskMethod(self, bitmask: Bitmask) -> str:
+        if bitmask.name in self.generatedMethods:
+            return self.generatedMethods[bitmask.name]
+
+        out = []
+        out.append(f'''
+            const char* gen_{bitmask.name}_c_str(const {bitmask.name} v) {{
+                switch (v) {{
+                    {''.join([f'case {flag.name}: return "{flag.name}";' for flag in bitmask.flags])}
+                        default:
+                            break;
+                    }}
+                    Error() << "Invalid bitmask value";
+                    return "Invalid bitmask value";
+                }}
+        ''')
+
+        self.gen_Enum_c_str_methods.extend(out)
+
+        self.gen_Enum_methods.append(f'''
+            Json::Value gen_{bitmask.name}(const {bitmask.name} v, const LocationScope&) {{
+                return gen_{bitmask.name}_c_str(v);
+            }}
+        ''')
+
+        self.generatedMethods[bitmask.name] = f'gen_{bitmask.name}'
+        return self.generatedMethods[bitmask.name]
 
     def genStructChainMethod(self, struct: Struct) -> str:
-        self.genStructContentsMethod(self, struct)
+        self.genStructContentsMethod(struct)
 
         out = []
         out.append(f'''
@@ -183,34 +288,45 @@ class JsonGenGenerator(BaseGenerator):
                 json["sType"] = "{struct.sType}";
 
                 auto next = reinterpret_cast<const VkBaseInStructure*>(s.pNext);
-                auto& json_next = json["pNext"];
+                Json::Value* json_next = &json["pNext"];
 
                 while (next != nullptr) {{
                     switch (next->sType) {{
             ''')
 
-        for extStruct in [self.vk.structs[x] for x in struct.extendedBy]:
-            out.append(f'''
-                        case {extStruct.sType}: {{
-                            json_next = {self.genStructContentsMethod(extStruct)}(
-                                *reinterpret_cast<const {extStruct.name}*>(next),
-                                CreateScope("pNext<{extStruct.name}>", true));
-                            json_next["sType"] = "{extStruct.sType}";
-                            break;
-                ''')
+        if struct.extendedBy:
+            guard_helper = PlatformGuardHelper()
 
-        out.append('''
+            for extStruct in [self.vk.structs[x] for x in struct.extendedBy]:
+                out.extend(guard_helper.add_guard(extStruct.protect))
+
+                out.append(f'''
+                            case {extStruct.sType}: {{
+                                *json_next = {self.genStructContentsMethod(extStruct)}(
+                                    *reinterpret_cast<const {extStruct.name}*>(next),
+                                    CreateScope("pNext<{extStruct.name}>", true));
+                                (*json_next)["sType"] = "{extStruct.sType}";
+                                break;
+                            }}
+                    ''')
+
+            out.extend(guard_helper.add_guard(None))
+
+        out.append(f'''
                         default:
-                            Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: " << next->sType;
+                            Error() << "Invalid structure type extending {struct.name}: " << next->sType;
                             break;
-                    }
+                    }}
                     next = next->pNext;
-                    if (!json_next.isNull()) json_next = json_next["pNext"];
-                }
+                    if (!json_next->isNull()) {{
+                        json_next = &(*json_next)["pNext"];
+                    }} 
+                }}
 
-                json_next = "NULL";
+                *json_next = "NULL";
 
                 return json;
+            }};
             ''')
 
         self.gen_structChain_methods.extend(out)
@@ -219,20 +335,93 @@ class JsonGenGenerator(BaseGenerator):
         return self.generatedMethods[struct.name]
 
     def genStructContentsMethod(self, struct: Struct):
-        out = []
+        if struct.name in self.generatedMethods:
+            return f'gen_{struct.name}_contents'
+        
+        guard_helper = PlatformGuardHelper()
 
-        # TODO: Unclear how to handle unions
+        out = []
+        out.extend(guard_helper.add_guard(struct.protect))
+
+        # TODO: Unions have to be handled as struct for lack of a better option
+
+        out.append(f'''
+            Json::Value gen_{struct.name}_contents (const {struct.name}& s, const LocationScope& l) {{
+                Json::Value json;
+
+        ''')
 
         for member in struct.members:
             if member.name in ['sType', 'pNext']:
                 # Do not handle sType and pNext here as it is already handled in genStructChainMethod
                 continue
 
-            # TODO: convert to JSON for each member, typical case would be
-            out.append(f'json["{member.name}"] = {self.genTypeMethod(member.type)}(s.{member.name}, CreateScope("{member.name}"));')
-            # but need to handle arrays, strings, optionality, pointers, etc. so it gets complicated
-            # For pointers or arrays, the CreateScope takes an additional argument (see its interface)
-            # For binary data we have to encode it as base64 with gen_binary
+            match StructMemberHelper.getMemberType(self.vk, self.basicTypes, member):
+                case TypeCategory.STRING:
+                    out.append(f'json["{member.name}"] = gen_string(s.{member.name});')
+
+                case TypeCategory.STRING_FIXED_SIZE_ARRAY | TypeCategory.STRING_ARRAY:
+                    raise Exception(f"Unhandled string array")
+
+                case TypeCategory.BINARY:
+                    out.append(f'json["{member.name}"] = gen_binary(s.{member.name}, s.{member.length});')
+
+                case TypeCategory.POINTER:
+                    out.append(f'json["{member.name}"] = s.{member.name} ? {self.genTypeMethod(member.type)}(*s.{member.name}, CreateScope("{member.name}", true)) : "NULL";')
+
+                case TypeCategory.FIXED_SIZE_ARRAY | TypeCategory.ARRAY:
+                    if member.fixedSizeArray and (len(member.fixedSizeArray) != 1 or member.length != member.fixedSizeArray[0]):
+                        raise Exception(f"Unhandled fixedSizedArray: {struct.name}.{member.name} size: {member.fixedSizeArray}")
+
+                    lengthExpr = member.length
+                    if "rasterizationSamples" in lengthExpr:
+                        lengthExpr = "size_t(" + lengthExpr.replace("rasterizationSamples", "s.rasterizationSamples") + ")"
+                    elif lengthExpr.isdigit():
+                        pass
+                    elif lengthExpr == "VK_UUID_SIZE":
+                        # TODO: Add constant handling once we have constants
+                        pass
+                    else:
+                        lengthExpr = "s." + lengthExpr
+
+                    out.append(f'''
+                        if ({lengthExpr} != 0) {{
+                            Json::Value json_array_{member.name};
+                        ''')
+
+                    if not member.fixedSizeArray:
+                        out.append(f'if (s.{member.name} != nullptr)')
+
+                    out.append(f'''{{
+                                for (Json::Value::ArrayIndex i = 0; i < {lengthExpr}; i++) {{
+                                    json_array_{member.name}[i] = {self.genTypeMethod(member.type)}(s.{member.name}[i], CreateScope("{member.name}", i));
+                                }}
+                                json["{member.name}"] = json_array_{member.name};
+                        ''')
+
+                    if not member.fixedSizeArray:
+                        out.append('} else {')
+                        if member.noAutoValidity:
+                            out.append(f'json["{member.name}"] = "NULL";\n')
+                        else:
+                            out.append(f'Error() << "{member.name} is NULL but its length is " << {lengthExpr};\n')
+
+                    out.append(f'''
+                            }}
+                        }} else {{
+                            json["{member.name}"] = "NULL";
+                        }}
+                    ''')
+
+                case TypeCategory.HANDLE | TypeCategory.ENUM | TypeCategory.FLAGS | TypeCategory.BITMASK | TypeCategory.BASIC | TypeCategory.STRUCT:
+                    out.append(f'json["{member.name}"] = {self.genTypeMethod(member.type)}(s.{member.name}, CreateScope("{member.name}"));\n')
+
+        out.append(f'''
+                return json;
+            }}
+        ''')
+
+        out.extend(guard_helper.add_guard(None))
 
         self.gen_struct_contents_methods.extend(out)
         self.generatedMethods[struct.name] = f'gen_{struct.name}_contents'

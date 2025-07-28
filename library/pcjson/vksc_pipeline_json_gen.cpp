@@ -8,6 +8,8 @@
 #include "vksc_pipeline_json_gen.hpp"
 #include "vksc_pipeline_json.h"
 
+#include <cassert>
+
 namespace pcjson {
 
 class Generator : private GeneratorBase {
@@ -163,7 +165,10 @@ class Generator : private GeneratorBase {
                 json_ycbcr_samplers.resize(state.ycbcrSamplerCount);
                 for (uint32_t i = 0; i < state.ycbcrSamplerCount; ++i) {
                     if (ycbcr_samplers[i].sType == VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_CREATE_INFO) {
-                        json_ycbcr_samplers[i] = gen_VkSamplerYcbcrConversionCreateInfo(ycbcr_samplers[i], CreateScope("pYcbcrSamplers", i));
+                        Json::Value key_ycbcr_sampler_pair = Json::objectValue;
+                        key_ycbcr_sampler_pair[std::to_string(i)] =
+                            gen_VkSamplerYcbcrConversionCreateInfo(ycbcr_samplers[i], CreateScope("pYcbcrSamplers", i));
+                        json_ycbcr_samplers[i] = key_ycbcr_sampler_pair;
                     } else {
                         Error() << "pYcbcrSamplers[" << i << "] has invalid structure type: " << ycbcr_samplers[i].sType;
                     }
@@ -180,7 +185,10 @@ class Generator : private GeneratorBase {
                 json_samplers.resize(state.immutableSamplerCount);
                 for (uint32_t i = 0; i < state.immutableSamplerCount; ++i) {
                     if (samplers[i].sType == VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO) {
-                        json_samplers[i] = gen_VkSamplerCreateInfo(samplers[i], CreateScope("pImmutableSamplers", i));
+                        Json::Value key_immutable_sampler_pair = Json::objectValue;
+                        key_immutable_sampler_pair[std::to_string(i)] =
+                            gen_VkSamplerCreateInfo(samplers[i], CreateScope("pImmutableSamplers", i));
+                        json_samplers[i] = key_immutable_sampler_pair;
                     } else {
                         Error() << "pImmutableSamplers[" << i << "] has invalid structure type: " << samplers[i].sType;
                     }
@@ -197,7 +205,9 @@ class Generator : private GeneratorBase {
                 json_ds_layouts.resize(state.descriptorSetLayoutCount);
                 for (uint32_t i = 0; i < state.descriptorSetLayoutCount; ++i) {
                     if (ds_layouts[i].sType == VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO) {
-                        json_ds_layouts[i] = gen_VkDescriptorSetLayoutCreateInfo(ds_layouts[i], CreateScope("pDescriptorSetLayouts", i));
+                        Json::Value key_ds_pair = Json::objectValue;
+                        key_ds_pair[std::to_string(i)] = gen_VkDescriptorSetLayoutCreateInfo(ds_layouts[i], CreateScope("pDescriptorSetLayouts", i));
+                        json_ds_layouts[i] = key_ds_pair; 
                     } else {
                         Error() << "pDescriptorSetLayouts[" << i << "] has invalid structure type: " << ds_layouts[i].sType;
                     }
@@ -270,6 +280,8 @@ class Generator : private GeneratorBase {
             Error() << "pRenderPass is NULL";
         }
 
+        ResolveObjectNames(json, state);
+
         return json;
     }
 
@@ -279,6 +291,8 @@ class Generator : private GeneratorBase {
 
         auto compute_pipeline = reinterpret_cast<const VkComputePipelineCreateInfo*>(state.pComputePipeline);
         json["ComputePipeline"] = gen_VkComputePipelineCreateInfo(*compute_pipeline, CreateScope("pComputePipeline"));
+
+        ResolveObjectNames(json, state);
 
         return json;
     }
@@ -310,6 +324,82 @@ class Generator : private GeneratorBase {
         return json;
     }
 
+    template <typename T>
+    void ResolveObjectNames(Json::Value& pipeline_state_json, const T& state) {
+        const auto update_key = [](Json::Value& json, const auto old_key, const auto new_key) {
+            Json::Value value = json[old_key];
+            assert(!value.isNull());
+            json.removeMember(old_key);
+            json[new_key] = value;
+        };
+
+        const auto update_keys_in_array = [update_key](Json::Value& json_array, uint32_t count, const char** names) {
+            assert(json_array.size() == count);
+            for (uint32_t i = 0; i < count; ++i) {
+                update_key(json_array[i], std::to_string(i), names[i]);
+            }
+        };
+
+        const auto update_array_with_names = [this](Json::Value& json_array, uint32_t count, const char** names,
+                                                    const char* object_type) {
+            Json::Value new_array = Json::arrayValue;
+            for (uint32_t i = 0; i < json_array.size(); i++) {
+                uint32_t name_id = json_array[i].asUInt();
+                if (name_id < count) {
+                    new_array[i] = names[name_id];
+                } else {
+                    Error() << "Ouf of range " << object_type << " id (" << name_id << ") during resolving names";
+                }
+            }
+            json_array.copy(new_array);
+        };
+
+        if (state.ppDescriptorSetLayoutNames != nullptr) {
+            update_keys_in_array(pipeline_state_json["DescriptorSetLayouts"], state.descriptorSetLayoutCount,
+                                 state.ppDescriptorSetLayoutNames);
+            update_array_with_names(pipeline_state_json["PipelineLayout"]["pSetLayouts"], state.descriptorSetLayoutCount,
+                                    state.ppDescriptorSetLayoutNames, "DescriptorLayout");
+        }
+
+        if (state.ppYcbrSamplerNames != nullptr) {
+            update_keys_in_array(pipeline_state_json["YcbcrSamplers"], state.ycbcrSamplerCount, state.ppYcbrSamplerNames);
+
+            for (auto& immutable_sampler : pipeline_state_json["ImmutableSamplers"]) {
+                assert(immutable_sampler.size() == 1);
+                Json::Value* pNext = &(*immutable_sampler.begin())["pNext"];
+
+                while (*pNext != "NULL") {
+                    if ((*pNext)["sType"] == "VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_INFO") {
+                        break;
+                    }
+                    pNext = &(*pNext)["pNext"];
+                }
+
+                if (*pNext != "NULL") {
+                    Json::Value& conversion = (*pNext)["conversion"];
+                    uint32_t ycbcr_sampler_id = conversion.asInt();
+                    if (ycbcr_sampler_id < state.ycbcrSamplerCount) {
+                        conversion.copy(state.ppYcbrSamplerNames[ycbcr_sampler_id]);
+                    } else {
+                        Error() << "Ouf of range ycbcr sampler reference";
+                    }
+                }
+            }
+        }
+
+        if (state.ppImmutableSamplerNames != nullptr) {
+            update_keys_in_array(pipeline_state_json["ImmutableSamplers"], state.immutableSamplerCount,
+                                 state.ppImmutableSamplerNames);
+
+            for (auto& descriptor_set_layout : pipeline_state_json["DescriptorSetLayouts"]) {
+                assert(descriptor_set_layout.size() == 1);
+                for (auto& binding : (*descriptor_set_layout.begin())["pBindings"]) {
+                    update_array_with_names(binding["pImmutableSamplers"], state.immutableSamplerCount,
+                                            state.ppImmutableSamplerNames, "ImmutableSampler");
+                }
+            }
+        }
+    }
     std::vector<std::string> json_outputs_;
 };
 

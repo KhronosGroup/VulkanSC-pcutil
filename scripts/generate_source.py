@@ -66,17 +66,17 @@ def RunGenerators(api: str, registry: str, styleFile: str, targetFilter: str) ->
             'generator' : JsonTestGenerator,
             'genCombined': False,
             'directory' : f'tests/json/generated'
+        },
+        'vksc_pipeline_json_gen.hpp' : {
+           'generator' : JsonGenGenerator,
+           'genCombined': False,
+           'directory' : f'library/pcjson/generated',
+        },
+        'vksc_pipeline_json_parse.hpp' : {
+           'generator' : JsonParseGenerator,
+           'genCombined': False,
+           'directory' : f'library/pcjson/generated',
         }
-        ##'vksc_pipeline_json_gen.hpp' : {
-        ##   'generator' : JsonGenGenerator,
-        ##   'genCombined': False,
-        ##   'directory' : f'library/pcjson/generated',
-        ##},
-        ##'vksc_pipeline_json_parse.hpp' : {
-        ##   'generator' : JsonParseGenerator,
-        ##   'genCombined': False,
-        ##   'directory' : f'library/pcjson/generated',
-        ##},
     }
 
     unknownTargets = [x for x in (targetFilter if targetFilter else []) if x not in generators.keys()]

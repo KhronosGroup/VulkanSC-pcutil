@@ -8,6 +8,7 @@
 import os
 
 from base_generator import BaseGenerator
+import common_codegen
 
 copyright = """
 /*
@@ -62,9 +63,9 @@ class JsonTestGenerator(BaseGenerator):
         self.write(copyright)
         self.write(predefinedCode)
 
-        pipeline_jsons = os.listdir("../tests/json/data");
+        pipeline_jsons = os.listdir(common_codegen.repo_relative("tests/json/data"))
 
-        for pipeline_json in pipeline_jsons:
+        for pipeline_json in sorted(pipeline_jsons):
             pipeline_json = pipeline_json[:-5]
             test_case = pipeline_json.replace(".", "_")
             self.write(validatePipelineJsonTestcase.format(pipeline_json = pipeline_json, test_case = test_case))

@@ -24,6 +24,4 @@ target_include_directories(VulkanPCJson
         $<INSTALL_INTERFACE:include>
 )
 
-set_property(TARGET VulkanPCJson PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-
 target_link_libraries(VulkanPCJson PRIVATE jsoncpp_static Vulkan::Headers)

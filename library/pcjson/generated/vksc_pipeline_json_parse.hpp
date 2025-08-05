@@ -5737,7 +5737,11 @@ class ParserBase : protected Base {
                                 << size_t((s.rasterizationSamples + 31) / 32) << ")";
                     }
                 } else {
-                    Error() << "pSampleMask is not an array";
+                    if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                        s.pSampleMask = nullptr;
+                    } else {
+                        Error() << "pSampleMask is not an array and is not NULL";
+                    }
                 }
             }
         }
@@ -5867,7 +5871,11 @@ class ParserBase : protected Base {
                                 << s.attachmentCount << ")";
                     }
                 } else {
-                    Error() << "pAttachments is not an array";
+                    if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                        s.pAttachments = nullptr;
+                    } else {
+                        Error() << "pAttachments is not an array and is not NULL";
+                    }
                 }
             }
         }
@@ -6360,7 +6368,11 @@ class ParserBase : protected Base {
                                 << ") does not match expected length (" << s.colorAttachmentCount << ")";
                     }
                 } else {
-                    Error() << "pColorAttachmentInputIndices is not an array";
+                    if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                        s.pColorAttachmentInputIndices = nullptr;
+                    } else {
+                        Error() << "pColorAttachmentInputIndices is not an array and is not NULL";
+                    }
                 }
             }
         }
@@ -7677,7 +7689,11 @@ class ParserBase : protected Base {
                                 << s.colorAttachmentCount << ")";
                     }
                 } else {
-                    Error() << "pResolveAttachments is not an array";
+                    if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                        s.pResolveAttachments = nullptr;
+                    } else {
+                        Error() << "pResolveAttachments is not an array and is not NULL";
+                    }
                 }
             }
         }
@@ -8063,7 +8079,11 @@ class ParserBase : protected Base {
                                 << s.colorAttachmentCount << ")";
                     }
                 } else {
-                    Error() << "pResolveAttachments is not an array";
+                    if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                        s.pResolveAttachments = nullptr;
+                    } else {
+                        Error() << "pResolveAttachments is not an array and is not NULL";
+                    }
                 }
             }
         }

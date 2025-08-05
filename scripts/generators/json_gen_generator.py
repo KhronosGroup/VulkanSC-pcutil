@@ -193,7 +193,15 @@ class JsonGenGenerator(BaseGenerator):
                 if (!v) {{
                     return 0;
                 }}
-
+            ''')
+            if any(flag for flag in self.vk.bitmasks[flags.bitmaskName].flags):
+                out.append(f'''
+                    
+                ''')
+                for flag in [f for f in self.vk.bitmasks[flags.bitmaskName].flags if f.multiBit]:
+                    out.append(f'''
+                    ''')
+            out.append(f'''
                 std::stringstream strm;
                 for ({base_type} bit = 0; bit < ({base_type}(1) << {flags.bitWidth - 1}); bit <<= 1) {{
                     if ((v & bit) != 0) {{
@@ -401,7 +409,7 @@ class JsonGenGenerator(BaseGenerator):
 
                     if not member.fixedSizeArray:
                         out.append('} else {')
-                        if member.noAutoValidity:
+                        if member.noAutoValidity or member.optional:
                             out.append(f'json["{member.name}"] = "NULL";\n')
                         else:
                             out.append(f'Error() << "{member.name} is NULL but its length is " << {lengthExpr};\n')

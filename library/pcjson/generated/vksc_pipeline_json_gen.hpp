@@ -4653,7 +4653,7 @@ class GeneratorBase : protected Base {
                 }
                 json["pSampleMask"] = json_array_pSampleMask;
             } else {
-                Error() << "pSampleMask is NULL but its length is " << size_t((s.rasterizationSamples + 31) / 32);
+                json["pSampleMask"] = "NULL";
             }
         } else {
             json["pSampleMask"] = "NULL";
@@ -4775,7 +4775,7 @@ class GeneratorBase : protected Base {
                 }
                 json["pAttachments"] = json_array_pAttachments;
             } else {
-                Error() << "pAttachments is NULL but its length is " << s.attachmentCount;
+                json["pAttachments"] = "NULL";
             }
         } else {
             json["pAttachments"] = "NULL";
@@ -5084,7 +5084,7 @@ class GeneratorBase : protected Base {
                 }
                 json["pColorAttachmentInputIndices"] = json_array_pColorAttachmentInputIndices;
             } else {
-                Error() << "pColorAttachmentInputIndices is NULL but its length is " << s.colorAttachmentCount;
+                json["pColorAttachmentInputIndices"] = "NULL";
             }
         } else {
             json["pColorAttachmentInputIndices"] = "NULL";
@@ -6436,7 +6436,7 @@ class GeneratorBase : protected Base {
                 }
                 json["pResolveAttachments"] = json_array_pResolveAttachments;
             } else {
-                Error() << "pResolveAttachments is NULL but its length is " << s.colorAttachmentCount;
+                json["pResolveAttachments"] = "NULL";
             }
         } else {
             json["pResolveAttachments"] = "NULL";
@@ -6713,7 +6713,7 @@ class GeneratorBase : protected Base {
                 }
                 json["pResolveAttachments"] = json_array_pResolveAttachments;
             } else {
-                Error() << "pResolveAttachments is NULL but its length is " << s.colorAttachmentCount;
+                json["pResolveAttachments"] = "NULL";
             }
         } else {
             json["pResolveAttachments"] = "NULL";

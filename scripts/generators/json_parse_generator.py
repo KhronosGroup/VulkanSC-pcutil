@@ -575,7 +575,6 @@ class JsonParseGenerator(BaseGenerator):
                                     Warn() << "{member.name} is not NULL but its length is zero";
                                 }}
                             }} else ''')
-                    
                     out.append(f'''{{
                                 if (json_member.isArray()) {{
                                     if (json_member.size() == {lengthExpr}) {{
@@ -599,8 +598,7 @@ class JsonParseGenerator(BaseGenerator):
                                     }}
                                 }} else {{
                         ''')
-
-                    if not member.fixedSizeArray and member.noAutoValidity:
+                    if (not member.fixedSizeArray and member.noAutoValidity) or member.optional:
                         out.append(f'''
                                     if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {{
                                         s.{member.name} = nullptr;

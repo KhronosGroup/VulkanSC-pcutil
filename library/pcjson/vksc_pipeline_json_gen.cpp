@@ -140,6 +140,29 @@ class Generator : private GeneratorBase {
         return IsStatusOK();
     }
 
+    bool FilterDeviceFeatures(const void* pDeviceCreateInfoPNext, const void** ppPhysicalDeviceFeatures, const char** ppMessages) {
+        ClearStatusAndMessages();
+
+        if (pDeviceCreateInfoPNext == nullptr) {
+            Error() << "pDeviceCreateInfoPNext is NULL";
+        }
+
+        if (ppPhysicalDeviceFeatures == nullptr) {
+            Error() << "ppPhysicalDeviceFeatures is NULL";
+        }
+
+        if (IsStatusOK()) {
+            *ppPhysicalDeviceFeatures =
+                filter_VkPhysicalDeviceFeatures2(pDeviceCreateInfoPNext, CreateScope("pDeviceCreateInfoPNext", true));
+        }
+
+        if (ppMessages != nullptr) {
+            *ppMessages = GetMessages();
+        }
+
+        return IsStatusOK();
+    }
+
     void FreeOutputs() {
         json_outputs_.clear();
         FreeAllMem();
@@ -417,6 +440,12 @@ bool vpjGeneratePipelineJson(VpjGenerator generator, const VpjData* pPipelineDat
 
 bool vpjGenerateSingleStructJson(VpjGenerator generator, const void* pStruct, const char** ppJson, const char** ppMessages) {
     return pcjson::Generator::FromHandle(generator)->GenerateSingleStructJson(pStruct, ppJson, ppMessages);
+}
+
+bool vpjFilterDeviceFeatures(VpjGenerator generator, const void* pDeviceCreateInfoPNext, const void** ppPhysicalDeviceFeatures,
+                             const char** ppMessages) {
+    return pcjson::Generator::FromHandle(generator)->FilterDeviceFeatures(pDeviceCreateInfoPNext, ppPhysicalDeviceFeatures,
+                                                                          ppMessages);
 }
 
 void vpjFreeGeneratorOutputs(VpjGenerator generator) {

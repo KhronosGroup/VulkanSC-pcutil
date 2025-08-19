@@ -96,7 +96,9 @@ class JsonParseGenerator(BaseGenerator):
 
                 const auto& json_stype = json["sType"];
                 if (json_stype.isString()) {
-                    if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO") != 0) {
+                    if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO") == 0) {
+                        s.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+                    } else {
                         Error() << "Invalid sType value: " << json_stype.asCString();
                     }
                 } else {
@@ -113,8 +115,12 @@ class JsonParseGenerator(BaseGenerator):
                     Error() << "Unexpected non-zero flags";
                 }
 
+                size_t size = 0;
                 s.codeSize = parse_size_t(json["codeSize"], CreateScope("codeSize"));
-                s.pCode = reinterpret_cast<const uint32_t*>(parse_binary(json["pCode"], CreateScope("pCode")));
+                s.pCode = reinterpret_cast<const uint32_t*>(parse_binary(json["pCode"], CreateScope("pCode"), size));
+                if (size != s.codeSize) {
+                    Error() << "pCode binary size (" << size << ") does not match expected size (" << s.codeSize << ")";
+                }
 
                 return s;
             }
@@ -231,60 +237,53 @@ class JsonParseGenerator(BaseGenerator):
                 }
             }
 
-            void* parse_binary(const Json::Value& json, const LocationScope& l) {
-                if (!json.isString()) {
-                    Error() << "Not a base64 encoded binary";
+            void* parse_binary(const Json::Value& v, const LocationScope&, size_t& size) {
+                if (!v.isString()) {
+                    Error() << "Base64 encoded binary not a string";
                     return nullptr;
                 }
 
-                auto src_buffer = json.asCString();
-                size_t src_buffer_len = strlen(src_buffer);
-                size_t dst_idx = 0;
-                uint8_t* dst_buffer = AllocMem<uint8_t>(src_buffer_len * 3);
+                const char *first, *last;
+                v.getString(&first, &last);
+                auto str_size = std::distance(first, last);
+                std::string_view str(first, str_size);
 
-                for (size_t src_idx = 0; src_idx < src_buffer_len; ++src_idx) {
-                    char c = src_buffer[src_idx];
-                    uint8_t decoded_bits = 0;
-                    if ('A' <= c && c <= 'Z') {
-                        decoded_bits = uint8_t(c - 'A');
-                    } else if ('a' <= c && c <= 'z') {
-                        decoded_bits = uint8_t(('Z' - 'A' + 1) + (c - 'a'));
-                    } if ('0' <= c && c <= '9') {
-                        decoded_bits = uint8_t(('Z' - 'A' + 1) + ('z' - 'a' + 1) + (c - '0'));
-                    } else if (c == '+') {
-                        decoded_bits = uint8_t(('Z' - 'A' + 1) + ('z' - 'a' + 1) + ('9' - '0' + 1));
-                    } else if (c == '/') {
-                        decoded_bits = uint8_t(('Z' - 'A' + 1) + ('z' - 'a' + 1) + ('9' - '0' + 2));
-                    } else {
-                        Error() << "Invalid base64 character '" << c << "'";
+                static const std::string_view base64_alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+                auto init_base64_lookup_table = [&] {
+                    std::array<uint8_t, UINT8_MAX + 1> lookup_table{};
+                    for (size_t i = 0; i <= UINT8_MAX; ++i) {
+                        lookup_table[i] = UINT8_MAX;
+                    }
+                    for (size_t i = 0; i < base64_alphabet.size(); ++i) {
+                        lookup_table[base64_alphabet[i]] = static_cast<uint8_t>(i);
+                    }
+                    return lookup_table;
+                };
+                static const std::array<uint8_t, UINT8_MAX + 1> base64_lookup_table = init_base64_lookup_table();
+
+                constexpr uint32_t bits_in_base64 = 6;
+                constexpr uint32_t bits_in_byte = 8;
+
+                uint8_t* result = AllocMem<uint8_t>((str.size() * bits_in_base64 + bits_in_byte - 1) / bits_in_byte);
+                size = 0;
+                uint32_t current_word = 0;
+                uint32_t current_bits = 0;
+                for (auto ch : str) {
+                    if (ch == '=') {
+                        // End of data padding
+                        break;
+                    } else if (base64_lookup_table[ch] == UINT8_MAX) {
+                        Error() << "Invalid base64 character '" << ch << "'";
                         return nullptr;
                     }
-
-                    auto dst_ptr = &dst_buffer[(dst_idx >> 2) * 3];
-
-                    switch (dst_idx % 4) {
-                        case 0:
-                            dst_ptr[0] |= decoded_bits << 2;
-                            break;
-                        case 1:
-                            dst_ptr[0] = uint8_t(dst_ptr[0] | uint8_t(decoded_bits >> 4));
-                            dst_ptr[1] = uint8_t(dst_ptr[1] | uint8_t((decoded_bits & 0xF) << 4));
-                            break;
-                        case 2:
-                            dst_ptr[1] = uint8_t(dst_ptr[1] | uint8_t(decoded_bits >> 2));
-                            dst_ptr[2] = uint8_t(dst_ptr[2] | uint8_t((decoded_bits & 0x3) << 6));
-                            break;
-                        case 3:
-                            dst_ptr[2] |= decoded_bits;
-                            break;
-                        default:
-                            break;
+                    current_word = (current_word << bits_in_base64) + base64_lookup_table[ch];
+                    current_bits += bits_in_base64;
+                    if (current_bits >= bits_in_byte) {
+                        result[size++] = static_cast<uint8_t>((current_word >> (current_bits - bits_in_byte)) & ((1 << bits_in_byte) - 1));
+                        current_bits -= bits_in_byte;
                     }
-
-                    dst_idx++;
                 }
-
-                return dst_buffer;
+                return result;
             }
 
             VkBool32 parse_VkBool32(const Json::Value& v, const LocationScope&) {
@@ -390,10 +389,19 @@ class JsonParseGenerator(BaseGenerator):
         return self.generatedMethods[flags.name]
 
     def genEnumMethod(self, enum: Enum) -> str:
+        enum_fields = []
+        for field in enum.fields:
+            enum_fields.append(field.name)
+            for alias in field.aliases:
+                enum_fields.append(alias)
+        enum_fields = [f'std::make_pair("{f}", {f})' for f in enum_fields]
+        if enum.name == 'VkStructureType':
+            # VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO does not exist in Vulkan SC, but the CTS has to [de]serialize it
+            enum_fields.append('std::make_pair("VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO", VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO)')
         self.parse_Enum_c_str_methods.append(f'''
             {enum.name} parse_{enum.name}_c_str(const char* v) {{
                 static std::unordered_map<std::string_view, {enum.name}> map = {{
-                    {','.join([f'std::make_pair("{f.name}", {f.name})' for f in enum.fields])}
+                    {','.join(enum_fields)}
                 }};
                 auto it = map.find(v);
                 if (it != map.end()) {{
@@ -454,13 +462,27 @@ class JsonParseGenerator(BaseGenerator):
 
         extStructs = [self.vk.structs[x] for x in struct.extendedBy] if struct.extendedBy else []
         guard_helper = PlatformGuardHelper()
+        cases = ''.join([f"""
+                        {''.join(guard_helper.add_guard(extStruct.protect))}
+                        case {extStruct.sType}: {{
+                            auto next = AllocMem<{extStruct.name}>();
+                            current_pnext_ref = "pNext<{extStruct.name}>";
+                            *next = {self.genStructContentsMethod(extStruct)}(*json_next, CreateScope(current_pnext_ref, true));
+                            next->sType = {extStruct.sType};
+                            prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
+                            break;
+                            }}
+                        {''.join(guard_helper.add_guard(None))}
+                        """ for extStruct in extStructs]) if struct.extendedBy else ''
         self.parse_structChain_methods.append(f'''
             {struct.name} parse_{struct.name}(const Json::Value& json, const LocationScope& l) {{
                 {struct.name} s = {self.genStructContentsMethod(struct)}(json, l);
 
                 const auto& json_stype = json["sType"];
                 if (json_stype.isString()) {{
-                    if (strcmp(json_stype.asCString(), "{struct.sType}") != 0) {{
+                    if (strcmp(json_stype.asCString(), "{struct.sType}") == 0) {{
+                        s.sType = {struct.sType};
+                    }} else {{
                         Error() << "Invalid sType value: " << json_stype.asCString();
                     }}
                 }} else {{
@@ -473,19 +495,9 @@ class JsonParseGenerator(BaseGenerator):
                 while (json_next->isObject()) {{
                     auto next_stype = parse_VkStructureType((*json_next)["sType"], CreateScope(current_pnext_ref));
                     switch (next_stype) {{
-                        {''.join([f"""
-                        {''.join(guard_helper.add_guard(extStruct.protect))}
-                        case {extStruct.sType}: {{
-                            auto next = AllocMem<{extStruct.name}>();
-                            current_pnext_ref = "pNext<{extStruct.name}>";
-                            *next = {self.genStructContentsMethod(extStruct)}(*json_next, CreateScope(current_pnext_ref, true));
-                            prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
-                            break;
-                            }}
-                        {''.join(guard_helper.add_guard(None))}
-                        """ for extStruct in extStructs]) if struct.extendedBy else ''}
+                        {cases}
                         default:
-                                Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: " << (*json_next)["sType"].asCString();
+                                Error() << "Invalid structure type extending {struct.name}: " << (*json_next)["sType"].asCString();
                                 break;
                     }}
                     json_next = &(*json_next)["pNext"];
@@ -531,7 +543,15 @@ class JsonParseGenerator(BaseGenerator):
                     raise Exception(f"Unhandled string array")
 
                 case TypeCategory.BINARY:
-                    out.append(f's.{member.name} = parse_binary(json["{member.name}"], CreateScope("{member.name}"));')
+                    out.append(f'''
+                        {{
+                            size_t size = 0;
+                            s.{member.name} = parse_binary(json["{member.name}"], CreateScope("{member.name}"), size);
+                            if (size != s.{member.length}) {{
+                                Error() << "{member.name} binary size (" << size << ") does not match expected size (" << s.{member.length} << ")";
+                            }}
+                        }}
+                        ''')
 
                 case TypeCategory.POINTER:
                     out.append(f'''
@@ -575,7 +595,7 @@ class JsonParseGenerator(BaseGenerator):
                                     Warn() << "{member.name} is not NULL but its length is zero";
                                 }}
                             }} else ''')
-                    
+
                     out.append(f'''{{
                                 if (json_member.isArray()) {{
                                     if (json_member.size() == {lengthExpr}) {{
@@ -597,22 +617,21 @@ class JsonParseGenerator(BaseGenerator):
                     out.append(f''' }} else {{
                                         Error() << "{member.name} array size (" << json_member.size() << ") does not match expected length (" << {lengthExpr} << ")";
                                     }}
-                                }} else {{
-                        ''')
+                                }} else ''')
 
-                    if not member.fixedSizeArray and member.noAutoValidity:
-                        out.append(f'''
-                                    if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {{
+                    if (not member.fixedSizeArray and member.noAutoValidity) or member.optional:
+                        out.append(f'''if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {{
                                         s.{member.name} = nullptr;
                                     }} else {{
                                         Error() << "{member.name} is not an array and is not NULL";
                                     }}
                             ''')
                     else:
-                        out.append(f'Error() << "{member.name} is not an array";')
+                        out.append(f'''{{
+                                   Error() << "{member.name} is not an array";
+                                   }}''')
 
                     out.append(f'''}}
-                            }}
                         }}
                         ''')
 

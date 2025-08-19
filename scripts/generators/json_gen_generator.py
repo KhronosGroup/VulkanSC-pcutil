@@ -65,10 +65,10 @@ class JsonGenGenerator(BaseGenerator):
 
         out.append(f'''
               private:
-                {"".join(self.gen_basic_methods)}
                 {"".join(self.gen_Handle_methods)}
                 {"".join(self.gen_Enum_c_str_methods)}
               protected:
+                {"".join(self.gen_basic_methods)}
                 {"".join(self.gen_Enum_methods)}
                 {"".join(self.gen_Flags_methods)}
                 {"".join(self.gen_structChain_methods)}
@@ -96,6 +96,46 @@ class JsonGenGenerator(BaseGenerator):
                 json["codeSize"] = s.codeSize;
                 json["pCode"] = gen_binary(s.pCode, s.codeSize);
                 return json;
+            }
+            ''')
+
+        # VkPhysicalDeviceFeatures2 structure filtering is another special case for which we provide an explicit API
+        self.gen_basic_methods.append('''
+            void* filter_VkPhysicalDeviceFeatures2(const void* pDeviceCreateInfoPNext, const LocationScope& l) {
+                auto base = AllocMem<VkPhysicalDeviceFeatures2>();
+                void* pnext = nullptr;
+                auto p = reinterpret_cast<const VkBaseInStructure*>(pDeviceCreateInfoPNext);
+                while (p != nullptr) {
+                    switch (p->sType) {
+                        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2: {
+                            *base = *reinterpret_cast<const VkPhysicalDeviceFeatures2*>(p);
+                            break;
+                        }
+            ''')
+        guard_helper = PlatformGuardHelper()
+        for feature_struct_name in self.vk.structs['VkPhysicalDeviceFeatures2'].extendedBy:
+            feature_struct = self.vk.structs[feature_struct_name]
+            self.gen_basic_methods.extend(guard_helper.add_guard(feature_struct.protect))
+            self.gen_basic_methods.append(f'''
+                        case {feature_struct.sType}: {{
+                            auto s = AllocMem<{feature_struct.name}>();
+                            *s = *reinterpret_cast<const {feature_struct.name}*>(p);
+                            s->pNext = pnext;
+                            pnext = s;
+                            break;
+                        }}
+                ''')
+        self.gen_basic_methods.extend(guard_helper.add_guard(None))
+        self.gen_basic_methods.append('''
+                        default: break;
+                    }
+                    p = p->pNext;
+                }
+
+                base->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+                base->pNext = pnext;
+
+                return base;
             }
             ''')
 
@@ -193,10 +233,31 @@ class JsonGenGenerator(BaseGenerator):
                 if (!v) {{
                     return 0;
                 }}
+                std::stringstream strm;''')
 
-                std::stringstream strm;
-                for ({base_type} bit = 0; bit < ({base_type}(1) << {flags.bitWidth - 1}); bit <<= 1) {{
-                    if ((v & bit) != 0) {{
+            multi_bit_flags = [flag for flag in self.vk.bitmasks[flags.bitmaskName].flags if flag.multiBit]
+            if multi_bit_flags:
+                out.append(f'''
+                    std::array<{flags.bitmaskName}, {len(multi_bit_flags)}> multi_bit_flags{{{{
+                        {','.join([f'{flags.bitmaskName}::{f.name}' for f in multi_bit_flags])}
+                    }}}};
+                    std::vector<{flags.bitmaskName}> matched_multi_bit_flags;
+                    for (auto multi_bit_flag : multi_bit_flags) {{
+                        if (v == multi_bit_flag) {{
+                            matched_multi_bit_flags.push_back(multi_bit_flag);
+                            if (strm.rdbuf()->in_avail() > 0) {{
+                                strm << " | ";
+                            }}
+                            strm << gen_{flags.bitmaskName}_c_str(static_cast<{flags.bitmaskName}>(multi_bit_flag));
+                        }}
+                    }}
+                    auto isnt_part_of_any_matched_multi_bit_flags = [&](const auto bit){{
+                        return std::none_of(matched_multi_bit_flags.begin(), matched_multi_bit_flags.end(), [bit](const auto multi_bit_flag){{ return multi_bit_flag & bit; }});
+                    }};''')
+            out.append(f'''
+                for (int i = 0; i < {flags.bitWidth - 1}; ++i) {{
+                    auto bit = {base_type}(1) << i;
+                    if ((v & bit) != 0{' && isnt_part_of_any_matched_multi_bit_flags(bit)' if multi_bit_flags else ''}) {{
                         if (strm.rdbuf()->in_avail() > 0) {{
                             strm << " | ";
                         }}
@@ -364,7 +425,24 @@ class JsonGenGenerator(BaseGenerator):
                     raise Exception(f"Unhandled string array")
 
                 case TypeCategory.BINARY:
-                    out.append(f'json["{member.name}"] = gen_binary(s.{member.name}, s.{member.length});')
+                    out.append(f'''
+                        if (s.{member.length} != 0) {{
+                            if (s.{member.name} != nullptr) {{
+                                json["{member.name}"] = gen_binary(s.{member.name}, s.{member.length});
+                            }} else {{
+                        ''')
+
+                    if member.noAutoValidity or member.optional:
+                        out.append(f'json["{member.name}"] = "NULL";\n')
+                    else:
+                        out.append(f'Error() << "{member.name} is NULL but its length is " << s.{member.length};\n')
+
+                    out.append(f'''
+                            }}
+                        }} else {{
+                            json["{member.name}"] = "NULL";
+                        }}
+                        ''')
 
                 case TypeCategory.POINTER:
                     out.append(f'json["{member.name}"] = s.{member.name} ? {self.genTypeMethod(member.type)}(*s.{member.name}, CreateScope("{member.name}", true)) : "NULL";')
@@ -401,7 +479,7 @@ class JsonGenGenerator(BaseGenerator):
 
                     if not member.fixedSizeArray:
                         out.append('} else {')
-                        if member.noAutoValidity:
+                        if member.noAutoValidity or member.optional:
                             out.append(f'json["{member.name}"] = "NULL";\n')
                         else:
                             out.append(f'Error() << "{member.name} is NULL but its length is " << {lengthExpr};\n')

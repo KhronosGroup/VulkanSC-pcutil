@@ -349,9 +349,13 @@ class ParserBase : protected Base {
                            VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TERMINATE_INVOCATION_FEATURES",
                            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TERMINATE_INVOCATION_FEATURES),
+            std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TERMINATE_INVOCATION_FEATURES_KHR",
+                           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TERMINATE_INVOCATION_FEATURES_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TOOL_PROPERTIES", VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TOOL_PROPERTIES),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES",
                            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES),
+            std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES_EXT",
+                           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES_EXT),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIVATE_DATA_FEATURES",
                            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIVATE_DATA_FEATURES),
             std::make_pair("VK_STRUCTURE_TYPE_DEVICE_PRIVATE_DATA_CREATE_INFO", VK_STRUCTURE_TYPE_DEVICE_PRIVATE_DATA_CREATE_INFO),
@@ -359,35 +363,63 @@ class ParserBase : protected Base {
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_CREATION_CACHE_CONTROL_FEATURES",
                            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_CREATION_CACHE_CONTROL_FEATURES),
             std::make_pair("VK_STRUCTURE_TYPE_MEMORY_BARRIER_2", VK_STRUCTURE_TYPE_MEMORY_BARRIER_2),
+            std::make_pair("VK_STRUCTURE_TYPE_MEMORY_BARRIER_2_KHR", VK_STRUCTURE_TYPE_MEMORY_BARRIER_2_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2", VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2),
+            std::make_pair("VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2_KHR", VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2", VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2),
+            std::make_pair("VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2_KHR", VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_DEPENDENCY_INFO", VK_STRUCTURE_TYPE_DEPENDENCY_INFO),
+            std::make_pair("VK_STRUCTURE_TYPE_DEPENDENCY_INFO_KHR", VK_STRUCTURE_TYPE_DEPENDENCY_INFO_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_SUBMIT_INFO_2", VK_STRUCTURE_TYPE_SUBMIT_INFO_2),
+            std::make_pair("VK_STRUCTURE_TYPE_SUBMIT_INFO_2_KHR", VK_STRUCTURE_TYPE_SUBMIT_INFO_2_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO", VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO),
+            std::make_pair("VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO_KHR", VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO", VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO),
+            std::make_pair("VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO_KHR", VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES",
                            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES),
+            std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES_KHR",
+                           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ZERO_INITIALIZE_WORKGROUP_MEMORY_FEATURES",
                            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ZERO_INITIALIZE_WORKGROUP_MEMORY_FEATURES),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ROBUSTNESS_FEATURES",
                            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ROBUSTNESS_FEATURES),
+            std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ROBUSTNESS_FEATURES_EXT",
+                           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ROBUSTNESS_FEATURES_EXT),
             std::make_pair("VK_STRUCTURE_TYPE_COPY_BUFFER_INFO_2", VK_STRUCTURE_TYPE_COPY_BUFFER_INFO_2),
+            std::make_pair("VK_STRUCTURE_TYPE_COPY_BUFFER_INFO_2_KHR", VK_STRUCTURE_TYPE_COPY_BUFFER_INFO_2_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_COPY_IMAGE_INFO_2", VK_STRUCTURE_TYPE_COPY_IMAGE_INFO_2),
+            std::make_pair("VK_STRUCTURE_TYPE_COPY_IMAGE_INFO_2_KHR", VK_STRUCTURE_TYPE_COPY_IMAGE_INFO_2_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_COPY_BUFFER_TO_IMAGE_INFO_2", VK_STRUCTURE_TYPE_COPY_BUFFER_TO_IMAGE_INFO_2),
+            std::make_pair("VK_STRUCTURE_TYPE_COPY_BUFFER_TO_IMAGE_INFO_2_KHR", VK_STRUCTURE_TYPE_COPY_BUFFER_TO_IMAGE_INFO_2_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_COPY_IMAGE_TO_BUFFER_INFO_2", VK_STRUCTURE_TYPE_COPY_IMAGE_TO_BUFFER_INFO_2),
+            std::make_pair("VK_STRUCTURE_TYPE_COPY_IMAGE_TO_BUFFER_INFO_2_KHR", VK_STRUCTURE_TYPE_COPY_IMAGE_TO_BUFFER_INFO_2_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_BLIT_IMAGE_INFO_2", VK_STRUCTURE_TYPE_BLIT_IMAGE_INFO_2),
+            std::make_pair("VK_STRUCTURE_TYPE_BLIT_IMAGE_INFO_2_KHR", VK_STRUCTURE_TYPE_BLIT_IMAGE_INFO_2_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_RESOLVE_IMAGE_INFO_2", VK_STRUCTURE_TYPE_RESOLVE_IMAGE_INFO_2),
+            std::make_pair("VK_STRUCTURE_TYPE_RESOLVE_IMAGE_INFO_2_KHR", VK_STRUCTURE_TYPE_RESOLVE_IMAGE_INFO_2_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_BUFFER_COPY_2", VK_STRUCTURE_TYPE_BUFFER_COPY_2),
+            std::make_pair("VK_STRUCTURE_TYPE_BUFFER_COPY_2_KHR", VK_STRUCTURE_TYPE_BUFFER_COPY_2_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_IMAGE_COPY_2", VK_STRUCTURE_TYPE_IMAGE_COPY_2),
+            std::make_pair("VK_STRUCTURE_TYPE_IMAGE_COPY_2_KHR", VK_STRUCTURE_TYPE_IMAGE_COPY_2_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_IMAGE_BLIT_2", VK_STRUCTURE_TYPE_IMAGE_BLIT_2),
+            std::make_pair("VK_STRUCTURE_TYPE_IMAGE_BLIT_2_KHR", VK_STRUCTURE_TYPE_IMAGE_BLIT_2_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_BUFFER_IMAGE_COPY_2", VK_STRUCTURE_TYPE_BUFFER_IMAGE_COPY_2),
+            std::make_pair("VK_STRUCTURE_TYPE_BUFFER_IMAGE_COPY_2_KHR", VK_STRUCTURE_TYPE_BUFFER_IMAGE_COPY_2_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_IMAGE_RESOLVE_2", VK_STRUCTURE_TYPE_IMAGE_RESOLVE_2),
+            std::make_pair("VK_STRUCTURE_TYPE_IMAGE_RESOLVE_2_KHR", VK_STRUCTURE_TYPE_IMAGE_RESOLVE_2_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_PROPERTIES",
                            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_PROPERTIES),
+            std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_PROPERTIES_EXT",
+                           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_PROPERTIES_EXT),
             std::make_pair("VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO",
                            VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO),
+            std::make_pair("VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO_EXT",
+                           VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO_EXT),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES",
                            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES),
+            std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES_EXT",
+                           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES_EXT),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_FEATURES",
                            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_FEATURES),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_PROPERTIES",
@@ -398,6 +430,8 @@ class ParserBase : protected Base {
                            VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_INLINE_UNIFORM_BLOCK_CREATE_INFO),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXTURE_COMPRESSION_ASTC_HDR_FEATURES",
                            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXTURE_COMPRESSION_ASTC_HDR_FEATURES),
+            std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXTURE_COMPRESSION_ASTC_HDR_FEATURES_EXT",
+                           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXTURE_COMPRESSION_ASTC_HDR_FEATURES_EXT),
             std::make_pair("VK_STRUCTURE_TYPE_RENDERING_INFO", VK_STRUCTURE_TYPE_RENDERING_INFO),
             std::make_pair("VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO", VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO),
             std::make_pair("VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO", VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO),
@@ -411,6 +445,8 @@ class ParserBase : protected Base {
                            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_DOT_PRODUCT_PROPERTIES),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_PROPERTIES",
                            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_PROPERTIES),
+            std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_PROPERTIES_EXT",
+                           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_PROPERTIES_EXT),
             std::make_pair("VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_3", VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_3),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_FEATURES",
                            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_FEATURES),
@@ -426,10 +462,16 @@ class ParserBase : protected Base {
                            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_PROPERTIES),
             std::make_pair("VK_STRUCTURE_TYPE_DEVICE_QUEUE_GLOBAL_PRIORITY_CREATE_INFO",
                            VK_STRUCTURE_TYPE_DEVICE_QUEUE_GLOBAL_PRIORITY_CREATE_INFO),
+            std::make_pair("VK_STRUCTURE_TYPE_DEVICE_QUEUE_GLOBAL_PRIORITY_CREATE_INFO_KHR",
+                           VK_STRUCTURE_TYPE_DEVICE_QUEUE_GLOBAL_PRIORITY_CREATE_INFO_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GLOBAL_PRIORITY_QUERY_FEATURES",
                            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GLOBAL_PRIORITY_QUERY_FEATURES),
+            std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GLOBAL_PRIORITY_QUERY_FEATURES_KHR",
+                           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GLOBAL_PRIORITY_QUERY_FEATURES_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_QUEUE_FAMILY_GLOBAL_PRIORITY_PROPERTIES",
                            VK_STRUCTURE_TYPE_QUEUE_FAMILY_GLOBAL_PRIORITY_PROPERTIES),
+            std::make_pair("VK_STRUCTURE_TYPE_QUEUE_FAMILY_GLOBAL_PRIORITY_PROPERTIES_KHR",
+                           VK_STRUCTURE_TYPE_QUEUE_FAMILY_GLOBAL_PRIORITY_PROPERTIES_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_ROTATE_FEATURES",
                            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_ROTATE_FEATURES),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT_CONTROLS_2_FEATURES",
@@ -438,18 +480,40 @@ class ParserBase : protected Base {
                            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_EXPECT_ASSUME_FEATURES),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES",
                            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES),
+            std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT",
+                           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT),
+            std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_KHR",
+                           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_LINE_STATE_CREATE_INFO",
                            VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_LINE_STATE_CREATE_INFO),
+            std::make_pair("VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_LINE_STATE_CREATE_INFO_EXT",
+                           VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_LINE_STATE_CREATE_INFO_EXT),
+            std::make_pair("VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_LINE_STATE_CREATE_INFO_KHR",
+                           VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_LINE_STATE_CREATE_INFO_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_PROPERTIES",
                            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_PROPERTIES),
+            std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_PROPERTIES_EXT",
+                           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_PROPERTIES_EXT),
+            std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_PROPERTIES_KHR",
+                           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_PROPERTIES_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_PROPERTIES",
                            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_PROPERTIES),
+            std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_PROPERTIES_KHR",
+                           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_PROPERTIES_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_DIVISOR_STATE_CREATE_INFO",
                            VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_DIVISOR_STATE_CREATE_INFO),
+            std::make_pair("VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_DIVISOR_STATE_CREATE_INFO_KHR",
+                           VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_DIVISOR_STATE_CREATE_INFO_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_FEATURES",
                            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_FEATURES),
+            std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_FEATURES_KHR",
+                           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_FEATURES_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES",
                            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES),
+            std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT",
+                           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT),
+            std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_KHR",
+                           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_MEMORY_MAP_INFO", VK_STRUCTURE_TYPE_MEMORY_MAP_INFO),
             std::make_pair("VK_STRUCTURE_TYPE_MEMORY_UNMAP_INFO", VK_STRUCTURE_TYPE_MEMORY_UNMAP_INFO),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_5_FEATURES",
@@ -697,6 +761,8 @@ class ParserBase : protected Base {
             std::make_pair("VK_STRUCTURE_TYPE_MEMORY_SCI_BUF_PROPERTIES_NV", VK_STRUCTURE_TYPE_MEMORY_SCI_BUF_PROPERTIES_NV),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_SCI_BUF_FEATURES_NV",
                            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_SCI_BUF_FEATURES_NV),
+            std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_SCI_BUF_FEATURES_NV",
+                           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_SCI_BUF_FEATURES_NV),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT",
                            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COLOR_WRITE_ENABLE_FEATURES_EXT",
@@ -723,8 +789,13 @@ class ParserBase : protected Base {
             std::make_pair("VK_STRUCTURE_TYPE_CALIBRATED_TIMESTAMP_INFO_KHR", VK_STRUCTURE_TYPE_CALIBRATED_TIMESTAMP_INFO_KHR),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_KHR",
                            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_KHR),
+            std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT",
+                           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT),
             std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_KHR",
-                           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_KHR)};
+                           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_KHR),
+            std::make_pair("VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_EXT",
+                           VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_EXT),
+            std::make_pair("VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO", VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO)};
         auto it = map.find(v);
         if (it != map.end()) {
             return it->second;
@@ -1117,27 +1188,49 @@ class ParserBase : protected Base {
             std::make_pair("VK_FORMAT_G16_B16R16_2PLANE_422_UNORM", VK_FORMAT_G16_B16R16_2PLANE_422_UNORM),
             std::make_pair("VK_FORMAT_G16_B16_R16_3PLANE_444_UNORM", VK_FORMAT_G16_B16_R16_3PLANE_444_UNORM),
             std::make_pair("VK_FORMAT_G8_B8R8_2PLANE_444_UNORM", VK_FORMAT_G8_B8R8_2PLANE_444_UNORM),
+            std::make_pair("VK_FORMAT_G8_B8R8_2PLANE_444_UNORM_EXT", VK_FORMAT_G8_B8R8_2PLANE_444_UNORM_EXT),
             std::make_pair("VK_FORMAT_G10X6_B10X6R10X6_2PLANE_444_UNORM_3PACK16",
                            VK_FORMAT_G10X6_B10X6R10X6_2PLANE_444_UNORM_3PACK16),
+            std::make_pair("VK_FORMAT_G10X6_B10X6R10X6_2PLANE_444_UNORM_3PACK16_EXT",
+                           VK_FORMAT_G10X6_B10X6R10X6_2PLANE_444_UNORM_3PACK16_EXT),
             std::make_pair("VK_FORMAT_G12X4_B12X4R12X4_2PLANE_444_UNORM_3PACK16",
                            VK_FORMAT_G12X4_B12X4R12X4_2PLANE_444_UNORM_3PACK16),
+            std::make_pair("VK_FORMAT_G12X4_B12X4R12X4_2PLANE_444_UNORM_3PACK16_EXT",
+                           VK_FORMAT_G12X4_B12X4R12X4_2PLANE_444_UNORM_3PACK16_EXT),
             std::make_pair("VK_FORMAT_G16_B16R16_2PLANE_444_UNORM", VK_FORMAT_G16_B16R16_2PLANE_444_UNORM),
+            std::make_pair("VK_FORMAT_G16_B16R16_2PLANE_444_UNORM_EXT", VK_FORMAT_G16_B16R16_2PLANE_444_UNORM_EXT),
             std::make_pair("VK_FORMAT_A4R4G4B4_UNORM_PACK16", VK_FORMAT_A4R4G4B4_UNORM_PACK16),
+            std::make_pair("VK_FORMAT_A4R4G4B4_UNORM_PACK16_EXT", VK_FORMAT_A4R4G4B4_UNORM_PACK16_EXT),
             std::make_pair("VK_FORMAT_A4B4G4R4_UNORM_PACK16", VK_FORMAT_A4B4G4R4_UNORM_PACK16),
+            std::make_pair("VK_FORMAT_A4B4G4R4_UNORM_PACK16_EXT", VK_FORMAT_A4B4G4R4_UNORM_PACK16_EXT),
             std::make_pair("VK_FORMAT_ASTC_4x4_SFLOAT_BLOCK", VK_FORMAT_ASTC_4x4_SFLOAT_BLOCK),
+            std::make_pair("VK_FORMAT_ASTC_4x4_SFLOAT_BLOCK_EXT", VK_FORMAT_ASTC_4x4_SFLOAT_BLOCK_EXT),
             std::make_pair("VK_FORMAT_ASTC_5x4_SFLOAT_BLOCK", VK_FORMAT_ASTC_5x4_SFLOAT_BLOCK),
+            std::make_pair("VK_FORMAT_ASTC_5x4_SFLOAT_BLOCK_EXT", VK_FORMAT_ASTC_5x4_SFLOAT_BLOCK_EXT),
             std::make_pair("VK_FORMAT_ASTC_5x5_SFLOAT_BLOCK", VK_FORMAT_ASTC_5x5_SFLOAT_BLOCK),
+            std::make_pair("VK_FORMAT_ASTC_5x5_SFLOAT_BLOCK_EXT", VK_FORMAT_ASTC_5x5_SFLOAT_BLOCK_EXT),
             std::make_pair("VK_FORMAT_ASTC_6x5_SFLOAT_BLOCK", VK_FORMAT_ASTC_6x5_SFLOAT_BLOCK),
+            std::make_pair("VK_FORMAT_ASTC_6x5_SFLOAT_BLOCK_EXT", VK_FORMAT_ASTC_6x5_SFLOAT_BLOCK_EXT),
             std::make_pair("VK_FORMAT_ASTC_6x6_SFLOAT_BLOCK", VK_FORMAT_ASTC_6x6_SFLOAT_BLOCK),
+            std::make_pair("VK_FORMAT_ASTC_6x6_SFLOAT_BLOCK_EXT", VK_FORMAT_ASTC_6x6_SFLOAT_BLOCK_EXT),
             std::make_pair("VK_FORMAT_ASTC_8x5_SFLOAT_BLOCK", VK_FORMAT_ASTC_8x5_SFLOAT_BLOCK),
+            std::make_pair("VK_FORMAT_ASTC_8x5_SFLOAT_BLOCK_EXT", VK_FORMAT_ASTC_8x5_SFLOAT_BLOCK_EXT),
             std::make_pair("VK_FORMAT_ASTC_8x6_SFLOAT_BLOCK", VK_FORMAT_ASTC_8x6_SFLOAT_BLOCK),
+            std::make_pair("VK_FORMAT_ASTC_8x6_SFLOAT_BLOCK_EXT", VK_FORMAT_ASTC_8x6_SFLOAT_BLOCK_EXT),
             std::make_pair("VK_FORMAT_ASTC_8x8_SFLOAT_BLOCK", VK_FORMAT_ASTC_8x8_SFLOAT_BLOCK),
+            std::make_pair("VK_FORMAT_ASTC_8x8_SFLOAT_BLOCK_EXT", VK_FORMAT_ASTC_8x8_SFLOAT_BLOCK_EXT),
             std::make_pair("VK_FORMAT_ASTC_10x5_SFLOAT_BLOCK", VK_FORMAT_ASTC_10x5_SFLOAT_BLOCK),
+            std::make_pair("VK_FORMAT_ASTC_10x5_SFLOAT_BLOCK_EXT", VK_FORMAT_ASTC_10x5_SFLOAT_BLOCK_EXT),
             std::make_pair("VK_FORMAT_ASTC_10x6_SFLOAT_BLOCK", VK_FORMAT_ASTC_10x6_SFLOAT_BLOCK),
+            std::make_pair("VK_FORMAT_ASTC_10x6_SFLOAT_BLOCK_EXT", VK_FORMAT_ASTC_10x6_SFLOAT_BLOCK_EXT),
             std::make_pair("VK_FORMAT_ASTC_10x8_SFLOAT_BLOCK", VK_FORMAT_ASTC_10x8_SFLOAT_BLOCK),
+            std::make_pair("VK_FORMAT_ASTC_10x8_SFLOAT_BLOCK_EXT", VK_FORMAT_ASTC_10x8_SFLOAT_BLOCK_EXT),
             std::make_pair("VK_FORMAT_ASTC_10x10_SFLOAT_BLOCK", VK_FORMAT_ASTC_10x10_SFLOAT_BLOCK),
+            std::make_pair("VK_FORMAT_ASTC_10x10_SFLOAT_BLOCK_EXT", VK_FORMAT_ASTC_10x10_SFLOAT_BLOCK_EXT),
             std::make_pair("VK_FORMAT_ASTC_12x10_SFLOAT_BLOCK", VK_FORMAT_ASTC_12x10_SFLOAT_BLOCK),
+            std::make_pair("VK_FORMAT_ASTC_12x10_SFLOAT_BLOCK_EXT", VK_FORMAT_ASTC_12x10_SFLOAT_BLOCK_EXT),
             std::make_pair("VK_FORMAT_ASTC_12x12_SFLOAT_BLOCK", VK_FORMAT_ASTC_12x12_SFLOAT_BLOCK),
+            std::make_pair("VK_FORMAT_ASTC_12x12_SFLOAT_BLOCK_EXT", VK_FORMAT_ASTC_12x12_SFLOAT_BLOCK_EXT),
             std::make_pair("VK_FORMAT_A1B5G5R5_UNORM_PACK16", VK_FORMAT_A1B5G5R5_UNORM_PACK16),
             std::make_pair("VK_FORMAT_A8_UNORM", VK_FORMAT_A8_UNORM)};
         auto it = map.find(v);
@@ -1247,9 +1340,17 @@ class ParserBase : protected Base {
     VkLineRasterizationMode parse_VkLineRasterizationMode_c_str(const char* v) {
         static std::unordered_map<std::string_view, VkLineRasterizationMode> map = {
             std::make_pair("VK_LINE_RASTERIZATION_MODE_DEFAULT", VK_LINE_RASTERIZATION_MODE_DEFAULT),
+            std::make_pair("VK_LINE_RASTERIZATION_MODE_DEFAULT_EXT", VK_LINE_RASTERIZATION_MODE_DEFAULT_EXT),
+            std::make_pair("VK_LINE_RASTERIZATION_MODE_DEFAULT_KHR", VK_LINE_RASTERIZATION_MODE_DEFAULT_KHR),
             std::make_pair("VK_LINE_RASTERIZATION_MODE_RECTANGULAR", VK_LINE_RASTERIZATION_MODE_RECTANGULAR),
+            std::make_pair("VK_LINE_RASTERIZATION_MODE_RECTANGULAR_EXT", VK_LINE_RASTERIZATION_MODE_RECTANGULAR_EXT),
+            std::make_pair("VK_LINE_RASTERIZATION_MODE_RECTANGULAR_KHR", VK_LINE_RASTERIZATION_MODE_RECTANGULAR_KHR),
             std::make_pair("VK_LINE_RASTERIZATION_MODE_BRESENHAM", VK_LINE_RASTERIZATION_MODE_BRESENHAM),
-            std::make_pair("VK_LINE_RASTERIZATION_MODE_RECTANGULAR_SMOOTH", VK_LINE_RASTERIZATION_MODE_RECTANGULAR_SMOOTH)};
+            std::make_pair("VK_LINE_RASTERIZATION_MODE_BRESENHAM_EXT", VK_LINE_RASTERIZATION_MODE_BRESENHAM_EXT),
+            std::make_pair("VK_LINE_RASTERIZATION_MODE_BRESENHAM_KHR", VK_LINE_RASTERIZATION_MODE_BRESENHAM_KHR),
+            std::make_pair("VK_LINE_RASTERIZATION_MODE_RECTANGULAR_SMOOTH", VK_LINE_RASTERIZATION_MODE_RECTANGULAR_SMOOTH),
+            std::make_pair("VK_LINE_RASTERIZATION_MODE_RECTANGULAR_SMOOTH_EXT", VK_LINE_RASTERIZATION_MODE_RECTANGULAR_SMOOTH_EXT),
+            std::make_pair("VK_LINE_RASTERIZATION_MODE_RECTANGULAR_SMOOTH_KHR", VK_LINE_RASTERIZATION_MODE_RECTANGULAR_SMOOTH_KHR)};
         auto it = map.find(v);
         if (it != map.end()) {
             return it->second;
@@ -1477,21 +1578,38 @@ class ParserBase : protected Base {
             std::make_pair("VK_DYNAMIC_STATE_STENCIL_WRITE_MASK", VK_DYNAMIC_STATE_STENCIL_WRITE_MASK),
             std::make_pair("VK_DYNAMIC_STATE_STENCIL_REFERENCE", VK_DYNAMIC_STATE_STENCIL_REFERENCE),
             std::make_pair("VK_DYNAMIC_STATE_CULL_MODE", VK_DYNAMIC_STATE_CULL_MODE),
+            std::make_pair("VK_DYNAMIC_STATE_CULL_MODE_EXT", VK_DYNAMIC_STATE_CULL_MODE_EXT),
             std::make_pair("VK_DYNAMIC_STATE_FRONT_FACE", VK_DYNAMIC_STATE_FRONT_FACE),
+            std::make_pair("VK_DYNAMIC_STATE_FRONT_FACE_EXT", VK_DYNAMIC_STATE_FRONT_FACE_EXT),
             std::make_pair("VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY", VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY),
+            std::make_pair("VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY_EXT", VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY_EXT),
             std::make_pair("VK_DYNAMIC_STATE_VIEWPORT_WITH_COUNT", VK_DYNAMIC_STATE_VIEWPORT_WITH_COUNT),
+            std::make_pair("VK_DYNAMIC_STATE_VIEWPORT_WITH_COUNT_EXT", VK_DYNAMIC_STATE_VIEWPORT_WITH_COUNT_EXT),
             std::make_pair("VK_DYNAMIC_STATE_SCISSOR_WITH_COUNT", VK_DYNAMIC_STATE_SCISSOR_WITH_COUNT),
+            std::make_pair("VK_DYNAMIC_STATE_SCISSOR_WITH_COUNT_EXT", VK_DYNAMIC_STATE_SCISSOR_WITH_COUNT_EXT),
             std::make_pair("VK_DYNAMIC_STATE_VERTEX_INPUT_BINDING_STRIDE", VK_DYNAMIC_STATE_VERTEX_INPUT_BINDING_STRIDE),
+            std::make_pair("VK_DYNAMIC_STATE_VERTEX_INPUT_BINDING_STRIDE_EXT", VK_DYNAMIC_STATE_VERTEX_INPUT_BINDING_STRIDE_EXT),
             std::make_pair("VK_DYNAMIC_STATE_DEPTH_TEST_ENABLE", VK_DYNAMIC_STATE_DEPTH_TEST_ENABLE),
+            std::make_pair("VK_DYNAMIC_STATE_DEPTH_TEST_ENABLE_EXT", VK_DYNAMIC_STATE_DEPTH_TEST_ENABLE_EXT),
             std::make_pair("VK_DYNAMIC_STATE_DEPTH_WRITE_ENABLE", VK_DYNAMIC_STATE_DEPTH_WRITE_ENABLE),
+            std::make_pair("VK_DYNAMIC_STATE_DEPTH_WRITE_ENABLE_EXT", VK_DYNAMIC_STATE_DEPTH_WRITE_ENABLE_EXT),
             std::make_pair("VK_DYNAMIC_STATE_DEPTH_COMPARE_OP", VK_DYNAMIC_STATE_DEPTH_COMPARE_OP),
+            std::make_pair("VK_DYNAMIC_STATE_DEPTH_COMPARE_OP_EXT", VK_DYNAMIC_STATE_DEPTH_COMPARE_OP_EXT),
             std::make_pair("VK_DYNAMIC_STATE_DEPTH_BOUNDS_TEST_ENABLE", VK_DYNAMIC_STATE_DEPTH_BOUNDS_TEST_ENABLE),
+            std::make_pair("VK_DYNAMIC_STATE_DEPTH_BOUNDS_TEST_ENABLE_EXT", VK_DYNAMIC_STATE_DEPTH_BOUNDS_TEST_ENABLE_EXT),
             std::make_pair("VK_DYNAMIC_STATE_STENCIL_TEST_ENABLE", VK_DYNAMIC_STATE_STENCIL_TEST_ENABLE),
+            std::make_pair("VK_DYNAMIC_STATE_STENCIL_TEST_ENABLE_EXT", VK_DYNAMIC_STATE_STENCIL_TEST_ENABLE_EXT),
             std::make_pair("VK_DYNAMIC_STATE_STENCIL_OP", VK_DYNAMIC_STATE_STENCIL_OP),
+            std::make_pair("VK_DYNAMIC_STATE_STENCIL_OP_EXT", VK_DYNAMIC_STATE_STENCIL_OP_EXT),
             std::make_pair("VK_DYNAMIC_STATE_RASTERIZER_DISCARD_ENABLE", VK_DYNAMIC_STATE_RASTERIZER_DISCARD_ENABLE),
+            std::make_pair("VK_DYNAMIC_STATE_RASTERIZER_DISCARD_ENABLE_EXT", VK_DYNAMIC_STATE_RASTERIZER_DISCARD_ENABLE_EXT),
             std::make_pair("VK_DYNAMIC_STATE_DEPTH_BIAS_ENABLE", VK_DYNAMIC_STATE_DEPTH_BIAS_ENABLE),
+            std::make_pair("VK_DYNAMIC_STATE_DEPTH_BIAS_ENABLE_EXT", VK_DYNAMIC_STATE_DEPTH_BIAS_ENABLE_EXT),
             std::make_pair("VK_DYNAMIC_STATE_PRIMITIVE_RESTART_ENABLE", VK_DYNAMIC_STATE_PRIMITIVE_RESTART_ENABLE),
+            std::make_pair("VK_DYNAMIC_STATE_PRIMITIVE_RESTART_ENABLE_EXT", VK_DYNAMIC_STATE_PRIMITIVE_RESTART_ENABLE_EXT),
             std::make_pair("VK_DYNAMIC_STATE_LINE_STIPPLE", VK_DYNAMIC_STATE_LINE_STIPPLE),
+            std::make_pair("VK_DYNAMIC_STATE_LINE_STIPPLE_EXT", VK_DYNAMIC_STATE_LINE_STIPPLE_EXT),
+            std::make_pair("VK_DYNAMIC_STATE_LINE_STIPPLE_KHR", VK_DYNAMIC_STATE_LINE_STIPPLE_KHR),
             std::make_pair("VK_DYNAMIC_STATE_DISCARD_RECTANGLE_EXT", VK_DYNAMIC_STATE_DISCARD_RECTANGLE_EXT),
             std::make_pair("VK_DYNAMIC_STATE_DISCARD_RECTANGLE_ENABLE_EXT", VK_DYNAMIC_STATE_DISCARD_RECTANGLE_ENABLE_EXT),
             std::make_pair("VK_DYNAMIC_STATE_DISCARD_RECTANGLE_MODE_EXT", VK_DYNAMIC_STATE_DISCARD_RECTANGLE_MODE_EXT),
@@ -1887,7 +2005,9 @@ class ParserBase : protected Base {
             std::make_pair("VK_IMAGE_LAYOUT_STENCIL_ATTACHMENT_OPTIMAL", VK_IMAGE_LAYOUT_STENCIL_ATTACHMENT_OPTIMAL),
             std::make_pair("VK_IMAGE_LAYOUT_STENCIL_READ_ONLY_OPTIMAL", VK_IMAGE_LAYOUT_STENCIL_READ_ONLY_OPTIMAL),
             std::make_pair("VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL", VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL),
+            std::make_pair("VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL_KHR", VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL_KHR),
             std::make_pair("VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL", VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL),
+            std::make_pair("VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR", VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR),
             std::make_pair("VK_IMAGE_LAYOUT_RENDERING_LOCAL_READ", VK_IMAGE_LAYOUT_RENDERING_LOCAL_READ),
             std::make_pair("VK_IMAGE_LAYOUT_PRESENT_SRC_KHR", VK_IMAGE_LAYOUT_PRESENT_SRC_KHR),
             std::make_pair("VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR", VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR),
@@ -2269,61 +2389,53 @@ class ParserBase : protected Base {
         }
     }
 
-    void* parse_binary(const Json::Value& json, const LocationScope& l) {
-        if (!json.isString()) {
-            Error() << "Not a base64 encoded binary";
+    void* parse_binary(const Json::Value& v, const LocationScope&, size_t& size) {
+        if (!v.isString()) {
+            Error() << "Base64 encoded binary not a string";
             return nullptr;
         }
 
-        auto src_buffer = json.asCString();
-        size_t src_buffer_len = strlen(src_buffer);
-        size_t dst_idx = 0;
-        uint8_t* dst_buffer = AllocMem<uint8_t>(src_buffer_len * 3);
+        const char *first, *last;
+        v.getString(&first, &last);
+        auto str_size = std::distance(first, last);
+        std::string_view str(first, str_size);
 
-        for (size_t src_idx = 0; src_idx < src_buffer_len; ++src_idx) {
-            char c = src_buffer[src_idx];
-            uint8_t decoded_bits = 0;
-            if ('A' <= c && c <= 'Z') {
-                decoded_bits = uint8_t(c - 'A');
-            } else if ('a' <= c && c <= 'z') {
-                decoded_bits = uint8_t(('Z' - 'A' + 1) + (c - 'a'));
+        static const std::string_view base64_alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        auto init_base64_lookup_table = [&] {
+            std::array<uint8_t, UINT8_MAX + 1> lookup_table{};
+            for (size_t i = 0; i <= UINT8_MAX; ++i) {
+                lookup_table[i] = UINT8_MAX;
             }
-            if ('0' <= c && c <= '9') {
-                decoded_bits = uint8_t(('Z' - 'A' + 1) + ('z' - 'a' + 1) + (c - '0'));
-            } else if (c == '+') {
-                decoded_bits = uint8_t(('Z' - 'A' + 1) + ('z' - 'a' + 1) + ('9' - '0' + 1));
-            } else if (c == '/') {
-                decoded_bits = uint8_t(('Z' - 'A' + 1) + ('z' - 'a' + 1) + ('9' - '0' + 2));
-            } else {
-                Error() << "Invalid base64 character '" << c << "'";
+            for (size_t i = 0; i < base64_alphabet.size(); ++i) {
+                lookup_table[base64_alphabet[i]] = static_cast<uint8_t>(i);
+            }
+            return lookup_table;
+        };
+        static const std::array<uint8_t, UINT8_MAX + 1> base64_lookup_table = init_base64_lookup_table();
+
+        constexpr uint32_t bits_in_base64 = 6;
+        constexpr uint32_t bits_in_byte = 8;
+
+        uint8_t* result = AllocMem<uint8_t>((str.size() * bits_in_base64 + bits_in_byte - 1) / bits_in_byte);
+        size = 0;
+        uint32_t current_word = 0;
+        uint32_t current_bits = 0;
+        for (auto ch : str) {
+            if (ch == '=') {
+                // End of data padding
+                break;
+            } else if (base64_lookup_table[ch] == UINT8_MAX) {
+                Error() << "Invalid base64 character '" << ch << "'";
                 return nullptr;
             }
-
-            auto dst_ptr = &dst_buffer[(dst_idx >> 2) * 3];
-
-            switch (dst_idx % 4) {
-                case 0:
-                    dst_ptr[0] |= decoded_bits << 2;
-                    break;
-                case 1:
-                    dst_ptr[0] = uint8_t(dst_ptr[0] | uint8_t(decoded_bits >> 4));
-                    dst_ptr[1] = uint8_t(dst_ptr[1] | uint8_t((decoded_bits & 0xF) << 4));
-                    break;
-                case 2:
-                    dst_ptr[1] = uint8_t(dst_ptr[1] | uint8_t(decoded_bits >> 2));
-                    dst_ptr[2] = uint8_t(dst_ptr[2] | uint8_t((decoded_bits & 0x3) << 6));
-                    break;
-                case 3:
-                    dst_ptr[2] |= decoded_bits;
-                    break;
-                default:
-                    break;
+            current_word = (current_word << bits_in_base64) + base64_lookup_table[ch];
+            current_bits += bits_in_base64;
+            if (current_bits >= bits_in_byte) {
+                result[size++] = static_cast<uint8_t>((current_word >> (current_bits - bits_in_byte)) & ((1 << bits_in_byte) - 1));
+                current_bits -= bits_in_byte;
             }
-
-            dst_idx++;
         }
-
-        return dst_buffer;
+        return result;
     }
 
     VkBool32 parse_VkBool32(const Json::Value& v, const LocationScope&) {
@@ -3418,7 +3530,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -3435,8 +3549,12 @@ class ParserBase : protected Base {
             Error() << "Unexpected non-zero flags";
         }
 
+        size_t size = 0;
         s.codeSize = parse_size_t(json["codeSize"], CreateScope("codeSize"));
-        s.pCode = reinterpret_cast<const uint32_t*>(parse_binary(json["pCode"], CreateScope("pCode")));
+        s.pCode = reinterpret_cast<const uint32_t*>(parse_binary(json["pCode"], CreateScope("pCode"), size));
+        if (size != s.codeSize) {
+            Error() << "pCode binary size (" << size << ") does not match expected size (" << s.codeSize << ")";
+        }
 
         return s;
     }
@@ -3446,7 +3564,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -3463,6 +3583,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkDebugUtilsObjectNameInfoEXT>();
                     current_pnext_ref = "pNext<VkDebugUtilsObjectNameInfoEXT>";
                     *next = parse_VkDebugUtilsObjectNameInfoEXT_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -3471,6 +3592,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPipelineRobustnessCreateInfo>();
                     current_pnext_ref = "pNext<VkPipelineRobustnessCreateInfo>";
                     *next = parse_VkPipelineRobustnessCreateInfo_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PIPELINE_ROBUSTNESS_CREATE_INFO;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -3480,12 +3602,13 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPipelineShaderStageRequiredSubgroupSizeCreateInfo>";
                     *next = parse_VkPipelineShaderStageRequiredSubgroupSizeCreateInfo_contents(
                         *json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
 
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
+                    Error() << "Invalid structure type extending VkPipelineShaderStageCreateInfo: "
                             << (*json_next)["sType"].asCString();
                     break;
             }
@@ -3505,7 +3628,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -3523,12 +3648,13 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPipelineVertexInputDivisorStateCreateInfo>";
                     *next = parse_VkPipelineVertexInputDivisorStateCreateInfo_contents(*json_next,
                                                                                        CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_DIVISOR_STATE_CREATE_INFO;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
 
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
+                    Error() << "Invalid structure type extending VkPipelineVertexInputStateCreateInfo: "
                             << (*json_next)["sType"].asCString();
                     break;
             }
@@ -3548,7 +3674,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -3562,7 +3690,7 @@ class ParserBase : protected Base {
             auto next_stype = parse_VkStructureType((*json_next)["sType"], CreateScope(current_pnext_ref));
             switch (next_stype) {
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
+                    Error() << "Invalid structure type extending VkPipelineInputAssemblyStateCreateInfo: "
                             << (*json_next)["sType"].asCString();
                     break;
             }
@@ -3582,7 +3710,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -3600,12 +3730,13 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPipelineTessellationDomainOriginStateCreateInfo>";
                     *next = parse_VkPipelineTessellationDomainOriginStateCreateInfo_contents(*json_next,
                                                                                              CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_DOMAIN_ORIGIN_STATE_CREATE_INFO;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
 
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
+                    Error() << "Invalid structure type extending VkPipelineTessellationStateCreateInfo: "
                             << (*json_next)["sType"].asCString();
                     break;
             }
@@ -3624,7 +3755,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -3638,7 +3771,7 @@ class ParserBase : protected Base {
             auto next_stype = parse_VkStructureType((*json_next)["sType"], CreateScope(current_pnext_ref));
             switch (next_stype) {
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
+                    Error() << "Invalid structure type extending VkPipelineViewportStateCreateInfo: "
                             << (*json_next)["sType"].asCString();
                     break;
             }
@@ -3658,7 +3791,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -3676,6 +3811,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPipelineRasterizationConservativeStateCreateInfoEXT>";
                     *next = parse_VkPipelineRasterizationConservativeStateCreateInfoEXT_contents(
                         *json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_CONSERVATIVE_STATE_CREATE_INFO_EXT;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -3685,6 +3821,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPipelineRasterizationDepthClipStateCreateInfoEXT>";
                     *next = parse_VkPipelineRasterizationDepthClipStateCreateInfoEXT_contents(*json_next,
                                                                                               CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_DEPTH_CLIP_STATE_CREATE_INFO_EXT;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -3694,12 +3831,13 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPipelineRasterizationLineStateCreateInfo>";
                     *next =
                         parse_VkPipelineRasterizationLineStateCreateInfo_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_LINE_STATE_CREATE_INFO;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
 
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
+                    Error() << "Invalid structure type extending VkPipelineRasterizationStateCreateInfo: "
                             << (*json_next)["sType"].asCString();
                     break;
             }
@@ -3718,7 +3856,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_SAMPLE_LOCATIONS_INFO_EXT") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_SAMPLE_LOCATIONS_INFO_EXT") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_SAMPLE_LOCATIONS_INFO_EXT;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -3732,8 +3872,7 @@ class ParserBase : protected Base {
             auto next_stype = parse_VkStructureType((*json_next)["sType"], CreateScope(current_pnext_ref));
             switch (next_stype) {
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
-                            << (*json_next)["sType"].asCString();
+                    Error() << "Invalid structure type extending VkSampleLocationsInfoEXT: " << (*json_next)["sType"].asCString();
                     break;
             }
             json_next = &(*json_next)["pNext"];
@@ -3752,7 +3891,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -3770,12 +3911,13 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPipelineSampleLocationsStateCreateInfoEXT>";
                     *next = parse_VkPipelineSampleLocationsStateCreateInfoEXT_contents(*json_next,
                                                                                        CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PIPELINE_SAMPLE_LOCATIONS_STATE_CREATE_INFO_EXT;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
 
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
+                    Error() << "Invalid structure type extending VkPipelineMultisampleStateCreateInfo: "
                             << (*json_next)["sType"].asCString();
                     break;
             }
@@ -3795,7 +3937,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -3809,7 +3953,7 @@ class ParserBase : protected Base {
             auto next_stype = parse_VkStructureType((*json_next)["sType"], CreateScope(current_pnext_ref));
             switch (next_stype) {
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
+                    Error() << "Invalid structure type extending VkPipelineDepthStencilStateCreateInfo: "
                             << (*json_next)["sType"].asCString();
                     break;
             }
@@ -3828,7 +3972,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -3846,6 +3992,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPipelineColorBlendAdvancedStateCreateInfoEXT>";
                     *next = parse_VkPipelineColorBlendAdvancedStateCreateInfoEXT_contents(*json_next,
                                                                                           CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_ADVANCED_STATE_CREATE_INFO_EXT;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -3854,12 +4001,13 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPipelineColorWriteCreateInfoEXT>();
                     current_pnext_ref = "pNext<VkPipelineColorWriteCreateInfoEXT>";
                     *next = parse_VkPipelineColorWriteCreateInfoEXT_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_WRITE_CREATE_INFO_EXT;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
 
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
+                    Error() << "Invalid structure type extending VkPipelineColorBlendStateCreateInfo: "
                             << (*json_next)["sType"].asCString();
                     break;
             }
@@ -3878,7 +4026,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -3892,7 +4042,7 @@ class ParserBase : protected Base {
             auto next_stype = parse_VkStructureType((*json_next)["sType"], CreateScope(current_pnext_ref));
             switch (next_stype) {
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
+                    Error() << "Invalid structure type extending VkPipelineDynamicStateCreateInfo: "
                             << (*json_next)["sType"].asCString();
                     break;
             }
@@ -3911,7 +4061,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -3928,6 +4080,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPipelineCreateFlags2CreateInfo>();
                     current_pnext_ref = "pNext<VkPipelineCreateFlags2CreateInfo>";
                     *next = parse_VkPipelineCreateFlags2CreateInfo_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PIPELINE_CREATE_FLAGS_2_CREATE_INFO;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -3936,6 +4089,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPipelineCreationFeedbackCreateInfo>();
                     current_pnext_ref = "pNext<VkPipelineCreationFeedbackCreateInfo>";
                     *next = parse_VkPipelineCreationFeedbackCreateInfo_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -3945,6 +4099,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPipelineDiscardRectangleStateCreateInfoEXT>";
                     *next = parse_VkPipelineDiscardRectangleStateCreateInfoEXT_contents(*json_next,
                                                                                         CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PIPELINE_DISCARD_RECTANGLE_STATE_CREATE_INFO_EXT;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -3954,6 +4109,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPipelineFragmentShadingRateStateCreateInfoKHR>";
                     *next = parse_VkPipelineFragmentShadingRateStateCreateInfoKHR_contents(*json_next,
                                                                                            CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PIPELINE_FRAGMENT_SHADING_RATE_STATE_CREATE_INFO_KHR;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -3962,6 +4118,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPipelineOfflineCreateInfo>();
                     current_pnext_ref = "pNext<VkPipelineOfflineCreateInfo>";
                     *next = parse_VkPipelineOfflineCreateInfo_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PIPELINE_OFFLINE_CREATE_INFO;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -3970,6 +4127,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPipelineRenderingCreateInfo>();
                     current_pnext_ref = "pNext<VkPipelineRenderingCreateInfo>";
                     *next = parse_VkPipelineRenderingCreateInfo_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -3978,6 +4136,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPipelineRobustnessCreateInfo>();
                     current_pnext_ref = "pNext<VkPipelineRobustnessCreateInfo>";
                     *next = parse_VkPipelineRobustnessCreateInfo_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PIPELINE_ROBUSTNESS_CREATE_INFO;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -3986,6 +4145,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkRenderingAttachmentLocationInfo>();
                     current_pnext_ref = "pNext<VkRenderingAttachmentLocationInfo>";
                     *next = parse_VkRenderingAttachmentLocationInfo_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_LOCATION_INFO;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -3994,6 +4154,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkRenderingInputAttachmentIndexInfo>();
                     current_pnext_ref = "pNext<VkRenderingInputAttachmentIndexInfo>";
                     *next = parse_VkRenderingInputAttachmentIndexInfo_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_RENDERING_INPUT_ATTACHMENT_INDEX_INFO;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4018,7 +4179,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -4035,6 +4198,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPipelineCreateFlags2CreateInfo>();
                     current_pnext_ref = "pNext<VkPipelineCreateFlags2CreateInfo>";
                     *next = parse_VkPipelineCreateFlags2CreateInfo_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PIPELINE_CREATE_FLAGS_2_CREATE_INFO;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4043,6 +4207,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPipelineCreationFeedbackCreateInfo>();
                     current_pnext_ref = "pNext<VkPipelineCreationFeedbackCreateInfo>";
                     *next = parse_VkPipelineCreationFeedbackCreateInfo_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4051,6 +4216,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPipelineOfflineCreateInfo>();
                     current_pnext_ref = "pNext<VkPipelineOfflineCreateInfo>";
                     *next = parse_VkPipelineOfflineCreateInfo_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PIPELINE_OFFLINE_CREATE_INFO;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4059,12 +4225,13 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPipelineRobustnessCreateInfo>();
                     current_pnext_ref = "pNext<VkPipelineRobustnessCreateInfo>";
                     *next = parse_VkPipelineRobustnessCreateInfo_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PIPELINE_ROBUSTNESS_CREATE_INFO;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
 
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
+                    Error() << "Invalid structure type extending VkComputePipelineCreateInfo: "
                             << (*json_next)["sType"].asCString();
                     break;
             }
@@ -4083,7 +4250,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_CREATE_INFO") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_CREATE_INFO") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_CREATE_INFO;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -4102,13 +4271,14 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkExternalFormatQNX>();
                     current_pnext_ref = "pNext<VkExternalFormatQNX>";
                     *next = parse_VkExternalFormatQNX_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_EXTERNAL_FORMAT_QNX;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
 #endif  // VK_USE_PLATFORM_SCREEN_QNX
 
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
+                    Error() << "Invalid structure type extending VkSamplerYcbcrConversionCreateInfo: "
                             << (*json_next)["sType"].asCString();
                     break;
             }
@@ -4127,7 +4297,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -4145,6 +4317,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkSamplerCustomBorderColorCreateInfoEXT>";
                     *next =
                         parse_VkSamplerCustomBorderColorCreateInfoEXT_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_SAMPLER_CUSTOM_BORDER_COLOR_CREATE_INFO_EXT;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4153,6 +4326,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkSamplerReductionModeCreateInfo>();
                     current_pnext_ref = "pNext<VkSamplerReductionModeCreateInfo>";
                     *next = parse_VkSamplerReductionModeCreateInfo_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_SAMPLER_REDUCTION_MODE_CREATE_INFO;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4161,13 +4335,13 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkSamplerYcbcrConversionInfo>();
                     current_pnext_ref = "pNext<VkSamplerYcbcrConversionInfo>";
                     *next = parse_VkSamplerYcbcrConversionInfo_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_INFO;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
 
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
-                            << (*json_next)["sType"].asCString();
+                    Error() << "Invalid structure type extending VkSamplerCreateInfo: " << (*json_next)["sType"].asCString();
                     break;
             }
             json_next = &(*json_next)["pNext"];
@@ -4185,7 +4359,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -4203,12 +4379,13 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkDescriptorSetLayoutBindingFlagsCreateInfo>";
                     *next = parse_VkDescriptorSetLayoutBindingFlagsCreateInfo_contents(*json_next,
                                                                                        CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
 
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
+                    Error() << "Invalid structure type extending VkDescriptorSetLayoutCreateInfo: "
                             << (*json_next)["sType"].asCString();
                     break;
             }
@@ -4227,7 +4404,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -4241,8 +4420,7 @@ class ParserBase : protected Base {
             auto next_stype = parse_VkStructureType((*json_next)["sType"], CreateScope(current_pnext_ref));
             switch (next_stype) {
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
-                            << (*json_next)["sType"].asCString();
+                    Error() << "Invalid structure type extending VkPipelineLayoutCreateInfo: " << (*json_next)["sType"].asCString();
                     break;
             }
             json_next = &(*json_next)["pNext"];
@@ -4260,7 +4438,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -4277,6 +4457,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPhysicalDevice16BitStorageFeatures>();
                     current_pnext_ref = "pNext<VkPhysicalDevice16BitStorageFeatures>";
                     *next = parse_VkPhysicalDevice16BitStorageFeatures_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4285,6 +4466,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPhysicalDevice4444FormatsFeaturesEXT>();
                     current_pnext_ref = "pNext<VkPhysicalDevice4444FormatsFeaturesEXT>";
                     *next = parse_VkPhysicalDevice4444FormatsFeaturesEXT_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_4444_FORMATS_FEATURES_EXT;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4293,6 +4475,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPhysicalDevice8BitStorageFeatures>();
                     current_pnext_ref = "pNext<VkPhysicalDevice8BitStorageFeatures>";
                     *next = parse_VkPhysicalDevice8BitStorageFeatures_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4301,6 +4484,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPhysicalDeviceASTCDecodeFeaturesEXT>();
                     current_pnext_ref = "pNext<VkPhysicalDeviceASTCDecodeFeaturesEXT>";
                     *next = parse_VkPhysicalDeviceASTCDecodeFeaturesEXT_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ASTC_DECODE_FEATURES_EXT;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4310,6 +4494,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceBlendOperationAdvancedFeaturesEXT>";
                     *next = parse_VkPhysicalDeviceBlendOperationAdvancedFeaturesEXT_contents(*json_next,
                                                                                              CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_FEATURES_EXT;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4319,6 +4504,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceBufferDeviceAddressFeatures>";
                     *next = parse_VkPhysicalDeviceBufferDeviceAddressFeatures_contents(*json_next,
                                                                                        CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4328,6 +4514,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceColorWriteEnableFeaturesEXT>";
                     *next = parse_VkPhysicalDeviceColorWriteEnableFeaturesEXT_contents(*json_next,
                                                                                        CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COLOR_WRITE_ENABLE_FEATURES_EXT;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4337,6 +4524,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceCustomBorderColorFeaturesEXT>";
                     *next = parse_VkPhysicalDeviceCustomBorderColorFeaturesEXT_contents(*json_next,
                                                                                         CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_FEATURES_EXT;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4346,6 +4534,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceDepthClipEnableFeaturesEXT>";
                     *next =
                         parse_VkPhysicalDeviceDepthClipEnableFeaturesEXT_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4355,6 +4544,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceDescriptorIndexingFeatures>";
                     *next =
                         parse_VkPhysicalDeviceDescriptorIndexingFeatures_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4364,6 +4554,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceDynamicRenderingFeatures>";
                     *next =
                         parse_VkPhysicalDeviceDynamicRenderingFeatures_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4373,6 +4564,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceDynamicRenderingLocalReadFeatures>";
                     *next = parse_VkPhysicalDeviceDynamicRenderingLocalReadFeatures_contents(*json_next,
                                                                                              CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_LOCAL_READ_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4382,6 +4574,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceExtendedDynamicState2FeaturesEXT>";
                     *next = parse_VkPhysicalDeviceExtendedDynamicState2FeaturesEXT_contents(*json_next,
                                                                                             CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4391,6 +4584,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceExtendedDynamicStateFeaturesEXT>";
                     *next = parse_VkPhysicalDeviceExtendedDynamicStateFeaturesEXT_contents(*json_next,
                                                                                            CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4402,6 +4596,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceExternalMemorySciBufFeaturesNV>";
                     *next = parse_VkPhysicalDeviceExternalMemorySciBufFeaturesNV_contents(*json_next,
                                                                                           CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_SCI_BUF_FEATURES_NV;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4414,6 +4609,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceExternalMemoryScreenBufferFeaturesQNX>";
                     *next = parse_VkPhysicalDeviceExternalMemoryScreenBufferFeaturesQNX_contents(
                         *json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_SCREEN_BUFFER_FEATURES_QNX;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4426,6 +4622,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceExternalSciSync2FeaturesNV>";
                     *next =
                         parse_VkPhysicalDeviceExternalSciSync2FeaturesNV_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_SCI_SYNC_2_FEATURES_NV;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4438,6 +4635,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceExternalSciSyncFeaturesNV>";
                     *next =
                         parse_VkPhysicalDeviceExternalSciSyncFeaturesNV_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_SCI_SYNC_FEATURES_NV;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4448,6 +4646,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceFragmentShaderInterlockFeaturesEXT>";
                     *next = parse_VkPhysicalDeviceFragmentShaderInterlockFeaturesEXT_contents(*json_next,
                                                                                               CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_INTERLOCK_FEATURES_EXT;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4457,6 +4656,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceFragmentShadingRateFeaturesKHR>";
                     *next = parse_VkPhysicalDeviceFragmentShadingRateFeaturesKHR_contents(*json_next,
                                                                                           CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4466,6 +4666,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceGlobalPriorityQueryFeatures>";
                     *next = parse_VkPhysicalDeviceGlobalPriorityQueryFeatures_contents(*json_next,
                                                                                        CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GLOBAL_PRIORITY_QUERY_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4474,6 +4675,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPhysicalDeviceHostImageCopyFeatures>();
                     current_pnext_ref = "pNext<VkPhysicalDeviceHostImageCopyFeatures>";
                     *next = parse_VkPhysicalDeviceHostImageCopyFeatures_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_IMAGE_COPY_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4482,6 +4684,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPhysicalDeviceHostQueryResetFeatures>();
                     current_pnext_ref = "pNext<VkPhysicalDeviceHostQueryResetFeatures>";
                     *next = parse_VkPhysicalDeviceHostQueryResetFeatures_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4491,6 +4694,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceImageRobustnessFeatures>";
                     *next =
                         parse_VkPhysicalDeviceImageRobustnessFeatures_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ROBUSTNESS_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4500,6 +4704,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceImagelessFramebufferFeatures>";
                     *next = parse_VkPhysicalDeviceImagelessFramebufferFeatures_contents(*json_next,
                                                                                         CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGELESS_FRAMEBUFFER_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4508,6 +4713,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPhysicalDeviceIndexTypeUint8Features>();
                     current_pnext_ref = "pNext<VkPhysicalDeviceIndexTypeUint8Features>";
                     *next = parse_VkPhysicalDeviceIndexTypeUint8Features_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4517,6 +4723,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceInlineUniformBlockFeatures>";
                     *next =
                         parse_VkPhysicalDeviceInlineUniformBlockFeatures_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4526,6 +4733,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceLineRasterizationFeatures>";
                     *next =
                         parse_VkPhysicalDeviceLineRasterizationFeatures_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4534,6 +4742,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPhysicalDeviceMaintenance4Features>();
                     current_pnext_ref = "pNext<VkPhysicalDeviceMaintenance4Features>";
                     *next = parse_VkPhysicalDeviceMaintenance4Features_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4542,6 +4751,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPhysicalDeviceMaintenance5Features>();
                     current_pnext_ref = "pNext<VkPhysicalDeviceMaintenance5Features>";
                     *next = parse_VkPhysicalDeviceMaintenance5Features_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_5_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4550,6 +4760,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPhysicalDeviceMaintenance6Features>();
                     current_pnext_ref = "pNext<VkPhysicalDeviceMaintenance6Features>";
                     *next = parse_VkPhysicalDeviceMaintenance6Features_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_6_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4558,6 +4769,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPhysicalDeviceMultiviewFeatures>();
                     current_pnext_ref = "pNext<VkPhysicalDeviceMultiviewFeatures>";
                     *next = parse_VkPhysicalDeviceMultiviewFeatures_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4567,6 +4779,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDevicePerformanceQueryFeaturesKHR>";
                     *next = parse_VkPhysicalDevicePerformanceQueryFeaturesKHR_contents(*json_next,
                                                                                        CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_QUERY_FEATURES_KHR;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4576,6 +4789,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDevicePipelineCreationCacheControlFeatures>";
                     *next = parse_VkPhysicalDevicePipelineCreationCacheControlFeatures_contents(
                         *json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_CREATION_CACHE_CONTROL_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4585,6 +4799,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDevicePipelineProtectedAccessFeatures>";
                     *next = parse_VkPhysicalDevicePipelineProtectedAccessFeatures_contents(*json_next,
                                                                                            CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_PROTECTED_ACCESS_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4594,6 +4809,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDevicePipelineRobustnessFeatures>";
                     *next =
                         parse_VkPhysicalDevicePipelineRobustnessFeatures_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_ROBUSTNESS_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4602,6 +4818,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPhysicalDevicePrivateDataFeatures>();
                     current_pnext_ref = "pNext<VkPhysicalDevicePrivateDataFeatures>";
                     *next = parse_VkPhysicalDevicePrivateDataFeatures_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIVATE_DATA_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4611,6 +4828,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceProtectedMemoryFeatures>";
                     *next =
                         parse_VkPhysicalDeviceProtectedMemoryFeatures_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4619,6 +4837,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPhysicalDeviceRobustness2FeaturesKHR>();
                     current_pnext_ref = "pNext<VkPhysicalDeviceRobustness2FeaturesKHR>";
                     *next = parse_VkPhysicalDeviceRobustness2FeaturesKHR_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_KHR;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4628,6 +4847,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceSamplerYcbcrConversionFeatures>";
                     *next = parse_VkPhysicalDeviceSamplerYcbcrConversionFeatures_contents(*json_next,
                                                                                           CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_YCBCR_CONVERSION_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4637,6 +4857,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceScalarBlockLayoutFeatures>";
                     *next =
                         parse_VkPhysicalDeviceScalarBlockLayoutFeatures_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4646,6 +4867,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures>";
                     *next = parse_VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures_contents(
                         *json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SEPARATE_DEPTH_STENCIL_LAYOUTS_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4655,6 +4877,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceShaderAtomicFloatFeaturesEXT>";
                     *next = parse_VkPhysicalDeviceShaderAtomicFloatFeaturesEXT_contents(*json_next,
                                                                                         CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT_FEATURES_EXT;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4664,6 +4887,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceShaderAtomicInt64Features>";
                     *next =
                         parse_VkPhysicalDeviceShaderAtomicInt64Features_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_INT64_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4672,6 +4896,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPhysicalDeviceShaderClockFeaturesKHR>();
                     current_pnext_ref = "pNext<VkPhysicalDeviceShaderClockFeaturesKHR>";
                     *next = parse_VkPhysicalDeviceShaderClockFeaturesKHR_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CLOCK_FEATURES_KHR;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4681,6 +4906,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceShaderDemoteToHelperInvocationFeatures>";
                     *next = parse_VkPhysicalDeviceShaderDemoteToHelperInvocationFeatures_contents(
                         *json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4690,6 +4916,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceShaderDrawParametersFeatures>";
                     *next = parse_VkPhysicalDeviceShaderDrawParametersFeatures_contents(*json_next,
                                                                                         CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4699,6 +4926,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceShaderExpectAssumeFeatures>";
                     *next =
                         parse_VkPhysicalDeviceShaderExpectAssumeFeatures_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_EXPECT_ASSUME_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4708,6 +4936,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceShaderFloat16Int8Features>";
                     *next =
                         parse_VkPhysicalDeviceShaderFloat16Int8Features_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4717,6 +4946,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceShaderFloatControls2Features>";
                     *next = parse_VkPhysicalDeviceShaderFloatControls2Features_contents(*json_next,
                                                                                         CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT_CONTROLS_2_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4726,6 +4956,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceShaderImageAtomicInt64FeaturesEXT>";
                     *next = parse_VkPhysicalDeviceShaderImageAtomicInt64FeaturesEXT_contents(*json_next,
                                                                                              CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_IMAGE_ATOMIC_INT64_FEATURES_EXT;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4735,6 +4966,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceShaderIntegerDotProductFeatures>";
                     *next = parse_VkPhysicalDeviceShaderIntegerDotProductFeatures_contents(*json_next,
                                                                                            CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_DOT_PRODUCT_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4744,6 +4976,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceShaderSubgroupExtendedTypesFeatures>";
                     *next = parse_VkPhysicalDeviceShaderSubgroupExtendedTypesFeatures_contents(
                         *json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4753,6 +4986,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceShaderSubgroupRotateFeatures>";
                     *next = parse_VkPhysicalDeviceShaderSubgroupRotateFeatures_contents(*json_next,
                                                                                         CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_ROTATE_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4762,6 +4996,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceShaderTerminateInvocationFeatures>";
                     *next = parse_VkPhysicalDeviceShaderTerminateInvocationFeatures_contents(*json_next,
                                                                                              CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TERMINATE_INVOCATION_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4771,6 +5006,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceSubgroupSizeControlFeatures>";
                     *next = parse_VkPhysicalDeviceSubgroupSizeControlFeatures_contents(*json_next,
                                                                                        CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4780,6 +5016,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceSynchronization2Features>";
                     *next =
                         parse_VkPhysicalDeviceSynchronization2Features_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4789,6 +5026,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceTexelBufferAlignmentFeaturesEXT>";
                     *next = parse_VkPhysicalDeviceTexelBufferAlignmentFeaturesEXT_contents(*json_next,
                                                                                            CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_FEATURES_EXT;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4798,6 +5036,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceTextureCompressionASTCHDRFeatures>";
                     *next = parse_VkPhysicalDeviceTextureCompressionASTCHDRFeatures_contents(*json_next,
                                                                                              CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXTURE_COMPRESSION_ASTC_HDR_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4807,6 +5046,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceTimelineSemaphoreFeatures>";
                     *next =
                         parse_VkPhysicalDeviceTimelineSemaphoreFeatures_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4816,6 +5056,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceUniformBufferStandardLayoutFeatures>";
                     *next = parse_VkPhysicalDeviceUniformBufferStandardLayoutFeatures_contents(
                         *json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_UNIFORM_BUFFER_STANDARD_LAYOUT_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4825,6 +5066,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceVariablePointersFeatures>";
                     *next =
                         parse_VkPhysicalDeviceVariablePointersFeatures_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTERS_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4834,6 +5076,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceVertexAttributeDivisorFeatures>";
                     *next = parse_VkPhysicalDeviceVertexAttributeDivisorFeatures_contents(*json_next,
                                                                                           CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4843,6 +5086,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT>";
                     *next = parse_VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT_contents(*json_next,
                                                                                               CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_INPUT_DYNAMIC_STATE_FEATURES_EXT;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4851,6 +5095,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPhysicalDeviceVulkan11Features>();
                     current_pnext_ref = "pNext<VkPhysicalDeviceVulkan11Features>";
                     *next = parse_VkPhysicalDeviceVulkan11Features_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4859,6 +5104,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPhysicalDeviceVulkan12Features>();
                     current_pnext_ref = "pNext<VkPhysicalDeviceVulkan12Features>";
                     *next = parse_VkPhysicalDeviceVulkan12Features_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4867,6 +5113,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPhysicalDeviceVulkan13Features>();
                     current_pnext_ref = "pNext<VkPhysicalDeviceVulkan13Features>";
                     *next = parse_VkPhysicalDeviceVulkan13Features_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4875,6 +5122,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPhysicalDeviceVulkan14Features>();
                     current_pnext_ref = "pNext<VkPhysicalDeviceVulkan14Features>";
                     *next = parse_VkPhysicalDeviceVulkan14Features_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4884,6 +5132,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceVulkanMemoryModelFeatures>";
                     *next =
                         parse_VkPhysicalDeviceVulkanMemoryModelFeatures_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_MEMORY_MODEL_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4892,6 +5141,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkPhysicalDeviceVulkanSC10Features>();
                     current_pnext_ref = "pNext<VkPhysicalDeviceVulkanSC10Features>";
                     *next = parse_VkPhysicalDeviceVulkanSC10Features_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_SC_1_0_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4901,6 +5151,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceYcbcr2Plane444FormatsFeaturesEXT>";
                     *next = parse_VkPhysicalDeviceYcbcr2Plane444FormatsFeaturesEXT_contents(*json_next,
                                                                                             CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_YCBCR_2_PLANE_444_FORMATS_FEATURES_EXT;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4910,6 +5161,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceYcbcrImageArraysFeaturesEXT>";
                     *next = parse_VkPhysicalDeviceYcbcrImageArraysFeaturesEXT_contents(*json_next,
                                                                                        CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_YCBCR_IMAGE_ARRAYS_FEATURES_EXT;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4919,13 +5171,13 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPhysicalDeviceZeroInitializeWorkgroupMemoryFeatures>";
                     *next = parse_VkPhysicalDeviceZeroInitializeWorkgroupMemoryFeatures_contents(
                         *json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ZERO_INITIALIZE_WORKGROUP_MEMORY_FEATURES;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
 
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
-                            << (*json_next)["sType"].asCString();
+                    Error() << "Invalid structure type extending VkPhysicalDeviceFeatures2: " << (*json_next)["sType"].asCString();
                     break;
             }
             json_next = &(*json_next)["pNext"];
@@ -4943,7 +5195,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -4961,6 +5215,7 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkRenderPassInputAttachmentAspectCreateInfo>";
                     *next = parse_VkRenderPassInputAttachmentAspectCreateInfo_contents(*json_next,
                                                                                        CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_RENDER_PASS_INPUT_ATTACHMENT_ASPECT_CREATE_INFO;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -4969,13 +5224,13 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkRenderPassMultiviewCreateInfo>();
                     current_pnext_ref = "pNext<VkRenderPassMultiviewCreateInfo>";
                     *next = parse_VkRenderPassMultiviewCreateInfo_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
 
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
-                            << (*json_next)["sType"].asCString();
+                    Error() << "Invalid structure type extending VkRenderPassCreateInfo: " << (*json_next)["sType"].asCString();
                     break;
             }
             json_next = &(*json_next)["pNext"];
@@ -4993,7 +5248,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -5010,13 +5267,13 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkAttachmentDescriptionStencilLayout>();
                     current_pnext_ref = "pNext<VkAttachmentDescriptionStencilLayout>";
                     *next = parse_VkAttachmentDescriptionStencilLayout_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_STENCIL_LAYOUT;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
 
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
-                            << (*json_next)["sType"].asCString();
+                    Error() << "Invalid structure type extending VkAttachmentDescription2: " << (*json_next)["sType"].asCString();
                     break;
             }
             json_next = &(*json_next)["pNext"];
@@ -5034,7 +5291,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -5051,13 +5310,13 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkAttachmentReferenceStencilLayout>();
                     current_pnext_ref = "pNext<VkAttachmentReferenceStencilLayout>";
                     *next = parse_VkAttachmentReferenceStencilLayout_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_STENCIL_LAYOUT;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
 
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
-                            << (*json_next)["sType"].asCString();
+                    Error() << "Invalid structure type extending VkAttachmentReference2: " << (*json_next)["sType"].asCString();
                     break;
             }
             json_next = &(*json_next)["pNext"];
@@ -5075,7 +5334,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -5092,6 +5353,7 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkFragmentShadingRateAttachmentInfoKHR>();
                     current_pnext_ref = "pNext<VkFragmentShadingRateAttachmentInfoKHR>";
                     *next = parse_VkFragmentShadingRateAttachmentInfoKHR_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_FRAGMENT_SHADING_RATE_ATTACHMENT_INFO_KHR;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -5101,13 +5363,13 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkSubpassDescriptionDepthStencilResolve>";
                     *next =
                         parse_VkSubpassDescriptionDepthStencilResolve_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_DEPTH_STENCIL_RESOLVE;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
 
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
-                            << (*json_next)["sType"].asCString();
+                    Error() << "Invalid structure type extending VkSubpassDescription2: " << (*json_next)["sType"].asCString();
                     break;
             }
             json_next = &(*json_next)["pNext"];
@@ -5125,7 +5387,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -5142,13 +5406,13 @@ class ParserBase : protected Base {
                     auto next = AllocMem<VkMemoryBarrier2>();
                     current_pnext_ref = "pNext<VkMemoryBarrier2>";
                     *next = parse_VkMemoryBarrier2_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
 
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
-                            << (*json_next)["sType"].asCString();
+                    Error() << "Invalid structure type extending VkSubpassDependency2: " << (*json_next)["sType"].asCString();
                     break;
             }
             json_next = &(*json_next)["pNext"];
@@ -5166,7 +5430,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -5180,8 +5446,7 @@ class ParserBase : protected Base {
             auto next_stype = parse_VkStructureType((*json_next)["sType"], CreateScope(current_pnext_ref));
             switch (next_stype) {
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
-                            << (*json_next)["sType"].asCString();
+                    Error() << "Invalid structure type extending VkRenderPassCreateInfo2: " << (*json_next)["sType"].asCString();
                     break;
             }
             json_next = &(*json_next)["pNext"];
@@ -5199,7 +5464,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -5213,8 +5480,7 @@ class ParserBase : protected Base {
             auto next_stype = parse_VkStructureType((*json_next)["sType"], CreateScope(current_pnext_ref));
             switch (next_stype) {
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
-                            << (*json_next)["sType"].asCString();
+                    Error() << "Invalid structure type extending VkPipelineCacheCreateInfo: " << (*json_next)["sType"].asCString();
                     break;
             }
             json_next = &(*json_next)["pNext"];
@@ -5232,7 +5498,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_POOL_SIZE") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_POOL_SIZE") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_PIPELINE_POOL_SIZE;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -5246,8 +5514,7 @@ class ParserBase : protected Base {
             auto next_stype = parse_VkStructureType((*json_next)["sType"], CreateScope(current_pnext_ref));
             switch (next_stype) {
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
-                            << (*json_next)["sType"].asCString();
+                    Error() << "Invalid structure type extending VkPipelinePoolSize: " << (*json_next)["sType"].asCString();
                     break;
             }
             json_next = &(*json_next)["pNext"];
@@ -5265,7 +5532,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -5279,7 +5548,7 @@ class ParserBase : protected Base {
             auto next_stype = parse_VkStructureType((*json_next)["sType"], CreateScope(current_pnext_ref));
             switch (next_stype) {
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
+                    Error() << "Invalid structure type extending VkDeviceObjectReservationCreateInfo: "
                             << (*json_next)["sType"].asCString();
                     break;
             }
@@ -5298,7 +5567,9 @@ class ParserBase : protected Base {
 
         const auto& json_stype = json["sType"];
         if (json_stype.isString()) {
-            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_OFFLINE_CREATE_INFO") != 0) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_PIPELINE_OFFLINE_CREATE_INFO") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_PIPELINE_OFFLINE_CREATE_INFO;
+            } else {
                 Error() << "Invalid sType value: " << json_stype.asCString();
             }
         } else {
@@ -5312,7 +5583,7 @@ class ParserBase : protected Base {
             auto next_stype = parse_VkStructureType((*json_next)["sType"], CreateScope(current_pnext_ref));
             switch (next_stype) {
                 default:
-                    Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
+                    Error() << "Invalid structure type extending VkPipelineOfflineCreateInfo: "
                             << (*json_next)["sType"].asCString();
                     break;
             }
@@ -5364,7 +5635,14 @@ class ParserBase : protected Base {
             }
         }
         s.dataSize = parse_size_t(json["dataSize"], CreateScope("dataSize"));
-        s.pData = parse_binary(json["pData"], CreateScope("pData"));
+        {
+            size_t size = 0;
+            s.pData = parse_binary(json["pData"], CreateScope("pData"), size);
+            if (size != s.dataSize) {
+                Error() << "pData binary size (" << size << ") does not match expected size (" << s.dataSize << ")";
+            }
+        }
+
         return s;
     }
 
@@ -5619,12 +5897,10 @@ class ParserBase : protected Base {
                         Error() << "pViewports array size (" << json_member.size() << ") does not match expected length ("
                                 << s.viewportCount << ")";
                     }
+                } else if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                    s.pViewports = nullptr;
                 } else {
-                    if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
-                        s.pViewports = nullptr;
-                    } else {
-                        Error() << "pViewports is not an array and is not NULL";
-                    }
+                    Error() << "pViewports is not an array and is not NULL";
                 }
             }
         }
@@ -5649,12 +5925,10 @@ class ParserBase : protected Base {
                         Error() << "pScissors array size (" << json_member.size() << ") does not match expected length ("
                                 << s.scissorCount << ")";
                     }
+                } else if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                    s.pScissors = nullptr;
                 } else {
-                    if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
-                        s.pScissors = nullptr;
-                    } else {
-                        Error() << "pScissors is not an array and is not NULL";
-                    }
+                    Error() << "pScissors is not an array and is not NULL";
                 }
             }
         }
@@ -5736,8 +6010,10 @@ class ParserBase : protected Base {
                         Error() << "pSampleMask array size (" << json_member.size() << ") does not match expected length ("
                                 << size_t((s.rasterizationSamples + 31) / 32) << ")";
                     }
+                } else if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                    s.pSampleMask = nullptr;
                 } else {
-                    Error() << "pSampleMask is not an array";
+                    Error() << "pSampleMask is not an array and is not NULL";
                 }
             }
         }
@@ -5866,8 +6142,10 @@ class ParserBase : protected Base {
                         Error() << "pAttachments array size (" << json_member.size() << ") does not match expected length ("
                                 << s.attachmentCount << ")";
                     }
+                } else if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                    s.pAttachments = nullptr;
                 } else {
-                    Error() << "pAttachments is not an array";
+                    Error() << "pAttachments is not an array and is not NULL";
                 }
             }
         }
@@ -5993,12 +6271,10 @@ class ParserBase : protected Base {
                         Error() << "pStages array size (" << json_member.size() << ") does not match expected length ("
                                 << s.stageCount << ")";
                     }
+                } else if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                    s.pStages = nullptr;
                 } else {
-                    if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
-                        s.pStages = nullptr;
-                    } else {
-                        Error() << "pStages is not an array and is not NULL";
-                    }
+                    Error() << "pStages is not an array and is not NULL";
                 }
             }
         }
@@ -6196,12 +6472,10 @@ class ParserBase : protected Base {
                         Error() << "pDiscardRectangles array size (" << json_member.size() << ") does not match expected length ("
                                 << s.discardRectangleCount << ")";
                     }
+                } else if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                    s.pDiscardRectangles = nullptr;
                 } else {
-                    if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
-                        s.pDiscardRectangles = nullptr;
-                    } else {
-                        Error() << "pDiscardRectangles is not an array and is not NULL";
-                    }
+                    Error() << "pDiscardRectangles is not an array and is not NULL";
                 }
             }
         }
@@ -6284,12 +6558,10 @@ class ParserBase : protected Base {
                         Error() << "pColorAttachmentFormats array size (" << json_member.size()
                                 << ") does not match expected length (" << s.colorAttachmentCount << ")";
                     }
+                } else if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                    s.pColorAttachmentFormats = nullptr;
                 } else {
-                    if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
-                        s.pColorAttachmentFormats = nullptr;
-                    } else {
-                        Error() << "pColorAttachmentFormats is not an array and is not NULL";
-                    }
+                    Error() << "pColorAttachmentFormats is not an array and is not NULL";
                 }
             }
         }
@@ -6322,12 +6594,10 @@ class ParserBase : protected Base {
                         Error() << "pColorAttachmentLocations array size (" << json_member.size()
                                 << ") does not match expected length (" << s.colorAttachmentCount << ")";
                     }
+                } else if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                    s.pColorAttachmentLocations = nullptr;
                 } else {
-                    if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
-                        s.pColorAttachmentLocations = nullptr;
-                    } else {
-                        Error() << "pColorAttachmentLocations is not an array and is not NULL";
-                    }
+                    Error() << "pColorAttachmentLocations is not an array and is not NULL";
                 }
             }
         }
@@ -6359,8 +6629,10 @@ class ParserBase : protected Base {
                         Error() << "pColorAttachmentInputIndices array size (" << json_member.size()
                                 << ") does not match expected length (" << s.colorAttachmentCount << ")";
                     }
+                } else if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                    s.pColorAttachmentInputIndices = nullptr;
                 } else {
-                    Error() << "pColorAttachmentInputIndices is not an array";
+                    Error() << "pColorAttachmentInputIndices is not an array and is not NULL";
                 }
             }
         }
@@ -6557,12 +6829,10 @@ class ParserBase : protected Base {
                         Error() << "pImmutableSamplers array size (" << json_member.size() << ") does not match expected length ("
                                 << s.descriptorCount << ")";
                     }
+                } else if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                    s.pImmutableSamplers = nullptr;
                 } else {
-                    if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
-                        s.pImmutableSamplers = nullptr;
-                    } else {
-                        Error() << "pImmutableSamplers is not an array and is not NULL";
-                    }
+                    Error() << "pImmutableSamplers is not an array and is not NULL";
                 }
             }
         }
@@ -7676,8 +7946,10 @@ class ParserBase : protected Base {
                         Error() << "pResolveAttachments array size (" << json_member.size() << ") does not match expected length ("
                                 << s.colorAttachmentCount << ")";
                     }
+                } else if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                    s.pResolveAttachments = nullptr;
                 } else {
-                    Error() << "pResolveAttachments is not an array";
+                    Error() << "pResolveAttachments is not an array and is not NULL";
                 }
             }
         }
@@ -8062,8 +8334,10 @@ class ParserBase : protected Base {
                         Error() << "pResolveAttachments array size (" << json_member.size() << ") does not match expected length ("
                                 << s.colorAttachmentCount << ")";
                     }
+                } else if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                    s.pResolveAttachments = nullptr;
                 } else {
-                    Error() << "pResolveAttachments is not an array";
+                    Error() << "pResolveAttachments is not an array and is not NULL";
                 }
             }
         }
@@ -8283,7 +8557,14 @@ class ParserBase : protected Base {
         VkPipelineCacheCreateInfo s{};
         s.flags = parse_VkPipelineCacheCreateFlags(json["flags"], CreateScope("flags"));
         s.initialDataSize = parse_size_t(json["initialDataSize"], CreateScope("initialDataSize"));
-        s.pInitialData = parse_binary(json["pInitialData"], CreateScope("pInitialData"));
+        {
+            size_t size = 0;
+            s.pInitialData = parse_binary(json["pInitialData"], CreateScope("pInitialData"), size);
+            if (size != s.initialDataSize) {
+                Error() << "pInitialData binary size (" << size << ") does not match expected size (" << s.initialDataSize << ")";
+            }
+        }
+
         return s;
     }
 

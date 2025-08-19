@@ -23,53 +23,6 @@ namespace pcjson {
 
 class GeneratorBase : protected Base {
   private:
-    Json::Value gen_int8_t(const int8_t v, const LocationScope&) { return v; }
-    Json::Value gen_uint8_t(const uint8_t v, const LocationScope&) { return v; }
-    Json::Value gen_int16_t(const int16_t v, const LocationScope&) { return v; }
-    Json::Value gen_uint16_t(const uint16_t v, const LocationScope&) { return v; }
-    Json::Value gen_int32_t(const int32_t v, const LocationScope&) { return v; }
-    Json::Value gen_uint32_t(const uint32_t v, const LocationScope&) { return v; }
-    Json::Value gen_int64_t(const int64_t v, const LocationScope&) { return v; }
-    Json::Value gen_uint64_t(const uint64_t v, const LocationScope&) { return v; }
-    Json::Value gen_float(const float v, const LocationScope&) { return v; }
-    Json::Value gen_size_t(const size_t v, const LocationScope&) { return v; }
-    Json::Value gen_VkBool32(const VkBool32 v, const LocationScope&) { return v; }
-    Json::Value gen_VkDeviceSize(const VkDeviceSize v, const LocationScope&) { return v; }
-    Json::Value gen_VkSampleMask(const VkSampleMask v, const LocationScope&) { return v; }
-
-    std::string gen_string(const char* str) { return str; }
-
-    std::string gen_binary(const void* ptr, const size_t size) {
-        static const char base64_table[64] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
-                                              'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
-                                              'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
-                                              'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'};
-
-        const uint8_t* data = reinterpret_cast<const uint8_t*>(ptr);
-        size_t src_idx = 0;
-        std::string result;
-        result.reserve(size * 4);
-
-        while (src_idx < size) {
-            size_t num_read = std::min(size_t(3), size - src_idx);
-
-            uint8_t s0 = data[src_idx];
-            uint8_t s1 = (num_read >= 2) ? data[src_idx + 1] : 0;
-            uint8_t s2 = (num_read >= 3) ? data[src_idx + 2] : 0;
-
-            src_idx += num_read;
-
-            result.push_back(base64_table[s0 >> 2]);
-            result.push_back(base64_table[((s0 & 0x3) << 4) | (s1 >> 4)]);
-            result.push_back(base64_table[((s1 & 0xF) << 2) | (s2 >> 6)]);
-            result.push_back(base64_table[s2 & 0x3F]);
-
-            if (num_read < 3) result[result.size() - 1] = '=';
-            if (num_read < 2) result[result.size() - 2] = '=';
-        }
-        return result;
-    }
-
     Json::Value gen_VkShaderModule(const VkShaderModule v, const LocationScope&) { return uint64_t(v); }
     Json::Value gen_VkPipelineLayout(const VkPipelineLayout v, const LocationScope&) { return uint64_t(v); }
     Json::Value gen_VkRenderPass(const VkRenderPass v, const LocationScope&) { return uint64_t(v); }
@@ -2031,6 +1984,665 @@ class GeneratorBase : protected Base {
     }
 
   protected:
+    void* filter_VkPhysicalDeviceFeatures2(const void* pDeviceCreateInfoPNext, const LocationScope& l) {
+        auto base = AllocMem<VkPhysicalDeviceFeatures2>();
+        void* pnext = nullptr;
+        auto p = reinterpret_cast<const VkBaseInStructure*>(pDeviceCreateInfoPNext);
+        while (p != nullptr) {
+            switch (p->sType) {
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2: {
+                    *base = *reinterpret_cast<const VkPhysicalDeviceFeatures2*>(p);
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDevice16BitStorageFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDevice16BitStorageFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_4444_FORMATS_FEATURES_EXT: {
+                    auto s = AllocMem<VkPhysicalDevice4444FormatsFeaturesEXT>();
+                    *s = *reinterpret_cast<const VkPhysicalDevice4444FormatsFeaturesEXT*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDevice8BitStorageFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDevice8BitStorageFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ASTC_DECODE_FEATURES_EXT: {
+                    auto s = AllocMem<VkPhysicalDeviceASTCDecodeFeaturesEXT>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceASTCDecodeFeaturesEXT*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_FEATURES_EXT: {
+                    auto s = AllocMem<VkPhysicalDeviceBlendOperationAdvancedFeaturesEXT>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceBlendOperationAdvancedFeaturesEXT*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceBufferDeviceAddressFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceBufferDeviceAddressFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COLOR_WRITE_ENABLE_FEATURES_EXT: {
+                    auto s = AllocMem<VkPhysicalDeviceColorWriteEnableFeaturesEXT>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceColorWriteEnableFeaturesEXT*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_FEATURES_EXT: {
+                    auto s = AllocMem<VkPhysicalDeviceCustomBorderColorFeaturesEXT>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceCustomBorderColorFeaturesEXT*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT: {
+                    auto s = AllocMem<VkPhysicalDeviceDepthClipEnableFeaturesEXT>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceDepthClipEnableFeaturesEXT*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceDescriptorIndexingFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceDescriptorIndexingFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceDynamicRenderingFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceDynamicRenderingFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_LOCAL_READ_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceDynamicRenderingLocalReadFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceDynamicRenderingLocalReadFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT: {
+                    auto s = AllocMem<VkPhysicalDeviceExtendedDynamicState2FeaturesEXT>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceExtendedDynamicState2FeaturesEXT*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT: {
+                    auto s = AllocMem<VkPhysicalDeviceExtendedDynamicStateFeaturesEXT>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceExtendedDynamicStateFeaturesEXT*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+#ifdef VK_USE_PLATFORM_SCI
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_SCI_BUF_FEATURES_NV: {
+                    auto s = AllocMem<VkPhysicalDeviceExternalMemorySciBufFeaturesNV>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceExternalMemorySciBufFeaturesNV*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+#endif  // VK_USE_PLATFORM_SCI
+#ifdef VK_USE_PLATFORM_SCREEN_QNX
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_SCREEN_BUFFER_FEATURES_QNX: {
+                    auto s = AllocMem<VkPhysicalDeviceExternalMemoryScreenBufferFeaturesQNX>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceExternalMemoryScreenBufferFeaturesQNX*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+#endif  // VK_USE_PLATFORM_SCREEN_QNX
+#ifdef VK_USE_PLATFORM_SCI
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_SCI_SYNC_2_FEATURES_NV: {
+                    auto s = AllocMem<VkPhysicalDeviceExternalSciSync2FeaturesNV>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceExternalSciSync2FeaturesNV*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_SCI_SYNC_FEATURES_NV: {
+                    auto s = AllocMem<VkPhysicalDeviceExternalSciSyncFeaturesNV>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceExternalSciSyncFeaturesNV*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+#endif  // VK_USE_PLATFORM_SCI
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_INTERLOCK_FEATURES_EXT: {
+                    auto s = AllocMem<VkPhysicalDeviceFragmentShaderInterlockFeaturesEXT>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceFragmentShaderInterlockFeaturesEXT*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR: {
+                    auto s = AllocMem<VkPhysicalDeviceFragmentShadingRateFeaturesKHR>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceFragmentShadingRateFeaturesKHR*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GLOBAL_PRIORITY_QUERY_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceGlobalPriorityQueryFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceGlobalPriorityQueryFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_IMAGE_COPY_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceHostImageCopyFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceHostImageCopyFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceHostQueryResetFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceHostQueryResetFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ROBUSTNESS_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceImageRobustnessFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceImageRobustnessFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGELESS_FRAMEBUFFER_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceImagelessFramebufferFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceImagelessFramebufferFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceIndexTypeUint8Features>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceIndexTypeUint8Features*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceInlineUniformBlockFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceInlineUniformBlockFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceLineRasterizationFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceLineRasterizationFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceMaintenance4Features>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceMaintenance4Features*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_5_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceMaintenance5Features>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceMaintenance5Features*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_6_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceMaintenance6Features>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceMaintenance6Features*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceMultiviewFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceMultiviewFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_QUERY_FEATURES_KHR: {
+                    auto s = AllocMem<VkPhysicalDevicePerformanceQueryFeaturesKHR>();
+                    *s = *reinterpret_cast<const VkPhysicalDevicePerformanceQueryFeaturesKHR*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_CREATION_CACHE_CONTROL_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDevicePipelineCreationCacheControlFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDevicePipelineCreationCacheControlFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_PROTECTED_ACCESS_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDevicePipelineProtectedAccessFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDevicePipelineProtectedAccessFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_ROBUSTNESS_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDevicePipelineRobustnessFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDevicePipelineRobustnessFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIVATE_DATA_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDevicePrivateDataFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDevicePrivateDataFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceProtectedMemoryFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceProtectedMemoryFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_KHR: {
+                    auto s = AllocMem<VkPhysicalDeviceRobustness2FeaturesKHR>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceRobustness2FeaturesKHR*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_YCBCR_CONVERSION_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceSamplerYcbcrConversionFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceSamplerYcbcrConversionFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceScalarBlockLayoutFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceScalarBlockLayoutFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SEPARATE_DEPTH_STENCIL_LAYOUTS_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT_FEATURES_EXT: {
+                    auto s = AllocMem<VkPhysicalDeviceShaderAtomicFloatFeaturesEXT>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceShaderAtomicFloatFeaturesEXT*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_INT64_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceShaderAtomicInt64Features>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceShaderAtomicInt64Features*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CLOCK_FEATURES_KHR: {
+                    auto s = AllocMem<VkPhysicalDeviceShaderClockFeaturesKHR>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceShaderClockFeaturesKHR*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceShaderDemoteToHelperInvocationFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceShaderDemoteToHelperInvocationFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceShaderDrawParametersFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceShaderDrawParametersFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_EXPECT_ASSUME_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceShaderExpectAssumeFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceShaderExpectAssumeFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceShaderFloat16Int8Features>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceShaderFloat16Int8Features*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT_CONTROLS_2_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceShaderFloatControls2Features>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceShaderFloatControls2Features*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_IMAGE_ATOMIC_INT64_FEATURES_EXT: {
+                    auto s = AllocMem<VkPhysicalDeviceShaderImageAtomicInt64FeaturesEXT>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceShaderImageAtomicInt64FeaturesEXT*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_DOT_PRODUCT_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceShaderIntegerDotProductFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceShaderIntegerDotProductFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceShaderSubgroupExtendedTypesFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceShaderSubgroupExtendedTypesFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_ROTATE_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceShaderSubgroupRotateFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceShaderSubgroupRotateFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TERMINATE_INVOCATION_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceShaderTerminateInvocationFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceShaderTerminateInvocationFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceSubgroupSizeControlFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceSubgroupSizeControlFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceSynchronization2Features>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceSynchronization2Features*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_FEATURES_EXT: {
+                    auto s = AllocMem<VkPhysicalDeviceTexelBufferAlignmentFeaturesEXT>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceTexelBufferAlignmentFeaturesEXT*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXTURE_COMPRESSION_ASTC_HDR_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceTextureCompressionASTCHDRFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceTextureCompressionASTCHDRFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceTimelineSemaphoreFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceTimelineSemaphoreFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_UNIFORM_BUFFER_STANDARD_LAYOUT_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceUniformBufferStandardLayoutFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceUniformBufferStandardLayoutFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTERS_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceVariablePointersFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceVariablePointersFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceVertexAttributeDivisorFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceVertexAttributeDivisorFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_INPUT_DYNAMIC_STATE_FEATURES_EXT: {
+                    auto s = AllocMem<VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceVulkan11Features>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceVulkan11Features*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceVulkan12Features>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceVulkan12Features*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceVulkan13Features>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceVulkan13Features*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceVulkan14Features>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceVulkan14Features*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_MEMORY_MODEL_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceVulkanMemoryModelFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceVulkanMemoryModelFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_SC_1_0_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceVulkanSC10Features>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceVulkanSC10Features*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_YCBCR_2_PLANE_444_FORMATS_FEATURES_EXT: {
+                    auto s = AllocMem<VkPhysicalDeviceYcbcr2Plane444FormatsFeaturesEXT>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceYcbcr2Plane444FormatsFeaturesEXT*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_YCBCR_IMAGE_ARRAYS_FEATURES_EXT: {
+                    auto s = AllocMem<VkPhysicalDeviceYcbcrImageArraysFeaturesEXT>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceYcbcrImageArraysFeaturesEXT*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ZERO_INITIALIZE_WORKGROUP_MEMORY_FEATURES: {
+                    auto s = AllocMem<VkPhysicalDeviceZeroInitializeWorkgroupMemoryFeatures>();
+                    *s = *reinterpret_cast<const VkPhysicalDeviceZeroInitializeWorkgroupMemoryFeatures*>(p);
+                    s->pNext = pnext;
+                    pnext = s;
+                    break;
+                }
+
+                default:
+                    break;
+            }
+            p = p->pNext;
+        }
+
+        base->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+        base->pNext = pnext;
+
+        return base;
+    }
+    Json::Value gen_int8_t(const int8_t v, const LocationScope&) { return v; }
+    Json::Value gen_uint8_t(const uint8_t v, const LocationScope&) { return v; }
+    Json::Value gen_int16_t(const int16_t v, const LocationScope&) { return v; }
+    Json::Value gen_uint16_t(const uint16_t v, const LocationScope&) { return v; }
+    Json::Value gen_int32_t(const int32_t v, const LocationScope&) { return v; }
+    Json::Value gen_uint32_t(const uint32_t v, const LocationScope&) { return v; }
+    Json::Value gen_int64_t(const int64_t v, const LocationScope&) { return v; }
+    Json::Value gen_uint64_t(const uint64_t v, const LocationScope&) { return v; }
+    Json::Value gen_float(const float v, const LocationScope&) { return v; }
+    Json::Value gen_size_t(const size_t v, const LocationScope&) { return v; }
+    Json::Value gen_VkBool32(const VkBool32 v, const LocationScope&) { return v; }
+    Json::Value gen_VkDeviceSize(const VkDeviceSize v, const LocationScope&) { return v; }
+    Json::Value gen_VkSampleMask(const VkSampleMask v, const LocationScope&) { return v; }
+
+    std::string gen_string(const char* str) { return str; }
+
+    std::string gen_binary(const void* ptr, const size_t size) {
+        static const char base64_table[64] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+                                              'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
+                                              'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+                                              'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'};
+
+        const uint8_t* data = reinterpret_cast<const uint8_t*>(ptr);
+        size_t src_idx = 0;
+        std::string result;
+        result.reserve(size * 4);
+
+        while (src_idx < size) {
+            size_t num_read = std::min(size_t(3), size - src_idx);
+
+            uint8_t s0 = data[src_idx];
+            uint8_t s1 = (num_read >= 2) ? data[src_idx + 1] : 0;
+            uint8_t s2 = (num_read >= 3) ? data[src_idx + 2] : 0;
+
+            src_idx += num_read;
+
+            result.push_back(base64_table[s0 >> 2]);
+            result.push_back(base64_table[((s0 & 0x3) << 4) | (s1 >> 4)]);
+            result.push_back(base64_table[((s1 & 0xF) << 2) | (s2 >> 6)]);
+            result.push_back(base64_table[s2 & 0x3F]);
+
+            if (num_read < 3) result[result.size() - 1] = '=';
+            if (num_read < 2) result[result.size() - 2] = '=';
+        }
+        return result;
+    }
+
     Json::Value gen_VkPipelineCreateFlagBits(const VkPipelineCreateFlagBits v, const LocationScope&) {
         return gen_VkPipelineCreateFlagBits_c_str(v);
     }
@@ -2223,9 +2835,9 @@ class GeneratorBase : protected Base {
         if (!v) {
             return 0;
         }
-
         std::stringstream strm;
-        for (uint32_t bit = 0; bit < (uint32_t(1) << 31); bit <<= 1) {
+        for (int i = 0; i < 31; ++i) {
+            auto bit = uint32_t(1) << i;
             if ((v & bit) != 0) {
                 if (strm.rdbuf()->in_avail() > 0) {
                     strm << " | ";
@@ -2241,9 +2853,9 @@ class GeneratorBase : protected Base {
         if (!v) {
             return 0;
         }
-
         std::stringstream strm;
-        for (uint32_t bit = 0; bit < (uint32_t(1) << 31); bit <<= 1) {
+        for (int i = 0; i < 31; ++i) {
+            auto bit = uint32_t(1) << i;
             if ((v & bit) != 0) {
                 if (strm.rdbuf()->in_avail() > 0) {
                     strm << " | ";
@@ -2304,10 +2916,25 @@ class GeneratorBase : protected Base {
         if (!v) {
             return 0;
         }
-
         std::stringstream strm;
-        for (uint32_t bit = 0; bit < (uint32_t(1) << 31); bit <<= 1) {
-            if ((v & bit) != 0) {
+        std::array<VkCullModeFlagBits, 1> multi_bit_flags{{VkCullModeFlagBits::VK_CULL_MODE_FRONT_AND_BACK}};
+        std::vector<VkCullModeFlagBits> matched_multi_bit_flags;
+        for (auto multi_bit_flag : multi_bit_flags) {
+            if (v == multi_bit_flag) {
+                matched_multi_bit_flags.push_back(multi_bit_flag);
+                if (strm.rdbuf()->in_avail() > 0) {
+                    strm << " | ";
+                }
+                strm << gen_VkCullModeFlagBits_c_str(static_cast<VkCullModeFlagBits>(multi_bit_flag));
+            }
+        }
+        auto isnt_part_of_any_matched_multi_bit_flags = [&](const auto bit) {
+            return std::none_of(matched_multi_bit_flags.begin(), matched_multi_bit_flags.end(),
+                                [bit](const auto multi_bit_flag) { return multi_bit_flag & bit; });
+        };
+        for (int i = 0; i < 31; ++i) {
+            auto bit = uint32_t(1) << i;
+            if ((v & bit) != 0 && isnt_part_of_any_matched_multi_bit_flags(bit)) {
                 if (strm.rdbuf()->in_avail() > 0) {
                     strm << " | ";
                 }
@@ -2369,9 +2996,9 @@ class GeneratorBase : protected Base {
         if (!v) {
             return 0;
         }
-
         std::stringstream strm;
-        for (uint32_t bit = 0; bit < (uint32_t(1) << 31); bit <<= 1) {
+        for (int i = 0; i < 31; ++i) {
+            auto bit = uint32_t(1) << i;
             if ((v & bit) != 0) {
                 if (strm.rdbuf()->in_avail() > 0) {
                     strm << " | ";
@@ -2396,9 +3023,9 @@ class GeneratorBase : protected Base {
         if (!v) {
             return 0;
         }
-
         std::stringstream strm;
-        for (uint64_t bit = 0; bit < (uint64_t(1) << 63); bit <<= 1) {
+        for (int i = 0; i < 63; ++i) {
+            auto bit = uint64_t(1) << i;
             if ((v & bit) != 0) {
                 if (strm.rdbuf()->in_avail() > 0) {
                     strm << " | ";
@@ -2414,9 +3041,9 @@ class GeneratorBase : protected Base {
         if (!v) {
             return 0;
         }
-
         std::stringstream strm;
-        for (uint32_t bit = 0; bit < (uint32_t(1) << 31); bit <<= 1) {
+        for (int i = 0; i < 31; ++i) {
+            auto bit = uint32_t(1) << i;
             if ((v & bit) != 0) {
                 if (strm.rdbuf()->in_avail() > 0) {
                     strm << " | ";
@@ -2442,9 +3069,9 @@ class GeneratorBase : protected Base {
         if (!v) {
             return 0;
         }
-
         std::stringstream strm;
-        for (uint32_t bit = 0; bit < (uint32_t(1) << 31); bit <<= 1) {
+        for (int i = 0; i < 31; ++i) {
+            auto bit = uint32_t(1) << i;
             if ((v & bit) != 0) {
                 if (strm.rdbuf()->in_avail() > 0) {
                     strm << " | ";
@@ -2460,9 +3087,9 @@ class GeneratorBase : protected Base {
         if (!v) {
             return 0;
         }
-
         std::stringstream strm;
-        for (uint32_t bit = 0; bit < (uint32_t(1) << 31); bit <<= 1) {
+        for (int i = 0; i < 31; ++i) {
+            auto bit = uint32_t(1) << i;
             if ((v & bit) != 0) {
                 if (strm.rdbuf()->in_avail() > 0) {
                     strm << " | ";
@@ -2478,10 +3105,26 @@ class GeneratorBase : protected Base {
         if (!v) {
             return 0;
         }
-
         std::stringstream strm;
-        for (uint32_t bit = 0; bit < (uint32_t(1) << 31); bit <<= 1) {
-            if ((v & bit) != 0) {
+        std::array<VkShaderStageFlagBits, 2> multi_bit_flags{
+            {VkShaderStageFlagBits::VK_SHADER_STAGE_ALL_GRAPHICS, VkShaderStageFlagBits::VK_SHADER_STAGE_ALL}};
+        std::vector<VkShaderStageFlagBits> matched_multi_bit_flags;
+        for (auto multi_bit_flag : multi_bit_flags) {
+            if (v == multi_bit_flag) {
+                matched_multi_bit_flags.push_back(multi_bit_flag);
+                if (strm.rdbuf()->in_avail() > 0) {
+                    strm << " | ";
+                }
+                strm << gen_VkShaderStageFlagBits_c_str(static_cast<VkShaderStageFlagBits>(multi_bit_flag));
+            }
+        }
+        auto isnt_part_of_any_matched_multi_bit_flags = [&](const auto bit) {
+            return std::none_of(matched_multi_bit_flags.begin(), matched_multi_bit_flags.end(),
+                                [bit](const auto multi_bit_flag) { return multi_bit_flag & bit; });
+        };
+        for (int i = 0; i < 31; ++i) {
+            auto bit = uint32_t(1) << i;
+            if ((v & bit) != 0 && isnt_part_of_any_matched_multi_bit_flags(bit)) {
                 if (strm.rdbuf()->in_avail() > 0) {
                     strm << " | ";
                 }
@@ -2496,9 +3139,9 @@ class GeneratorBase : protected Base {
         if (!v) {
             return 0;
         }
-
         std::stringstream strm;
-        for (uint32_t bit = 0; bit < (uint32_t(1) << 31); bit <<= 1) {
+        for (int i = 0; i < 31; ++i) {
+            auto bit = uint32_t(1) << i;
             if ((v & bit) != 0) {
                 if (strm.rdbuf()->in_avail() > 0) {
                     strm << " | ";
@@ -2514,9 +3157,9 @@ class GeneratorBase : protected Base {
         if (!v) {
             return 0;
         }
-
         std::stringstream strm;
-        for (uint32_t bit = 0; bit < (uint32_t(1) << 31); bit <<= 1) {
+        for (int i = 0; i < 31; ++i) {
+            auto bit = uint32_t(1) << i;
             if ((v & bit) != 0) {
                 if (strm.rdbuf()->in_avail() > 0) {
                     strm << " | ";
@@ -2532,9 +3175,9 @@ class GeneratorBase : protected Base {
         if (!v) {
             return 0;
         }
-
         std::stringstream strm;
-        for (uint32_t bit = 0; bit < (uint32_t(1) << 31); bit <<= 1) {
+        for (int i = 0; i < 31; ++i) {
+            auto bit = uint32_t(1) << i;
             if ((v & bit) != 0) {
                 if (strm.rdbuf()->in_avail() > 0) {
                     strm << " | ";
@@ -2550,9 +3193,9 @@ class GeneratorBase : protected Base {
         if (!v) {
             return 0;
         }
-
         std::stringstream strm;
-        for (uint32_t bit = 0; bit < (uint32_t(1) << 31); bit <<= 1) {
+        for (int i = 0; i < 31; ++i) {
+            auto bit = uint32_t(1) << i;
             if ((v & bit) != 0) {
                 if (strm.rdbuf()->in_avail() > 0) {
                     strm << " | ";
@@ -2568,9 +3211,9 @@ class GeneratorBase : protected Base {
         if (!v) {
             return 0;
         }
-
         std::stringstream strm;
-        for (uint32_t bit = 0; bit < (uint32_t(1) << 31); bit <<= 1) {
+        for (int i = 0; i < 31; ++i) {
+            auto bit = uint32_t(1) << i;
             if ((v & bit) != 0) {
                 if (strm.rdbuf()->in_avail() > 0) {
                     strm << " | ";
@@ -2586,9 +3229,9 @@ class GeneratorBase : protected Base {
         if (!v) {
             return 0;
         }
-
         std::stringstream strm;
-        for (uint32_t bit = 0; bit < (uint32_t(1) << 31); bit <<= 1) {
+        for (int i = 0; i < 31; ++i) {
+            auto bit = uint32_t(1) << i;
             if ((v & bit) != 0) {
                 if (strm.rdbuf()->in_avail() > 0) {
                     strm << " | ";
@@ -2604,9 +3247,9 @@ class GeneratorBase : protected Base {
         if (!v) {
             return 0;
         }
-
         std::stringstream strm;
-        for (uint32_t bit = 0; bit < (uint32_t(1) << 31); bit <<= 1) {
+        for (int i = 0; i < 31; ++i) {
+            auto bit = uint32_t(1) << i;
             if ((v & bit) != 0) {
                 if (strm.rdbuf()->in_avail() > 0) {
                     strm << " | ";
@@ -2622,9 +3265,9 @@ class GeneratorBase : protected Base {
         if (!v) {
             return 0;
         }
-
         std::stringstream strm;
-        for (uint32_t bit = 0; bit < (uint32_t(1) << 31); bit <<= 1) {
+        for (int i = 0; i < 31; ++i) {
+            auto bit = uint32_t(1) << i;
             if ((v & bit) != 0) {
                 if (strm.rdbuf()->in_avail() > 0) {
                     strm << " | ";
@@ -2640,9 +3283,9 @@ class GeneratorBase : protected Base {
         if (!v) {
             return 0;
         }
-
         std::stringstream strm;
-        for (uint32_t bit = 0; bit < (uint32_t(1) << 31); bit <<= 1) {
+        for (int i = 0; i < 31; ++i) {
+            auto bit = uint32_t(1) << i;
             if ((v & bit) != 0) {
                 if (strm.rdbuf()->in_avail() > 0) {
                     strm << " | ";
@@ -2658,9 +3301,9 @@ class GeneratorBase : protected Base {
         if (!v) {
             return 0;
         }
-
         std::stringstream strm;
-        for (uint64_t bit = 0; bit < (uint64_t(1) << 63); bit <<= 1) {
+        for (int i = 0; i < 63; ++i) {
+            auto bit = uint64_t(1) << i;
             if ((v & bit) != 0) {
                 if (strm.rdbuf()->in_avail() > 0) {
                     strm << " | ";
@@ -2676,9 +3319,9 @@ class GeneratorBase : protected Base {
         if (!v) {
             return 0;
         }
-
         std::stringstream strm;
-        for (uint64_t bit = 0; bit < (uint64_t(1) << 63); bit <<= 1) {
+        for (int i = 0; i < 63; ++i) {
+            auto bit = uint64_t(1) << i;
             if ((v & bit) != 0) {
                 if (strm.rdbuf()->in_avail() > 0) {
                     strm << " | ";
@@ -2694,9 +3337,9 @@ class GeneratorBase : protected Base {
         if (!v) {
             return 0;
         }
-
         std::stringstream strm;
-        for (uint32_t bit = 0; bit < (uint32_t(1) << 31); bit <<= 1) {
+        for (int i = 0; i < 31; ++i) {
+            auto bit = uint32_t(1) << i;
             if ((v & bit) != 0) {
                 if (strm.rdbuf()->in_avail() > 0) {
                     strm << " | ";
@@ -4330,7 +4973,17 @@ class GeneratorBase : protected Base {
             json["pMapEntries"] = "NULL";
         }
         json["dataSize"] = gen_size_t(s.dataSize, CreateScope("dataSize"));
-        json["pData"] = gen_binary(s.pData, s.dataSize);
+
+        if (s.dataSize != 0) {
+            if (s.pData != nullptr) {
+                json["pData"] = gen_binary(s.pData, s.dataSize);
+            } else {
+                Error() << "pData is NULL but its length is " << s.dataSize;
+            }
+        } else {
+            json["pData"] = "NULL";
+        }
+
         return json;
     }
 
@@ -4653,7 +5306,7 @@ class GeneratorBase : protected Base {
                 }
                 json["pSampleMask"] = json_array_pSampleMask;
             } else {
-                Error() << "pSampleMask is NULL but its length is " << size_t((s.rasterizationSamples + 31) / 32);
+                json["pSampleMask"] = "NULL";
             }
         } else {
             json["pSampleMask"] = "NULL";
@@ -4775,7 +5428,7 @@ class GeneratorBase : protected Base {
                 }
                 json["pAttachments"] = json_array_pAttachments;
             } else {
-                Error() << "pAttachments is NULL but its length is " << s.attachmentCount;
+                json["pAttachments"] = "NULL";
             }
         } else {
             json["pAttachments"] = "NULL";
@@ -5084,7 +5737,7 @@ class GeneratorBase : protected Base {
                 }
                 json["pColorAttachmentInputIndices"] = json_array_pColorAttachmentInputIndices;
             } else {
-                Error() << "pColorAttachmentInputIndices is NULL but its length is " << s.colorAttachmentCount;
+                json["pColorAttachmentInputIndices"] = "NULL";
             }
         } else {
             json["pColorAttachmentInputIndices"] = "NULL";
@@ -6436,7 +7089,7 @@ class GeneratorBase : protected Base {
                 }
                 json["pResolveAttachments"] = json_array_pResolveAttachments;
             } else {
-                Error() << "pResolveAttachments is NULL but its length is " << s.colorAttachmentCount;
+                json["pResolveAttachments"] = "NULL";
             }
         } else {
             json["pResolveAttachments"] = "NULL";
@@ -6713,7 +7366,7 @@ class GeneratorBase : protected Base {
                 }
                 json["pResolveAttachments"] = json_array_pResolveAttachments;
             } else {
-                Error() << "pResolveAttachments is NULL but its length is " << s.colorAttachmentCount;
+                json["pResolveAttachments"] = "NULL";
             }
         } else {
             json["pResolveAttachments"] = "NULL";
@@ -6869,7 +7522,17 @@ class GeneratorBase : protected Base {
 
         json["flags"] = gen_VkPipelineCacheCreateFlags(s.flags, CreateScope("flags"));
         json["initialDataSize"] = gen_size_t(s.initialDataSize, CreateScope("initialDataSize"));
-        json["pInitialData"] = gen_binary(s.pInitialData, s.initialDataSize);
+
+        if (s.initialDataSize != 0) {
+            if (s.pInitialData != nullptr) {
+                json["pInitialData"] = gen_binary(s.pInitialData, s.initialDataSize);
+            } else {
+                Error() << "pInitialData is NULL but its length is " << s.initialDataSize;
+            }
+        } else {
+            json["pInitialData"] = "NULL";
+        }
+
         return json;
     }
 

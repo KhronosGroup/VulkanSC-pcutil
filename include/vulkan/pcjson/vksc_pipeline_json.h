@@ -96,18 +96,20 @@ VpjGenerator vpjCreateGenerator();
 
 /**
  * @brief Generates a pipeline JSON from the input pipeline data.
- * 
+ *
  * @param generator The JSON generator object
  * @param pPipelineData Pointer to input pipeline data
- * @param ppPipelineJson Pointer to the output JSON string (the backing storage remains valid until vpjFreeGeneratorOutputs or vpjDestroyGenerator is called)
- * @param ppMessages Optional pointer to the output messages (the backing storage remains valid until vpjFreeGeneratorOutputs, vpjDestroyGenerator, or another vpjGenerate* command is called)
+ * @param ppPipelineJson Pointer to the output JSON string (the backing storage remains valid until vpjFreeGeneratorOutputs or
+ * vpjDestroyGenerator is called)
+ * @param ppMessages Optional pointer to the output messages (the backing storage remains valid until vpjFreeGeneratorOutputs,
+ * vpjDestroyGenerator, or another vpjGenerate* command is called)
  * @return True, if the generation was successful, false otherwise.
  */
 bool vpjGeneratePipelineJson(VpjGenerator generator, const VpjData* pPipelineData, const char** ppPipelineJson, const char** ppMessages);
 
 /**
  * @brief Generates a JSON from a single input structure (including its pNext chain).
- * 
+ *
  * Supported structure types:
  *  * VkGraphicsPipelineCreateInfo
  *  * VkComputePipelineCreateInfo
@@ -121,21 +123,39 @@ bool vpjGeneratePipelineJson(VpjGenerator generator, const VpjData* pPipelineDat
  *  * VkShaderModuleCreateInfo
  *  * VkDeviceObjectReservationCreateInfo
  *  * VkPipelineOfflineCreateInfo
- * 
+ *
  * @param generator The JSON generator object
  * @param pStruct Pointer to input structure
- * @param ppJson Pointer to the output JSON string (the backing storage remains valid until vpjFreeGeneratorOutputs or vpjDestroyGenerator is called)
- * @param ppMessages Optional pointer to the output messages (the backing storage remains valid until vpjFreeGeneratorOutputs, vpjDestroyGenerator, or another vpjGenerate* command is called)
+ * @param ppJson Pointer to the output JSON string (the backing storage remains valid until vpjFreeGeneratorOutputs or
+ * vpjDestroyGenerator is called)
+ * @param ppMessages Optional pointer to the output messages (the backing storage remains valid until vpjFreeGeneratorOutputs,
+ * vpjDestroyGenerator, or another vpjGenerate* command is called)
  * @return True, if the generation was successful, false otherwise.
  */
 bool vpjGenerateSingleStructJson(VpjGenerator generator, const void* pStruct, const char** ppJson, const char** ppMessages);
+
+/**
+ * @brief Returns the VkPhysicalDeviceFeatures2 pNext chain from a VkDeviceCreateInfo pNext chain.
+ *
+ * Used to filter out non-device-feature structs out when the VkPhysicalDeviceFeatures2 pNext chain is not readily available
+ *
+ * @param generator The JSON generator object
+ * @param pDeviceCreateInfoPNext The input pNext chain pointer of the VkDeviceCreateInfo structure
+ * @param ppPhysicalDeviceFeatures Pointer to the output VkPhysicalDeviceFeatures2 structure (the backing storage remains valid
+ * until vpjFreeGeneratorOutputs or vpjDestroyGenerator is called)
+ * @param ppMessages Optional pointer to the output messages (the backing storage remains valid until vpjFreeGeneratorOutputs,
+ * vpjDestroyGenerator, or another vpjGenerate* command is called)
+ * @return True, if the generation was successful, false otherwise.
+ */
+bool vpjFilterDeviceFeatures(VpjGenerator generator, const void* pDeviceCreateInfoPNext, const void** ppPhysicalDeviceFeatures,
+                             const char** ppMessages);
 
 /**
  * @brief Frees any storage of previous pipeline JSON generator outputs.
  * 
  * @param generator The JSON generator to free output storage for
  */
-void vpjFreeGeneratorOutput(VpjGenerator generator);
+void vpjFreeGeneratorOutputs(VpjGenerator generator);
 
 /**
  * @brief Destroys a pipeline JSON generator.
@@ -155,18 +175,20 @@ VpjParser vpjCreateParser();
 
 /**
  * @brief Parses a pipeline JSON from the input JSON string.
- * 
+ *
  * @param parser The JSON parser object
  * @param pPipelineJson The input JSON string
- * @param pPipelineData Pointer to the pointer output pipeline data (the backing storage of nested data remains valid until vpjFreeParserOutputs or vpjDestroyParser is called)
- * @param ppMessages Optional pointer to the output messages (the backing storage remains valid until vpjFreeParserOutputs, vpjDestroyParser, or another vpjParse* command is called)
+ * @param pPipelineData Pointer to the pointer output pipeline data (the backing storage of nested data remains valid until
+ * vpjFreeParserOutputs or vpjDestroyParser is called)
+ * @param ppMessages Optional pointer to the output messages (the backing storage remains valid until vpjFreeParserOutputs,
+ * vpjDestroyParser, or another vpjParse* command is called)
  * @return True, if the parsing was successful, false otherwise.
  */
 bool vpjParsePipelineJson(VpjParser parser, const char* pPipelineJson, VpjData* pPipelineData, const char** ppMessages);
 
 /**
  * @brief Parses a single structure (including its pNext chain) from the input JSON string.
- * 
+ *
  * Supported structure types:
  *  * VkGraphicsPipelineCreateInfo
  *  * VkComputePipelineCreateInfo
@@ -180,11 +202,13 @@ bool vpjParsePipelineJson(VpjParser parser, const char* pPipelineJson, VpjData* 
  *  * VkShaderModuleCreateInfo
  *  * VkDeviceObjectReservationCreateInfo
  *  * VkPipelineOfflineCreateInfo
- * 
+ *
  * @param parser The JSON parser object
  * @param pJson The input JSON string
- * @param pStruct Pointer to the output structure (the backing storage of nested data remains valid until vpjFreeParserOutputs or vpjDestroyParser is called)
- * @param ppMessages Optional pointer to the output messages (the backing storage remains valid until vpjFreeParserOutputs, vpjDestroyParser, or another vpjParse* command is called)
+ * @param pStruct Pointer to the output structure (the backing storage of nested data remains valid until vpjFreeParserOutputs
+ * or vpjDestroyParser is called)
+ * @param ppMessages Optional pointer to the output messages (the backing storage remains valid until vpjFreeParserOutputs,
+ * vpjDestroyParser, or another vpjParse* command is called)
  * @return True, if the parsing was successful, false otherwise.
  */
 bool vpjParseSingleStructJson(VpjParser parser, const char* pJson, void* pStruct, const char** ppMessages);
@@ -194,7 +218,7 @@ bool vpjParseSingleStructJson(VpjParser parser, const char* pJson, void* pStruct
  * 
  * @param parser The JSON parser to free output storage for
  */
-void vpjFreeParserOutput(VpjParser parser);
+void vpjFreeParserOutputs(VpjParser parser);
 
 /**
  * @brief Destroys a pipeline JSON parser.

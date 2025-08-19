@@ -213,8 +213,16 @@ class JsonGenGenerator(BaseGenerator):
             raise Exception(f'Unexpected type name "{typeName}"')
 
     def genHandleMethod(self, handle: Handle) -> str:
-        # Handles are converted to uint64_t values through constructor syntax
-        self.gen_Handle_methods.append(f'Json::Value gen_{handle.name}(const {handle.name} v, const LocationScope&) {{ return uint64_t(v); }}')
+        # Handles are converted to uint64_t values through constructor syntax or to NULL
+        self.gen_Handle_methods.append(f'''
+            Json::Value gen_{handle.name}(const {handle.name} v, const LocationScope&) {{
+                if (v == VK_NULL_HANDLE) {{
+                    return "NULL";
+                }} else {{
+                    return uint64_t(v);
+                }}
+            }}
+            ''')
         self.generatedMethods[handle.name] = f'gen_{handle.name}'
         return self.generatedMethods[handle.name]
     

@@ -23,13 +23,61 @@ namespace pcjson {
 
 class GeneratorBase : protected Base {
   private:
-    Json::Value gen_VkShaderModule(const VkShaderModule v, const LocationScope&) { return uint64_t(v); }
-    Json::Value gen_VkPipelineLayout(const VkPipelineLayout v, const LocationScope&) { return uint64_t(v); }
-    Json::Value gen_VkRenderPass(const VkRenderPass v, const LocationScope&) { return uint64_t(v); }
-    Json::Value gen_VkPipeline(const VkPipeline v, const LocationScope&) { return uint64_t(v); }
-    Json::Value gen_VkSamplerYcbcrConversion(const VkSamplerYcbcrConversion v, const LocationScope&) { return uint64_t(v); }
-    Json::Value gen_VkSampler(const VkSampler v, const LocationScope&) { return uint64_t(v); }
-    Json::Value gen_VkDescriptorSetLayout(const VkDescriptorSetLayout v, const LocationScope&) { return uint64_t(v); }
+    Json::Value gen_VkShaderModule(const VkShaderModule v, const LocationScope&) {
+        if (v == VK_NULL_HANDLE) {
+            return "NULL";
+        } else {
+            return uint64_t(v);
+        }
+    }
+
+    Json::Value gen_VkPipelineLayout(const VkPipelineLayout v, const LocationScope&) {
+        if (v == VK_NULL_HANDLE) {
+            return "NULL";
+        } else {
+            return uint64_t(v);
+        }
+    }
+
+    Json::Value gen_VkRenderPass(const VkRenderPass v, const LocationScope&) {
+        if (v == VK_NULL_HANDLE) {
+            return "NULL";
+        } else {
+            return uint64_t(v);
+        }
+    }
+
+    Json::Value gen_VkPipeline(const VkPipeline v, const LocationScope&) {
+        if (v == VK_NULL_HANDLE) {
+            return "NULL";
+        } else {
+            return uint64_t(v);
+        }
+    }
+
+    Json::Value gen_VkSamplerYcbcrConversion(const VkSamplerYcbcrConversion v, const LocationScope&) {
+        if (v == VK_NULL_HANDLE) {
+            return "NULL";
+        } else {
+            return uint64_t(v);
+        }
+    }
+
+    Json::Value gen_VkSampler(const VkSampler v, const LocationScope&) {
+        if (v == VK_NULL_HANDLE) {
+            return "NULL";
+        } else {
+            return uint64_t(v);
+        }
+    }
+
+    Json::Value gen_VkDescriptorSetLayout(const VkDescriptorSetLayout v, const LocationScope&) {
+        if (v == VK_NULL_HANDLE) {
+            return "NULL";
+        } else {
+            return uint64_t(v);
+        }
+    }
 
     const char* gen_VkPipelineCreateFlagBits_c_str(const VkPipelineCreateFlagBits v) {
         switch (v) {

@@ -338,7 +338,12 @@ class JsonParseGenerator(BaseGenerator):
         self.parse_Handle_methods.append(f'''
             {handle.name} parse_{handle.name}(const Json::Value& json, const LocationScope& l) {{
                 if (json.isString()) {{
-                    return reinterpret_cast<{handle.name}>((void*)parse_string(json, l));
+                    auto json_str = json.asCString();
+                    if (strcmp(json_str, "NULL") == 0) {{
+                        return VK_NULL_HANDLE;
+                    }} else {{
+                        return reinterpret_cast<{handle.name}>((void*)parse_string(json, l));
+                    }}
                 }} else if (json.isUInt()) {{
                     return {handle.name}(parse_uint64_t(json, l));
                 }} else {{

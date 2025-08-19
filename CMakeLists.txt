@@ -38,17 +38,9 @@ endif()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-if(NOT TARGET Vulkan::Headers)
-    find_package(VulkanHeaders REQUIRED CONFIG QUIET)
-endif()
-
-if(NOT TARGET Vulkan::UtilityHeaders)
-    find_package(VulkanUtilityLibraries REQUIRED CONFIG QUIET)
-endif()
-
-if(NOT TARGET jsoncpp_static)
-    find_package(jsoncpp REQUIRED CONFIG QUIET)
-endif()
+find_package(VulkanHeaders REQUIRED CONFIG QUIET)
+find_package(VulkanUtilityLibraries REQUIRED CONFIG QUIET)
+find_package(jsoncpp REQUIRED CONFIG QUIET)
 
 include(GNUInstallDirs)
 

@@ -24,4 +24,5 @@ target_include_directories(VulkanPCJson
         $<INSTALL_INTERFACE:include>
 )
 
+find_package(jsoncpp REQUIRED CONFIG QUIET)
 target_link_libraries(VulkanPCJson PRIVATE jsoncpp_static Vulkan::Headers)

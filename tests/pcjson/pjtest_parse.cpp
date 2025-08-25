@@ -20,15 +20,22 @@
 
 class PJParseTest : public testing::Test {
   public:
-    PJParseTest() : parser_{vpjCreateParser()} {}
+    PJParseTest() : parser_{vpjCreateParser()}, msg_{nullptr} {}
     PJParseTest(const PJParseTest&) = delete;
     PJParseTest(PJParseTest&&) = default;
     ~PJParseTest() { vpjDestroyParser(parser_); }
 
     void TEST_DESCRIPTION(const char* desc) { RecordProperty("description", desc); }
+    void CHECK_PARSE(bool success) {
+        EXPECT_TRUE(success);
+        if (msg_ && std::strlen(msg_)) {
+            FAIL() << msg_;
+        }
+    }
 
   protected:
     VpjParser parser_;
+    const char* msg_;
 };
 
 TEST_F(PJParseTest, BasicTypesVkBool32) {
@@ -36,6 +43,8 @@ TEST_F(PJParseTest, BasicTypesVkBool32) {
 
     VkPhysicalDeviceFeatures2 data;
     const char* msg = nullptr;
+    // Generates JSON representing a VkPhysicalDeviceFeatures2 struct with the desired
+    // VkBool32 value (JSON fragment) written into the robustBufferAccess field.
     auto get_json = [](const char* val) {
         std::string result = {R"({
             "sType" : "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2",
@@ -118,6 +127,54 @@ TEST_F(PJParseTest, BasicTypesVkBool32) {
     test_eq(R"(0)", 0);
     test_eq(R"("VK_FALSE")", VK_FALSE);
     test_eq(R"(4294967295)", 4294967295);
+}
+
+TEST_F(PJParseTest, VkComputePipelineCreateInfo) {
+    TEST_DESCRIPTION("Tests parsing of a reasonably complex compute pipeline create info JSON");
+
+    VkComputePipelineCreateInfo cp_ci;
+    std::string json = {R"({
+        "sType" : "VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO",
+        "pNext": "NULL",
+        "flags" : "0",
+        "stage":
+        {
+            "sType" : "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
+            "pNext": {
+                "sType": "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO",
+                "pNext": "NULL",
+                "requiredSubgroupSize": 64
+            },
+            "flags" : "VK_PIPELINE_SHADER_STAGE_CREATE_REQUIRE_FULL_SUBGROUPS_BIT",
+            "stage" : "VK_SHADER_STAGE_COMPUTE_BIT",
+            "pName" : "main",
+            "pSpecializationInfo": "NULL",
+            "module": "NULL"
+        },
+        "layout" : 9,
+        "basePipelineHandle" : "NULL",
+        "basePipelineIndex" : 0
+    })"};
+
+    CHECK_PARSE(vpjParseSingleStructJson(this->parser_, json.c_str(), &cp_ci, &msg_));
+    const auto& pssrss_ci = *reinterpret_cast<const VkPipelineShaderStageRequiredSubgroupSizeCreateInfo*>(cp_ci.stage.pNext);
+
+    EXPECT_EQ(cp_ci.sType, VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO);
+    EXPECT_EQ(cp_ci.pNext, nullptr);
+    EXPECT_EQ(cp_ci.flags, 0);
+    EXPECT_EQ(cp_ci.stage.sType, VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
+    EXPECT_NE(cp_ci.stage.pNext, nullptr);
+    EXPECT_EQ(pssrss_ci.sType, VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO);
+    EXPECT_EQ(pssrss_ci.pNext, nullptr);
+    EXPECT_EQ(pssrss_ci.requiredSubgroupSize, 64);
+    EXPECT_EQ(cp_ci.stage.flags, VK_PIPELINE_SHADER_STAGE_CREATE_REQUIRE_FULL_SUBGROUPS_BIT);
+    EXPECT_EQ(cp_ci.stage.stage, VK_SHADER_STAGE_COMPUTE_BIT);
+    EXPECT_STREQ(cp_ci.stage.pName, "main");
+    EXPECT_EQ(cp_ci.stage.pSpecializationInfo, nullptr);
+    EXPECT_EQ(cp_ci.stage.module, VK_NULL_HANDLE);
+    EXPECT_EQ(cp_ci.layout, reinterpret_cast<void*>(9));
+    EXPECT_EQ(cp_ci.basePipelineHandle, VK_NULL_HANDLE);
+    EXPECT_EQ(cp_ci.basePipelineIndex, 0);
 }
 
 TEST_F(PJParseTest, SAXPY) {

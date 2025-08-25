@@ -149,10 +149,10 @@ TEST_F(PJParseTest, VkComputePipelineCreateInfo) {
             "stage" : "VK_SHADER_STAGE_COMPUTE_BIT",
             "pName" : "main",
             "pSpecializationInfo": "NULL",
-            "module": "NULL"
+            "module": ""
         },
         "layout" : 9,
-        "basePipelineHandle" : "NULL",
+        "basePipelineHandle" : "",
         "basePipelineIndex" : 0
     })"};
 

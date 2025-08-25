@@ -217,7 +217,7 @@ class JsonGenGenerator(BaseGenerator):
         self.gen_Handle_methods.append(f'''
             Json::Value gen_{handle.name}(const {handle.name} v, const LocationScope&) {{
                 if (v == VK_NULL_HANDLE) {{
-                    return "NULL";
+                    return "";
                 }} else {{
                     return uint64_t(v);
                 }}

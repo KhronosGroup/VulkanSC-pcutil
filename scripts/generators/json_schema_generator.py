@@ -131,12 +131,7 @@ class JsonSchemaGenerator(BaseGenerator):
             raise Exception(f'Unexpected type name "{typeName}"')
 
     def genHandleDefinition(self, handle: Handle):
-        self.schema["definitions"][handle.name] = { "anyOf":
-            [
-                {"$ref": "#/definitions/uint64_t"},
-                {"type": "string"}
-            ]
-        }
+        self.schema["definitions"][handle.name] = {"$ref": "#/definitions/uint64_t"}
         self.genAliases(handle.name, handle.aliases)
 
     def genEnumDefinition(self, enum: Enum):
@@ -215,6 +210,8 @@ class JsonSchemaGenerator(BaseGenerator):
                             }
                         ]
                     }
+                elif member.type in self.vk.handles:
+                    props[member.name] = { "$ref": f"#/definitions/{member.type}" }
                 elif member.pointer or member.optional:
                     props[member.name] = {
                         "oneOf" if member.type != "char" else "anyOf": [

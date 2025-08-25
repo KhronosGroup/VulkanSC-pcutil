@@ -25,7 +25,7 @@ class GeneratorBase : protected Base {
   private:
     Json::Value gen_VkShaderModule(const VkShaderModule v, const LocationScope&) {
         if (v == VK_NULL_HANDLE) {
-            return "NULL";
+            return "";
         } else {
             return uint64_t(v);
         }
@@ -33,7 +33,7 @@ class GeneratorBase : protected Base {
 
     Json::Value gen_VkPipelineLayout(const VkPipelineLayout v, const LocationScope&) {
         if (v == VK_NULL_HANDLE) {
-            return "NULL";
+            return "";
         } else {
             return uint64_t(v);
         }
@@ -41,7 +41,7 @@ class GeneratorBase : protected Base {
 
     Json::Value gen_VkRenderPass(const VkRenderPass v, const LocationScope&) {
         if (v == VK_NULL_HANDLE) {
-            return "NULL";
+            return "";
         } else {
             return uint64_t(v);
         }
@@ -49,7 +49,7 @@ class GeneratorBase : protected Base {
 
     Json::Value gen_VkPipeline(const VkPipeline v, const LocationScope&) {
         if (v == VK_NULL_HANDLE) {
-            return "NULL";
+            return "";
         } else {
             return uint64_t(v);
         }
@@ -57,7 +57,7 @@ class GeneratorBase : protected Base {
 
     Json::Value gen_VkSamplerYcbcrConversion(const VkSamplerYcbcrConversion v, const LocationScope&) {
         if (v == VK_NULL_HANDLE) {
-            return "NULL";
+            return "";
         } else {
             return uint64_t(v);
         }
@@ -65,7 +65,7 @@ class GeneratorBase : protected Base {
 
     Json::Value gen_VkSampler(const VkSampler v, const LocationScope&) {
         if (v == VK_NULL_HANDLE) {
-            return "NULL";
+            return "";
         } else {
             return uint64_t(v);
         }
@@ -73,7 +73,7 @@ class GeneratorBase : protected Base {
 
     Json::Value gen_VkDescriptorSetLayout(const VkDescriptorSetLayout v, const LocationScope&) {
         if (v == VK_NULL_HANDLE) {
-            return "NULL";
+            return "";
         } else {
             return uint64_t(v);
         }

@@ -29,7 +29,7 @@ class ParserBase : protected Base {
     VkShaderModule parse_VkShaderModule(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             auto json_str = json.asCString();
-            if (strcmp(json_str, "NULL") == 0) {
+            if (strcmp(json_str, "") == 0) {
                 return VK_NULL_HANDLE;
             } else {
                 return reinterpret_cast<VkShaderModule>((void*)parse_string(json, l));
@@ -45,7 +45,7 @@ class ParserBase : protected Base {
     VkPipelineLayout parse_VkPipelineLayout(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             auto json_str = json.asCString();
-            if (strcmp(json_str, "NULL") == 0) {
+            if (strcmp(json_str, "") == 0) {
                 return VK_NULL_HANDLE;
             } else {
                 return reinterpret_cast<VkPipelineLayout>((void*)parse_string(json, l));
@@ -61,7 +61,7 @@ class ParserBase : protected Base {
     VkRenderPass parse_VkRenderPass(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             auto json_str = json.asCString();
-            if (strcmp(json_str, "NULL") == 0) {
+            if (strcmp(json_str, "") == 0) {
                 return VK_NULL_HANDLE;
             } else {
                 return reinterpret_cast<VkRenderPass>((void*)parse_string(json, l));
@@ -77,7 +77,7 @@ class ParserBase : protected Base {
     VkPipeline parse_VkPipeline(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             auto json_str = json.asCString();
-            if (strcmp(json_str, "NULL") == 0) {
+            if (strcmp(json_str, "") == 0) {
                 return VK_NULL_HANDLE;
             } else {
                 return reinterpret_cast<VkPipeline>((void*)parse_string(json, l));
@@ -93,7 +93,7 @@ class ParserBase : protected Base {
     VkSamplerYcbcrConversion parse_VkSamplerYcbcrConversion(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             auto json_str = json.asCString();
-            if (strcmp(json_str, "NULL") == 0) {
+            if (strcmp(json_str, "") == 0) {
                 return VK_NULL_HANDLE;
             } else {
                 return reinterpret_cast<VkSamplerYcbcrConversion>((void*)parse_string(json, l));
@@ -109,7 +109,7 @@ class ParserBase : protected Base {
     VkSampler parse_VkSampler(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             auto json_str = json.asCString();
-            if (strcmp(json_str, "NULL") == 0) {
+            if (strcmp(json_str, "") == 0) {
                 return VK_NULL_HANDLE;
             } else {
                 return reinterpret_cast<VkSampler>((void*)parse_string(json, l));
@@ -125,7 +125,7 @@ class ParserBase : protected Base {
     VkDescriptorSetLayout parse_VkDescriptorSetLayout(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             auto json_str = json.asCString();
-            if (strcmp(json_str, "NULL") == 0) {
+            if (strcmp(json_str, "") == 0) {
                 return VK_NULL_HANDLE;
             } else {
                 return reinterpret_cast<VkDescriptorSetLayout>((void*)parse_string(json, l));

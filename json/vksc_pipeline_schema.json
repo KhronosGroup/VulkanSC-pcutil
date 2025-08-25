@@ -365,14 +365,7 @@
             ]
         },
         "VkShaderModule": {
-            "anyOf": [
-                {
-                    "$ref": "#/definitions/uint64_t"
-                },
-                {
-                    "type": "string"
-                }
-            ]
+            "$ref": "#/definitions/uint64_t"
         },
         "VkSpecializationMapEntry": {
             "additionalProperties": false,
@@ -623,16 +616,7 @@
                     "$ref": "#/definitions/VkShaderStageFlagBits"
                 },
                 "module": {
-                    "oneOf": [
-                        {
-                            "enum": [
-                                "NULL"
-                            ]
-                        },
-                        {
-                            "$ref": "#/definitions/VkShaderModule"
-                        }
-                    ]
+                    "$ref": "#/definitions/VkShaderModule"
                 },
                 "pName": {
                     "type": "string"
@@ -2594,34 +2578,13 @@
             "type": "object"
         },
         "VkPipelineLayout": {
-            "anyOf": [
-                {
-                    "$ref": "#/definitions/uint64_t"
-                },
-                {
-                    "type": "string"
-                }
-            ]
+            "$ref": "#/definitions/uint64_t"
         },
         "VkRenderPass": {
-            "anyOf": [
-                {
-                    "$ref": "#/definitions/uint64_t"
-                },
-                {
-                    "type": "string"
-                }
-            ]
+            "$ref": "#/definitions/uint64_t"
         },
         "VkPipeline": {
-            "anyOf": [
-                {
-                    "$ref": "#/definitions/uint64_t"
-                },
-                {
-                    "type": "string"
-                }
-            ]
+            "$ref": "#/definitions/uint64_t"
         },
         "VkPipelineCreateFlags2": {
             "anyOf": [
@@ -3265,43 +3228,16 @@
                     ]
                 },
                 "layout": {
-                    "oneOf": [
-                        {
-                            "enum": [
-                                "NULL"
-                            ]
-                        },
-                        {
-                            "$ref": "#/definitions/VkPipelineLayout"
-                        }
-                    ]
+                    "$ref": "#/definitions/VkPipelineLayout"
                 },
                 "renderPass": {
-                    "oneOf": [
-                        {
-                            "enum": [
-                                "NULL"
-                            ]
-                        },
-                        {
-                            "$ref": "#/definitions/VkRenderPass"
-                        }
-                    ]
+                    "$ref": "#/definitions/VkRenderPass"
                 },
                 "subpass": {
                     "$ref": "#/definitions/uint32_t"
                 },
                 "basePipelineHandle": {
-                    "oneOf": [
-                        {
-                            "enum": [
-                                "NULL"
-                            ]
-                        },
-                        {
-                            "$ref": "#/definitions/VkPipeline"
-                        }
-                    ]
+                    "$ref": "#/definitions/VkPipeline"
                 },
                 "basePipelineIndex": {
                     "$ref": "#/definitions/int32_t"
@@ -3513,16 +3449,7 @@
                     "$ref": "#/definitions/VkPipelineLayout"
                 },
                 "basePipelineHandle": {
-                    "oneOf": [
-                        {
-                            "enum": [
-                                "NULL"
-                            ]
-                        },
-                        {
-                            "$ref": "#/definitions/VkPipeline"
-                        }
-                    ]
+                    "$ref": "#/definitions/VkPipeline"
                 },
                 "basePipelineIndex": {
                     "$ref": "#/definitions/int32_t"
@@ -3771,14 +3698,7 @@
             ]
         },
         "VkSamplerYcbcrConversion": {
-            "anyOf": [
-                {
-                    "$ref": "#/definitions/uint64_t"
-                },
-                {
-                    "type": "string"
-                }
-            ]
+            "$ref": "#/definitions/uint64_t"
         },
         "VkSamplerCreateInfo_pNext": {
             "oneOf": [
@@ -4003,14 +3923,7 @@
             ]
         },
         "VkSampler": {
-            "anyOf": [
-                {
-                    "$ref": "#/definitions/uint64_t"
-                },
-                {
-                    "type": "string"
-                }
-            ]
+            "$ref": "#/definitions/uint64_t"
         },
         "VkDescriptorSetLayoutBinding": {
             "additionalProperties": false,
@@ -4223,14 +4136,7 @@
             ]
         },
         "VkDescriptorSetLayout": {
-            "anyOf": [
-                {
-                    "$ref": "#/definitions/uint64_t"
-                },
-                {
-                    "type": "string"
-                }
-            ]
+            "$ref": "#/definitions/uint64_t"
         },
         "VkPushConstantRange": {
             "additionalProperties": false,

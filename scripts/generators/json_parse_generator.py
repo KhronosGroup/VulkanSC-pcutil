@@ -339,7 +339,7 @@ class JsonParseGenerator(BaseGenerator):
             {handle.name} parse_{handle.name}(const Json::Value& json, const LocationScope& l) {{
                 if (json.isString()) {{
                     auto json_str = json.asCString();
-                    if (strcmp(json_str, "NULL") == 0) {{
+                    if (strcmp(json_str, "") == 0) {{
                         return VK_NULL_HANDLE;
                     }} else {{
                         return reinterpret_cast<{handle.name}>((void*)parse_string(json, l));

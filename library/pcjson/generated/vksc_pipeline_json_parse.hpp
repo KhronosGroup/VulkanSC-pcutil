@@ -2425,6 +2425,23 @@ class ParserBase : protected Base {
     }
 
     void* parse_binary(const Json::Value& v, const LocationScope&, size_t& size) {
+        if (v.isArray()) {  // TODO: Consider removing. Array path is preserved for historical reasons.
+            if (v.size() == 0) {
+                size = 0;
+                return nullptr;
+            }
+            uint8_t* result = AllocMem<uint8_t>(v.size());
+            for (Json::Value::ArrayIndex i = 0; i < v.size(); ++i) {
+                if (v[i].isUInt() && v[i].asUInt() <= 255) {
+                    result[i] = v[i].asUInt();
+                } else {
+                    Error() << "Binary array has non-unsigned integral value or is out of [0-255] range.";
+                    return nullptr;
+                }
+            }
+            size = v.size();
+            return result;
+        }
         if (!v.isString()) {
             Error() << "Base64 encoded binary not a string";
             return nullptr;

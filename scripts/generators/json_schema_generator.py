@@ -90,7 +90,12 @@ class JsonSchemaGenerator(BaseGenerator):
             "uint16_t": {"type": "integer", "minimum": 0, "maximum": 65535},
             "int32_t": {"type": "integer", "minimum": -2147483648, "maximum": 2147483647},
             "uint32_t": {"type": "integer", "minimum": 0, "maximum": 4294967295},
-            "binary": { "type": "string" }, # TODO: Maybe restrict to base64 characters
+            "binary": {"oneOf":
+                [
+                    { "type": "string" }, # TODO: Maybe restrict to base64 characters
+                    { "type": "array", "items": { "$ref": "#/definitions/uint8_t" } }
+                ]
+            },
             "float": {"type": "number"},
 
             "uint64_t": {"oneOf":

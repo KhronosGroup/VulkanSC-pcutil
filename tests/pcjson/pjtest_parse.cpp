@@ -148,7 +148,18 @@ TEST_F(PJParseTest, VkComputePipelineCreateInfo) {
             "flags" : "VK_PIPELINE_SHADER_STAGE_CREATE_REQUIRE_FULL_SUBGROUPS_BIT",
             "stage" : "VK_SHADER_STAGE_COMPUTE_BIT",
             "pName" : "main",
-            "pSpecializationInfo": "NULL",
+            "pSpecializationInfo": {
+                "mapEntryCount": 1,
+                "pMapEntries": [
+                    {
+                        "constantID": 0,
+                        "offset": 0,
+                        "size": 4
+                    }
+                ],
+                "dataSize": 4,
+                "pData": [ 0, 1, 2, 3 ]
+            },
             "module": ""
         },
         "layout" : 9,
@@ -170,7 +181,15 @@ TEST_F(PJParseTest, VkComputePipelineCreateInfo) {
     EXPECT_EQ(cp_ci.stage.flags, VK_PIPELINE_SHADER_STAGE_CREATE_REQUIRE_FULL_SUBGROUPS_BIT);
     EXPECT_EQ(cp_ci.stage.stage, VK_SHADER_STAGE_COMPUTE_BIT);
     EXPECT_STREQ(cp_ci.stage.pName, "main");
-    EXPECT_EQ(cp_ci.stage.pSpecializationInfo, nullptr);
+    EXPECT_EQ(cp_ci.stage.pSpecializationInfo->mapEntryCount, 1);
+    EXPECT_EQ(cp_ci.stage.pSpecializationInfo->pMapEntries[0].constantID, 0);
+    EXPECT_EQ(cp_ci.stage.pSpecializationInfo->pMapEntries[0].offset, 0);
+    EXPECT_EQ(cp_ci.stage.pSpecializationInfo->pMapEntries[0].size, 4);
+    EXPECT_EQ(cp_ci.stage.pSpecializationInfo->dataSize, 4);
+    EXPECT_EQ(reinterpret_cast<const uint8_t*>(cp_ci.stage.pSpecializationInfo->pData)[0], 0);
+    EXPECT_EQ(reinterpret_cast<const uint8_t*>(cp_ci.stage.pSpecializationInfo->pData)[1], 1);
+    EXPECT_EQ(reinterpret_cast<const uint8_t*>(cp_ci.stage.pSpecializationInfo->pData)[2], 2);
+    EXPECT_EQ(reinterpret_cast<const uint8_t*>(cp_ci.stage.pSpecializationInfo->pData)[3], 3);
     EXPECT_EQ(cp_ci.stage.module, VK_NULL_HANDLE);
     EXPECT_EQ(cp_ci.layout, reinterpret_cast<void*>(9));
     EXPECT_EQ(cp_ci.basePipelineHandle, VK_NULL_HANDLE);

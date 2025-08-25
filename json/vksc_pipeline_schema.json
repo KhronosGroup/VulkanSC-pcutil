@@ -183,7 +183,17 @@
             "maximum": 4294967295
         },
         "binary": {
-            "type": "string"
+            "oneOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/uint8_t"
+                    }
+                }
+            ]
         },
         "float": {
             "type": "number"

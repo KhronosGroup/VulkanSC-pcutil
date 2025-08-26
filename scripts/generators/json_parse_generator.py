@@ -438,6 +438,8 @@ class JsonParseGenerator(BaseGenerator):
             {enum.name} parse_{enum.name}(const Json::Value& json, const LocationScope& l) {{
                 if (json.isString()) {{
                     return parse_{enum.name}_c_str(json.asCString());
+                }} else if (json.isInt()) {{
+                    return static_cast<{enum.name}>(json.asInt());
                 }} else {{
                     Error() << "Invalid format";
                     return static_cast<{enum.name}>(0);

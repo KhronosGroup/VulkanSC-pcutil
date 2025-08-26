@@ -2514,6 +2514,8 @@ class ParserBase : protected Base {
     VkStructureType parse_VkStructureType(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkStructureType_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkStructureType>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkStructureType>(0);
@@ -2550,6 +2552,8 @@ class ParserBase : protected Base {
     VkObjectType parse_VkObjectType(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkObjectType_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkObjectType>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkObjectType>(0);
@@ -2559,6 +2563,8 @@ class ParserBase : protected Base {
     VkPipelineRobustnessBufferBehavior parse_VkPipelineRobustnessBufferBehavior(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkPipelineRobustnessBufferBehavior_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkPipelineRobustnessBufferBehavior>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkPipelineRobustnessBufferBehavior>(0);
@@ -2568,6 +2574,8 @@ class ParserBase : protected Base {
     VkPipelineRobustnessImageBehavior parse_VkPipelineRobustnessImageBehavior(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkPipelineRobustnessImageBehavior_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkPipelineRobustnessImageBehavior>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkPipelineRobustnessImageBehavior>(0);
@@ -2577,6 +2585,8 @@ class ParserBase : protected Base {
     VkVertexInputRate parse_VkVertexInputRate(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkVertexInputRate_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkVertexInputRate>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkVertexInputRate>(0);
@@ -2586,6 +2596,8 @@ class ParserBase : protected Base {
     VkFormat parse_VkFormat(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkFormat_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkFormat>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkFormat>(0);
@@ -2595,6 +2607,8 @@ class ParserBase : protected Base {
     VkPrimitiveTopology parse_VkPrimitiveTopology(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkPrimitiveTopology_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkPrimitiveTopology>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkPrimitiveTopology>(0);
@@ -2604,6 +2618,8 @@ class ParserBase : protected Base {
     VkTessellationDomainOrigin parse_VkTessellationDomainOrigin(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkTessellationDomainOrigin_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkTessellationDomainOrigin>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkTessellationDomainOrigin>(0);
@@ -2613,6 +2629,8 @@ class ParserBase : protected Base {
     VkPolygonMode parse_VkPolygonMode(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkPolygonMode_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkPolygonMode>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkPolygonMode>(0);
@@ -2631,6 +2649,8 @@ class ParserBase : protected Base {
     VkFrontFace parse_VkFrontFace(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkFrontFace_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkFrontFace>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkFrontFace>(0);
@@ -2640,6 +2660,8 @@ class ParserBase : protected Base {
     VkConservativeRasterizationModeEXT parse_VkConservativeRasterizationModeEXT(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkConservativeRasterizationModeEXT_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkConservativeRasterizationModeEXT>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkConservativeRasterizationModeEXT>(0);
@@ -2649,6 +2671,8 @@ class ParserBase : protected Base {
     VkLineRasterizationMode parse_VkLineRasterizationMode(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkLineRasterizationMode_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkLineRasterizationMode>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkLineRasterizationMode>(0);
@@ -2667,6 +2691,8 @@ class ParserBase : protected Base {
     VkCompareOp parse_VkCompareOp(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkCompareOp_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkCompareOp>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkCompareOp>(0);
@@ -2676,6 +2702,8 @@ class ParserBase : protected Base {
     VkStencilOp parse_VkStencilOp(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkStencilOp_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkStencilOp>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkStencilOp>(0);
@@ -2685,6 +2713,8 @@ class ParserBase : protected Base {
     VkLogicOp parse_VkLogicOp(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkLogicOp_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkLogicOp>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkLogicOp>(0);
@@ -2694,6 +2724,8 @@ class ParserBase : protected Base {
     VkBlendFactor parse_VkBlendFactor(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkBlendFactor_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkBlendFactor>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkBlendFactor>(0);
@@ -2703,6 +2735,8 @@ class ParserBase : protected Base {
     VkBlendOp parse_VkBlendOp(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkBlendOp_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkBlendOp>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkBlendOp>(0);
@@ -2721,6 +2755,8 @@ class ParserBase : protected Base {
     VkBlendOverlapEXT parse_VkBlendOverlapEXT(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkBlendOverlapEXT_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkBlendOverlapEXT>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkBlendOverlapEXT>(0);
@@ -2730,6 +2766,8 @@ class ParserBase : protected Base {
     VkDynamicState parse_VkDynamicState(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkDynamicState_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkDynamicState>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkDynamicState>(0);
@@ -2757,6 +2795,8 @@ class ParserBase : protected Base {
     VkDiscardRectangleModeEXT parse_VkDiscardRectangleModeEXT(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkDiscardRectangleModeEXT_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkDiscardRectangleModeEXT>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkDiscardRectangleModeEXT>(0);
@@ -2766,6 +2806,8 @@ class ParserBase : protected Base {
     VkFragmentShadingRateCombinerOpKHR parse_VkFragmentShadingRateCombinerOpKHR(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkFragmentShadingRateCombinerOpKHR_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkFragmentShadingRateCombinerOpKHR>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkFragmentShadingRateCombinerOpKHR>(0);
@@ -2775,6 +2817,8 @@ class ParserBase : protected Base {
     VkPipelineMatchControl parse_VkPipelineMatchControl(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkPipelineMatchControl_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkPipelineMatchControl>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkPipelineMatchControl>(0);
@@ -2784,6 +2828,8 @@ class ParserBase : protected Base {
     VkSamplerYcbcrModelConversion parse_VkSamplerYcbcrModelConversion(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkSamplerYcbcrModelConversion_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkSamplerYcbcrModelConversion>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkSamplerYcbcrModelConversion>(0);
@@ -2793,6 +2839,8 @@ class ParserBase : protected Base {
     VkSamplerYcbcrRange parse_VkSamplerYcbcrRange(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkSamplerYcbcrRange_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkSamplerYcbcrRange>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkSamplerYcbcrRange>(0);
@@ -2802,6 +2850,8 @@ class ParserBase : protected Base {
     VkComponentSwizzle parse_VkComponentSwizzle(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkComponentSwizzle_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkComponentSwizzle>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkComponentSwizzle>(0);
@@ -2811,6 +2861,8 @@ class ParserBase : protected Base {
     VkChromaLocation parse_VkChromaLocation(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkChromaLocation_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkChromaLocation>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkChromaLocation>(0);
@@ -2820,6 +2872,8 @@ class ParserBase : protected Base {
     VkFilter parse_VkFilter(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkFilter_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkFilter>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkFilter>(0);
@@ -2838,6 +2892,8 @@ class ParserBase : protected Base {
     VkSamplerMipmapMode parse_VkSamplerMipmapMode(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkSamplerMipmapMode_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkSamplerMipmapMode>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkSamplerMipmapMode>(0);
@@ -2847,6 +2903,8 @@ class ParserBase : protected Base {
     VkSamplerAddressMode parse_VkSamplerAddressMode(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkSamplerAddressMode_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkSamplerAddressMode>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkSamplerAddressMode>(0);
@@ -2856,6 +2914,8 @@ class ParserBase : protected Base {
     VkBorderColor parse_VkBorderColor(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkBorderColor_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkBorderColor>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkBorderColor>(0);
@@ -2865,6 +2925,8 @@ class ParserBase : protected Base {
     VkSamplerReductionMode parse_VkSamplerReductionMode(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkSamplerReductionMode_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkSamplerReductionMode>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkSamplerReductionMode>(0);
@@ -2883,6 +2945,8 @@ class ParserBase : protected Base {
     VkDescriptorType parse_VkDescriptorType(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkDescriptorType_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkDescriptorType>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkDescriptorType>(0);
@@ -2928,6 +2992,8 @@ class ParserBase : protected Base {
     VkAttachmentLoadOp parse_VkAttachmentLoadOp(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkAttachmentLoadOp_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkAttachmentLoadOp>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkAttachmentLoadOp>(0);
@@ -2937,6 +3003,8 @@ class ParserBase : protected Base {
     VkAttachmentStoreOp parse_VkAttachmentStoreOp(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkAttachmentStoreOp_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkAttachmentStoreOp>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkAttachmentStoreOp>(0);
@@ -2946,6 +3014,8 @@ class ParserBase : protected Base {
     VkImageLayout parse_VkImageLayout(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkImageLayout_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkImageLayout>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkImageLayout>(0);
@@ -2964,6 +3034,8 @@ class ParserBase : protected Base {
     VkPipelineBindPoint parse_VkPipelineBindPoint(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkPipelineBindPoint_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkPipelineBindPoint>(json.asInt());
         } else {
             Error() << "Invalid format";
             return static_cast<VkPipelineBindPoint>(0);

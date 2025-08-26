@@ -142,11 +142,19 @@ class JsonGenGenerator(BaseGenerator):
     def genBasicMethods(self):
         # For basic types we generate simple wrappers
         self.basicTypes = ['int8_t', 'uint8_t', 'int16_t', 'uint16_t', 'int32_t', 'uint32_t', 'int64_t', 'uint64_t', 'float', 'size_t']
-        self.basicTypes.extend(['VkBool32', 'VkDeviceSize', 'VkSampleMask'])
+        self.basicTypes.extend(['VkDeviceSize', 'VkSampleMask'])
 
         for typeName in self.basicTypes:
             self.generatedMethods[typeName] = f'gen_{typeName}'
             self.gen_basic_methods.append(f'Json::Value gen_{typeName}(const {typeName} v, const LocationScope&) {{ return v; }}\n')
+
+        self.basicTypes.append('VkBool32')
+        self.generatedMethods['VkBool32'] = 'gen_VkBool32'
+        self.gen_basic_methods.append('''
+            Json::Value gen_VkBool32(const VkBool32 v, const LocationScope&) {
+                return Json::Value(v ? "VK_TRUE" : "VK_FALSE");
+            }
+        ''')
 
         # We also need to add a base64 encoder for encoding binary data
         self.gen_basic_methods.append('''

@@ -2654,9 +2654,10 @@ class GeneratorBase : protected Base {
     Json::Value gen_uint64_t(const uint64_t v, const LocationScope&) { return v; }
     Json::Value gen_float(const float v, const LocationScope&) { return v; }
     Json::Value gen_size_t(const size_t v, const LocationScope&) { return v; }
-    Json::Value gen_VkBool32(const VkBool32 v, const LocationScope&) { return v; }
     Json::Value gen_VkDeviceSize(const VkDeviceSize v, const LocationScope&) { return v; }
     Json::Value gen_VkSampleMask(const VkSampleMask v, const LocationScope&) { return v; }
+
+    Json::Value gen_VkBool32(const VkBool32 v, const LocationScope&) { return Json::Value(v ? "VK_TRUE" : "VK_FALSE"); }
 
     std::string gen_string(const char* str) { return str; }
 

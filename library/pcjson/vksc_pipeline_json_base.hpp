@@ -56,13 +56,10 @@ class Base {
 #endif
         }
 
-        ~MemoryBlock() {
-#ifdef _WIN32
-            _aligned_free(block_);
-#else
-            free(block_);
-#endif
-        }
+        ~MemoryBlock() { Reset(); }
+
+        MemoryBlock(MemoryBlock&& other) { MoveFrom(std::move(other)); }
+        MemoryBlock& operator=(MemoryBlock&& other) { return MoveFrom(std::move(other)); }
 
         void* Alloc(size_t alignment, size_t size) {
             const size_t aligned_alloc_offset = (used_bytes_ + alignment - 1) & ~(alignment - 1);
@@ -75,9 +72,38 @@ class Base {
         }
 
       private:
+        MemoryBlock(const MemoryBlock&) = delete;
+        MemoryBlock& operator=(const MemoryBlock&) = delete;
+
+        MemoryBlock& MoveFrom(MemoryBlock&& other) {
+            if (&other != this) {
+                Reset();
+                block_ = other.block_;
+                size_ = other.size_;
+                used_bytes_ = other.used_bytes_;
+                other.block_ = nullptr;
+                other.size_ = 0;
+                other.used_bytes_ = 0;
+            }
+            return *this;
+        }
+
+        void Reset() {
+            if (block_ != nullptr) {
+#ifdef _WIN32
+                _aligned_free(block_);
+#else
+                free(block_);
+#endif
+            }
+            block_ = nullptr;
+            size_ = 0;
+            used_bytes_ = 0;
+        }
+
         uint8_t* block_{nullptr};
-        const size_t size_;
-        size_t used_bytes_;
+        size_t size_{0};
+        size_t used_bytes_{0};
     };
 
     Base() {

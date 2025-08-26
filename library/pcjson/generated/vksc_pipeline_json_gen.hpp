@@ -213,8 +213,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkObjectType enum value";
+        return nullptr;
     }
 
     const char* gen_VkPipelineRobustnessBufferBehavior_c_str(const VkPipelineRobustnessBufferBehavior v) {
@@ -230,8 +230,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkPipelineRobustnessBufferBehavior enum value";
+        return nullptr;
     }
 
     const char* gen_VkPipelineRobustnessImageBehavior_c_str(const VkPipelineRobustnessImageBehavior v) {
@@ -247,8 +247,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkPipelineRobustnessImageBehavior enum value";
+        return nullptr;
     }
 
     const char* gen_VkVertexInputRate_c_str(const VkVertexInputRate v) {
@@ -260,8 +260,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkVertexInputRate enum value";
+        return nullptr;
     }
 
     const char* gen_VkFormat_c_str(const VkFormat v) {
@@ -751,8 +751,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkFormat enum value";
+        return nullptr;
     }
 
     const char* gen_VkPrimitiveTopology_c_str(const VkPrimitiveTopology v) {
@@ -782,8 +782,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkPrimitiveTopology enum value";
+        return nullptr;
     }
 
     const char* gen_VkTessellationDomainOrigin_c_str(const VkTessellationDomainOrigin v) {
@@ -795,8 +795,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkTessellationDomainOrigin enum value";
+        return nullptr;
     }
 
     const char* gen_VkPolygonMode_c_str(const VkPolygonMode v) {
@@ -810,8 +810,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkPolygonMode enum value";
+        return nullptr;
     }
 
     const char* gen_VkCullModeFlagBits_c_str(const VkCullModeFlagBits v) {
@@ -840,8 +840,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkFrontFace enum value";
+        return nullptr;
     }
 
     const char* gen_VkConservativeRasterizationModeEXT_c_str(const VkConservativeRasterizationModeEXT v) {
@@ -855,8 +855,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkConservativeRasterizationModeEXT enum value";
+        return nullptr;
     }
 
     const char* gen_VkLineRasterizationMode_c_str(const VkLineRasterizationMode v) {
@@ -872,8 +872,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkLineRasterizationMode enum value";
+        return nullptr;
     }
 
     const char* gen_VkSampleCountFlagBits_c_str(const VkSampleCountFlagBits v) {
@@ -920,8 +920,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkCompareOp enum value";
+        return nullptr;
     }
 
     const char* gen_VkStencilOp_c_str(const VkStencilOp v) {
@@ -945,8 +945,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkStencilOp enum value";
+        return nullptr;
     }
 
     const char* gen_VkLogicOp_c_str(const VkLogicOp v) {
@@ -986,8 +986,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkLogicOp enum value";
+        return nullptr;
     }
 
     const char* gen_VkBlendFactor_c_str(const VkBlendFactor v) {
@@ -1033,8 +1033,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkBlendFactor enum value";
+        return nullptr;
     }
 
     const char* gen_VkBlendOp_c_str(const VkBlendOp v) {
@@ -1144,8 +1144,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkBlendOp enum value";
+        return nullptr;
     }
 
     const char* gen_VkColorComponentFlagBits_c_str(const VkColorComponentFlagBits v) {
@@ -1176,8 +1176,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkBlendOverlapEXT enum value";
+        return nullptr;
     }
 
     const char* gen_VkDynamicState_c_str(const VkDynamicState v) {
@@ -1253,8 +1253,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkDynamicState enum value";
+        return nullptr;
     }
 
     const char* gen_VkPipelineCreateFlagBits2_c_str(const VkPipelineCreateFlagBits2 v) {
@@ -1308,8 +1308,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkDiscardRectangleModeEXT enum value";
+        return nullptr;
     }
 
     const char* gen_VkFragmentShadingRateCombinerOpKHR_c_str(const VkFragmentShadingRateCombinerOpKHR v) {
@@ -1327,8 +1327,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkFragmentShadingRateCombinerOpKHR enum value";
+        return nullptr;
     }
 
     const char* gen_VkPipelineMatchControl_c_str(const VkPipelineMatchControl v) {
@@ -1338,8 +1338,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkPipelineMatchControl enum value";
+        return nullptr;
     }
 
     const char* gen_VkSamplerYcbcrModelConversion_c_str(const VkSamplerYcbcrModelConversion v) {
@@ -1357,8 +1357,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkSamplerYcbcrModelConversion enum value";
+        return nullptr;
     }
 
     const char* gen_VkSamplerYcbcrRange_c_str(const VkSamplerYcbcrRange v) {
@@ -1370,8 +1370,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkSamplerYcbcrRange enum value";
+        return nullptr;
     }
 
     const char* gen_VkComponentSwizzle_c_str(const VkComponentSwizzle v) {
@@ -1393,8 +1393,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkComponentSwizzle enum value";
+        return nullptr;
     }
 
     const char* gen_VkChromaLocation_c_str(const VkChromaLocation v) {
@@ -1406,8 +1406,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkChromaLocation enum value";
+        return nullptr;
     }
 
     const char* gen_VkFilter_c_str(const VkFilter v) {
@@ -1421,8 +1421,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkFilter enum value";
+        return nullptr;
     }
 
     const char* gen_VkSamplerCreateFlagBits_c_str(const VkSamplerCreateFlagBits v) {
@@ -1443,8 +1443,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkSamplerMipmapMode enum value";
+        return nullptr;
     }
 
     const char* gen_VkSamplerAddressMode_c_str(const VkSamplerAddressMode v) {
@@ -1462,8 +1462,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkSamplerAddressMode enum value";
+        return nullptr;
     }
 
     const char* gen_VkBorderColor_c_str(const VkBorderColor v) {
@@ -1487,8 +1487,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkBorderColor enum value";
+        return nullptr;
     }
 
     const char* gen_VkSamplerReductionMode_c_str(const VkSamplerReductionMode v) {
@@ -1502,8 +1502,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkSamplerReductionMode enum value";
+        return nullptr;
     }
 
     const char* gen_VkDescriptorSetLayoutCreateFlagBits_c_str(const VkDescriptorSetLayoutCreateFlagBits v) {
@@ -1548,8 +1548,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkDescriptorType enum value";
+        return nullptr;
     }
 
     const char* gen_VkDescriptorBindingFlagBits_c_str(const VkDescriptorBindingFlagBits v) {
@@ -1611,8 +1611,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkAttachmentLoadOp enum value";
+        return nullptr;
     }
 
     const char* gen_VkAttachmentStoreOp_c_str(const VkAttachmentStoreOp v) {
@@ -1626,8 +1626,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkAttachmentStoreOp enum value";
+        return nullptr;
     }
 
     const char* gen_VkImageLayout_c_str(const VkImageLayout v) {
@@ -1677,8 +1677,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkImageLayout enum value";
+        return nullptr;
     }
 
     const char* gen_VkSubpassDescriptionFlagBits_c_str(const VkSubpassDescriptionFlagBits v) {
@@ -1699,8 +1699,8 @@ class GeneratorBase : protected Base {
             default:
                 break;
         }
-        Error() << "Invalid enum value";
-        return "Invalid enum value";
+        Warn() << "Invalid VkPipelineBindPoint enum value";
+        return nullptr;
     }
 
     const char* gen_VkPipelineStageFlagBits_c_str(const VkPipelineStageFlagBits v) {
@@ -2703,63 +2703,105 @@ class GeneratorBase : protected Base {
         return gen_VkShaderStageFlagBits_c_str(v);
     }
 
-    Json::Value gen_VkObjectType(const VkObjectType v, const LocationScope&) { return gen_VkObjectType_c_str(v); }
+    Json::Value gen_VkObjectType(const VkObjectType v, const LocationScope&) {
+        const char* enum_str = gen_VkObjectType_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
+    }
 
     Json::Value gen_VkPipelineRobustnessBufferBehavior(const VkPipelineRobustnessBufferBehavior v, const LocationScope&) {
-        return gen_VkPipelineRobustnessBufferBehavior_c_str(v);
+        const char* enum_str = gen_VkPipelineRobustnessBufferBehavior_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
     }
 
     Json::Value gen_VkPipelineRobustnessImageBehavior(const VkPipelineRobustnessImageBehavior v, const LocationScope&) {
-        return gen_VkPipelineRobustnessImageBehavior_c_str(v);
+        const char* enum_str = gen_VkPipelineRobustnessImageBehavior_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
     }
 
-    Json::Value gen_VkVertexInputRate(const VkVertexInputRate v, const LocationScope&) { return gen_VkVertexInputRate_c_str(v); }
+    Json::Value gen_VkVertexInputRate(const VkVertexInputRate v, const LocationScope&) {
+        const char* enum_str = gen_VkVertexInputRate_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
+    }
 
-    Json::Value gen_VkFormat(const VkFormat v, const LocationScope&) { return gen_VkFormat_c_str(v); }
+    Json::Value gen_VkFormat(const VkFormat v, const LocationScope&) {
+        const char* enum_str = gen_VkFormat_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
+    }
 
     Json::Value gen_VkPrimitiveTopology(const VkPrimitiveTopology v, const LocationScope&) {
-        return gen_VkPrimitiveTopology_c_str(v);
+        const char* enum_str = gen_VkPrimitiveTopology_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
     }
 
     Json::Value gen_VkTessellationDomainOrigin(const VkTessellationDomainOrigin v, const LocationScope&) {
-        return gen_VkTessellationDomainOrigin_c_str(v);
+        const char* enum_str = gen_VkTessellationDomainOrigin_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
     }
 
-    Json::Value gen_VkPolygonMode(const VkPolygonMode v, const LocationScope&) { return gen_VkPolygonMode_c_str(v); }
+    Json::Value gen_VkPolygonMode(const VkPolygonMode v, const LocationScope&) {
+        const char* enum_str = gen_VkPolygonMode_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
+    }
 
     Json::Value gen_VkCullModeFlagBits(const VkCullModeFlagBits v, const LocationScope&) { return gen_VkCullModeFlagBits_c_str(v); }
 
-    Json::Value gen_VkFrontFace(const VkFrontFace v, const LocationScope&) { return gen_VkFrontFace_c_str(v); }
+    Json::Value gen_VkFrontFace(const VkFrontFace v, const LocationScope&) {
+        const char* enum_str = gen_VkFrontFace_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
+    }
 
     Json::Value gen_VkConservativeRasterizationModeEXT(const VkConservativeRasterizationModeEXT v, const LocationScope&) {
-        return gen_VkConservativeRasterizationModeEXT_c_str(v);
+        const char* enum_str = gen_VkConservativeRasterizationModeEXT_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
     }
 
     Json::Value gen_VkLineRasterizationMode(const VkLineRasterizationMode v, const LocationScope&) {
-        return gen_VkLineRasterizationMode_c_str(v);
+        const char* enum_str = gen_VkLineRasterizationMode_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
     }
 
     Json::Value gen_VkSampleCountFlagBits(const VkSampleCountFlagBits v, const LocationScope&) {
         return gen_VkSampleCountFlagBits_c_str(v);
     }
 
-    Json::Value gen_VkCompareOp(const VkCompareOp v, const LocationScope&) { return gen_VkCompareOp_c_str(v); }
+    Json::Value gen_VkCompareOp(const VkCompareOp v, const LocationScope&) {
+        const char* enum_str = gen_VkCompareOp_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
+    }
 
-    Json::Value gen_VkStencilOp(const VkStencilOp v, const LocationScope&) { return gen_VkStencilOp_c_str(v); }
+    Json::Value gen_VkStencilOp(const VkStencilOp v, const LocationScope&) {
+        const char* enum_str = gen_VkStencilOp_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
+    }
 
-    Json::Value gen_VkLogicOp(const VkLogicOp v, const LocationScope&) { return gen_VkLogicOp_c_str(v); }
+    Json::Value gen_VkLogicOp(const VkLogicOp v, const LocationScope&) {
+        const char* enum_str = gen_VkLogicOp_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
+    }
 
-    Json::Value gen_VkBlendFactor(const VkBlendFactor v, const LocationScope&) { return gen_VkBlendFactor_c_str(v); }
+    Json::Value gen_VkBlendFactor(const VkBlendFactor v, const LocationScope&) {
+        const char* enum_str = gen_VkBlendFactor_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
+    }
 
-    Json::Value gen_VkBlendOp(const VkBlendOp v, const LocationScope&) { return gen_VkBlendOp_c_str(v); }
+    Json::Value gen_VkBlendOp(const VkBlendOp v, const LocationScope&) {
+        const char* enum_str = gen_VkBlendOp_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
+    }
 
     Json::Value gen_VkColorComponentFlagBits(const VkColorComponentFlagBits v, const LocationScope&) {
         return gen_VkColorComponentFlagBits_c_str(v);
     }
 
-    Json::Value gen_VkBlendOverlapEXT(const VkBlendOverlapEXT v, const LocationScope&) { return gen_VkBlendOverlapEXT_c_str(v); }
+    Json::Value gen_VkBlendOverlapEXT(const VkBlendOverlapEXT v, const LocationScope&) {
+        const char* enum_str = gen_VkBlendOverlapEXT_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
+    }
 
-    Json::Value gen_VkDynamicState(const VkDynamicState v, const LocationScope&) { return gen_VkDynamicState_c_str(v); }
+    Json::Value gen_VkDynamicState(const VkDynamicState v, const LocationScope&) {
+        const char* enum_str = gen_VkDynamicState_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
+    }
 
     Json::Value gen_VkPipelineCreateFlagBits2(const VkPipelineCreateFlagBits2 v, const LocationScope&) {
         return gen_VkPipelineCreateFlagBits2_c_str(v);
@@ -2770,54 +2812,77 @@ class GeneratorBase : protected Base {
     }
 
     Json::Value gen_VkDiscardRectangleModeEXT(const VkDiscardRectangleModeEXT v, const LocationScope&) {
-        return gen_VkDiscardRectangleModeEXT_c_str(v);
+        const char* enum_str = gen_VkDiscardRectangleModeEXT_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
     }
 
     Json::Value gen_VkFragmentShadingRateCombinerOpKHR(const VkFragmentShadingRateCombinerOpKHR v, const LocationScope&) {
-        return gen_VkFragmentShadingRateCombinerOpKHR_c_str(v);
+        const char* enum_str = gen_VkFragmentShadingRateCombinerOpKHR_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
     }
 
     Json::Value gen_VkPipelineMatchControl(const VkPipelineMatchControl v, const LocationScope&) {
-        return gen_VkPipelineMatchControl_c_str(v);
+        const char* enum_str = gen_VkPipelineMatchControl_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
     }
 
     Json::Value gen_VkSamplerYcbcrModelConversion(const VkSamplerYcbcrModelConversion v, const LocationScope&) {
-        return gen_VkSamplerYcbcrModelConversion_c_str(v);
+        const char* enum_str = gen_VkSamplerYcbcrModelConversion_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
     }
 
     Json::Value gen_VkSamplerYcbcrRange(const VkSamplerYcbcrRange v, const LocationScope&) {
-        return gen_VkSamplerYcbcrRange_c_str(v);
+        const char* enum_str = gen_VkSamplerYcbcrRange_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
     }
 
-    Json::Value gen_VkComponentSwizzle(const VkComponentSwizzle v, const LocationScope&) { return gen_VkComponentSwizzle_c_str(v); }
+    Json::Value gen_VkComponentSwizzle(const VkComponentSwizzle v, const LocationScope&) {
+        const char* enum_str = gen_VkComponentSwizzle_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
+    }
 
-    Json::Value gen_VkChromaLocation(const VkChromaLocation v, const LocationScope&) { return gen_VkChromaLocation_c_str(v); }
+    Json::Value gen_VkChromaLocation(const VkChromaLocation v, const LocationScope&) {
+        const char* enum_str = gen_VkChromaLocation_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
+    }
 
-    Json::Value gen_VkFilter(const VkFilter v, const LocationScope&) { return gen_VkFilter_c_str(v); }
+    Json::Value gen_VkFilter(const VkFilter v, const LocationScope&) {
+        const char* enum_str = gen_VkFilter_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
+    }
 
     Json::Value gen_VkSamplerCreateFlagBits(const VkSamplerCreateFlagBits v, const LocationScope&) {
         return gen_VkSamplerCreateFlagBits_c_str(v);
     }
 
     Json::Value gen_VkSamplerMipmapMode(const VkSamplerMipmapMode v, const LocationScope&) {
-        return gen_VkSamplerMipmapMode_c_str(v);
+        const char* enum_str = gen_VkSamplerMipmapMode_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
     }
 
     Json::Value gen_VkSamplerAddressMode(const VkSamplerAddressMode v, const LocationScope&) {
-        return gen_VkSamplerAddressMode_c_str(v);
+        const char* enum_str = gen_VkSamplerAddressMode_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
     }
 
-    Json::Value gen_VkBorderColor(const VkBorderColor v, const LocationScope&) { return gen_VkBorderColor_c_str(v); }
+    Json::Value gen_VkBorderColor(const VkBorderColor v, const LocationScope&) {
+        const char* enum_str = gen_VkBorderColor_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
+    }
 
     Json::Value gen_VkSamplerReductionMode(const VkSamplerReductionMode v, const LocationScope&) {
-        return gen_VkSamplerReductionMode_c_str(v);
+        const char* enum_str = gen_VkSamplerReductionMode_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
     }
 
     Json::Value gen_VkDescriptorSetLayoutCreateFlagBits(const VkDescriptorSetLayoutCreateFlagBits v, const LocationScope&) {
         return gen_VkDescriptorSetLayoutCreateFlagBits_c_str(v);
     }
 
-    Json::Value gen_VkDescriptorType(const VkDescriptorType v, const LocationScope&) { return gen_VkDescriptorType_c_str(v); }
+    Json::Value gen_VkDescriptorType(const VkDescriptorType v, const LocationScope&) {
+        const char* enum_str = gen_VkDescriptorType_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
+    }
 
     Json::Value gen_VkDescriptorBindingFlagBits(const VkDescriptorBindingFlagBits v, const LocationScope&) {
         return gen_VkDescriptorBindingFlagBits_c_str(v);
@@ -2835,20 +2900,28 @@ class GeneratorBase : protected Base {
         return gen_VkAttachmentDescriptionFlagBits_c_str(v);
     }
 
-    Json::Value gen_VkAttachmentLoadOp(const VkAttachmentLoadOp v, const LocationScope&) { return gen_VkAttachmentLoadOp_c_str(v); }
-
-    Json::Value gen_VkAttachmentStoreOp(const VkAttachmentStoreOp v, const LocationScope&) {
-        return gen_VkAttachmentStoreOp_c_str(v);
+    Json::Value gen_VkAttachmentLoadOp(const VkAttachmentLoadOp v, const LocationScope&) {
+        const char* enum_str = gen_VkAttachmentLoadOp_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
     }
 
-    Json::Value gen_VkImageLayout(const VkImageLayout v, const LocationScope&) { return gen_VkImageLayout_c_str(v); }
+    Json::Value gen_VkAttachmentStoreOp(const VkAttachmentStoreOp v, const LocationScope&) {
+        const char* enum_str = gen_VkAttachmentStoreOp_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
+    }
+
+    Json::Value gen_VkImageLayout(const VkImageLayout v, const LocationScope&) {
+        const char* enum_str = gen_VkImageLayout_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
+    }
 
     Json::Value gen_VkSubpassDescriptionFlagBits(const VkSubpassDescriptionFlagBits v, const LocationScope&) {
         return gen_VkSubpassDescriptionFlagBits_c_str(v);
     }
 
     Json::Value gen_VkPipelineBindPoint(const VkPipelineBindPoint v, const LocationScope&) {
-        return gen_VkPipelineBindPoint_c_str(v);
+        const char* enum_str = gen_VkPipelineBindPoint_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
     }
 
     Json::Value gen_VkPipelineStageFlagBits(const VkPipelineStageFlagBits v, const LocationScope&) {

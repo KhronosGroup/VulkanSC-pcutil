@@ -452,57 +452,78 @@
             "type": "object"
         },
         "VkObjectType": {
-            "enum": [
-                "VK_OBJECT_TYPE_UNKNOWN",
-                "VK_OBJECT_TYPE_INSTANCE",
-                "VK_OBJECT_TYPE_PHYSICAL_DEVICE",
-                "VK_OBJECT_TYPE_DEVICE",
-                "VK_OBJECT_TYPE_QUEUE",
-                "VK_OBJECT_TYPE_SEMAPHORE",
-                "VK_OBJECT_TYPE_COMMAND_BUFFER",
-                "VK_OBJECT_TYPE_FENCE",
-                "VK_OBJECT_TYPE_DEVICE_MEMORY",
-                "VK_OBJECT_TYPE_BUFFER",
-                "VK_OBJECT_TYPE_IMAGE",
-                "VK_OBJECT_TYPE_EVENT",
-                "VK_OBJECT_TYPE_QUERY_POOL",
-                "VK_OBJECT_TYPE_BUFFER_VIEW",
-                "VK_OBJECT_TYPE_IMAGE_VIEW",
-                "VK_OBJECT_TYPE_SHADER_MODULE",
-                "VK_OBJECT_TYPE_PIPELINE_CACHE",
-                "VK_OBJECT_TYPE_PIPELINE_LAYOUT",
-                "VK_OBJECT_TYPE_RENDER_PASS",
-                "VK_OBJECT_TYPE_PIPELINE",
-                "VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT",
-                "VK_OBJECT_TYPE_SAMPLER",
-                "VK_OBJECT_TYPE_DESCRIPTOR_POOL",
-                "VK_OBJECT_TYPE_DESCRIPTOR_SET",
-                "VK_OBJECT_TYPE_FRAMEBUFFER",
-                "VK_OBJECT_TYPE_COMMAND_POOL",
-                "VK_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION",
-                "VK_OBJECT_TYPE_PRIVATE_DATA_SLOT",
-                "VK_OBJECT_TYPE_SURFACE_KHR",
-                "VK_OBJECT_TYPE_SWAPCHAIN_KHR",
-                "VK_OBJECT_TYPE_DISPLAY_KHR",
-                "VK_OBJECT_TYPE_DISPLAY_MODE_KHR",
-                "VK_OBJECT_TYPE_DEBUG_UTILS_MESSENGER_EXT",
-                "VK_OBJECT_TYPE_SEMAPHORE_SCI_SYNC_POOL_NV"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_OBJECT_TYPE_UNKNOWN",
+                        "VK_OBJECT_TYPE_INSTANCE",
+                        "VK_OBJECT_TYPE_PHYSICAL_DEVICE",
+                        "VK_OBJECT_TYPE_DEVICE",
+                        "VK_OBJECT_TYPE_QUEUE",
+                        "VK_OBJECT_TYPE_SEMAPHORE",
+                        "VK_OBJECT_TYPE_COMMAND_BUFFER",
+                        "VK_OBJECT_TYPE_FENCE",
+                        "VK_OBJECT_TYPE_DEVICE_MEMORY",
+                        "VK_OBJECT_TYPE_BUFFER",
+                        "VK_OBJECT_TYPE_IMAGE",
+                        "VK_OBJECT_TYPE_EVENT",
+                        "VK_OBJECT_TYPE_QUERY_POOL",
+                        "VK_OBJECT_TYPE_BUFFER_VIEW",
+                        "VK_OBJECT_TYPE_IMAGE_VIEW",
+                        "VK_OBJECT_TYPE_SHADER_MODULE",
+                        "VK_OBJECT_TYPE_PIPELINE_CACHE",
+                        "VK_OBJECT_TYPE_PIPELINE_LAYOUT",
+                        "VK_OBJECT_TYPE_RENDER_PASS",
+                        "VK_OBJECT_TYPE_PIPELINE",
+                        "VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT",
+                        "VK_OBJECT_TYPE_SAMPLER",
+                        "VK_OBJECT_TYPE_DESCRIPTOR_POOL",
+                        "VK_OBJECT_TYPE_DESCRIPTOR_SET",
+                        "VK_OBJECT_TYPE_FRAMEBUFFER",
+                        "VK_OBJECT_TYPE_COMMAND_POOL",
+                        "VK_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION",
+                        "VK_OBJECT_TYPE_PRIVATE_DATA_SLOT",
+                        "VK_OBJECT_TYPE_SURFACE_KHR",
+                        "VK_OBJECT_TYPE_SWAPCHAIN_KHR",
+                        "VK_OBJECT_TYPE_DISPLAY_KHR",
+                        "VK_OBJECT_TYPE_DISPLAY_MODE_KHR",
+                        "VK_OBJECT_TYPE_DEBUG_UTILS_MESSENGER_EXT",
+                        "VK_OBJECT_TYPE_SEMAPHORE_SCI_SYNC_POOL_NV"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkPipelineRobustnessBufferBehavior": {
-            "enum": [
-                "VK_PIPELINE_ROBUSTNESS_BUFFER_BEHAVIOR_DEVICE_DEFAULT",
-                "VK_PIPELINE_ROBUSTNESS_BUFFER_BEHAVIOR_DISABLED",
-                "VK_PIPELINE_ROBUSTNESS_BUFFER_BEHAVIOR_ROBUST_BUFFER_ACCESS",
-                "VK_PIPELINE_ROBUSTNESS_BUFFER_BEHAVIOR_ROBUST_BUFFER_ACCESS_2"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_PIPELINE_ROBUSTNESS_BUFFER_BEHAVIOR_DEVICE_DEFAULT",
+                        "VK_PIPELINE_ROBUSTNESS_BUFFER_BEHAVIOR_DISABLED",
+                        "VK_PIPELINE_ROBUSTNESS_BUFFER_BEHAVIOR_ROBUST_BUFFER_ACCESS",
+                        "VK_PIPELINE_ROBUSTNESS_BUFFER_BEHAVIOR_ROBUST_BUFFER_ACCESS_2"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkPipelineRobustnessImageBehavior": {
-            "enum": [
-                "VK_PIPELINE_ROBUSTNESS_IMAGE_BEHAVIOR_DEVICE_DEFAULT",
-                "VK_PIPELINE_ROBUSTNESS_IMAGE_BEHAVIOR_DISABLED",
-                "VK_PIPELINE_ROBUSTNESS_IMAGE_BEHAVIOR_ROBUST_IMAGE_ACCESS",
-                "VK_PIPELINE_ROBUSTNESS_IMAGE_BEHAVIOR_ROBUST_IMAGE_ACCESS_2"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_PIPELINE_ROBUSTNESS_IMAGE_BEHAVIOR_DEVICE_DEFAULT",
+                        "VK_PIPELINE_ROBUSTNESS_IMAGE_BEHAVIOR_DISABLED",
+                        "VK_PIPELINE_ROBUSTNESS_IMAGE_BEHAVIOR_ROBUST_IMAGE_ACCESS",
+                        "VK_PIPELINE_ROBUSTNESS_IMAGE_BEHAVIOR_ROBUST_IMAGE_ACCESS_2"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkPipelineShaderStageCreateInfo_pNext": {
@@ -671,9 +692,16 @@
             ]
         },
         "VkVertexInputRate": {
-            "enum": [
-                "VK_VERTEX_INPUT_RATE_VERTEX",
-                "VK_VERTEX_INPUT_RATE_INSTANCE"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_VERTEX_INPUT_RATE_VERTEX",
+                        "VK_VERTEX_INPUT_RATE_INSTANCE"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkVertexInputBindingDescription": {
@@ -697,248 +725,255 @@
             "type": "object"
         },
         "VkFormat": {
-            "enum": [
-                "VK_FORMAT_UNDEFINED",
-                "VK_FORMAT_R4G4_UNORM_PACK8",
-                "VK_FORMAT_R4G4B4A4_UNORM_PACK16",
-                "VK_FORMAT_B4G4R4A4_UNORM_PACK16",
-                "VK_FORMAT_R5G6B5_UNORM_PACK16",
-                "VK_FORMAT_B5G6R5_UNORM_PACK16",
-                "VK_FORMAT_R5G5B5A1_UNORM_PACK16",
-                "VK_FORMAT_B5G5R5A1_UNORM_PACK16",
-                "VK_FORMAT_A1R5G5B5_UNORM_PACK16",
-                "VK_FORMAT_R8_UNORM",
-                "VK_FORMAT_R8_SNORM",
-                "VK_FORMAT_R8_USCALED",
-                "VK_FORMAT_R8_SSCALED",
-                "VK_FORMAT_R8_UINT",
-                "VK_FORMAT_R8_SINT",
-                "VK_FORMAT_R8_SRGB",
-                "VK_FORMAT_R8G8_UNORM",
-                "VK_FORMAT_R8G8_SNORM",
-                "VK_FORMAT_R8G8_USCALED",
-                "VK_FORMAT_R8G8_SSCALED",
-                "VK_FORMAT_R8G8_UINT",
-                "VK_FORMAT_R8G8_SINT",
-                "VK_FORMAT_R8G8_SRGB",
-                "VK_FORMAT_R8G8B8_UNORM",
-                "VK_FORMAT_R8G8B8_SNORM",
-                "VK_FORMAT_R8G8B8_USCALED",
-                "VK_FORMAT_R8G8B8_SSCALED",
-                "VK_FORMAT_R8G8B8_UINT",
-                "VK_FORMAT_R8G8B8_SINT",
-                "VK_FORMAT_R8G8B8_SRGB",
-                "VK_FORMAT_B8G8R8_UNORM",
-                "VK_FORMAT_B8G8R8_SNORM",
-                "VK_FORMAT_B8G8R8_USCALED",
-                "VK_FORMAT_B8G8R8_SSCALED",
-                "VK_FORMAT_B8G8R8_UINT",
-                "VK_FORMAT_B8G8R8_SINT",
-                "VK_FORMAT_B8G8R8_SRGB",
-                "VK_FORMAT_R8G8B8A8_UNORM",
-                "VK_FORMAT_R8G8B8A8_SNORM",
-                "VK_FORMAT_R8G8B8A8_USCALED",
-                "VK_FORMAT_R8G8B8A8_SSCALED",
-                "VK_FORMAT_R8G8B8A8_UINT",
-                "VK_FORMAT_R8G8B8A8_SINT",
-                "VK_FORMAT_R8G8B8A8_SRGB",
-                "VK_FORMAT_B8G8R8A8_UNORM",
-                "VK_FORMAT_B8G8R8A8_SNORM",
-                "VK_FORMAT_B8G8R8A8_USCALED",
-                "VK_FORMAT_B8G8R8A8_SSCALED",
-                "VK_FORMAT_B8G8R8A8_UINT",
-                "VK_FORMAT_B8G8R8A8_SINT",
-                "VK_FORMAT_B8G8R8A8_SRGB",
-                "VK_FORMAT_A8B8G8R8_UNORM_PACK32",
-                "VK_FORMAT_A8B8G8R8_SNORM_PACK32",
-                "VK_FORMAT_A8B8G8R8_USCALED_PACK32",
-                "VK_FORMAT_A8B8G8R8_SSCALED_PACK32",
-                "VK_FORMAT_A8B8G8R8_UINT_PACK32",
-                "VK_FORMAT_A8B8G8R8_SINT_PACK32",
-                "VK_FORMAT_A8B8G8R8_SRGB_PACK32",
-                "VK_FORMAT_A2R10G10B10_UNORM_PACK32",
-                "VK_FORMAT_A2R10G10B10_SNORM_PACK32",
-                "VK_FORMAT_A2R10G10B10_USCALED_PACK32",
-                "VK_FORMAT_A2R10G10B10_SSCALED_PACK32",
-                "VK_FORMAT_A2R10G10B10_UINT_PACK32",
-                "VK_FORMAT_A2R10G10B10_SINT_PACK32",
-                "VK_FORMAT_A2B10G10R10_UNORM_PACK32",
-                "VK_FORMAT_A2B10G10R10_SNORM_PACK32",
-                "VK_FORMAT_A2B10G10R10_USCALED_PACK32",
-                "VK_FORMAT_A2B10G10R10_SSCALED_PACK32",
-                "VK_FORMAT_A2B10G10R10_UINT_PACK32",
-                "VK_FORMAT_A2B10G10R10_SINT_PACK32",
-                "VK_FORMAT_R16_UNORM",
-                "VK_FORMAT_R16_SNORM",
-                "VK_FORMAT_R16_USCALED",
-                "VK_FORMAT_R16_SSCALED",
-                "VK_FORMAT_R16_UINT",
-                "VK_FORMAT_R16_SINT",
-                "VK_FORMAT_R16_SFLOAT",
-                "VK_FORMAT_R16G16_UNORM",
-                "VK_FORMAT_R16G16_SNORM",
-                "VK_FORMAT_R16G16_USCALED",
-                "VK_FORMAT_R16G16_SSCALED",
-                "VK_FORMAT_R16G16_UINT",
-                "VK_FORMAT_R16G16_SINT",
-                "VK_FORMAT_R16G16_SFLOAT",
-                "VK_FORMAT_R16G16B16_UNORM",
-                "VK_FORMAT_R16G16B16_SNORM",
-                "VK_FORMAT_R16G16B16_USCALED",
-                "VK_FORMAT_R16G16B16_SSCALED",
-                "VK_FORMAT_R16G16B16_UINT",
-                "VK_FORMAT_R16G16B16_SINT",
-                "VK_FORMAT_R16G16B16_SFLOAT",
-                "VK_FORMAT_R16G16B16A16_UNORM",
-                "VK_FORMAT_R16G16B16A16_SNORM",
-                "VK_FORMAT_R16G16B16A16_USCALED",
-                "VK_FORMAT_R16G16B16A16_SSCALED",
-                "VK_FORMAT_R16G16B16A16_UINT",
-                "VK_FORMAT_R16G16B16A16_SINT",
-                "VK_FORMAT_R16G16B16A16_SFLOAT",
-                "VK_FORMAT_R32_UINT",
-                "VK_FORMAT_R32_SINT",
-                "VK_FORMAT_R32_SFLOAT",
-                "VK_FORMAT_R32G32_UINT",
-                "VK_FORMAT_R32G32_SINT",
-                "VK_FORMAT_R32G32_SFLOAT",
-                "VK_FORMAT_R32G32B32_UINT",
-                "VK_FORMAT_R32G32B32_SINT",
-                "VK_FORMAT_R32G32B32_SFLOAT",
-                "VK_FORMAT_R32G32B32A32_UINT",
-                "VK_FORMAT_R32G32B32A32_SINT",
-                "VK_FORMAT_R32G32B32A32_SFLOAT",
-                "VK_FORMAT_R64_UINT",
-                "VK_FORMAT_R64_SINT",
-                "VK_FORMAT_R64_SFLOAT",
-                "VK_FORMAT_R64G64_UINT",
-                "VK_FORMAT_R64G64_SINT",
-                "VK_FORMAT_R64G64_SFLOAT",
-                "VK_FORMAT_R64G64B64_UINT",
-                "VK_FORMAT_R64G64B64_SINT",
-                "VK_FORMAT_R64G64B64_SFLOAT",
-                "VK_FORMAT_R64G64B64A64_UINT",
-                "VK_FORMAT_R64G64B64A64_SINT",
-                "VK_FORMAT_R64G64B64A64_SFLOAT",
-                "VK_FORMAT_B10G11R11_UFLOAT_PACK32",
-                "VK_FORMAT_E5B9G9R9_UFLOAT_PACK32",
-                "VK_FORMAT_D16_UNORM",
-                "VK_FORMAT_X8_D24_UNORM_PACK32",
-                "VK_FORMAT_D32_SFLOAT",
-                "VK_FORMAT_S8_UINT",
-                "VK_FORMAT_D16_UNORM_S8_UINT",
-                "VK_FORMAT_D24_UNORM_S8_UINT",
-                "VK_FORMAT_D32_SFLOAT_S8_UINT",
-                "VK_FORMAT_BC1_RGB_UNORM_BLOCK",
-                "VK_FORMAT_BC1_RGB_SRGB_BLOCK",
-                "VK_FORMAT_BC1_RGBA_UNORM_BLOCK",
-                "VK_FORMAT_BC1_RGBA_SRGB_BLOCK",
-                "VK_FORMAT_BC2_UNORM_BLOCK",
-                "VK_FORMAT_BC2_SRGB_BLOCK",
-                "VK_FORMAT_BC3_UNORM_BLOCK",
-                "VK_FORMAT_BC3_SRGB_BLOCK",
-                "VK_FORMAT_BC4_UNORM_BLOCK",
-                "VK_FORMAT_BC4_SNORM_BLOCK",
-                "VK_FORMAT_BC5_UNORM_BLOCK",
-                "VK_FORMAT_BC5_SNORM_BLOCK",
-                "VK_FORMAT_BC6H_UFLOAT_BLOCK",
-                "VK_FORMAT_BC6H_SFLOAT_BLOCK",
-                "VK_FORMAT_BC7_UNORM_BLOCK",
-                "VK_FORMAT_BC7_SRGB_BLOCK",
-                "VK_FORMAT_ETC2_R8G8B8_UNORM_BLOCK",
-                "VK_FORMAT_ETC2_R8G8B8_SRGB_BLOCK",
-                "VK_FORMAT_ETC2_R8G8B8A1_UNORM_BLOCK",
-                "VK_FORMAT_ETC2_R8G8B8A1_SRGB_BLOCK",
-                "VK_FORMAT_ETC2_R8G8B8A8_UNORM_BLOCK",
-                "VK_FORMAT_ETC2_R8G8B8A8_SRGB_BLOCK",
-                "VK_FORMAT_EAC_R11_UNORM_BLOCK",
-                "VK_FORMAT_EAC_R11_SNORM_BLOCK",
-                "VK_FORMAT_EAC_R11G11_UNORM_BLOCK",
-                "VK_FORMAT_EAC_R11G11_SNORM_BLOCK",
-                "VK_FORMAT_ASTC_4x4_UNORM_BLOCK",
-                "VK_FORMAT_ASTC_4x4_SRGB_BLOCK",
-                "VK_FORMAT_ASTC_5x4_UNORM_BLOCK",
-                "VK_FORMAT_ASTC_5x4_SRGB_BLOCK",
-                "VK_FORMAT_ASTC_5x5_UNORM_BLOCK",
-                "VK_FORMAT_ASTC_5x5_SRGB_BLOCK",
-                "VK_FORMAT_ASTC_6x5_UNORM_BLOCK",
-                "VK_FORMAT_ASTC_6x5_SRGB_BLOCK",
-                "VK_FORMAT_ASTC_6x6_UNORM_BLOCK",
-                "VK_FORMAT_ASTC_6x6_SRGB_BLOCK",
-                "VK_FORMAT_ASTC_8x5_UNORM_BLOCK",
-                "VK_FORMAT_ASTC_8x5_SRGB_BLOCK",
-                "VK_FORMAT_ASTC_8x6_UNORM_BLOCK",
-                "VK_FORMAT_ASTC_8x6_SRGB_BLOCK",
-                "VK_FORMAT_ASTC_8x8_UNORM_BLOCK",
-                "VK_FORMAT_ASTC_8x8_SRGB_BLOCK",
-                "VK_FORMAT_ASTC_10x5_UNORM_BLOCK",
-                "VK_FORMAT_ASTC_10x5_SRGB_BLOCK",
-                "VK_FORMAT_ASTC_10x6_UNORM_BLOCK",
-                "VK_FORMAT_ASTC_10x6_SRGB_BLOCK",
-                "VK_FORMAT_ASTC_10x8_UNORM_BLOCK",
-                "VK_FORMAT_ASTC_10x8_SRGB_BLOCK",
-                "VK_FORMAT_ASTC_10x10_UNORM_BLOCK",
-                "VK_FORMAT_ASTC_10x10_SRGB_BLOCK",
-                "VK_FORMAT_ASTC_12x10_UNORM_BLOCK",
-                "VK_FORMAT_ASTC_12x10_SRGB_BLOCK",
-                "VK_FORMAT_ASTC_12x12_UNORM_BLOCK",
-                "VK_FORMAT_ASTC_12x12_SRGB_BLOCK",
-                "VK_FORMAT_G8B8G8R8_422_UNORM",
-                "VK_FORMAT_B8G8R8G8_422_UNORM",
-                "VK_FORMAT_G8_B8_R8_3PLANE_420_UNORM",
-                "VK_FORMAT_G8_B8R8_2PLANE_420_UNORM",
-                "VK_FORMAT_G8_B8_R8_3PLANE_422_UNORM",
-                "VK_FORMAT_G8_B8R8_2PLANE_422_UNORM",
-                "VK_FORMAT_G8_B8_R8_3PLANE_444_UNORM",
-                "VK_FORMAT_R10X6_UNORM_PACK16",
-                "VK_FORMAT_R10X6G10X6_UNORM_2PACK16",
-                "VK_FORMAT_R10X6G10X6B10X6A10X6_UNORM_4PACK16",
-                "VK_FORMAT_G10X6B10X6G10X6R10X6_422_UNORM_4PACK16",
-                "VK_FORMAT_B10X6G10X6R10X6G10X6_422_UNORM_4PACK16",
-                "VK_FORMAT_G10X6_B10X6_R10X6_3PLANE_420_UNORM_3PACK16",
-                "VK_FORMAT_G10X6_B10X6R10X6_2PLANE_420_UNORM_3PACK16",
-                "VK_FORMAT_G10X6_B10X6_R10X6_3PLANE_422_UNORM_3PACK16",
-                "VK_FORMAT_G10X6_B10X6R10X6_2PLANE_422_UNORM_3PACK16",
-                "VK_FORMAT_G10X6_B10X6_R10X6_3PLANE_444_UNORM_3PACK16",
-                "VK_FORMAT_R12X4_UNORM_PACK16",
-                "VK_FORMAT_R12X4G12X4_UNORM_2PACK16",
-                "VK_FORMAT_R12X4G12X4B12X4A12X4_UNORM_4PACK16",
-                "VK_FORMAT_G12X4B12X4G12X4R12X4_422_UNORM_4PACK16",
-                "VK_FORMAT_B12X4G12X4R12X4G12X4_422_UNORM_4PACK16",
-                "VK_FORMAT_G12X4_B12X4_R12X4_3PLANE_420_UNORM_3PACK16",
-                "VK_FORMAT_G12X4_B12X4R12X4_2PLANE_420_UNORM_3PACK16",
-                "VK_FORMAT_G12X4_B12X4_R12X4_3PLANE_422_UNORM_3PACK16",
-                "VK_FORMAT_G12X4_B12X4R12X4_2PLANE_422_UNORM_3PACK16",
-                "VK_FORMAT_G12X4_B12X4_R12X4_3PLANE_444_UNORM_3PACK16",
-                "VK_FORMAT_G16B16G16R16_422_UNORM",
-                "VK_FORMAT_B16G16R16G16_422_UNORM",
-                "VK_FORMAT_G16_B16_R16_3PLANE_420_UNORM",
-                "VK_FORMAT_G16_B16R16_2PLANE_420_UNORM",
-                "VK_FORMAT_G16_B16_R16_3PLANE_422_UNORM",
-                "VK_FORMAT_G16_B16R16_2PLANE_422_UNORM",
-                "VK_FORMAT_G16_B16_R16_3PLANE_444_UNORM",
-                "VK_FORMAT_G8_B8R8_2PLANE_444_UNORM",
-                "VK_FORMAT_G10X6_B10X6R10X6_2PLANE_444_UNORM_3PACK16",
-                "VK_FORMAT_G12X4_B12X4R12X4_2PLANE_444_UNORM_3PACK16",
-                "VK_FORMAT_G16_B16R16_2PLANE_444_UNORM",
-                "VK_FORMAT_A4R4G4B4_UNORM_PACK16",
-                "VK_FORMAT_A4B4G4R4_UNORM_PACK16",
-                "VK_FORMAT_ASTC_4x4_SFLOAT_BLOCK",
-                "VK_FORMAT_ASTC_5x4_SFLOAT_BLOCK",
-                "VK_FORMAT_ASTC_5x5_SFLOAT_BLOCK",
-                "VK_FORMAT_ASTC_6x5_SFLOAT_BLOCK",
-                "VK_FORMAT_ASTC_6x6_SFLOAT_BLOCK",
-                "VK_FORMAT_ASTC_8x5_SFLOAT_BLOCK",
-                "VK_FORMAT_ASTC_8x6_SFLOAT_BLOCK",
-                "VK_FORMAT_ASTC_8x8_SFLOAT_BLOCK",
-                "VK_FORMAT_ASTC_10x5_SFLOAT_BLOCK",
-                "VK_FORMAT_ASTC_10x6_SFLOAT_BLOCK",
-                "VK_FORMAT_ASTC_10x8_SFLOAT_BLOCK",
-                "VK_FORMAT_ASTC_10x10_SFLOAT_BLOCK",
-                "VK_FORMAT_ASTC_12x10_SFLOAT_BLOCK",
-                "VK_FORMAT_ASTC_12x12_SFLOAT_BLOCK",
-                "VK_FORMAT_A1B5G5R5_UNORM_PACK16",
-                "VK_FORMAT_A8_UNORM"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_FORMAT_UNDEFINED",
+                        "VK_FORMAT_R4G4_UNORM_PACK8",
+                        "VK_FORMAT_R4G4B4A4_UNORM_PACK16",
+                        "VK_FORMAT_B4G4R4A4_UNORM_PACK16",
+                        "VK_FORMAT_R5G6B5_UNORM_PACK16",
+                        "VK_FORMAT_B5G6R5_UNORM_PACK16",
+                        "VK_FORMAT_R5G5B5A1_UNORM_PACK16",
+                        "VK_FORMAT_B5G5R5A1_UNORM_PACK16",
+                        "VK_FORMAT_A1R5G5B5_UNORM_PACK16",
+                        "VK_FORMAT_R8_UNORM",
+                        "VK_FORMAT_R8_SNORM",
+                        "VK_FORMAT_R8_USCALED",
+                        "VK_FORMAT_R8_SSCALED",
+                        "VK_FORMAT_R8_UINT",
+                        "VK_FORMAT_R8_SINT",
+                        "VK_FORMAT_R8_SRGB",
+                        "VK_FORMAT_R8G8_UNORM",
+                        "VK_FORMAT_R8G8_SNORM",
+                        "VK_FORMAT_R8G8_USCALED",
+                        "VK_FORMAT_R8G8_SSCALED",
+                        "VK_FORMAT_R8G8_UINT",
+                        "VK_FORMAT_R8G8_SINT",
+                        "VK_FORMAT_R8G8_SRGB",
+                        "VK_FORMAT_R8G8B8_UNORM",
+                        "VK_FORMAT_R8G8B8_SNORM",
+                        "VK_FORMAT_R8G8B8_USCALED",
+                        "VK_FORMAT_R8G8B8_SSCALED",
+                        "VK_FORMAT_R8G8B8_UINT",
+                        "VK_FORMAT_R8G8B8_SINT",
+                        "VK_FORMAT_R8G8B8_SRGB",
+                        "VK_FORMAT_B8G8R8_UNORM",
+                        "VK_FORMAT_B8G8R8_SNORM",
+                        "VK_FORMAT_B8G8R8_USCALED",
+                        "VK_FORMAT_B8G8R8_SSCALED",
+                        "VK_FORMAT_B8G8R8_UINT",
+                        "VK_FORMAT_B8G8R8_SINT",
+                        "VK_FORMAT_B8G8R8_SRGB",
+                        "VK_FORMAT_R8G8B8A8_UNORM",
+                        "VK_FORMAT_R8G8B8A8_SNORM",
+                        "VK_FORMAT_R8G8B8A8_USCALED",
+                        "VK_FORMAT_R8G8B8A8_SSCALED",
+                        "VK_FORMAT_R8G8B8A8_UINT",
+                        "VK_FORMAT_R8G8B8A8_SINT",
+                        "VK_FORMAT_R8G8B8A8_SRGB",
+                        "VK_FORMAT_B8G8R8A8_UNORM",
+                        "VK_FORMAT_B8G8R8A8_SNORM",
+                        "VK_FORMAT_B8G8R8A8_USCALED",
+                        "VK_FORMAT_B8G8R8A8_SSCALED",
+                        "VK_FORMAT_B8G8R8A8_UINT",
+                        "VK_FORMAT_B8G8R8A8_SINT",
+                        "VK_FORMAT_B8G8R8A8_SRGB",
+                        "VK_FORMAT_A8B8G8R8_UNORM_PACK32",
+                        "VK_FORMAT_A8B8G8R8_SNORM_PACK32",
+                        "VK_FORMAT_A8B8G8R8_USCALED_PACK32",
+                        "VK_FORMAT_A8B8G8R8_SSCALED_PACK32",
+                        "VK_FORMAT_A8B8G8R8_UINT_PACK32",
+                        "VK_FORMAT_A8B8G8R8_SINT_PACK32",
+                        "VK_FORMAT_A8B8G8R8_SRGB_PACK32",
+                        "VK_FORMAT_A2R10G10B10_UNORM_PACK32",
+                        "VK_FORMAT_A2R10G10B10_SNORM_PACK32",
+                        "VK_FORMAT_A2R10G10B10_USCALED_PACK32",
+                        "VK_FORMAT_A2R10G10B10_SSCALED_PACK32",
+                        "VK_FORMAT_A2R10G10B10_UINT_PACK32",
+                        "VK_FORMAT_A2R10G10B10_SINT_PACK32",
+                        "VK_FORMAT_A2B10G10R10_UNORM_PACK32",
+                        "VK_FORMAT_A2B10G10R10_SNORM_PACK32",
+                        "VK_FORMAT_A2B10G10R10_USCALED_PACK32",
+                        "VK_FORMAT_A2B10G10R10_SSCALED_PACK32",
+                        "VK_FORMAT_A2B10G10R10_UINT_PACK32",
+                        "VK_FORMAT_A2B10G10R10_SINT_PACK32",
+                        "VK_FORMAT_R16_UNORM",
+                        "VK_FORMAT_R16_SNORM",
+                        "VK_FORMAT_R16_USCALED",
+                        "VK_FORMAT_R16_SSCALED",
+                        "VK_FORMAT_R16_UINT",
+                        "VK_FORMAT_R16_SINT",
+                        "VK_FORMAT_R16_SFLOAT",
+                        "VK_FORMAT_R16G16_UNORM",
+                        "VK_FORMAT_R16G16_SNORM",
+                        "VK_FORMAT_R16G16_USCALED",
+                        "VK_FORMAT_R16G16_SSCALED",
+                        "VK_FORMAT_R16G16_UINT",
+                        "VK_FORMAT_R16G16_SINT",
+                        "VK_FORMAT_R16G16_SFLOAT",
+                        "VK_FORMAT_R16G16B16_UNORM",
+                        "VK_FORMAT_R16G16B16_SNORM",
+                        "VK_FORMAT_R16G16B16_USCALED",
+                        "VK_FORMAT_R16G16B16_SSCALED",
+                        "VK_FORMAT_R16G16B16_UINT",
+                        "VK_FORMAT_R16G16B16_SINT",
+                        "VK_FORMAT_R16G16B16_SFLOAT",
+                        "VK_FORMAT_R16G16B16A16_UNORM",
+                        "VK_FORMAT_R16G16B16A16_SNORM",
+                        "VK_FORMAT_R16G16B16A16_USCALED",
+                        "VK_FORMAT_R16G16B16A16_SSCALED",
+                        "VK_FORMAT_R16G16B16A16_UINT",
+                        "VK_FORMAT_R16G16B16A16_SINT",
+                        "VK_FORMAT_R16G16B16A16_SFLOAT",
+                        "VK_FORMAT_R32_UINT",
+                        "VK_FORMAT_R32_SINT",
+                        "VK_FORMAT_R32_SFLOAT",
+                        "VK_FORMAT_R32G32_UINT",
+                        "VK_FORMAT_R32G32_SINT",
+                        "VK_FORMAT_R32G32_SFLOAT",
+                        "VK_FORMAT_R32G32B32_UINT",
+                        "VK_FORMAT_R32G32B32_SINT",
+                        "VK_FORMAT_R32G32B32_SFLOAT",
+                        "VK_FORMAT_R32G32B32A32_UINT",
+                        "VK_FORMAT_R32G32B32A32_SINT",
+                        "VK_FORMAT_R32G32B32A32_SFLOAT",
+                        "VK_FORMAT_R64_UINT",
+                        "VK_FORMAT_R64_SINT",
+                        "VK_FORMAT_R64_SFLOAT",
+                        "VK_FORMAT_R64G64_UINT",
+                        "VK_FORMAT_R64G64_SINT",
+                        "VK_FORMAT_R64G64_SFLOAT",
+                        "VK_FORMAT_R64G64B64_UINT",
+                        "VK_FORMAT_R64G64B64_SINT",
+                        "VK_FORMAT_R64G64B64_SFLOAT",
+                        "VK_FORMAT_R64G64B64A64_UINT",
+                        "VK_FORMAT_R64G64B64A64_SINT",
+                        "VK_FORMAT_R64G64B64A64_SFLOAT",
+                        "VK_FORMAT_B10G11R11_UFLOAT_PACK32",
+                        "VK_FORMAT_E5B9G9R9_UFLOAT_PACK32",
+                        "VK_FORMAT_D16_UNORM",
+                        "VK_FORMAT_X8_D24_UNORM_PACK32",
+                        "VK_FORMAT_D32_SFLOAT",
+                        "VK_FORMAT_S8_UINT",
+                        "VK_FORMAT_D16_UNORM_S8_UINT",
+                        "VK_FORMAT_D24_UNORM_S8_UINT",
+                        "VK_FORMAT_D32_SFLOAT_S8_UINT",
+                        "VK_FORMAT_BC1_RGB_UNORM_BLOCK",
+                        "VK_FORMAT_BC1_RGB_SRGB_BLOCK",
+                        "VK_FORMAT_BC1_RGBA_UNORM_BLOCK",
+                        "VK_FORMAT_BC1_RGBA_SRGB_BLOCK",
+                        "VK_FORMAT_BC2_UNORM_BLOCK",
+                        "VK_FORMAT_BC2_SRGB_BLOCK",
+                        "VK_FORMAT_BC3_UNORM_BLOCK",
+                        "VK_FORMAT_BC3_SRGB_BLOCK",
+                        "VK_FORMAT_BC4_UNORM_BLOCK",
+                        "VK_FORMAT_BC4_SNORM_BLOCK",
+                        "VK_FORMAT_BC5_UNORM_BLOCK",
+                        "VK_FORMAT_BC5_SNORM_BLOCK",
+                        "VK_FORMAT_BC6H_UFLOAT_BLOCK",
+                        "VK_FORMAT_BC6H_SFLOAT_BLOCK",
+                        "VK_FORMAT_BC7_UNORM_BLOCK",
+                        "VK_FORMAT_BC7_SRGB_BLOCK",
+                        "VK_FORMAT_ETC2_R8G8B8_UNORM_BLOCK",
+                        "VK_FORMAT_ETC2_R8G8B8_SRGB_BLOCK",
+                        "VK_FORMAT_ETC2_R8G8B8A1_UNORM_BLOCK",
+                        "VK_FORMAT_ETC2_R8G8B8A1_SRGB_BLOCK",
+                        "VK_FORMAT_ETC2_R8G8B8A8_UNORM_BLOCK",
+                        "VK_FORMAT_ETC2_R8G8B8A8_SRGB_BLOCK",
+                        "VK_FORMAT_EAC_R11_UNORM_BLOCK",
+                        "VK_FORMAT_EAC_R11_SNORM_BLOCK",
+                        "VK_FORMAT_EAC_R11G11_UNORM_BLOCK",
+                        "VK_FORMAT_EAC_R11G11_SNORM_BLOCK",
+                        "VK_FORMAT_ASTC_4x4_UNORM_BLOCK",
+                        "VK_FORMAT_ASTC_4x4_SRGB_BLOCK",
+                        "VK_FORMAT_ASTC_5x4_UNORM_BLOCK",
+                        "VK_FORMAT_ASTC_5x4_SRGB_BLOCK",
+                        "VK_FORMAT_ASTC_5x5_UNORM_BLOCK",
+                        "VK_FORMAT_ASTC_5x5_SRGB_BLOCK",
+                        "VK_FORMAT_ASTC_6x5_UNORM_BLOCK",
+                        "VK_FORMAT_ASTC_6x5_SRGB_BLOCK",
+                        "VK_FORMAT_ASTC_6x6_UNORM_BLOCK",
+                        "VK_FORMAT_ASTC_6x6_SRGB_BLOCK",
+                        "VK_FORMAT_ASTC_8x5_UNORM_BLOCK",
+                        "VK_FORMAT_ASTC_8x5_SRGB_BLOCK",
+                        "VK_FORMAT_ASTC_8x6_UNORM_BLOCK",
+                        "VK_FORMAT_ASTC_8x6_SRGB_BLOCK",
+                        "VK_FORMAT_ASTC_8x8_UNORM_BLOCK",
+                        "VK_FORMAT_ASTC_8x8_SRGB_BLOCK",
+                        "VK_FORMAT_ASTC_10x5_UNORM_BLOCK",
+                        "VK_FORMAT_ASTC_10x5_SRGB_BLOCK",
+                        "VK_FORMAT_ASTC_10x6_UNORM_BLOCK",
+                        "VK_FORMAT_ASTC_10x6_SRGB_BLOCK",
+                        "VK_FORMAT_ASTC_10x8_UNORM_BLOCK",
+                        "VK_FORMAT_ASTC_10x8_SRGB_BLOCK",
+                        "VK_FORMAT_ASTC_10x10_UNORM_BLOCK",
+                        "VK_FORMAT_ASTC_10x10_SRGB_BLOCK",
+                        "VK_FORMAT_ASTC_12x10_UNORM_BLOCK",
+                        "VK_FORMAT_ASTC_12x10_SRGB_BLOCK",
+                        "VK_FORMAT_ASTC_12x12_UNORM_BLOCK",
+                        "VK_FORMAT_ASTC_12x12_SRGB_BLOCK",
+                        "VK_FORMAT_G8B8G8R8_422_UNORM",
+                        "VK_FORMAT_B8G8R8G8_422_UNORM",
+                        "VK_FORMAT_G8_B8_R8_3PLANE_420_UNORM",
+                        "VK_FORMAT_G8_B8R8_2PLANE_420_UNORM",
+                        "VK_FORMAT_G8_B8_R8_3PLANE_422_UNORM",
+                        "VK_FORMAT_G8_B8R8_2PLANE_422_UNORM",
+                        "VK_FORMAT_G8_B8_R8_3PLANE_444_UNORM",
+                        "VK_FORMAT_R10X6_UNORM_PACK16",
+                        "VK_FORMAT_R10X6G10X6_UNORM_2PACK16",
+                        "VK_FORMAT_R10X6G10X6B10X6A10X6_UNORM_4PACK16",
+                        "VK_FORMAT_G10X6B10X6G10X6R10X6_422_UNORM_4PACK16",
+                        "VK_FORMAT_B10X6G10X6R10X6G10X6_422_UNORM_4PACK16",
+                        "VK_FORMAT_G10X6_B10X6_R10X6_3PLANE_420_UNORM_3PACK16",
+                        "VK_FORMAT_G10X6_B10X6R10X6_2PLANE_420_UNORM_3PACK16",
+                        "VK_FORMAT_G10X6_B10X6_R10X6_3PLANE_422_UNORM_3PACK16",
+                        "VK_FORMAT_G10X6_B10X6R10X6_2PLANE_422_UNORM_3PACK16",
+                        "VK_FORMAT_G10X6_B10X6_R10X6_3PLANE_444_UNORM_3PACK16",
+                        "VK_FORMAT_R12X4_UNORM_PACK16",
+                        "VK_FORMAT_R12X4G12X4_UNORM_2PACK16",
+                        "VK_FORMAT_R12X4G12X4B12X4A12X4_UNORM_4PACK16",
+                        "VK_FORMAT_G12X4B12X4G12X4R12X4_422_UNORM_4PACK16",
+                        "VK_FORMAT_B12X4G12X4R12X4G12X4_422_UNORM_4PACK16",
+                        "VK_FORMAT_G12X4_B12X4_R12X4_3PLANE_420_UNORM_3PACK16",
+                        "VK_FORMAT_G12X4_B12X4R12X4_2PLANE_420_UNORM_3PACK16",
+                        "VK_FORMAT_G12X4_B12X4_R12X4_3PLANE_422_UNORM_3PACK16",
+                        "VK_FORMAT_G12X4_B12X4R12X4_2PLANE_422_UNORM_3PACK16",
+                        "VK_FORMAT_G12X4_B12X4_R12X4_3PLANE_444_UNORM_3PACK16",
+                        "VK_FORMAT_G16B16G16R16_422_UNORM",
+                        "VK_FORMAT_B16G16R16G16_422_UNORM",
+                        "VK_FORMAT_G16_B16_R16_3PLANE_420_UNORM",
+                        "VK_FORMAT_G16_B16R16_2PLANE_420_UNORM",
+                        "VK_FORMAT_G16_B16_R16_3PLANE_422_UNORM",
+                        "VK_FORMAT_G16_B16R16_2PLANE_422_UNORM",
+                        "VK_FORMAT_G16_B16_R16_3PLANE_444_UNORM",
+                        "VK_FORMAT_G8_B8R8_2PLANE_444_UNORM",
+                        "VK_FORMAT_G10X6_B10X6R10X6_2PLANE_444_UNORM_3PACK16",
+                        "VK_FORMAT_G12X4_B12X4R12X4_2PLANE_444_UNORM_3PACK16",
+                        "VK_FORMAT_G16_B16R16_2PLANE_444_UNORM",
+                        "VK_FORMAT_A4R4G4B4_UNORM_PACK16",
+                        "VK_FORMAT_A4B4G4R4_UNORM_PACK16",
+                        "VK_FORMAT_ASTC_4x4_SFLOAT_BLOCK",
+                        "VK_FORMAT_ASTC_5x4_SFLOAT_BLOCK",
+                        "VK_FORMAT_ASTC_5x5_SFLOAT_BLOCK",
+                        "VK_FORMAT_ASTC_6x5_SFLOAT_BLOCK",
+                        "VK_FORMAT_ASTC_6x6_SFLOAT_BLOCK",
+                        "VK_FORMAT_ASTC_8x5_SFLOAT_BLOCK",
+                        "VK_FORMAT_ASTC_8x6_SFLOAT_BLOCK",
+                        "VK_FORMAT_ASTC_8x8_SFLOAT_BLOCK",
+                        "VK_FORMAT_ASTC_10x5_SFLOAT_BLOCK",
+                        "VK_FORMAT_ASTC_10x6_SFLOAT_BLOCK",
+                        "VK_FORMAT_ASTC_10x8_SFLOAT_BLOCK",
+                        "VK_FORMAT_ASTC_10x10_SFLOAT_BLOCK",
+                        "VK_FORMAT_ASTC_12x10_SFLOAT_BLOCK",
+                        "VK_FORMAT_ASTC_12x12_SFLOAT_BLOCK",
+                        "VK_FORMAT_A1B5G5R5_UNORM_PACK16",
+                        "VK_FORMAT_A8_UNORM"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkVertexInputAttributeDescription": {
@@ -1145,18 +1180,25 @@
             ]
         },
         "VkPrimitiveTopology": {
-            "enum": [
-                "VK_PRIMITIVE_TOPOLOGY_POINT_LIST",
-                "VK_PRIMITIVE_TOPOLOGY_LINE_LIST",
-                "VK_PRIMITIVE_TOPOLOGY_LINE_STRIP",
-                "VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST",
-                "VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP",
-                "VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN",
-                "VK_PRIMITIVE_TOPOLOGY_LINE_LIST_WITH_ADJACENCY",
-                "VK_PRIMITIVE_TOPOLOGY_LINE_STRIP_WITH_ADJACENCY",
-                "VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_WITH_ADJACENCY",
-                "VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY",
-                "VK_PRIMITIVE_TOPOLOGY_PATCH_LIST"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_PRIMITIVE_TOPOLOGY_POINT_LIST",
+                        "VK_PRIMITIVE_TOPOLOGY_LINE_LIST",
+                        "VK_PRIMITIVE_TOPOLOGY_LINE_STRIP",
+                        "VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST",
+                        "VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP",
+                        "VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN",
+                        "VK_PRIMITIVE_TOPOLOGY_LINE_LIST_WITH_ADJACENCY",
+                        "VK_PRIMITIVE_TOPOLOGY_LINE_STRIP_WITH_ADJACENCY",
+                        "VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_WITH_ADJACENCY",
+                        "VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY",
+                        "VK_PRIMITIVE_TOPOLOGY_PATCH_LIST"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkPipelineInputAssemblyStateCreateInfo": {
@@ -1216,9 +1258,16 @@
             ]
         },
         "VkTessellationDomainOrigin": {
-            "enum": [
-                "VK_TESSELLATION_DOMAIN_ORIGIN_UPPER_LEFT",
-                "VK_TESSELLATION_DOMAIN_ORIGIN_LOWER_LEFT"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_TESSELLATION_DOMAIN_ORIGIN_UPPER_LEFT",
+                        "VK_TESSELLATION_DOMAIN_ORIGIN_LOWER_LEFT"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkPipelineTessellationStateCreateInfo_pNext": {
@@ -1497,10 +1546,17 @@
             ]
         },
         "VkPolygonMode": {
-            "enum": [
-                "VK_POLYGON_MODE_FILL",
-                "VK_POLYGON_MODE_LINE",
-                "VK_POLYGON_MODE_POINT"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_POLYGON_MODE_FILL",
+                        "VK_POLYGON_MODE_LINE",
+                        "VK_POLYGON_MODE_POINT"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkCullModeFlags": {
@@ -1522,9 +1578,16 @@
             ]
         },
         "VkFrontFace": {
-            "enum": [
-                "VK_FRONT_FACE_COUNTER_CLOCKWISE",
-                "VK_FRONT_FACE_CLOCKWISE"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_FRONT_FACE_COUNTER_CLOCKWISE",
+                        "VK_FRONT_FACE_CLOCKWISE"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkPipelineRasterizationConservativeStateCreateFlagsEXT": {
@@ -1541,10 +1604,17 @@
             ]
         },
         "VkConservativeRasterizationModeEXT": {
-            "enum": [
-                "VK_CONSERVATIVE_RASTERIZATION_MODE_DISABLED_EXT",
-                "VK_CONSERVATIVE_RASTERIZATION_MODE_OVERESTIMATE_EXT",
-                "VK_CONSERVATIVE_RASTERIZATION_MODE_UNDERESTIMATE_EXT"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_CONSERVATIVE_RASTERIZATION_MODE_DISABLED_EXT",
+                        "VK_CONSERVATIVE_RASTERIZATION_MODE_OVERESTIMATE_EXT",
+                        "VK_CONSERVATIVE_RASTERIZATION_MODE_UNDERESTIMATE_EXT"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkPipelineRasterizationDepthClipStateCreateFlagsEXT": {
@@ -1561,11 +1631,18 @@
             ]
         },
         "VkLineRasterizationMode": {
-            "enum": [
-                "VK_LINE_RASTERIZATION_MODE_DEFAULT",
-                "VK_LINE_RASTERIZATION_MODE_RECTANGULAR",
-                "VK_LINE_RASTERIZATION_MODE_BRESENHAM",
-                "VK_LINE_RASTERIZATION_MODE_RECTANGULAR_SMOOTH"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_LINE_RASTERIZATION_MODE_DEFAULT",
+                        "VK_LINE_RASTERIZATION_MODE_RECTANGULAR",
+                        "VK_LINE_RASTERIZATION_MODE_BRESENHAM",
+                        "VK_LINE_RASTERIZATION_MODE_RECTANGULAR_SMOOTH"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkPipelineRasterizationStateCreateInfo_pNext": {
@@ -1991,27 +2068,41 @@
             ]
         },
         "VkCompareOp": {
-            "enum": [
-                "VK_COMPARE_OP_NEVER",
-                "VK_COMPARE_OP_LESS",
-                "VK_COMPARE_OP_EQUAL",
-                "VK_COMPARE_OP_LESS_OR_EQUAL",
-                "VK_COMPARE_OP_GREATER",
-                "VK_COMPARE_OP_NOT_EQUAL",
-                "VK_COMPARE_OP_GREATER_OR_EQUAL",
-                "VK_COMPARE_OP_ALWAYS"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_COMPARE_OP_NEVER",
+                        "VK_COMPARE_OP_LESS",
+                        "VK_COMPARE_OP_EQUAL",
+                        "VK_COMPARE_OP_LESS_OR_EQUAL",
+                        "VK_COMPARE_OP_GREATER",
+                        "VK_COMPARE_OP_NOT_EQUAL",
+                        "VK_COMPARE_OP_GREATER_OR_EQUAL",
+                        "VK_COMPARE_OP_ALWAYS"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkStencilOp": {
-            "enum": [
-                "VK_STENCIL_OP_KEEP",
-                "VK_STENCIL_OP_ZERO",
-                "VK_STENCIL_OP_REPLACE",
-                "VK_STENCIL_OP_INCREMENT_AND_CLAMP",
-                "VK_STENCIL_OP_DECREMENT_AND_CLAMP",
-                "VK_STENCIL_OP_INVERT",
-                "VK_STENCIL_OP_INCREMENT_AND_WRAP",
-                "VK_STENCIL_OP_DECREMENT_AND_WRAP"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_STENCIL_OP_KEEP",
+                        "VK_STENCIL_OP_ZERO",
+                        "VK_STENCIL_OP_REPLACE",
+                        "VK_STENCIL_OP_INCREMENT_AND_CLAMP",
+                        "VK_STENCIL_OP_DECREMENT_AND_CLAMP",
+                        "VK_STENCIL_OP_INVERT",
+                        "VK_STENCIL_OP_INCREMENT_AND_WRAP",
+                        "VK_STENCIL_OP_DECREMENT_AND_WRAP"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkStencilOpState": {
@@ -2135,101 +2226,122 @@
             ]
         },
         "VkLogicOp": {
-            "enum": [
-                "VK_LOGIC_OP_CLEAR",
-                "VK_LOGIC_OP_AND",
-                "VK_LOGIC_OP_AND_REVERSE",
-                "VK_LOGIC_OP_COPY",
-                "VK_LOGIC_OP_AND_INVERTED",
-                "VK_LOGIC_OP_NO_OP",
-                "VK_LOGIC_OP_XOR",
-                "VK_LOGIC_OP_OR",
-                "VK_LOGIC_OP_NOR",
-                "VK_LOGIC_OP_EQUIVALENT",
-                "VK_LOGIC_OP_INVERT",
-                "VK_LOGIC_OP_OR_REVERSE",
-                "VK_LOGIC_OP_COPY_INVERTED",
-                "VK_LOGIC_OP_OR_INVERTED",
-                "VK_LOGIC_OP_NAND",
-                "VK_LOGIC_OP_SET"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_LOGIC_OP_CLEAR",
+                        "VK_LOGIC_OP_AND",
+                        "VK_LOGIC_OP_AND_REVERSE",
+                        "VK_LOGIC_OP_COPY",
+                        "VK_LOGIC_OP_AND_INVERTED",
+                        "VK_LOGIC_OP_NO_OP",
+                        "VK_LOGIC_OP_XOR",
+                        "VK_LOGIC_OP_OR",
+                        "VK_LOGIC_OP_NOR",
+                        "VK_LOGIC_OP_EQUIVALENT",
+                        "VK_LOGIC_OP_INVERT",
+                        "VK_LOGIC_OP_OR_REVERSE",
+                        "VK_LOGIC_OP_COPY_INVERTED",
+                        "VK_LOGIC_OP_OR_INVERTED",
+                        "VK_LOGIC_OP_NAND",
+                        "VK_LOGIC_OP_SET"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkBlendFactor": {
-            "enum": [
-                "VK_BLEND_FACTOR_ZERO",
-                "VK_BLEND_FACTOR_ONE",
-                "VK_BLEND_FACTOR_SRC_COLOR",
-                "VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR",
-                "VK_BLEND_FACTOR_DST_COLOR",
-                "VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR",
-                "VK_BLEND_FACTOR_SRC_ALPHA",
-                "VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA",
-                "VK_BLEND_FACTOR_DST_ALPHA",
-                "VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA",
-                "VK_BLEND_FACTOR_CONSTANT_COLOR",
-                "VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR",
-                "VK_BLEND_FACTOR_CONSTANT_ALPHA",
-                "VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA",
-                "VK_BLEND_FACTOR_SRC_ALPHA_SATURATE",
-                "VK_BLEND_FACTOR_SRC1_COLOR",
-                "VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR",
-                "VK_BLEND_FACTOR_SRC1_ALPHA",
-                "VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_BLEND_FACTOR_ZERO",
+                        "VK_BLEND_FACTOR_ONE",
+                        "VK_BLEND_FACTOR_SRC_COLOR",
+                        "VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR",
+                        "VK_BLEND_FACTOR_DST_COLOR",
+                        "VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR",
+                        "VK_BLEND_FACTOR_SRC_ALPHA",
+                        "VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA",
+                        "VK_BLEND_FACTOR_DST_ALPHA",
+                        "VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA",
+                        "VK_BLEND_FACTOR_CONSTANT_COLOR",
+                        "VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR",
+                        "VK_BLEND_FACTOR_CONSTANT_ALPHA",
+                        "VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA",
+                        "VK_BLEND_FACTOR_SRC_ALPHA_SATURATE",
+                        "VK_BLEND_FACTOR_SRC1_COLOR",
+                        "VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR",
+                        "VK_BLEND_FACTOR_SRC1_ALPHA",
+                        "VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkBlendOp": {
-            "enum": [
-                "VK_BLEND_OP_ADD",
-                "VK_BLEND_OP_SUBTRACT",
-                "VK_BLEND_OP_REVERSE_SUBTRACT",
-                "VK_BLEND_OP_MIN",
-                "VK_BLEND_OP_MAX",
-                "VK_BLEND_OP_ZERO_EXT",
-                "VK_BLEND_OP_SRC_EXT",
-                "VK_BLEND_OP_DST_EXT",
-                "VK_BLEND_OP_SRC_OVER_EXT",
-                "VK_BLEND_OP_DST_OVER_EXT",
-                "VK_BLEND_OP_SRC_IN_EXT",
-                "VK_BLEND_OP_DST_IN_EXT",
-                "VK_BLEND_OP_SRC_OUT_EXT",
-                "VK_BLEND_OP_DST_OUT_EXT",
-                "VK_BLEND_OP_SRC_ATOP_EXT",
-                "VK_BLEND_OP_DST_ATOP_EXT",
-                "VK_BLEND_OP_XOR_EXT",
-                "VK_BLEND_OP_MULTIPLY_EXT",
-                "VK_BLEND_OP_SCREEN_EXT",
-                "VK_BLEND_OP_OVERLAY_EXT",
-                "VK_BLEND_OP_DARKEN_EXT",
-                "VK_BLEND_OP_LIGHTEN_EXT",
-                "VK_BLEND_OP_COLORDODGE_EXT",
-                "VK_BLEND_OP_COLORBURN_EXT",
-                "VK_BLEND_OP_HARDLIGHT_EXT",
-                "VK_BLEND_OP_SOFTLIGHT_EXT",
-                "VK_BLEND_OP_DIFFERENCE_EXT",
-                "VK_BLEND_OP_EXCLUSION_EXT",
-                "VK_BLEND_OP_INVERT_EXT",
-                "VK_BLEND_OP_INVERT_RGB_EXT",
-                "VK_BLEND_OP_LINEARDODGE_EXT",
-                "VK_BLEND_OP_LINEARBURN_EXT",
-                "VK_BLEND_OP_VIVIDLIGHT_EXT",
-                "VK_BLEND_OP_LINEARLIGHT_EXT",
-                "VK_BLEND_OP_PINLIGHT_EXT",
-                "VK_BLEND_OP_HARDMIX_EXT",
-                "VK_BLEND_OP_HSL_HUE_EXT",
-                "VK_BLEND_OP_HSL_SATURATION_EXT",
-                "VK_BLEND_OP_HSL_COLOR_EXT",
-                "VK_BLEND_OP_HSL_LUMINOSITY_EXT",
-                "VK_BLEND_OP_PLUS_EXT",
-                "VK_BLEND_OP_PLUS_CLAMPED_EXT",
-                "VK_BLEND_OP_PLUS_CLAMPED_ALPHA_EXT",
-                "VK_BLEND_OP_PLUS_DARKER_EXT",
-                "VK_BLEND_OP_MINUS_EXT",
-                "VK_BLEND_OP_MINUS_CLAMPED_EXT",
-                "VK_BLEND_OP_CONTRAST_EXT",
-                "VK_BLEND_OP_INVERT_OVG_EXT",
-                "VK_BLEND_OP_RED_EXT",
-                "VK_BLEND_OP_GREEN_EXT",
-                "VK_BLEND_OP_BLUE_EXT"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_BLEND_OP_ADD",
+                        "VK_BLEND_OP_SUBTRACT",
+                        "VK_BLEND_OP_REVERSE_SUBTRACT",
+                        "VK_BLEND_OP_MIN",
+                        "VK_BLEND_OP_MAX",
+                        "VK_BLEND_OP_ZERO_EXT",
+                        "VK_BLEND_OP_SRC_EXT",
+                        "VK_BLEND_OP_DST_EXT",
+                        "VK_BLEND_OP_SRC_OVER_EXT",
+                        "VK_BLEND_OP_DST_OVER_EXT",
+                        "VK_BLEND_OP_SRC_IN_EXT",
+                        "VK_BLEND_OP_DST_IN_EXT",
+                        "VK_BLEND_OP_SRC_OUT_EXT",
+                        "VK_BLEND_OP_DST_OUT_EXT",
+                        "VK_BLEND_OP_SRC_ATOP_EXT",
+                        "VK_BLEND_OP_DST_ATOP_EXT",
+                        "VK_BLEND_OP_XOR_EXT",
+                        "VK_BLEND_OP_MULTIPLY_EXT",
+                        "VK_BLEND_OP_SCREEN_EXT",
+                        "VK_BLEND_OP_OVERLAY_EXT",
+                        "VK_BLEND_OP_DARKEN_EXT",
+                        "VK_BLEND_OP_LIGHTEN_EXT",
+                        "VK_BLEND_OP_COLORDODGE_EXT",
+                        "VK_BLEND_OP_COLORBURN_EXT",
+                        "VK_BLEND_OP_HARDLIGHT_EXT",
+                        "VK_BLEND_OP_SOFTLIGHT_EXT",
+                        "VK_BLEND_OP_DIFFERENCE_EXT",
+                        "VK_BLEND_OP_EXCLUSION_EXT",
+                        "VK_BLEND_OP_INVERT_EXT",
+                        "VK_BLEND_OP_INVERT_RGB_EXT",
+                        "VK_BLEND_OP_LINEARDODGE_EXT",
+                        "VK_BLEND_OP_LINEARBURN_EXT",
+                        "VK_BLEND_OP_VIVIDLIGHT_EXT",
+                        "VK_BLEND_OP_LINEARLIGHT_EXT",
+                        "VK_BLEND_OP_PINLIGHT_EXT",
+                        "VK_BLEND_OP_HARDMIX_EXT",
+                        "VK_BLEND_OP_HSL_HUE_EXT",
+                        "VK_BLEND_OP_HSL_SATURATION_EXT",
+                        "VK_BLEND_OP_HSL_COLOR_EXT",
+                        "VK_BLEND_OP_HSL_LUMINOSITY_EXT",
+                        "VK_BLEND_OP_PLUS_EXT",
+                        "VK_BLEND_OP_PLUS_CLAMPED_EXT",
+                        "VK_BLEND_OP_PLUS_CLAMPED_ALPHA_EXT",
+                        "VK_BLEND_OP_PLUS_DARKER_EXT",
+                        "VK_BLEND_OP_MINUS_EXT",
+                        "VK_BLEND_OP_MINUS_CLAMPED_EXT",
+                        "VK_BLEND_OP_CONTRAST_EXT",
+                        "VK_BLEND_OP_INVERT_OVG_EXT",
+                        "VK_BLEND_OP_RED_EXT",
+                        "VK_BLEND_OP_GREEN_EXT",
+                        "VK_BLEND_OP_BLUE_EXT"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkColorComponentFlags": {
@@ -2300,10 +2412,17 @@
             "type": "object"
         },
         "VkBlendOverlapEXT": {
-            "enum": [
-                "VK_BLEND_OVERLAP_UNCORRELATED_EXT",
-                "VK_BLEND_OVERLAP_DISJOINT_EXT",
-                "VK_BLEND_OVERLAP_CONJOINT_EXT"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_BLEND_OVERLAP_UNCORRELATED_EXT",
+                        "VK_BLEND_OVERLAP_DISJOINT_EXT",
+                        "VK_BLEND_OVERLAP_CONJOINT_EXT"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkPipelineColorBlendStateCreateInfo_pNext": {
@@ -2486,41 +2605,48 @@
             ]
         },
         "VkDynamicState": {
-            "enum": [
-                "VK_DYNAMIC_STATE_VIEWPORT",
-                "VK_DYNAMIC_STATE_SCISSOR",
-                "VK_DYNAMIC_STATE_LINE_WIDTH",
-                "VK_DYNAMIC_STATE_DEPTH_BIAS",
-                "VK_DYNAMIC_STATE_BLEND_CONSTANTS",
-                "VK_DYNAMIC_STATE_DEPTH_BOUNDS",
-                "VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK",
-                "VK_DYNAMIC_STATE_STENCIL_WRITE_MASK",
-                "VK_DYNAMIC_STATE_STENCIL_REFERENCE",
-                "VK_DYNAMIC_STATE_CULL_MODE",
-                "VK_DYNAMIC_STATE_FRONT_FACE",
-                "VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY",
-                "VK_DYNAMIC_STATE_VIEWPORT_WITH_COUNT",
-                "VK_DYNAMIC_STATE_SCISSOR_WITH_COUNT",
-                "VK_DYNAMIC_STATE_VERTEX_INPUT_BINDING_STRIDE",
-                "VK_DYNAMIC_STATE_DEPTH_TEST_ENABLE",
-                "VK_DYNAMIC_STATE_DEPTH_WRITE_ENABLE",
-                "VK_DYNAMIC_STATE_DEPTH_COMPARE_OP",
-                "VK_DYNAMIC_STATE_DEPTH_BOUNDS_TEST_ENABLE",
-                "VK_DYNAMIC_STATE_STENCIL_TEST_ENABLE",
-                "VK_DYNAMIC_STATE_STENCIL_OP",
-                "VK_DYNAMIC_STATE_RASTERIZER_DISCARD_ENABLE",
-                "VK_DYNAMIC_STATE_DEPTH_BIAS_ENABLE",
-                "VK_DYNAMIC_STATE_PRIMITIVE_RESTART_ENABLE",
-                "VK_DYNAMIC_STATE_LINE_STIPPLE",
-                "VK_DYNAMIC_STATE_DISCARD_RECTANGLE_EXT",
-                "VK_DYNAMIC_STATE_DISCARD_RECTANGLE_ENABLE_EXT",
-                "VK_DYNAMIC_STATE_DISCARD_RECTANGLE_MODE_EXT",
-                "VK_DYNAMIC_STATE_SAMPLE_LOCATIONS_EXT",
-                "VK_DYNAMIC_STATE_FRAGMENT_SHADING_RATE_KHR",
-                "VK_DYNAMIC_STATE_VERTEX_INPUT_EXT",
-                "VK_DYNAMIC_STATE_PATCH_CONTROL_POINTS_EXT",
-                "VK_DYNAMIC_STATE_LOGIC_OP_EXT",
-                "VK_DYNAMIC_STATE_COLOR_WRITE_ENABLE_EXT"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_DYNAMIC_STATE_VIEWPORT",
+                        "VK_DYNAMIC_STATE_SCISSOR",
+                        "VK_DYNAMIC_STATE_LINE_WIDTH",
+                        "VK_DYNAMIC_STATE_DEPTH_BIAS",
+                        "VK_DYNAMIC_STATE_BLEND_CONSTANTS",
+                        "VK_DYNAMIC_STATE_DEPTH_BOUNDS",
+                        "VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK",
+                        "VK_DYNAMIC_STATE_STENCIL_WRITE_MASK",
+                        "VK_DYNAMIC_STATE_STENCIL_REFERENCE",
+                        "VK_DYNAMIC_STATE_CULL_MODE",
+                        "VK_DYNAMIC_STATE_FRONT_FACE",
+                        "VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY",
+                        "VK_DYNAMIC_STATE_VIEWPORT_WITH_COUNT",
+                        "VK_DYNAMIC_STATE_SCISSOR_WITH_COUNT",
+                        "VK_DYNAMIC_STATE_VERTEX_INPUT_BINDING_STRIDE",
+                        "VK_DYNAMIC_STATE_DEPTH_TEST_ENABLE",
+                        "VK_DYNAMIC_STATE_DEPTH_WRITE_ENABLE",
+                        "VK_DYNAMIC_STATE_DEPTH_COMPARE_OP",
+                        "VK_DYNAMIC_STATE_DEPTH_BOUNDS_TEST_ENABLE",
+                        "VK_DYNAMIC_STATE_STENCIL_TEST_ENABLE",
+                        "VK_DYNAMIC_STATE_STENCIL_OP",
+                        "VK_DYNAMIC_STATE_RASTERIZER_DISCARD_ENABLE",
+                        "VK_DYNAMIC_STATE_DEPTH_BIAS_ENABLE",
+                        "VK_DYNAMIC_STATE_PRIMITIVE_RESTART_ENABLE",
+                        "VK_DYNAMIC_STATE_LINE_STIPPLE",
+                        "VK_DYNAMIC_STATE_DISCARD_RECTANGLE_EXT",
+                        "VK_DYNAMIC_STATE_DISCARD_RECTANGLE_ENABLE_EXT",
+                        "VK_DYNAMIC_STATE_DISCARD_RECTANGLE_MODE_EXT",
+                        "VK_DYNAMIC_STATE_SAMPLE_LOCATIONS_EXT",
+                        "VK_DYNAMIC_STATE_FRAGMENT_SHADING_RATE_KHR",
+                        "VK_DYNAMIC_STATE_VERTEX_INPUT_EXT",
+                        "VK_DYNAMIC_STATE_PATCH_CONTROL_POINTS_EXT",
+                        "VK_DYNAMIC_STATE_LOGIC_OP_EXT",
+                        "VK_DYNAMIC_STATE_COLOR_WRITE_ENABLE_EXT"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkPipelineDynamicStateCreateInfo": {
@@ -2662,23 +2788,44 @@
             ]
         },
         "VkDiscardRectangleModeEXT": {
-            "enum": [
-                "VK_DISCARD_RECTANGLE_MODE_INCLUSIVE_EXT",
-                "VK_DISCARD_RECTANGLE_MODE_EXCLUSIVE_EXT"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_DISCARD_RECTANGLE_MODE_INCLUSIVE_EXT",
+                        "VK_DISCARD_RECTANGLE_MODE_EXCLUSIVE_EXT"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkFragmentShadingRateCombinerOpKHR": {
-            "enum": [
-                "VK_FRAGMENT_SHADING_RATE_COMBINER_OP_KEEP_KHR",
-                "VK_FRAGMENT_SHADING_RATE_COMBINER_OP_REPLACE_KHR",
-                "VK_FRAGMENT_SHADING_RATE_COMBINER_OP_MIN_KHR",
-                "VK_FRAGMENT_SHADING_RATE_COMBINER_OP_MAX_KHR",
-                "VK_FRAGMENT_SHADING_RATE_COMBINER_OP_MUL_KHR"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_FRAGMENT_SHADING_RATE_COMBINER_OP_KEEP_KHR",
+                        "VK_FRAGMENT_SHADING_RATE_COMBINER_OP_REPLACE_KHR",
+                        "VK_FRAGMENT_SHADING_RATE_COMBINER_OP_MIN_KHR",
+                        "VK_FRAGMENT_SHADING_RATE_COMBINER_OP_MAX_KHR",
+                        "VK_FRAGMENT_SHADING_RATE_COMBINER_OP_MUL_KHR"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkPipelineMatchControl": {
-            "enum": [
-                "VK_PIPELINE_MATCH_CONTROL_APPLICATION_UUID_EXACT_MATCH"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_PIPELINE_MATCH_CONTROL_APPLICATION_UUID_EXACT_MATCH"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkGraphicsPipelineCreateInfo_pNext": {
@@ -3479,29 +3626,50 @@
             "type": "object"
         },
         "VkSamplerYcbcrModelConversion": {
-            "enum": [
-                "VK_SAMPLER_YCBCR_MODEL_CONVERSION_RGB_IDENTITY",
-                "VK_SAMPLER_YCBCR_MODEL_CONVERSION_YCBCR_IDENTITY",
-                "VK_SAMPLER_YCBCR_MODEL_CONVERSION_YCBCR_709",
-                "VK_SAMPLER_YCBCR_MODEL_CONVERSION_YCBCR_601",
-                "VK_SAMPLER_YCBCR_MODEL_CONVERSION_YCBCR_2020"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_SAMPLER_YCBCR_MODEL_CONVERSION_RGB_IDENTITY",
+                        "VK_SAMPLER_YCBCR_MODEL_CONVERSION_YCBCR_IDENTITY",
+                        "VK_SAMPLER_YCBCR_MODEL_CONVERSION_YCBCR_709",
+                        "VK_SAMPLER_YCBCR_MODEL_CONVERSION_YCBCR_601",
+                        "VK_SAMPLER_YCBCR_MODEL_CONVERSION_YCBCR_2020"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkSamplerYcbcrRange": {
-            "enum": [
-                "VK_SAMPLER_YCBCR_RANGE_ITU_FULL",
-                "VK_SAMPLER_YCBCR_RANGE_ITU_NARROW"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_SAMPLER_YCBCR_RANGE_ITU_FULL",
+                        "VK_SAMPLER_YCBCR_RANGE_ITU_NARROW"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkComponentSwizzle": {
-            "enum": [
-                "VK_COMPONENT_SWIZZLE_IDENTITY",
-                "VK_COMPONENT_SWIZZLE_ZERO",
-                "VK_COMPONENT_SWIZZLE_ONE",
-                "VK_COMPONENT_SWIZZLE_R",
-                "VK_COMPONENT_SWIZZLE_G",
-                "VK_COMPONENT_SWIZZLE_B",
-                "VK_COMPONENT_SWIZZLE_A"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_COMPONENT_SWIZZLE_IDENTITY",
+                        "VK_COMPONENT_SWIZZLE_ZERO",
+                        "VK_COMPONENT_SWIZZLE_ONE",
+                        "VK_COMPONENT_SWIZZLE_R",
+                        "VK_COMPONENT_SWIZZLE_G",
+                        "VK_COMPONENT_SWIZZLE_B",
+                        "VK_COMPONENT_SWIZZLE_A"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkComponentMapping": {
@@ -3529,16 +3697,30 @@
             "type": "object"
         },
         "VkChromaLocation": {
-            "enum": [
-                "VK_CHROMA_LOCATION_COSITED_EVEN",
-                "VK_CHROMA_LOCATION_MIDPOINT"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_CHROMA_LOCATION_COSITED_EVEN",
+                        "VK_CHROMA_LOCATION_MIDPOINT"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkFilter": {
-            "enum": [
-                "VK_FILTER_NEAREST",
-                "VK_FILTER_LINEAR",
-                "VK_FILTER_CUBIC_EXT"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_FILTER_NEAREST",
+                        "VK_FILTER_LINEAR",
+                        "VK_FILTER_CUBIC_EXT"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkSamplerYcbcrConversionCreateInfo_pNext": {
@@ -3650,30 +3832,51 @@
             ]
         },
         "VkSamplerMipmapMode": {
-            "enum": [
-                "VK_SAMPLER_MIPMAP_MODE_NEAREST",
-                "VK_SAMPLER_MIPMAP_MODE_LINEAR"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_SAMPLER_MIPMAP_MODE_NEAREST",
+                        "VK_SAMPLER_MIPMAP_MODE_LINEAR"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkSamplerAddressMode": {
-            "enum": [
-                "VK_SAMPLER_ADDRESS_MODE_REPEAT",
-                "VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT",
-                "VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE",
-                "VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER",
-                "VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_SAMPLER_ADDRESS_MODE_REPEAT",
+                        "VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT",
+                        "VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE",
+                        "VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER",
+                        "VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkBorderColor": {
-            "enum": [
-                "VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK",
-                "VK_BORDER_COLOR_INT_TRANSPARENT_BLACK",
-                "VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK",
-                "VK_BORDER_COLOR_INT_OPAQUE_BLACK",
-                "VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE",
-                "VK_BORDER_COLOR_INT_OPAQUE_WHITE",
-                "VK_BORDER_COLOR_FLOAT_CUSTOM_EXT",
-                "VK_BORDER_COLOR_INT_CUSTOM_EXT"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK",
+                        "VK_BORDER_COLOR_INT_TRANSPARENT_BLACK",
+                        "VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK",
+                        "VK_BORDER_COLOR_INT_OPAQUE_BLACK",
+                        "VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE",
+                        "VK_BORDER_COLOR_INT_OPAQUE_WHITE",
+                        "VK_BORDER_COLOR_FLOAT_CUSTOM_EXT",
+                        "VK_BORDER_COLOR_INT_CUSTOM_EXT"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkClearColorValue": {
@@ -3701,10 +3904,17 @@
             "type": "object"
         },
         "VkSamplerReductionMode": {
-            "enum": [
-                "VK_SAMPLER_REDUCTION_MODE_WEIGHTED_AVERAGE",
-                "VK_SAMPLER_REDUCTION_MODE_MIN",
-                "VK_SAMPLER_REDUCTION_MODE_MAX"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_SAMPLER_REDUCTION_MODE_WEIGHTED_AVERAGE",
+                        "VK_SAMPLER_REDUCTION_MODE_MIN",
+                        "VK_SAMPLER_REDUCTION_MODE_MAX"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkSamplerYcbcrConversion": {
@@ -3899,19 +4109,26 @@
             ]
         },
         "VkDescriptorType": {
-            "enum": [
-                "VK_DESCRIPTOR_TYPE_SAMPLER",
-                "VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER",
-                "VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE",
-                "VK_DESCRIPTOR_TYPE_STORAGE_IMAGE",
-                "VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER",
-                "VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER",
-                "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER",
-                "VK_DESCRIPTOR_TYPE_STORAGE_BUFFER",
-                "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC",
-                "VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC",
-                "VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT",
-                "VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_DESCRIPTOR_TYPE_SAMPLER",
+                        "VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER",
+                        "VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE",
+                        "VK_DESCRIPTOR_TYPE_STORAGE_IMAGE",
+                        "VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER",
+                        "VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER",
+                        "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER",
+                        "VK_DESCRIPTOR_TYPE_STORAGE_BUFFER",
+                        "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC",
+                        "VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC",
+                        "VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT",
+                        "VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkShaderStageFlags": {
@@ -6499,43 +6716,64 @@
             ]
         },
         "VkAttachmentLoadOp": {
-            "enum": [
-                "VK_ATTACHMENT_LOAD_OP_LOAD",
-                "VK_ATTACHMENT_LOAD_OP_CLEAR",
-                "VK_ATTACHMENT_LOAD_OP_DONT_CARE",
-                "VK_ATTACHMENT_LOAD_OP_NONE"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_ATTACHMENT_LOAD_OP_LOAD",
+                        "VK_ATTACHMENT_LOAD_OP_CLEAR",
+                        "VK_ATTACHMENT_LOAD_OP_DONT_CARE",
+                        "VK_ATTACHMENT_LOAD_OP_NONE"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkAttachmentStoreOp": {
-            "enum": [
-                "VK_ATTACHMENT_STORE_OP_STORE",
-                "VK_ATTACHMENT_STORE_OP_DONT_CARE",
-                "VK_ATTACHMENT_STORE_OP_NONE"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_ATTACHMENT_STORE_OP_STORE",
+                        "VK_ATTACHMENT_STORE_OP_DONT_CARE",
+                        "VK_ATTACHMENT_STORE_OP_NONE"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkImageLayout": {
-            "enum": [
-                "VK_IMAGE_LAYOUT_UNDEFINED",
-                "VK_IMAGE_LAYOUT_GENERAL",
-                "VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL",
-                "VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL",
-                "VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL",
-                "VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL",
-                "VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL",
-                "VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL",
-                "VK_IMAGE_LAYOUT_PREINITIALIZED",
-                "VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL",
-                "VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL",
-                "VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL",
-                "VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL",
-                "VK_IMAGE_LAYOUT_STENCIL_ATTACHMENT_OPTIMAL",
-                "VK_IMAGE_LAYOUT_STENCIL_READ_ONLY_OPTIMAL",
-                "VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL",
-                "VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL",
-                "VK_IMAGE_LAYOUT_RENDERING_LOCAL_READ",
-                "VK_IMAGE_LAYOUT_PRESENT_SRC_KHR",
-                "VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR",
-                "VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_IMAGE_LAYOUT_UNDEFINED",
+                        "VK_IMAGE_LAYOUT_GENERAL",
+                        "VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL",
+                        "VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL",
+                        "VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL",
+                        "VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL",
+                        "VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL",
+                        "VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL",
+                        "VK_IMAGE_LAYOUT_PREINITIALIZED",
+                        "VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL",
+                        "VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL",
+                        "VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL",
+                        "VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL",
+                        "VK_IMAGE_LAYOUT_STENCIL_ATTACHMENT_OPTIMAL",
+                        "VK_IMAGE_LAYOUT_STENCIL_READ_ONLY_OPTIMAL",
+                        "VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL",
+                        "VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL",
+                        "VK_IMAGE_LAYOUT_RENDERING_LOCAL_READ",
+                        "VK_IMAGE_LAYOUT_PRESENT_SRC_KHR",
+                        "VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR",
+                        "VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkAttachmentDescription": {
@@ -6609,9 +6847,16 @@
             ]
         },
         "VkPipelineBindPoint": {
-            "enum": [
-                "VK_PIPELINE_BIND_POINT_GRAPHICS",
-                "VK_PIPELINE_BIND_POINT_COMPUTE"
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_PIPELINE_BIND_POINT_GRAPHICS",
+                        "VK_PIPELINE_BIND_POINT_COMPUTE"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
             ]
         },
         "VkAttachmentReference": {

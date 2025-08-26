@@ -141,7 +141,12 @@ class JsonSchemaGenerator(BaseGenerator):
 
     def genEnumDefinition(self, enum: Enum):
         enum_values = list(map(lambda x: x.name, enum.fields))
-        self.schema["definitions"][enum.name] = {"enum": enum_values}
+        self.schema["definitions"][enum.name] = { "oneOf" :
+                [
+                    { "enum": enum_values },
+                    { "type": "integer" }
+                ]
+            }
 
     def genBitmaskDefinition(self, bitmask: Bitmask):
         flags = list(map(lambda x: x.name, bitmask.flags))

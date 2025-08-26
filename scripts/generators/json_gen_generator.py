@@ -302,8 +302,8 @@ class JsonGenGenerator(BaseGenerator):
                         default:
                             break;
                     }}
-                    Error() << "Invalid enum value";
-                    return "Invalid enum value";
+                    Warn() << "Invalid {enum.name} enum value";
+                    return nullptr;
                 }}
         ''')
 
@@ -311,7 +311,8 @@ class JsonGenGenerator(BaseGenerator):
 
         self.gen_Enum_methods.append(f'''
             Json::Value gen_{enum.name}(const {enum.name} v, const LocationScope&) {{
-                return gen_{enum.name}_c_str(v);
+                const char* enum_str = gen_{enum.name}_c_str(v);
+                return enum_str ? Json::Value(enum_str) : Json::Value(v);
             }}
         ''')
 

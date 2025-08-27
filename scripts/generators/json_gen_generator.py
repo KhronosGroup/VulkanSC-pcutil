@@ -162,7 +162,7 @@ class JsonGenGenerator(BaseGenerator):
                 return str;
             }
 
-            std::string gen_binary(const void* ptr, const size_t size) {
+            Json::Value gen_binary(const void* ptr, const size_t size) {
                 static const char base64_table[64] = {
                     'A','B','C','D','E','F','G','H','I','J','K','L','M',
                     'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
@@ -193,7 +193,17 @@ class JsonGenGenerator(BaseGenerator):
                     if (num_read < 3) result[result.size() - 1] = '=';
                     if (num_read < 2) result[result.size() - 2] = '=';
                 }
-                return result;
+
+                if (result != "NULL") {
+                    return result;
+                }
+
+                Json::Value result_array = Json::arrayValue;
+                result_array.resize(Json::Value::ArrayIndex(size));
+                for (size_t i = 0; i < size; i++) {
+                    result[i] = data[i];
+                }
+                return result_array;
             }
             ''')
 

@@ -3673,11 +3673,21 @@ class ParserBase : protected Base {
             Error() << "Unexpected non-zero flags";
         }
 
-        size_t size = 0;
         s.codeSize = parse_size_t(json["codeSize"], CreateScope("codeSize"));
-        s.pCode = reinterpret_cast<const uint32_t*>(parse_binary(json["pCode"], CreateScope("pCode"), size));
-        if (size != s.codeSize) {
-            Error() << "pCode binary size (" << size << ") does not match expected size (" << s.codeSize << ")";
+        const auto& json_pcode = json["pCode"];
+
+        if (s.codeSize == 0) {
+            s.pCode = nullptr;
+            if (!(json_pcode.isNull() ||
+                  (json_pcode.isString() && ((json_pcode.asString() == "") || (json_pcode.asString() == "NULL"))))) {
+                Error() << "pCode is not empty or not NULL but codeSize is zero";
+            }
+        } else {
+            size_t size = 0;
+            s.pCode = reinterpret_cast<const uint32_t*>(parse_binary(json_pcode, CreateScope("pCode"), size));
+            if (size != s.codeSize) {
+                Error() << "pCode binary size (" << size << ") does not match expected size (" << s.codeSize << ")";
+            }
         }
 
         return s;
@@ -5760,10 +5770,19 @@ class ParserBase : protected Base {
         }
         s.dataSize = parse_size_t(json["dataSize"], CreateScope("dataSize"));
         {
-            size_t size = 0;
-            s.pData = parse_binary(json["pData"], CreateScope("pData"), size);
-            if (size != s.dataSize) {
-                Error() << "pData binary size (" << size << ") does not match expected size (" << s.dataSize << ")";
+            const Json::Value& json_member = json["pData"];
+            if (s.dataSize == 0) {
+                s.pData = nullptr;
+                if (!(json_member.isNull() ||
+                      (json_member.isString() && ((json_member.asString() == "") || (json_member.asString() == "NULL"))))) {
+                    Error() << "pData is not empty or not NULL but its length is zero";
+                }
+            } else {
+                size_t size = 0;
+                s.pData = parse_binary(json_member, CreateScope("pData"), size);
+                if (size != s.dataSize) {
+                    Error() << "pData binary size (" << size << ") does not match expected size (" << s.dataSize << ")";
+                }
             }
         }
 
@@ -8682,10 +8701,20 @@ class ParserBase : protected Base {
         s.flags = parse_VkPipelineCacheCreateFlags(json["flags"], CreateScope("flags"));
         s.initialDataSize = parse_size_t(json["initialDataSize"], CreateScope("initialDataSize"));
         {
-            size_t size = 0;
-            s.pInitialData = parse_binary(json["pInitialData"], CreateScope("pInitialData"), size);
-            if (size != s.initialDataSize) {
-                Error() << "pInitialData binary size (" << size << ") does not match expected size (" << s.initialDataSize << ")";
+            const Json::Value& json_member = json["pInitialData"];
+            if (s.initialDataSize == 0) {
+                s.pInitialData = nullptr;
+                if (!(json_member.isNull() ||
+                      (json_member.isString() && ((json_member.asString() == "") || (json_member.asString() == "NULL"))))) {
+                    Error() << "pInitialData is not empty or not NULL but its length is zero";
+                }
+            } else {
+                size_t size = 0;
+                s.pInitialData = parse_binary(json_member, CreateScope("pInitialData"), size);
+                if (size != s.initialDataSize) {
+                    Error() << "pInitialData binary size (" << size << ") does not match expected size (" << s.initialDataSize
+                            << ")";
+                }
             }
         }
 

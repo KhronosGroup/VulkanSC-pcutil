@@ -142,6 +142,22 @@ class JsonParseGenerator(BaseGenerator):
         for typeName in self.basicTypes:
             self.generatedMethods[typeName] = f'parse_{typeName}'
 
+        uint32_t_constants = []
+        uint64_t_constants = []
+        float_constants = []
+        # TODO: Iterate self.vk.constants once BaseGenerator is updated
+        for enums in self.registry.reg.findall('enums'):
+            if enums.get("name") == "API Constants":
+                for enum in enums.findall('enum'):
+                    enum_name = enum.get("name")
+                    if enum_name != 'VK_SHADER_INDEX_UNUSED_AMDX':
+                        if enum.get("type") == "uint32_t":
+                            uint32_t_constants.append(enum_name)
+                        elif enum.get("type") == "uint64_t":
+                            uint64_t_constants.append(enum_name)
+                        elif enum.get("type") == "float":
+                            float_constants.append(enum_name)
+
         self.parse_basic_methods.append(f'''
             int8_t parse_int8_t(const Json::Value& v, const LocationScope&) {{
                 if (v.isInt() && v.asInt() >= INT8_MIN && v.asInt() <= INT8_MAX) {{
@@ -200,6 +216,16 @@ class JsonParseGenerator(BaseGenerator):
             uint32_t parse_uint32_t(const Json::Value& v, const LocationScope&) {{
                 if (v.isUInt() && v.asUInt() <= UINT32_MAX) {{
                     return v.asUInt();
+                }} else if(v.isString()) {{
+                    const char *first, *last;
+                    v.getString(&first, &last);
+                    auto str_size = std::distance(first, last);
+                    std::string_view str(first, str_size);
+                    {''.join(f'if (str == "{constant}") return {constant};' for constant in uint32_t_constants)}
+                    else {{
+                        Error() << "String is not a known 32-bit unsigned integer constant";
+                        return 0;
+                    }}
                 }} else {{
                     Error() << "Not a 32-bit unsigned integer";
                     return 0;
@@ -209,6 +235,16 @@ class JsonParseGenerator(BaseGenerator):
             uint64_t parse_uint64_t(const Json::Value& v, const LocationScope&) {{
                 if (v.isUInt64()) {{
                     return v.asUInt64();
+                }} else if(v.isString()) {{
+                    const char *first, *last;
+                    v.getString(&first, &last);
+                    auto str_size = std::distance(first, last);
+                    std::string_view str(first, str_size);
+                    {''.join(f'if (str == "{constant}") return {constant};' for constant in uint64_t_constants)}
+                    else {{
+                        Error() << "String is not a known 64-bit unsigned integer constant";
+                        return 0;
+                    }}
                 }} else {{
                     Error() << "Not a 64-bit unsigned integer";
                     return 0;
@@ -218,6 +254,16 @@ class JsonParseGenerator(BaseGenerator):
             float parse_float(const Json::Value& v, const LocationScope& l) {{
                 if (v.isDouble()) {{
                     return v.asFloat();
+                }} else if(v.isString()) {{
+                    const char *first, *last;
+                    v.getString(&first, &last);
+                    auto str_size = std::distance(first, last);
+                    std::string_view str(first, str_size);
+                    {''.join(f'if (str == "{constant}") return {constant};' for constant in float_constants)}
+                    else {{
+                        Error() << "String is not a known 32-bit floating-point constant";
+                        return 0;
+                    }}
                 }} else {{
                     Error() << "Not a 32-bit floating-point value";
                     return 0;

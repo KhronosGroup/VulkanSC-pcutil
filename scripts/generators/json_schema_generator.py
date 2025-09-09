@@ -85,23 +85,49 @@ class JsonSchemaGenerator(BaseGenerator):
         self.write(json.dumps(self.schema, indent=4))
 
     def genBasicDefinitions(self):
+        uint32_t_constants = []
+        uint64_t_constants = []
+        float_constants = []
+        # TODO: Iterate self.vk.constants once BaseGenerator is updated
+        for enums in self.registry.reg.findall('enums'):
+            if enums.get("name") == "API Constants":
+                for enum in enums.findall('enum'):
+                    enum_name = enum.get("name")
+                    if enum_name != 'VK_SHADER_INDEX_UNUSED_AMDX':
+                        if enum.get("type") == "uint32_t":
+                            uint32_t_constants.append(enum_name)
+                        elif enum.get("type") == "uint64_t":
+                            uint64_t_constants.append(enum_name)
+                        elif enum.get("type") == "float":
+                            float_constants.append(enum_name)
+
         self.schema["definitions"].update({
             "uint8_t": {"type": "integer", "minimum": 0, "maximum": 255},
             "uint16_t": {"type": "integer", "minimum": 0, "maximum": 65535},
             "int32_t": {"type": "integer", "minimum": -2147483648, "maximum": 2147483647},
-            "uint32_t": {"type": "integer", "minimum": 0, "maximum": 4294967295},
+            "uint32_t": {"oneOf":
+                [
+                    {"type": "integer", "minimum": 0, "maximum": 4294967295},
+                    {"type": "string", "pattern": '|'.join(uint32_t_constants)}
+                ]
+            },
             "binary": {"oneOf":
                 [
                     { "type": "string" }, # TODO: Maybe restrict to base64 characters
                     { "type": "array", "items": { "$ref": "#/definitions/uint8_t" } }
                 ]
             },
-            "float": {"type": "number"},
+            "float": {"oneOf":
+                [
+                    {"type": "number"},
+                    {"type": "string", "pattern": '|'.join(float_constants)}
+                ]
+            },
 
             "uint64_t": {"oneOf":
                 [
                     { "type": "string", "pattern": "[0-9]*"},
-                    { "type": "string", "pattern": "VK_WHOLE_SIZE"},
+                    { "type": "string", "pattern": '|'.join(uint64_t_constants)},
                     { "type": "integer"}
                 ]
             },

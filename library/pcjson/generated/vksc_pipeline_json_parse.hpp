@@ -2381,6 +2381,45 @@ class ParserBase : protected Base {
     uint32_t parse_uint32_t(const Json::Value& v, const LocationScope&) {
         if (v.isUInt() && v.asUInt() <= UINT32_MAX) {
             return v.asUInt();
+        } else if (v.isString()) {
+            const char *first, *last;
+            v.getString(&first, &last);
+            auto str_size = std::distance(first, last);
+            std::string_view str(first, str_size);
+            if (str == "VK_MAX_PHYSICAL_DEVICE_NAME_SIZE") return VK_MAX_PHYSICAL_DEVICE_NAME_SIZE;
+            if (str == "VK_UUID_SIZE") return VK_UUID_SIZE;
+            if (str == "VK_LUID_SIZE") return VK_LUID_SIZE;
+            if (str == "VK_MAX_EXTENSION_NAME_SIZE") return VK_MAX_EXTENSION_NAME_SIZE;
+            if (str == "VK_MAX_DESCRIPTION_SIZE") return VK_MAX_DESCRIPTION_SIZE;
+            if (str == "VK_MAX_MEMORY_TYPES") return VK_MAX_MEMORY_TYPES;
+            if (str == "VK_MAX_MEMORY_HEAPS") return VK_MAX_MEMORY_HEAPS;
+            if (str == "VK_REMAINING_MIP_LEVELS") return VK_REMAINING_MIP_LEVELS;
+            if (str == "VK_REMAINING_ARRAY_LAYERS") return VK_REMAINING_ARRAY_LAYERS;
+            if (str == "VK_REMAINING_3D_SLICES_EXT") return VK_REMAINING_3D_SLICES_EXT;
+            if (str == "VK_ATTACHMENT_UNUSED") return VK_ATTACHMENT_UNUSED;
+            if (str == "VK_TRUE") return VK_TRUE;
+            if (str == "VK_FALSE") return VK_FALSE;
+            if (str == "VK_QUEUE_FAMILY_IGNORED") return VK_QUEUE_FAMILY_IGNORED;
+            if (str == "VK_QUEUE_FAMILY_EXTERNAL") return VK_QUEUE_FAMILY_EXTERNAL;
+            if (str == "VK_QUEUE_FAMILY_FOREIGN_EXT") return VK_QUEUE_FAMILY_FOREIGN_EXT;
+            if (str == "VK_SUBPASS_EXTERNAL") return VK_SUBPASS_EXTERNAL;
+            if (str == "VK_MAX_DEVICE_GROUP_SIZE") return VK_MAX_DEVICE_GROUP_SIZE;
+            if (str == "VK_MAX_DRIVER_NAME_SIZE") return VK_MAX_DRIVER_NAME_SIZE;
+            if (str == "VK_MAX_DRIVER_INFO_SIZE") return VK_MAX_DRIVER_INFO_SIZE;
+            if (str == "VK_SHADER_UNUSED_KHR") return VK_SHADER_UNUSED_KHR;
+            if (str == "VK_MAX_GLOBAL_PRIORITY_SIZE") return VK_MAX_GLOBAL_PRIORITY_SIZE;
+            if (str == "VK_MAX_SHADER_MODULE_IDENTIFIER_SIZE_EXT") return VK_MAX_SHADER_MODULE_IDENTIFIER_SIZE_EXT;
+            if (str == "VK_MAX_PIPELINE_BINARY_KEY_SIZE_KHR") return VK_MAX_PIPELINE_BINARY_KEY_SIZE_KHR;
+            if (str == "VK_MAX_VIDEO_AV1_REFERENCES_PER_FRAME_KHR") return VK_MAX_VIDEO_AV1_REFERENCES_PER_FRAME_KHR;
+            if (str == "VK_MAX_VIDEO_VP9_REFERENCES_PER_FRAME_KHR") return VK_MAX_VIDEO_VP9_REFERENCES_PER_FRAME_KHR;
+            if (str == "VK_PARTITIONED_ACCELERATION_STRUCTURE_PARTITION_INDEX_GLOBAL_NV")
+                return VK_PARTITIONED_ACCELERATION_STRUCTURE_PARTITION_INDEX_GLOBAL_NV;
+            if (str == "VK_MAX_PHYSICAL_DEVICE_DATA_GRAPH_OPERATION_SET_NAME_SIZE_ARM")
+                return VK_MAX_PHYSICAL_DEVICE_DATA_GRAPH_OPERATION_SET_NAME_SIZE_ARM;
+            else {
+                Error() << "String is not a known 32-bit unsigned integer constant";
+                return 0;
+            }
         } else {
             Error() << "Not a 32-bit unsigned integer";
             return 0;
@@ -2390,6 +2429,17 @@ class ParserBase : protected Base {
     uint64_t parse_uint64_t(const Json::Value& v, const LocationScope&) {
         if (v.isUInt64()) {
             return v.asUInt64();
+        } else if (v.isString()) {
+            const char *first, *last;
+            v.getString(&first, &last);
+            auto str_size = std::distance(first, last);
+            std::string_view str(first, str_size);
+            if (str == "VK_WHOLE_SIZE")
+                return VK_WHOLE_SIZE;
+            else {
+                Error() << "String is not a known 64-bit unsigned integer constant";
+                return 0;
+            }
         } else {
             Error() << "Not a 64-bit unsigned integer";
             return 0;
@@ -2399,6 +2449,17 @@ class ParserBase : protected Base {
     float parse_float(const Json::Value& v, const LocationScope& l) {
         if (v.isDouble()) {
             return v.asFloat();
+        } else if (v.isString()) {
+            const char *first, *last;
+            v.getString(&first, &last);
+            auto str_size = std::distance(first, last);
+            std::string_view str(first, str_size);
+            if (str == "VK_LOD_CLAMP_NONE")
+                return VK_LOD_CLAMP_NONE;
+            else {
+                Error() << "String is not a known 32-bit floating-point constant";
+                return 0;
+            }
         } else {
             Error() << "Not a 32-bit floating-point value";
             return 0;

@@ -142,98 +142,98 @@ class JsonParseGenerator(BaseGenerator):
         for typeName in self.basicTypes:
             self.generatedMethods[typeName] = f'parse_{typeName}'
 
-        self.parse_basic_methods.append('''
-            int8_t parse_int8_t(const Json::Value& v, const LocationScope&) {
-                if (v.isInt() && v.asInt() >= INT8_MIN && v.asInt() <= INT8_MAX) {
+        self.parse_basic_methods.append(f'''
+            int8_t parse_int8_t(const Json::Value& v, const LocationScope&) {{
+                if (v.isInt() && v.asInt() >= INT8_MIN && v.asInt() <= INT8_MAX) {{
                     return v.asInt();
-                } else {
+                }} else {{
                     Error() << "Not an 8-bit signed integer";
                     return 0;
-                }
-            }
+                }}
+            }}
 
-            int16_t parse_int16_t(const Json::Value& v, const LocationScope&) {
-                if (v.isInt() && v.asInt() >= INT16_MIN && v.asInt() <= INT16_MAX) {
+            int16_t parse_int16_t(const Json::Value& v, const LocationScope&) {{
+                if (v.isInt() && v.asInt() >= INT16_MIN && v.asInt() <= INT16_MAX) {{
                     return v.asInt();
-                } else {
+                }} else {{
                     Error() << "Not a 16-bit signed integer";
                     return 0;
-                }
-            }
+                }}
+            }}
 
-            int32_t parse_int32_t(const Json::Value& v, const LocationScope&) {
-                if (v.isInt() && v.asInt() >= INT32_MIN && v.asInt() <= INT32_MAX) {
+            int32_t parse_int32_t(const Json::Value& v, const LocationScope&) {{
+                if (v.isInt() && v.asInt() >= INT32_MIN && v.asInt() <= INT32_MAX) {{
                     return v.asInt();
-                } else {
+                }} else {{
                     Error() << "Not a 32-bit signed integer";
                     return 0;
-                }
-            }
+                }}
+            }}
 
-            int64_t parse_int64_t(const Json::Value& v, const LocationScope&) {
-                if (v.isInt64()) {
+            int64_t parse_int64_t(const Json::Value& v, const LocationScope&) {{
+                if (v.isInt64()) {{
                     return v.asInt64();
-                } else {
+                }} else {{
                     Error() << "Not a 64-bit signed integer";
                     return 0;
-                }
-            }
+                }}
+            }}
 
-            uint8_t parse_uint8_t(const Json::Value& v, const LocationScope&) {
-                if (v.isUInt() && v.asUInt() <= UINT8_MAX) {
+            uint8_t parse_uint8_t(const Json::Value& v, const LocationScope&) {{
+                if (v.isUInt() && v.asUInt() <= UINT8_MAX) {{
                     return v.asUInt();
-                } else {
+                }} else {{
                     Error() << "Not an 8-bit unsigned integer";
                     return 0;
-                }
-            }
+                }}
+            }}
 
-            uint16_t parse_uint16_t(const Json::Value& v, const LocationScope&) {
-                if (v.isUInt() && v.asUInt() <= UINT16_MAX) {
+            uint16_t parse_uint16_t(const Json::Value& v, const LocationScope&) {{
+                if (v.isUInt() && v.asUInt() <= UINT16_MAX) {{
                     return v.asUInt();
-                } else {
+                }} else {{
                     Error() << "Not a 16-bit unsigned integer";
                     return 0;
-                }
-            }
+                }}
+            }}
 
-            uint32_t parse_uint32_t(const Json::Value& v, const LocationScope&) {
-                if (v.isUInt() && v.asUInt() <= UINT32_MAX) {
+            uint32_t parse_uint32_t(const Json::Value& v, const LocationScope&) {{
+                if (v.isUInt() && v.asUInt() <= UINT32_MAX) {{
                     return v.asUInt();
-                } else {
+                }} else {{
                     Error() << "Not a 32-bit unsigned integer";
                     return 0;
-                }
-            }
+                }}
+            }}
 
-            uint64_t parse_uint64_t(const Json::Value& v, const LocationScope&) {
-                if (v.isUInt64()) {
+            uint64_t parse_uint64_t(const Json::Value& v, const LocationScope&) {{
+                if (v.isUInt64()) {{
                     return v.asUInt64();
-                } else {
+                }} else {{
                     Error() << "Not a 64-bit unsigned integer";
                     return 0;
-                }
-            }
+                }}
+            }}
 
-            float parse_float(const Json::Value& v, const LocationScope& l) {
-                if (v.isDouble()) {
+            float parse_float(const Json::Value& v, const LocationScope& l) {{
+                if (v.isDouble()) {{
                     return v.asFloat();
-                } else {
+                }} else {{
                     Error() << "Not a 32-bit floating-point value";
                     return 0;
-                }
-            }
+                }}
+            }}
 
-            size_t parse_size_t(const Json::Value& v, const LocationScope& l) {
+            size_t parse_size_t(const Json::Value& v, const LocationScope& l) {{
                 return parse_uint64_t(v, l);
-            }
+            }}
 
-            VkDeviceSize parse_VkDeviceSize(const Json::Value& v, const LocationScope& l) {
+            VkDeviceSize parse_VkDeviceSize(const Json::Value& v, const LocationScope& l) {{
                 return parse_uint64_t(v, l);
-            }
+            }}
 
-            const char* parse_string(const Json::Value& v, const LocationScope&) {
-                if (v.isString()) {
+            const char* parse_string(const Json::Value& v, const LocationScope&) {{
+                if (v.isString()) {{
                     const char *first, *last;
                     v.getString(&first, &last);
                     auto str_size = std::distance(first, last);
@@ -241,34 +241,34 @@ class JsonParseGenerator(BaseGenerator):
                     std::copy(first, last, dst);
                     dst[str_size] = '\\0';
                     return dst;
-                } else {
+                }} else {{
                     Error() << "Not a string";
                     return nullptr;
-                }
-            }
+                }}
+            }}
 
-            void* parse_binary(const Json::Value& v, const LocationScope&, size_t& size) {
-                if (v.isArray()) { // TODO: Consider removing. Array path is preserved for historical reasons.
-                    if (v.size() == 0) {
+            void* parse_binary(const Json::Value& v, const LocationScope&, size_t& size) {{
+                if (v.isArray()) {{ // TODO: Consider removing. Array path is preserved for historical reasons.
+                    if (v.size() == 0) {{
                         size = 0;
                         return nullptr;
-                    }
+                    }}
                     uint8_t* result = AllocMem<uint8_t>(v.size());
-                    for (Json::Value::ArrayIndex i = 0; i < v.size(); ++i) {
-                        if (v[i].isUInt() && v[i].asUInt() <= 255) {
+                    for (Json::Value::ArrayIndex i = 0; i < v.size(); ++i) {{
+                        if (v[i].isUInt() && v[i].asUInt() <= 255) {{
                             result[i] = v[i].asUInt();
-                        } else {
+                        }} else {{
                             Error() << "Binary array has non-unsigned integral value or is out of [0-255] range.";
                             return nullptr;
-                        }
-                    }
+                        }}
+                    }}
                     size = v.size();
                     return result;
-                }
-                if (!v.isString()) {
+                }}
+                if (!v.isString()) {{
                     Error() << "Base64 encoded binary not a string";
                     return nullptr;
-                }
+                }}
 
                 const char *first, *last;
                 v.getString(&first, &last);
@@ -276,16 +276,16 @@ class JsonParseGenerator(BaseGenerator):
                 std::string_view str(first, str_size);
 
                 static const std::string_view base64_alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                auto init_base64_lookup_table = [&] {
-                    std::array<uint8_t, UINT8_MAX + 1> lookup_table{};
-                    for (size_t i = 0; i <= UINT8_MAX; ++i) {
+                auto init_base64_lookup_table = [&] {{
+                    std::array<uint8_t, UINT8_MAX + 1> lookup_table{{}};
+                    for (size_t i = 0; i <= UINT8_MAX; ++i) {{
                         lookup_table[i] = UINT8_MAX;
-                    }
-                    for (size_t i = 0; i < base64_alphabet.size(); ++i) {
+                    }}
+                    for (size_t i = 0; i < base64_alphabet.size(); ++i) {{
                         lookup_table[base64_alphabet[i]] = static_cast<uint8_t>(i);
-                    }
+                    }}
                     return lookup_table;
-                };
+                }};
                 static const std::array<uint8_t, UINT8_MAX + 1> base64_lookup_table = init_base64_lookup_table();
 
                 constexpr uint32_t bits_in_base64 = 6;
@@ -295,47 +295,47 @@ class JsonParseGenerator(BaseGenerator):
                 size = 0;
                 uint32_t current_word = 0;
                 uint32_t current_bits = 0;
-                for (auto ch : str) {
-                    if (ch == '=') {
+                for (auto ch : str) {{
+                    if (ch == '=') {{
                         // End of data padding
                         break;
-                    } else if (base64_lookup_table[ch] == UINT8_MAX) {
+                    }} else if (base64_lookup_table[ch] == UINT8_MAX) {{
                         Error() << "Invalid base64 character '" << ch << "'";
                         return nullptr;
-                    }
+                    }}
                     current_word = (current_word << bits_in_base64) + base64_lookup_table[ch];
                     current_bits += bits_in_base64;
-                    if (current_bits >= bits_in_byte) {
+                    if (current_bits >= bits_in_byte) {{
                         result[size++] = static_cast<uint8_t>((current_word >> (current_bits - bits_in_byte)) & ((1 << bits_in_byte) - 1));
                         current_bits -= bits_in_byte;
-                    }
-                }
+                    }}
+                }}
                 return result;
-            }
+            }}
 
-            VkBool32 parse_VkBool32(const Json::Value& v, const LocationScope&) {
-                if (v.isString()) {
+            VkBool32 parse_VkBool32(const Json::Value& v, const LocationScope&) {{
+                if (v.isString()) {{
                     auto value = v.asCString();
-                    if (strcmp(value, "VK_TRUE") == 0) {
+                    if (strcmp(value, "VK_TRUE") == 0) {{
                         return VK_TRUE;
-                    } else if (strcmp(value, "VK_FALSE") == 0) {
+                    }} else if (strcmp(value, "VK_FALSE") == 0) {{
                         return VK_FALSE;
-                    } else {
+                    }} else {{
                         Error() << "VKBool32 string is neither VK_TRUE nor VK_FALSE";
                         return 0;
-                    }
-                }
-                else if (v.isUInt() && v.asUInt() <= UINT32_MAX) {
+                    }}
+                }}
+                else if (v.isUInt() && v.asUInt() <= UINT32_MAX) {{
                     return v.asUInt();
-                } else {
+                }} else {{
                     Error() << "Not a 32-bit unsigned integer";
                     return 0;
-                }
-            }
+                }}
+            }}
 
-            VkSampleMask parse_VkSampleMask(const Json::Value& v, const LocationScope& l) {
+            VkSampleMask parse_VkSampleMask(const Json::Value& v, const LocationScope& l) {{
                 return parse_uint32_t(v, l);
-            }
+            }}
             ''')
 
     def genTypeMethod(self, typeName: str) -> str:

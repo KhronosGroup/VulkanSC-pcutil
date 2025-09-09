@@ -509,11 +509,18 @@ class JsonParseGenerator(BaseGenerator):
         if bitmask.name in self.generatedMethods:
             return self.generatedMethods[bitmask.name]
 
+        enum_flags = []
+        for flag in bitmask.flags:
+            enum_flags.append(flag.name)
+            for alias in flag.aliases:
+                enum_flags.append(alias)
+        enum_flags = [f'std::make_pair("{f}", {f})' for f in enum_flags]
+
         self.parse_Enum_c_str_methods.append(f'''
             {bitmask.name} parse_{bitmask.name}_c_str(const char* v) {{
                 static std::unordered_map<std::string_view, {bitmask.name}> map = {{
                     std::make_pair("0", static_cast<{bitmask.name}>(0)),
-                    {','.join([f'std::make_pair("{f.name}", {f.name})' for f in bitmask.flags])}
+                    {','.join(enum_flags)}
                 }};
                 auto it = map.find(v);
                 if (it != map.end()) {{

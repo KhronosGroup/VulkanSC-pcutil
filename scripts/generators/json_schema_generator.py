@@ -108,7 +108,7 @@ class JsonSchemaGenerator(BaseGenerator):
             "uint32_t": {"oneOf":
                 [
                     {"type": "integer", "minimum": 0, "maximum": 4294967295},
-                    {"type": "string", "pattern": '|'.join(uint32_t_constants)}
+                    {"enum": uint32_t_constants}
                 ]
             },
             "binary": {"oneOf":
@@ -120,23 +120,22 @@ class JsonSchemaGenerator(BaseGenerator):
             "float": {"oneOf":
                 [
                     {"type": "number"},
-                    {"type": "string", "pattern": '|'.join(float_constants)}
+                    {"enum": float_constants}
                 ]
             },
 
             "uint64_t": {"oneOf":
                 [
                     { "type": "string", "pattern": "[0-9]*"},
-                    { "type": "string", "pattern": '|'.join(uint64_t_constants)},
-                    { "type": "integer"}
+                    { "type": "integer"},
+                    { "enum": uint64_t_constants},
                 ]
             },
 
             "size_t": {"$ref": "#/definitions/uint64_t"},
             "VkDeviceSize": {"$ref": "#/definitions/uint64_t"},
 
-            "subpass_id": {"oneOf": [{"enum": [ "VK_SUBPASS_EXTERNAL"] }, {"$ref": "#/definitions/uint32_t"}]},
-            "VkBool32": { "oneOf": [ { "$ref": "#/definitions/uint32_t" }, { "enum": [ "VK_TRUE", "VK_FALSE" ] } ] },
+            "VkBool32": { "$ref": "#/definitions/uint32_t" },
             "VkSampleMask": { "$ref": "#/definitions/uint32_t" },
         })
 
@@ -210,9 +209,6 @@ class JsonSchemaGenerator(BaseGenerator):
                     sTypes += self.getSTypeAliases(struct.sType)
                     sTypes = "|".join(sTypes)
                     props[member.name] = { "type": "string", "pattern": f"{(sTypes)}" }
-
-            elif (member.name == "srcSubpass" or member.name == "dstSubpass") and struct.name == "VkSubpassDependency":
-                props[member.name] = { "$ref": "#/definitions/subpass_id" }
 
             else:
                 if member.type == "void" and (member.fixedSizeArray or member.length or member.pointer):

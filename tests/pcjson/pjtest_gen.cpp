@@ -749,7 +749,7 @@ TEST_F(PJGenTest, VkComputePipelineCreateInfo) {
 }
 
 TEST_F(PJGenTest, VkSamplerYcbcrConversionCreateInfo) {
-    TEST_DESCRIPTION("Tests parsing of a reasonably complex ycbcr conversion create info JSON");
+    TEST_DESCRIPTION("Tests generating of a reasonably complex ycbcr conversion create info JSON");
 
 #ifdef VK_USE_PLATFORM_SCREEN_QNX
     std::string ycbcr_ci_pnext = R"({
@@ -1493,8 +1493,7 @@ TEST_F(PJGenTest, VkRenderPassCreateInfo2) {
 
     EXPECT_TRUE(vpjGenerateSingleStructJson(generator_, &rp2_ci, &result_json, &msg_));
     CHECK_GEN();
-    auto a = reformatJson(ref_json);
-    EXPECT_TRUE(a == result_json);
+    EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
 TEST_F(PJGenTest, VkShaderModuleCreateInfo) {
@@ -1521,8 +1520,7 @@ TEST_F(PJGenTest, VkShaderModuleCreateInfo) {
 
     EXPECT_TRUE(vpjGenerateSingleStructJson(generator_, &sm_ci, &result_json, &msg_));
     CHECK_GEN();
-    auto a = reformatJson(ref_json);
-    EXPECT_TRUE(a == result_json);
+    EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
 TEST_F(PJGenTest, VkDeviceObjectReservationCreateInfo) {
@@ -1657,8 +1655,7 @@ TEST_F(PJGenTest, VkDeviceObjectReservationCreateInfo) {
 
     EXPECT_TRUE(vpjGenerateSingleStructJson(generator_, &dor_ci, &result_json, &msg_));
     CHECK_GEN();
-    auto a = reformatJson(ref_json);
-    EXPECT_TRUE(a == result_json);
+    EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
 TEST_F(PJGenTest, VkPipelineOfflineCreateInfo) {
@@ -1716,8 +1713,7 @@ TEST_F(PJGenTest, VkPipelineOfflineCreateInfo) {
 
     EXPECT_TRUE(vpjGenerateSingleStructJson(generator_, &po_ci, &result_json, &msg_));
     CHECK_GEN();
-    auto a = reformatJson(ref_json);
-    EXPECT_TRUE(a == result_json);
+    EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
 TEST_F(PJGenTest, SAXPY) {
@@ -2337,6 +2333,5 @@ TEST_F(PJGenTest, ObjectNameRemapping) {
 
     EXPECT_TRUE(vpjGeneratePipelineJson(generator_, &data, &result_json, &msg_));
     CHECK_GEN();
-    auto a = reformatJson(ref_json);
-    EXPECT_TRUE(a == result_json);
+    EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }

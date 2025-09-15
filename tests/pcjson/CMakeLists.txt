@@ -19,3 +19,15 @@ target_link_libraries(pjtest_parse PRIVATE
 )
 
 add_test(NAME pjtest.parse COMMAND pjtest_parse)
+
+add_executable(pjtest_gen pjtest_gen.cpp)
+
+target_link_libraries(pjtest_gen PRIVATE
+    Vulkan::Headers
+    Vulkan::PCJson
+    GTest::gtest
+    GTest::gtest_main
+    jsoncpp_static
+)
+
+add_test(NAME pjtest.gen COMMAND pjtest_gen)

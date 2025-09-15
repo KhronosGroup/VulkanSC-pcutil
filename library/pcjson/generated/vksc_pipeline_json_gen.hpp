@@ -16,6 +16,7 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include <cmath>
 
 #include "vksc_pipeline_json_base.hpp"
 
@@ -2652,7 +2653,12 @@ class GeneratorBase : protected Base {
     Json::Value gen_uint32_t(const uint32_t v, const LocationScope&) { return v; }
     Json::Value gen_int64_t(const int64_t v, const LocationScope&) { return v; }
     Json::Value gen_uint64_t(const uint64_t v, const LocationScope&) { return v; }
-    Json::Value gen_float(const float v, const LocationScope&) { return v; }
+    Json::Value gen_float(const float v, const LocationScope&) {
+        if (std::isnan(v))
+            return "NaN";
+        else
+            return v;
+    }
     Json::Value gen_size_t(const size_t v, const LocationScope&) { return v; }
     Json::Value gen_VkDeviceSize(const VkDeviceSize v, const LocationScope&) { return v; }
     Json::Value gen_VkSampleMask(const VkSampleMask v, const LocationScope&) { return v; }
@@ -7769,4 +7775,4 @@ class GeneratorBase : protected Base {
 };
 
 }  // namespace pcjson
-   // NOLINTEND
+// NOLINTEND

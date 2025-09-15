@@ -17,6 +17,7 @@
 #include <cstring>
 #include <vector>
 #include <string>
+#include <cmath>
 
 class PJParseTest : public testing::Test {
   public:
@@ -838,8 +839,8 @@ TEST_F(PJParseTest, VkSamplerCreateInfo) {
         "maxAnisotropy": 1.8,
         "compareEnable": "VK_FALSE",
         "compareOp": 137,
-        "minLod": 1.0,
-        "maxLod": 1000.0,
+        "minLod": "NaN",
+        "maxLod": "VK_LOD_CLAMP_NONE",
         "borderColor": "VK_BORDER_COLOR_FLOAT_CUSTOM_EXT",
         "unnormalizedCoordinates": "VK_TRUE"
     })"};
@@ -863,8 +864,8 @@ TEST_F(PJParseTest, VkSamplerCreateInfo) {
     EXPECT_EQ(sampler_ci.maxAnisotropy, 1.8f);
     EXPECT_EQ(sampler_ci.compareEnable, VK_FALSE);
     EXPECT_EQ(sampler_ci.compareOp, 137);
-    EXPECT_EQ(sampler_ci.minLod, 1.0f);
-    EXPECT_EQ(sampler_ci.maxLod, VK_LOD_CLAMP_NONE);  // NOTE: float constants can't be serialized as strings
+    EXPECT_TRUE(std::isnan(sampler_ci.minLod));
+    EXPECT_EQ(sampler_ci.maxLod, VK_LOD_CLAMP_NONE);
     EXPECT_EQ(sampler_ci.borderColor, VK_BORDER_COLOR_FLOAT_CUSTOM_EXT);
     EXPECT_EQ(sampler_ci.unnormalizedCoordinates, VK_TRUE);
 }

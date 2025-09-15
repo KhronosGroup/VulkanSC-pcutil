@@ -40,6 +40,7 @@ class JsonParseGenerator(BaseGenerator):
             #include <string_view>
             #include <unordered_map>
             #include <algorithm>
+            #include <limits>
 
             #include "vksc_pipeline_json_base.hpp"
 
@@ -259,6 +260,7 @@ class JsonParseGenerator(BaseGenerator):
                     v.getString(&first, &last);
                     auto str_size = std::distance(first, last);
                     std::string_view str(first, str_size);
+                    if (str == "NaN") return std::numeric_limits<float>::quiet_NaN();
                     {''.join(f'if (str == "{constant}") return {constant};' for constant in float_constants)}
                     else {{
                         Error() << "String is not a known 32-bit floating-point constant";

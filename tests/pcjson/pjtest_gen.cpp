@@ -17,6 +17,7 @@
 #include <cstring>
 #include <vector>
 #include <string>
+#include <limits>
 
 #include <json/json.h>
 
@@ -831,7 +832,7 @@ TEST_F(PJGenTest, VkSamplerCreateInfo) {
         "maxAnisotropy": 2.0,
         "compareEnable": "VK_FALSE",
         "compareOp": 137,
-        "minLod": 1.0,
+        "minLod": "NaN",
         "maxLod": 1000.0,
         "borderColor": "VK_BORDER_COLOR_FLOAT_CUSTOM_EXT",
         "unnormalizedCoordinates": "VK_TRUE"
@@ -859,7 +860,7 @@ TEST_F(PJGenTest, VkSamplerCreateInfo) {
     sampler_ci.maxAnisotropy = 2.0f;
     sampler_ci.compareEnable = VK_FALSE;
     sampler_ci.compareOp = static_cast<VkCompareOp>(137);
-    sampler_ci.minLod = 1.0f;
+    sampler_ci.minLod = std::numeric_limits<float>::quiet_NaN();
     sampler_ci.maxLod = VK_LOD_CLAMP_NONE;  // NOTE: float constants can't be serialized as strings
     sampler_ci.borderColor = VK_BORDER_COLOR_FLOAT_CUSTOM_EXT;
     sampler_ci.unnormalizedCoordinates = VK_TRUE;

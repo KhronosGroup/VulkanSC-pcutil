@@ -19,6 +19,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <algorithm>
+#include <limits>
 
 #include "vksc_pipeline_json_base.hpp"
 
@@ -2527,6 +2528,7 @@ class ParserBase : protected Base {
             v.getString(&first, &last);
             auto str_size = std::distance(first, last);
             std::string_view str(first, str_size);
+            if (str == "NaN") return std::numeric_limits<float>::quiet_NaN();
             if (str == "VK_LOD_CLAMP_NONE")
                 return VK_LOD_CLAMP_NONE;
             else {
@@ -8977,4 +8979,4 @@ class ParserBase : protected Base {
 };
 
 }  // namespace pcjson
-   // NOLINTEND
+// NOLINTEND

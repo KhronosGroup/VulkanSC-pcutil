@@ -367,7 +367,8 @@ class Generator : private GeneratorBase {
                                                     const char* object_type) {
             Json::Value new_array = Json::arrayValue;
             for (uint32_t i = 0; i < json_array.size(); i++) {
-                uint32_t name_id = json_array[i].asUInt();
+                auto& name_id_json = json_array[i];
+                uint64_t name_id = (name_id_json.isString() && name_id_json.asString() == "") ? 0 : name_id_json.asUInt64();
                 if (name_id < count) {
                     new_array[i] = names[name_id];
                 } else {
@@ -400,7 +401,7 @@ class Generator : private GeneratorBase {
 
                 if (*pNext != "NULL") {
                     Json::Value& conversion = (*pNext)["conversion"];
-                    uint32_t ycbcr_sampler_id = conversion.asInt();
+                    uint64_t ycbcr_sampler_id = (conversion.isString() && conversion.asString() == "") ? 0 : conversion.asUInt64();
                     if (ycbcr_sampler_id < state.ycbcrSamplerCount) {
                         conversion.copy(state.ppYcbrSamplerNames[ycbcr_sampler_id]);
                     } else {

@@ -266,8 +266,8 @@
             "$ref": "#/definitions/uint64_t"
         },
         "VkBool32": {
-                    "$ref": "#/definitions/uint32_t"
-                },
+            "$ref": "#/definitions/uint32_t"
+        },
         "VkSampleMask": {
             "$ref": "#/definitions/uint32_t"
         },

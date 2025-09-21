@@ -25,4 +25,6 @@ target_include_directories(VulkanPCJson
 )
 
 find_package(jsoncpp REQUIRED CONFIG QUIET)
-target_link_libraries(VulkanPCJson PRIVATE jsoncpp_static Vulkan::Headers)
+find_package(hashlib REQUIRED CONFIG QUIET)
+
+target_link_libraries(VulkanPCJson PRIVATE jsoncpp_static hashlib::hashlib Vulkan::Headers)

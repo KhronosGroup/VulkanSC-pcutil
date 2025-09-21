@@ -8,14 +8,22 @@
 #include "vksc_pipeline_json_gen.hpp"
 #include "vksc_pipeline_json.h"
 
-#include <cassert>
+#include <assert.h>
+#include <memory.h>
+#include <string.h>
+
+#include "hashlib/md5.hpp"
 
 namespace pcjson {
 
 class Generator : private GeneratorBase {
   public:
+    void SetMD5PipelineUUIDGeneration(bool enable) { md5_generator_enabled_ = enable; }
+
     bool GeneratePipelineJSON(const VpjData* pPipelineData, const char** ppPipelineJson, const char** ppMessages) {
         Json::Value json{};
+
+        generated_uuid_ = nullptr;
 
         ClearStatusAndMessages();
 
@@ -38,7 +46,6 @@ class Generator : private GeneratorBase {
         }
 
         if (IsStatusOK()) {
-            json["PipelineUUID"] = gen_PipelineUUID(*pPipelineData);
             json["EnabledExtensions"] = gen_EnabledExtensions(*pPipelineData);
 
             switch (pipeline_stype) {
@@ -54,12 +61,47 @@ class Generator : private GeneratorBase {
                     Error() << "Unknown pipeline create info structure type: " << pipeline_stype;
                     break;
             }
+
+            // Pipeline UUID is set last to be able to do MD5 generation from the full data if needed
+            if (md5_generator_enabled_) {
+                hashlib::md5 md5{};
+                gen_JsonMD5(md5, json);
+                generated_uuid_ = AllocMem<uint8_t>(VK_UUID_SIZE);
+                memcpy(generated_uuid_, md5.digest().data(), VK_UUID_SIZE);
+                json["PipelineUUID"] = gen_PipelineUUID(generated_uuid_);
+            } else {
+                json["PipelineUUID"] = gen_PipelineUUID(pPipelineData->pipelineUUID);
+            }
         }
 
         if (IsStatusOK()) {
             Json::StreamWriterBuilder builder{};
             json_outputs_.emplace_back(Json::writeString(builder, json));
             *ppPipelineJson = json_outputs_.back().c_str();
+        }
+
+        if (ppMessages != nullptr) {
+            *ppMessages = GetMessages();
+        }
+
+        return IsStatusOK();
+    }
+
+    bool GetGeneratedPipelineUUID(uint8_t* pPipelineUUID, const char** ppMessages) {
+        if (!IsStatusOK()) {
+            Error() << "Cannot retrieve generated pipeline UUID if the generation failed";
+        }
+
+        if (pPipelineUUID == nullptr) {
+            Error() << "pPipelineUUID is NULL";
+        }
+
+        if (generated_uuid_ == nullptr) {
+            Error() << "No pipeline UUID was generated";
+        }
+
+        if (IsStatusOK()) {
+            memcpy(pPipelineUUID, generated_uuid_, VK_UUID_SIZE);
         }
 
         if (ppMessages != nullptr) {
@@ -177,6 +219,48 @@ class Generator : private GeneratorBase {
     }
 
   private:
+    void gen_MD5(hashlib::md5& md5, const void* data, size_t size) {
+        const uint8_t* ptr = reinterpret_cast<const uint8_t*>(data);
+        md5.update(ptr, ptr + size);
+    }
+
+    template <typename T>
+    void gen_MD5(hashlib::md5& md5, const T& data) {
+        gen_MD5(md5, &data, sizeof(data));
+    }
+
+    void gen_JsonMD5(hashlib::md5& md5, const Json::Value& value) {
+        if (value.isArray()) {
+            uint32_t array_size = value.size();
+            gen_MD5(md5, array_size);
+            for (uint32_t i = 0; i < array_size; ++i) {
+                gen_JsonMD5(md5, value[i]);
+            }
+        } else if (value.isObject()) {
+            for (const auto& member : value.getMemberNames()) {
+                gen_JsonMD5(md5, value[member]);
+            }
+        } else if (value.isBool()) {
+            gen_MD5(md5, value.asBool());
+        } else if (value.isString()) {
+            auto str = value.asString();
+            gen_MD5(md5, str.size());
+            gen_MD5(md5, str.data(), str.size());
+        } else if (value.isDouble()) {
+            gen_MD5(md5, value.asDouble());
+        } else if (value.isInt()) {
+            gen_MD5(md5, value.asInt());
+        } else if (value.isUInt()) {
+            gen_MD5(md5, value.asUInt());
+        } else if (value.isInt64()) {
+            gen_MD5(md5, value.asInt64());
+        } else if (value.isUInt64()) {
+            gen_MD5(md5, value.asUInt());
+        } else {
+            Error() << "Unexpected JSON value type";
+        }
+    }
+
     template <typename T>
     Json::Value gen_CommonPipelineState(const T& state) {
         Json::Value json(Json::objectValue);
@@ -320,11 +404,11 @@ class Generator : private GeneratorBase {
         return json;
     }
 
-    Json::Value gen_PipelineUUID(const VpjData& data) {
+    Json::Value gen_PipelineUUID(const uint8_t* pPipelineUUID) {
         Json::Value json = Json::arrayValue;
-        json.resize(16);
+        json.resize(VK_UUID_SIZE);
         for (uint32_t i = 0; i < json.size(); ++i) {
-            json[i] = data.pipelineUUID[i];
+            json[i] = pPipelineUUID[i];
         }
         return json;
     }
@@ -424,7 +508,11 @@ class Generator : private GeneratorBase {
             }
         }
     }
+
     std::vector<std::string> json_outputs_;
+
+    bool md5_generator_enabled_{false};
+    uint8_t* generated_uuid_{nullptr};
 };
 
 }  // namespace pcjson
@@ -435,8 +523,16 @@ VpjGenerator vpjCreateGenerator() {
     return (new pcjson::Generator())->Handle();
 }
 
+void vpjSetMD5PipelineUUIDGeneration(VpjGenerator generator, bool enable) {
+    pcjson::Generator::FromHandle(generator)->SetMD5PipelineUUIDGeneration(enable);
+}
+
 bool vpjGeneratePipelineJson(VpjGenerator generator, const VpjData* pPipelineData, const char** ppPipelineJson, const char** ppMessages) {
     return pcjson::Generator::FromHandle(generator)->GeneratePipelineJSON(pPipelineData, ppPipelineJson, ppMessages);
+}
+
+bool vpjGetGeneratedPipelineUUID(VpjGenerator generator, uint8_t* pPipelineUUID, const char** ppMessages) {
+    return pcjson::Generator::FromHandle(generator)->GetGeneratedPipelineUUID(pPipelineUUID, ppMessages);
 }
 
 bool vpjGenerateSingleStructJson(VpjGenerator generator, const void* pStruct, const char** ppJson, const char** ppMessages) {

@@ -199,7 +199,10 @@
                 "tests"
             ],
             "cmake_options": [
-                "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug>"
+                "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug>",
+                "-DBUILD_WSI_XCB_SUPPORT=OFF",
+                "-DBUILD_WSI_XLIB_SUPPORT=OFF",
+                "-DBUILD_WSI_WAYLAND_SUPPORT=OFF"
             ],
             "deps": [
                 {

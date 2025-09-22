@@ -91,7 +91,7 @@ jobs:
       - name: Build
         run: cmake --build build/
       - name: Test
-        run: ctest --output-on-failure --test-dir build/
+        run: ctest --test-dir build/ --output-on-failure --parallel `nproc`
       - name: Install
         run: cmake --install build --prefix build/install
 
@@ -105,6 +105,10 @@ jobs:
         arch: [ x64 ]
         toolset: [ v143, ClangCL ]
         config: [ Debug, Release ]
+    env:
+      UseMultiToolTask: 'true' # Better parallel MSBuild execution
+      EnforceProcessCountAcrossBuilds: 'true'
+      MultiProcMaxCount: '3'
     steps:
       - name: ${{ format('Checkout {0}', github.repository) }}
         uses: actions/checkout@v4
@@ -129,6 +133,6 @@ jobs:
       - name: Build
         run: cmake --build build/ --config ${{matrix.config}}
       - name: Test
-        run: ctest --output-on-failure --build-config ${{matrix.config}} --test-dir build/
+        run: ctest --test-dir build/ --build-config ${{matrix.config}} --output-on-failure --parallel ${env:NUMBER_OF_PROCESSORS}
       - name: Install
         run: cmake --install build --prefix build/install --config ${{matrix.config}}

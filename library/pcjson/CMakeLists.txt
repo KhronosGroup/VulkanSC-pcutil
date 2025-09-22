@@ -26,3 +26,9 @@ target_include_directories(VulkanPCJson
 
 find_package(jsoncpp REQUIRED CONFIG QUIET)
 target_link_libraries(VulkanPCJson PRIVATE jsoncpp_static Vulkan::Headers)
+
+install(TARGETS VulkanPCJson)
+install(
+    DIRECTORY ${PROJECT_SOURCE_DIR}/include/vulkan/pcjson
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/vulkan"
+)

@@ -36,8 +36,7 @@ bool JsonValidator::LoadAndValidateSchema(const std::string &schema_file, const 
         return false;
     }
 
-    const auto fetch_document = [this, &remote_schema_remap](const std::string &uri) -> Json::Value*
-    {
+    const auto fetch_document = [this, &remote_schema_remap](const std::string &uri) -> Json::Value * {
         const std::string schema_path = remote_schema_remap.at(uri);
 
         auto schema_document = new Json::Value();
@@ -48,17 +47,15 @@ bool JsonValidator::LoadAndValidateSchema(const std::string &schema_file, const 
         return schema_document;
     };
 
-    const auto free_document = [](const Json::Value *adapter) {
-        delete adapter;
-    };
-    
+    const auto free_document = [](const Json::Value *adapter) { delete adapter; };
+
     schema.reset(new valijson::Schema);
 
     try {
         valijson::SchemaParser parser;
         valijson::adapters::JsonCppAdapter schema_adapter(schema_document);
         parser.populateSchema(schema_adapter, *schema, fetch_document, free_document);
-    } catch (const std::runtime_error& error) {
+    } catch (const std::runtime_error &error) {
         msg_stream << "Failed to parse schema document: " << error.what();
         return false;
     } catch (...) {
@@ -102,8 +99,7 @@ bool JsonValidator::ValidateJson(const Json::Value &json_document) {
     return true;
 }
 
-bool JsonValidator::ValidateJsonFromFile(const std::string &json_file)
-{
+bool JsonValidator::ValidateJsonFromFile(const std::string &json_file) {
     Json::Value json_document;
     if (!valijson::utils::loadDocument(json_file.c_str(), json_document)) {
         std::cerr << "Failed to load json document." << std::endl;
@@ -112,4 +108,3 @@ bool JsonValidator::ValidateJsonFromFile(const std::string &json_file)
 
     return ValidateJson(json_document);
 }
-

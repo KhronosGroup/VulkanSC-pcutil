@@ -84,40 +84,52 @@ class Generator : private GeneratorBase {
             auto base = reinterpret_cast<const VkBaseInStructure*>(pStruct);
             switch (base->sType) {
                 case VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO:
-                    json = gen_VkGraphicsPipelineCreateInfo(*reinterpret_cast<const VkGraphicsPipelineCreateInfo*>(pStruct), CreateScope("pStruct", true));
+                    json = gen_VkGraphicsPipelineCreateInfo(*reinterpret_cast<const VkGraphicsPipelineCreateInfo*>(pStruct),
+                                                            CreateScope("pStruct", true));
                     break;
                 case VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO:
-                    json = gen_VkComputePipelineCreateInfo(*reinterpret_cast<const VkComputePipelineCreateInfo*>(pStruct), CreateScope("pStruct", true));
+                    json = gen_VkComputePipelineCreateInfo(*reinterpret_cast<const VkComputePipelineCreateInfo*>(pStruct),
+                                                           CreateScope("pStruct", true));
                     break;
                 case VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_CREATE_INFO:
-                    json = gen_VkSamplerYcbcrConversionCreateInfo(*reinterpret_cast<const VkSamplerYcbcrConversionCreateInfo*>(pStruct), CreateScope("pStruct", true));
+                    json = gen_VkSamplerYcbcrConversionCreateInfo(
+                        *reinterpret_cast<const VkSamplerYcbcrConversionCreateInfo*>(pStruct), CreateScope("pStruct", true));
                     break;
                 case VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO:
-                    json = gen_VkSamplerCreateInfo(*reinterpret_cast<const VkSamplerCreateInfo*>(pStruct), CreateScope("pStruct", true));
+                    json = gen_VkSamplerCreateInfo(*reinterpret_cast<const VkSamplerCreateInfo*>(pStruct),
+                                                   CreateScope("pStruct", true));
                     break;
                 case VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO:
-                    json = gen_VkDescriptorSetLayoutCreateInfo(*reinterpret_cast<const VkDescriptorSetLayoutCreateInfo*>(pStruct), CreateScope("pStruct", true));
+                    json = gen_VkDescriptorSetLayoutCreateInfo(*reinterpret_cast<const VkDescriptorSetLayoutCreateInfo*>(pStruct),
+                                                               CreateScope("pStruct", true));
                     break;
                 case VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO:
-                    json = gen_VkPipelineLayoutCreateInfo(*reinterpret_cast<const VkPipelineLayoutCreateInfo*>(pStruct), CreateScope("pStruct", true));
+                    json = gen_VkPipelineLayoutCreateInfo(*reinterpret_cast<const VkPipelineLayoutCreateInfo*>(pStruct),
+                                                          CreateScope("pStruct", true));
                     break;
                 case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2:
-                    json = gen_VkPhysicalDeviceFeatures2(*reinterpret_cast<const VkPhysicalDeviceFeatures2*>(pStruct), CreateScope("pStruct", true));
+                    json = gen_VkPhysicalDeviceFeatures2(*reinterpret_cast<const VkPhysicalDeviceFeatures2*>(pStruct),
+                                                         CreateScope("pStruct", true));
                     break;
                 case VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO:
-                    json = gen_VkRenderPassCreateInfo(*reinterpret_cast<const VkRenderPassCreateInfo*>(pStruct), CreateScope("pStruct", true));
+                    json = gen_VkRenderPassCreateInfo(*reinterpret_cast<const VkRenderPassCreateInfo*>(pStruct),
+                                                      CreateScope("pStruct", true));
                     break;
                 case VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2:
-                    json = gen_VkRenderPassCreateInfo2(*reinterpret_cast<const VkRenderPassCreateInfo2*>(pStruct), CreateScope("pStruct", true));
+                    json = gen_VkRenderPassCreateInfo2(*reinterpret_cast<const VkRenderPassCreateInfo2*>(pStruct),
+                                                       CreateScope("pStruct", true));
                     break;
                 case VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO:
-                    json = gen_VkShaderModuleCreateInfo(*reinterpret_cast<const VkShaderModuleCreateInfo*>(pStruct), CreateScope("pStruct", true));
+                    json = gen_VkShaderModuleCreateInfo(*reinterpret_cast<const VkShaderModuleCreateInfo*>(pStruct),
+                                                        CreateScope("pStruct", true));
                     break;
                 case VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO:
-                    json = gen_VkDeviceObjectReservationCreateInfo(*reinterpret_cast<const VkDeviceObjectReservationCreateInfo*>(pStruct), CreateScope("pStruct", true));
+                    json = gen_VkDeviceObjectReservationCreateInfo(
+                        *reinterpret_cast<const VkDeviceObjectReservationCreateInfo*>(pStruct), CreateScope("pStruct", true));
                     break;
                 case VK_STRUCTURE_TYPE_PIPELINE_OFFLINE_CREATE_INFO:
-                    json = gen_VkPipelineOfflineCreateInfo(*reinterpret_cast<const VkPipelineOfflineCreateInfo*>(pStruct), CreateScope("pStruct", true));
+                    json = gen_VkPipelineOfflineCreateInfo(*reinterpret_cast<const VkPipelineOfflineCreateInfo*>(pStruct),
+                                                           CreateScope("pStruct", true));
                     break;
                 default:
                     Error() << "Unsupported structure type: " << base->sType;
@@ -166,13 +178,9 @@ class Generator : private GeneratorBase {
         FreeAllMem();
     }
 
-    VpjGenerator Handle() {
-        return reinterpret_cast<VpjGenerator>(this);
-    }
+    VpjGenerator Handle() { return reinterpret_cast<VpjGenerator>(this); }
 
-    static Generator* FromHandle(VpjGenerator handle) {
-        return reinterpret_cast<Generator*>(handle);
-    }
+    static Generator* FromHandle(VpjGenerator handle) { return reinterpret_cast<Generator*>(handle); }
 
   private:
     template <typename T>
@@ -227,8 +235,9 @@ class Generator : private GeneratorBase {
                 for (uint32_t i = 0; i < state.descriptorSetLayoutCount; ++i) {
                     if (ds_layouts[i].sType == VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO) {
                         Json::Value key_ds_pair = Json::objectValue;
-                        key_ds_pair[std::to_string(i)] = gen_VkDescriptorSetLayoutCreateInfo(ds_layouts[i], CreateScope("pDescriptorSetLayouts", i));
-                        json_ds_layouts[i] = key_ds_pair; 
+                        key_ds_pair[std::to_string(i)] =
+                            gen_VkDescriptorSetLayoutCreateInfo(ds_layouts[i], CreateScope("pDescriptorSetLayouts", i));
+                        json_ds_layouts[i] = key_ds_pair;
                     } else {
                         Error() << "pDescriptorSetLayouts[" << i << "] has invalid structure type: " << ds_layouts[i].sType;
                     }
@@ -255,8 +264,8 @@ class Generator : private GeneratorBase {
                 json_shaders.resize(state.shaderFileNameCount);
                 for (uint32_t i = 0; i < state.shaderFileNameCount; ++i) {
                     auto shader_loc = CreateScope("pShaderFileNames", i);
-                    json_shaders[i]["stage"] = gen_VkShaderStageFlagBits(static_cast<VkShaderStageFlagBits>(state.pShaderFileNames[i].stage),
-                                                                         CreateScope("stage"));
+                    json_shaders[i]["stage"] = gen_VkShaderStageFlagBits(
+                        static_cast<VkShaderStageFlagBits>(state.pShaderFileNames[i].stage), CreateScope("stage"));
                     if (state.pShaderFileNames[i].pFilename != nullptr) {
                         json_shaders[i]["filename"] = state.pShaderFileNames[i].pFilename;
                     } else {
@@ -271,7 +280,8 @@ class Generator : private GeneratorBase {
         auto features = reinterpret_cast<const VkPhysicalDeviceFeatures2*>(state.pPhysicalDeviceFeatures);
         if (features != nullptr) {
             if (features->sType == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2) {
-                json["PhysicalDeviceFeatures"] = gen_VkPhysicalDeviceFeatures2(*features, CreateScope("pPhysicalDeviceFeatures", true));
+                json["PhysicalDeviceFeatures"] =
+                    gen_VkPhysicalDeviceFeatures2(*features, CreateScope("pPhysicalDeviceFeatures", true));
             } else {
                 Error() << "pPhysicalDeviceFeatures has invalid structure type: " << features->sType;
             }
@@ -444,11 +454,10 @@ class Generator : private GeneratorBase {
 
 extern "C" {
 
-VpjGenerator vpjCreateGenerator() {
-    return (new pcjson::Generator())->Handle();
-}
+VpjGenerator vpjCreateGenerator() { return (new pcjson::Generator())->Handle(); }
 
-bool vpjGeneratePipelineJson(VpjGenerator generator, const VpjData* pPipelineData, const char** ppPipelineJson, const char** ppMessages) {
+bool vpjGeneratePipelineJson(VpjGenerator generator, const VpjData* pPipelineData, const char** ppPipelineJson,
+                             const char** ppMessages) {
     return pcjson::Generator::FromHandle(generator)->GeneratePipelineJSON(pPipelineData, ppPipelineJson, ppMessages);
 }
 
@@ -462,12 +471,8 @@ bool vpjFilterDeviceFeatures(VpjGenerator generator, const void* pDeviceCreateIn
                                                                           ppMessages);
 }
 
-void vpjFreeGeneratorOutputs(VpjGenerator generator) {
-    pcjson::Generator::FromHandle(generator)->FreeOutputs();
-}
+void vpjFreeGeneratorOutputs(VpjGenerator generator) { pcjson::Generator::FromHandle(generator)->FreeOutputs(); }
 
-void vpjDestroyGenerator(VpjGenerator generator) {
-    delete pcjson::Generator::FromHandle(generator);
-}
+void vpjDestroyGenerator(VpjGenerator generator) { delete pcjson::Generator::FromHandle(generator); }
 
 }  // extern "C"

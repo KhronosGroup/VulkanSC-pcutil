@@ -32,9 +32,7 @@ class Base {
             location_.push_back({name, false, true, index});
         }
 
-        ~LocationScope() {
-            location_.pop_back();
-        }
+        ~LocationScope() { location_.pop_back(); }
 
         LocationScope(const LocationScope&) = delete;
         LocationScope& operator=(const LocationScope&) = delete;
@@ -116,17 +114,11 @@ class Base {
         message_sink_.clear();
     }
 
-    bool IsStatusOK() const {
-        return status_;
-    }
+    bool IsStatusOK() const { return status_; }
 
-    LocationScope CreateScope(const char* scope, bool pointer = false) {
-        return LocationScope(location_, scope, pointer);
-    }
+    LocationScope CreateScope(const char* scope, bool pointer = false) { return LocationScope(location_, scope, pointer); }
 
-    LocationScope CreateScope(const char* scope, uint32_t index) {
-        return LocationScope(location_, scope, index);
-    }
+    LocationScope CreateScope(const char* scope, uint32_t index) { return LocationScope(location_, scope, index); }
 
     template <typename T>
     T* AllocMem(size_t count = 1) {
@@ -141,9 +133,7 @@ class Base {
         return reinterpret_cast<T*>(ptr);
     }
 
-    void FreeAllMem() {
-        memory_blocks_.clear();
-    }
+    void FreeAllMem() { memory_blocks_.clear(); }
 
     std::stringstream& Error() {
         if (message_sink_.rdbuf()->in_avail() > 0) {
@@ -175,7 +165,7 @@ class Base {
 
   private:
     void AddLocationInfo() {
-        if (!location_.empty()) { 
+        if (!location_.empty()) {
             const LocationDesc* prev_loc = nullptr;
             for (const auto& loc : location_) {
                 if (prev_loc != nullptr) {

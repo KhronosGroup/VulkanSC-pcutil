@@ -11,7 +11,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -89,7 +88,7 @@ typedef void* VpjGenerator;
 
 /**
  * @brief Creates a pipeline JSON generator.
- * 
+ *
  * @return The handle of the created JSON generator or NULL if allocation failed
  */
 VpjGenerator vpjCreateGenerator();
@@ -105,7 +104,8 @@ VpjGenerator vpjCreateGenerator();
  * vpjDestroyGenerator, or another vpjGenerate* command is called)
  * @return True, if the generation was successful, false otherwise.
  */
-bool vpjGeneratePipelineJson(VpjGenerator generator, const VpjData* pPipelineData, const char** ppPipelineJson, const char** ppMessages);
+bool vpjGeneratePipelineJson(VpjGenerator generator, const VpjData* pPipelineData, const char** ppPipelineJson,
+                             const char** ppMessages);
 
 /**
  * @brief Generates a JSON from a single input structure (including its pNext chain).
@@ -152,14 +152,14 @@ bool vpjFilterDeviceFeatures(VpjGenerator generator, const void* pDeviceCreateIn
 
 /**
  * @brief Frees any storage of previous pipeline JSON generator outputs.
- * 
+ *
  * @param generator The JSON generator to free output storage for
  */
 void vpjFreeGeneratorOutputs(VpjGenerator generator);
 
 /**
  * @brief Destroys a pipeline JSON generator.
- * 
+ *
  * @param generator The JSON generator to destroy
  */
 void vpjDestroyGenerator(VpjGenerator generator);
@@ -168,7 +168,7 @@ typedef void* VpjParser;
 
 /**
  * @brief Creates a pipeline JSON parser.
- * 
+ *
  * @return The handle of the created JSON parser or NULL if allocation failed
  */
 VpjParser vpjCreateParser();
@@ -215,14 +215,14 @@ bool vpjParseSingleStructJson(VpjParser parser, const char* pJson, void* pStruct
 
 /**
  * @brief Frees any storage of previous pipeline JSON parser outputs.
- * 
+ *
  * @param parser The JSON parser to free output storage for
  */
 void vpjFreeParserOutputs(VpjParser parser);
 
 /**
  * @brief Destroys a pipeline JSON parser.
- * 
+ *
  * @param parser The JSON parser to destroy
  */
 void vpjDestroyParser(VpjParser parser);

@@ -94,25 +94,31 @@ class Parser : private ParserBase {
         if (IsStatusOK()) {
             switch (stype) {
                 case VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO:
-                    *reinterpret_cast<VkGraphicsPipelineCreateInfo*>(pStruct) = parse_VkGraphicsPipelineCreateInfo(json, CreateScope("$"));
+                    *reinterpret_cast<VkGraphicsPipelineCreateInfo*>(pStruct) =
+                        parse_VkGraphicsPipelineCreateInfo(json, CreateScope("$"));
                     break;
                 case VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO:
-                    *reinterpret_cast<VkComputePipelineCreateInfo*>(pStruct) = parse_VkComputePipelineCreateInfo(json, CreateScope("$"));
+                    *reinterpret_cast<VkComputePipelineCreateInfo*>(pStruct) =
+                        parse_VkComputePipelineCreateInfo(json, CreateScope("$"));
                     break;
                 case VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_CREATE_INFO:
-                    *reinterpret_cast<VkSamplerYcbcrConversionCreateInfo*>(pStruct) = parse_VkSamplerYcbcrConversionCreateInfo(json, CreateScope("$"));
+                    *reinterpret_cast<VkSamplerYcbcrConversionCreateInfo*>(pStruct) =
+                        parse_VkSamplerYcbcrConversionCreateInfo(json, CreateScope("$"));
                     break;
                 case VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO:
                     *reinterpret_cast<VkSamplerCreateInfo*>(pStruct) = parse_VkSamplerCreateInfo(json, CreateScope("$"));
                     break;
                 case VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO:
-                    *reinterpret_cast<VkDescriptorSetLayoutCreateInfo*>(pStruct) = parse_VkDescriptorSetLayoutCreateInfo(json, CreateScope("$"));
+                    *reinterpret_cast<VkDescriptorSetLayoutCreateInfo*>(pStruct) =
+                        parse_VkDescriptorSetLayoutCreateInfo(json, CreateScope("$"));
                     break;
                 case VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO:
-                    *reinterpret_cast<VkPipelineLayoutCreateInfo*>(pStruct) = parse_VkPipelineLayoutCreateInfo(json, CreateScope("$"));
+                    *reinterpret_cast<VkPipelineLayoutCreateInfo*>(pStruct) =
+                        parse_VkPipelineLayoutCreateInfo(json, CreateScope("$"));
                     break;
                 case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2:
-                    *reinterpret_cast<VkPhysicalDeviceFeatures2*>(pStruct) = parse_VkPhysicalDeviceFeatures2(json, CreateScope("$"));
+                    *reinterpret_cast<VkPhysicalDeviceFeatures2*>(pStruct) =
+                        parse_VkPhysicalDeviceFeatures2(json, CreateScope("$"));
                     break;
                 case VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO:
                     *reinterpret_cast<VkRenderPassCreateInfo*>(pStruct) = parse_VkRenderPassCreateInfo(json, CreateScope("$"));
@@ -124,10 +130,12 @@ class Parser : private ParserBase {
                     *reinterpret_cast<VkShaderModuleCreateInfo*>(pStruct) = parse_VkShaderModuleCreateInfo(json, CreateScope("$"));
                     break;
                 case VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO:
-                    *reinterpret_cast<VkDeviceObjectReservationCreateInfo*>(pStruct) = parse_VkDeviceObjectReservationCreateInfo(json, CreateScope("$"));
+                    *reinterpret_cast<VkDeviceObjectReservationCreateInfo*>(pStruct) =
+                        parse_VkDeviceObjectReservationCreateInfo(json, CreateScope("$"));
                     break;
                 case VK_STRUCTURE_TYPE_PIPELINE_OFFLINE_CREATE_INFO:
-                    *reinterpret_cast<VkPipelineOfflineCreateInfo*>(pStruct) = parse_VkPipelineOfflineCreateInfo(json, CreateScope("$"));
+                    *reinterpret_cast<VkPipelineOfflineCreateInfo*>(pStruct) =
+                        parse_VkPipelineOfflineCreateInfo(json, CreateScope("$"));
                     break;
                 default:
                     Error() << "Unsupported structure type: " << stype;
@@ -142,17 +150,11 @@ class Parser : private ParserBase {
         return IsStatusOK();
     }
 
-    void FreeOutputs() {
-        FreeAllMem();
-    }
+    void FreeOutputs() { FreeAllMem(); }
 
-    VpjParser Handle() {
-        return reinterpret_cast<VpjParser>(this);
-    }
+    VpjParser Handle() { return reinterpret_cast<VpjParser>(this); }
 
-    static Parser* FromHandle(VpjParser handle) {
-        return reinterpret_cast<Parser*>(handle);
-    }
+    static Parser* FromHandle(VpjParser handle) { return reinterpret_cast<Parser*>(handle); }
 
   private:
     template <typename T>
@@ -467,9 +469,7 @@ class Parser : private ParserBase {
 
 extern "C" {
 
-VpjGenerator vpjCreateParser() {
-    return (new pcjson::Parser())->Handle();
-}
+VpjGenerator vpjCreateParser() { return (new pcjson::Parser())->Handle(); }
 
 bool vpjParsePipelineJson(VpjParser parser, const char* pPipelineJson, VpjData* pPipelineData, const char** ppMessages) {
     return pcjson::Parser::FromHandle(parser)->ParsePipelineJson(pPipelineJson, pPipelineData, ppMessages);
@@ -479,12 +479,8 @@ bool vpjParseSingleStructJson(VpjParser parser, const char* pJson, void* pStruct
     return pcjson::Parser::FromHandle(parser)->ParseSingleStructJson(pJson, pStruct, ppMessages);
 }
 
-void vpjFreeParserOutputs(VpjParser parser) {
-    pcjson::Parser::FromHandle(parser)->FreeOutputs();
-}
+void vpjFreeParserOutputs(VpjParser parser) { pcjson::Parser::FromHandle(parser)->FreeOutputs(); }
 
-void vpjDestroyParser(VpjParser parser) {
-    delete pcjson::Parser::FromHandle(parser);
-}
+void vpjDestroyParser(VpjParser parser) { delete pcjson::Parser::FromHandle(parser); }
 
 }  // extern "C"

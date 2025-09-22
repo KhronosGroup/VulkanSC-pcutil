@@ -16,11 +16,11 @@ concurrency:
 
 on:
   push:
-    branches:
-      - '!main'
+    branches-ignore:
+      - unified
   pull_request:
     branches:
-      - main
+      - unified
 
 permissions:
     contents: read

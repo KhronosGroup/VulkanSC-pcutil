@@ -184,9 +184,8 @@ class PipelineData {
         m_jsonStringsList.push_back(jsonString);
 
         /* Private Data Slot */
-        VkResult result =
-            createAndSetPrivateData(device, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, reinterpret_cast<uint64_t>(l), jsonString);
-        assert(result == VK_SUCCESS);
+        assert(VK_SUCCESS ==
+               createAndSetPrivateData(device, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, reinterpret_cast<uint64_t>(l), jsonString));
 
         if (pCreateInfo->pBindings) {
             for (unsigned int i = 0; i < pCreateInfo->bindingCount; i++) {
@@ -217,9 +216,8 @@ class PipelineData {
             m_jsonStringsList.push_back(jsonString);
 
             /* Private Data Slot */
-            VkResult result =
-                createAndSetPrivateData(device, VK_OBJECT_TYPE_RENDER_PASS, reinterpret_cast<uint64_t>(*pRenderPass), jsonString);
-            assert(result == VK_SUCCESS);
+            assert(VK_SUCCESS == createAndSetPrivateData(device, VK_OBJECT_TYPE_RENDER_PASS,
+                                                         reinterpret_cast<uint64_t>(*pRenderPass), jsonString));
         }
         INDENT(-INDENT_RENDERPASS);
     }
@@ -237,9 +235,8 @@ class PipelineData {
             m_jsonStringsList.push_back(jsonString);
 
             /* Private Data Slot */
-            VkResult result =
-                createAndSetPrivateData(device, VK_OBJECT_TYPE_RENDER_PASS, reinterpret_cast<uint64_t>(*pRenderPass), jsonString);
-            assert(result == VK_SUCCESS);
+            assert(VK_SUCCESS == createAndSetPrivateData(device, VK_OBJECT_TYPE_RENDER_PASS,
+                                                         reinterpret_cast<uint64_t>(*pRenderPass), jsonString));
         }
         INDENT(-INDENT_RENDERPASS);
     }
@@ -272,9 +269,8 @@ class PipelineData {
         m_pipelineLayoutDescSetMap.insert(std::make_pair(*pPipelineLayout, layouts));
 
         /* Private Data Slot */
-        VkResult result = createAndSetPrivateData(device, VK_OBJECT_TYPE_PIPELINE_LAYOUT,
-                                                  reinterpret_cast<uint64_t>(*pPipelineLayout), jsonString);
-        assert(result == VK_SUCCESS);
+        assert(VK_SUCCESS == createAndSetPrivateData(device, VK_OBJECT_TYPE_PIPELINE_LAYOUT,
+                                                     reinterpret_cast<uint64_t>(*pPipelineLayout), jsonString));
     }
 
     void setShaderModuleInfo(const VkShaderModuleCreateInfo* pCreateInfo, VkShaderModule* m) {

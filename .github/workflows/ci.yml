@@ -84,10 +84,9 @@ jobs:
         run: |
           cmake -S. -B build \
           -G Ninja \
-          -D BUILD_TESTS=ON \
-          -D UPDATE_DEPS=ON \
           -D CMAKE_BUILD_TYPE=${{matrix.config}} \
-          -D PCU_WERROR=OFF
+          -D BUILD_TESTS=ON \
+          -D UPDATE_DEPS=ON
       - name: Build
         run: cmake --build build/
       - name: Test
@@ -124,12 +123,11 @@ jobs:
         run: |
           cmake -S. -B build `
           -G "Visual Studio 17 2022" `
+          -A ${{ matrix.arch }} `
           -D CMAKE_BUILD_TYPE=${{matrix.config}} `
           -D CMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug> `
           -D BUILD_TESTS=ON `
-          -D UPDATE_DEPS=ON `
-          -A ${{ matrix.arch }} `
-          -D PCU_WERROR=OFF
+          -D UPDATE_DEPS=ON
       - name: Build
         run: cmake --build build/ --config ${{matrix.config}}
       - name: Test

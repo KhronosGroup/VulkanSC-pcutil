@@ -363,7 +363,7 @@ class Generator : private GeneratorBase {
     void ResolveObjectNames(Json::Value& pipeline_state_json, const T& state) {
         const auto update_key = [&](Json::Value& json, const auto old_key, const auto new_key, const char* object_set_name) {
             Json::Value value = json[old_key];
-            if (!value.isNull()) {
+            if (value.isNull()) {
                 Error() << "Did not find " << object_set_name << " with key \"" << old_key << '\"';
             }
             json.removeMember(old_key);

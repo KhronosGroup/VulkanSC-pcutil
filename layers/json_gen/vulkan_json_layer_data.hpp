@@ -34,7 +34,7 @@ static thread_local std::stringstream _string_stream;
 static void dumpPNextChain(const void* pNext);
 
 // By default, redirect to std::cout. Can stream it to a stringstream if needed.
-//#define   _OUT std::cout
+// #define   _OUT std::cout
 #define _OUT _string_stream
 
 // Helper utility to do indentation in the generated json file.

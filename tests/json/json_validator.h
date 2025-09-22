@@ -23,9 +23,9 @@
 #include <unordered_map>
 
 class JsonValidator {
-public:
+  public:
     using RemoteSchemaRemap = std::unordered_map<std::string, std::string>;
-    
+
     JsonValidator() = default;
     ~JsonValidator() = default;
 
@@ -34,12 +34,9 @@ public:
     bool ValidateJson(const Json::Value &json_document);
     bool ValidateJsonFromFile(const std::string &json_file);
 
-    std::string GetMessage() const {
-        return msg_stream.str();
-    }
+    std::string GetMessage() const { return msg_stream.str(); }
 
-private:
+  private:
     std::stringstream msg_stream;
     std::unique_ptr<valijson::Schema> schema;
 };
-

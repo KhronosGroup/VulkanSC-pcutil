@@ -29,7 +29,7 @@ typedef struct VpjGraphicsPipelineState {
     /// Optional pointer to array of VkSamplerYcbcrConversionCreateInfo structures and their pNext chains
     uint32_t ycbcrSamplerCount;
     const void* pYcbcrSamplers;
-    const char** ppYcbrSamplerNames;
+    const char** ppYcbcrSamplerNames;
     /// Optional pointer to array of VkSamplerCreateInfo structures and their pNext chains
     uint32_t immutableSamplerCount;
     const void* pImmutableSamplers;
@@ -57,7 +57,7 @@ typedef struct VpjComputePipelineState {
     /// Optional pointer to array of VkSamplerYcbcrConversionCreateInfo structures and their pNext chains
     uint32_t ycbcrSamplerCount;
     const void* pYcbcrSamplers;
-    const char** ppYcbrSamplerNames;
+    const char** ppYcbcrSamplerNames;
     /// Optional pointer to array of VkSamplerCreateInfo structures and their pNext chains
     uint32_t immutableSamplerCount;
     const void* pImmutableSamplers;

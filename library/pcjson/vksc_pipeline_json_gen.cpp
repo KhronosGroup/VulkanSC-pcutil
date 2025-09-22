@@ -8,8 +8,6 @@
 #include "vksc_pipeline_json_gen.hpp"
 #include "vksc_pipeline_json.h"
 
-#include <cassert>
-
 namespace pcjson {
 
 class Generator : private GeneratorBase {
@@ -303,7 +301,9 @@ class Generator : private GeneratorBase {
             Error() << "pRenderPass is NULL";
         }
 
-        ResolveObjectNames(json, state);
+        if (IsStatusOK()) {
+            ResolveObjectNames(json, state);
+        }
 
         return json;
     }
@@ -315,7 +315,9 @@ class Generator : private GeneratorBase {
         auto compute_pipeline = reinterpret_cast<const VkComputePipelineCreateInfo*>(state.pComputePipeline);
         json["ComputePipeline"] = gen_VkComputePipelineCreateInfo(*compute_pipeline, CreateScope("pComputePipeline"));
 
-        ResolveObjectNames(json, state);
+        if (IsStatusOK()) {
+            ResolveObjectNames(json, state);
+        }
 
         return json;
     }
@@ -349,22 +351,28 @@ class Generator : private GeneratorBase {
 
     template <typename T>
     void ResolveObjectNames(Json::Value& pipeline_state_json, const T& state) {
-        const auto update_key = [](Json::Value& json, const auto old_key, const auto new_key) {
+        const auto update_key = [&](Json::Value& json, const auto old_key, const auto new_key, const char* object_set_name) {
             Json::Value value = json[old_key];
-            assert(!value.isNull());
+            if (value.isNull()) {
+                Error() << "Did not find " << object_set_name << " with key \"" << old_key << '\"';
+            }
             json.removeMember(old_key);
             json[new_key] = value;
         };
 
-        const auto update_keys_in_array = [update_key](Json::Value& json_array, uint32_t count, const char** names) {
-            assert(json_array.size() == count);
+        const auto update_keys_in_array = [&](Json::Value& json_array, uint32_t count, const char** names,
+                                              const char* object_set_name) {
+            if (json_array.size() != count) {
+                Error() << "Mismatch between specified and generated JSON object count for " << object_set_name;
+                return;
+            }
             for (uint32_t i = 0; i < count; ++i) {
-                update_key(json_array[i], std::to_string(i), names[i]);
+                update_key(json_array[i], std::to_string(i), names[i], object_set_name);
             }
         };
 
-        const auto update_array_with_names = [this](Json::Value& json_array, uint32_t count, const char** names,
-                                                    const char* object_type) {
+        const auto update_array_with_names = [&](Json::Value& json_array, uint32_t count, const char** names,
+                                                 const char* object_set_name) {
             Json::Value new_array = Json::arrayValue;
             for (uint32_t i = 0; i < json_array.size(); i++) {
                 auto& name_id_json = json_array[i];
@@ -372,7 +380,7 @@ class Generator : private GeneratorBase {
                 if (name_id < count) {
                     new_array[i] = names[name_id];
                 } else {
-                    Error() << "Ouf of range " << object_type << " id (" << name_id << ") during resolving names";
+                    Error() << "Ouf of range " << object_set_name << " id (" << name_id << ") during resolving names";
                 }
             }
             json_array.copy(new_array);
@@ -380,16 +388,19 @@ class Generator : private GeneratorBase {
 
         if (state.ppDescriptorSetLayoutNames != nullptr) {
             update_keys_in_array(pipeline_state_json["DescriptorSetLayouts"], state.descriptorSetLayoutCount,
-                                 state.ppDescriptorSetLayoutNames);
+                                 state.ppDescriptorSetLayoutNames, "DescriptorSetLayouts");
             update_array_with_names(pipeline_state_json["PipelineLayout"]["pSetLayouts"], state.descriptorSetLayoutCount,
-                                    state.ppDescriptorSetLayoutNames, "DescriptorLayout");
+                                    state.ppDescriptorSetLayoutNames, "DescriptorSetLayouts");
         }
 
-        if (state.ppYcbrSamplerNames != nullptr) {
-            update_keys_in_array(pipeline_state_json["YcbcrSamplers"], state.ycbcrSamplerCount, state.ppYcbrSamplerNames);
+        if (state.ppYcbcrSamplerNames != nullptr) {
+            update_keys_in_array(pipeline_state_json["YcbcrSamplers"], state.ycbcrSamplerCount, state.ppYcbcrSamplerNames,
+                                 "YcbcrSamplers");
 
             for (auto& immutable_sampler : pipeline_state_json["ImmutableSamplers"]) {
-                assert(immutable_sampler.size() == 1);
+                if (immutable_sampler.size() != 1) {
+                    Error() << "Invalid ImmutableSamplers format containing multiple keys in element";
+                }
                 Json::Value* pNext = &(*immutable_sampler.begin())["pNext"];
 
                 while (*pNext != "NULL") {
@@ -403,9 +414,9 @@ class Generator : private GeneratorBase {
                     Json::Value& conversion = (*pNext)["conversion"];
                     uint64_t ycbcr_sampler_id = (conversion.isString() && conversion.asString() == "") ? 0 : conversion.asUInt64();
                     if (ycbcr_sampler_id < state.ycbcrSamplerCount) {
-                        conversion.copy(state.ppYcbrSamplerNames[ycbcr_sampler_id]);
+                        conversion.copy(state.ppYcbcrSamplerNames[ycbcr_sampler_id]);
                     } else {
-                        Error() << "Ouf of range ycbcr sampler reference";
+                        Error() << "Ouf of range YCbCr sampler reference";
                     }
                 }
             }
@@ -413,10 +424,12 @@ class Generator : private GeneratorBase {
 
         if (state.ppImmutableSamplerNames != nullptr) {
             update_keys_in_array(pipeline_state_json["ImmutableSamplers"], state.immutableSamplerCount,
-                                 state.ppImmutableSamplerNames);
+                                 state.ppImmutableSamplerNames, "ImmutableSamplers");
 
             for (auto& descriptor_set_layout : pipeline_state_json["DescriptorSetLayouts"]) {
-                assert(descriptor_set_layout.size() == 1);
+                if (descriptor_set_layout.size() != 1) {
+                    Error() << "Invalid DescriptorSetLayouts format containing multiple keys in element";
+                }
                 for (auto& binding : (*descriptor_set_layout.begin())["pBindings"]) {
                     update_array_with_names(binding["pImmutableSamplers"], state.immutableSamplerCount,
                                             state.ppImmutableSamplerNames, "ImmutableSampler");

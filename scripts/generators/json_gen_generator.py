@@ -37,7 +37,7 @@ class JsonGenGenerator(BaseGenerator):
             #include <string>
             #include <sstream>
             #include <algorithm>
-            #include <cmath>
+            #include <math.h>
 
             #include "vksc_pipeline_json_base.hpp"
 
@@ -147,7 +147,8 @@ class JsonGenGenerator(BaseGenerator):
 
         for typeName in self.basicTypes:
             self.generatedMethods[typeName] = f'gen_{typeName}'
-            self.gen_basic_methods.append(f'Json::Value gen_{typeName}(const {typeName} v, const LocationScope&) {{ {'return v;' if typeName != 'float' else 'if (std::isnan(v)) return "NaN"; else return v;'} }}\n')
+            return_statement = 'return v;' if typeName != 'float' else 'if (std::isnan(v)) return "NaN"; else return v;'
+            self.gen_basic_methods.append(f'Json::Value gen_{typeName}(const {typeName} v, const LocationScope&) {{ {return_statement} }}\n')
 
         self.basicTypes.append('VkBool32')
         self.generatedMethods['VkBool32'] = 'gen_VkBool32'

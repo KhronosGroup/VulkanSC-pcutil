@@ -8,13 +8,16 @@
 #include "vksc_pipeline_json_parse.hpp"
 #include "vksc_pipeline_json.h"
 
+#include <unordered_map>
+#include <string_view>
+#include <string.h>
+
 namespace pcjson {
 
 class Parser : private ParserBase {
   public:
     bool ParsePipelineJson(const char* pPipelineJson, VpjData* pPipelineData, const char** ppMessages) {
         ClearStatusAndMessages();
-        ClearAcceleratingStructures();
 
         if (pPipelineJson == nullptr) {
             Error() << "pPipelineJson is NULL";
@@ -60,7 +63,6 @@ class Parser : private ParserBase {
 
     bool ParseSingleStructJson(const char* pJson, void* pStruct, const char** ppMessages) {
         ClearStatusAndMessages();
-        ClearAcceleratingStructures();
 
         if (pJson == nullptr) {
             Error() << "pJson is NULL";
@@ -238,15 +240,26 @@ class Parser : private ParserBase {
     }
 
     template <typename T>
-    void preprocess_CommonPipelineState(Json::Value& json, T& state) {
+    void ResolveObjectNames(Json::Value& json, T& state) {
+        std::unordered_map<std::string_view, uint32_t> ycbcr_sampler_indices{};
+        std::unordered_map<std::string_view, uint32_t> immutable_sampler_indices{};
+        std::unordered_map<std::string_view, uint32_t> ds_layout_indices{};
+
+        auto alloc_and_copy_name = [&](const std::string_view& src) {
+            auto dst = AllocMem<char>(src.length() + 1);  // null-terminator
+            std::copy(src.begin(), src.end(), dst);
+            dst[src.length()] = '\0';
+            return dst;
+        };
+
         if (json.isMember("YcbcrSamplers")) {
             const auto& json_ycbcr_samplers = json["YcbcrSamplers"];
             if (json_ycbcr_samplers.isArray()) {
-                ycbcr_sampler_names_.reserve(json_ycbcr_samplers.size());
+                state.ppYcbcrSamplerNames = AllocMem<const char*>(json_ycbcr_samplers.size());
                 for (Json::Value::ArrayIndex i = 0; i < json_ycbcr_samplers.size(); ++i) {
-                    auto sampler_iter = json_ycbcr_samplers[i].begin();
-                    ycbcr_sampler_names_.emplace_back(sampler_iter.key().asString());  // Remember sampler name
-                    ycbcr_sampler_indices_[ycbcr_sampler_names_.back()] = i;           // Remember which index sampler name is at
+                    std::string_view ycbcr_sampler_name = json_ycbcr_samplers[i].begin().key().asCString();
+                    state.ppYcbcrSamplerNames[i] = alloc_and_copy_name(ycbcr_sampler_name);  // Remember YCbCr sampler name
+                    ycbcr_sampler_indices[state.ppYcbcrSamplerNames[i]] = i;                 // Remember which index the name is at
                 }
             } else {
                 Error() << "Invalid YcbcrSamplers format";
@@ -256,18 +269,23 @@ class Parser : private ParserBase {
         if (json.isMember("ImmutableSamplers")) {
             auto& json_immutable_samplers = json["ImmutableSamplers"];
             if (json_immutable_samplers.isArray()) {
-                immutable_sampler_names_.reserve(json_immutable_samplers.size());
+                state.ppImmutableSamplerNames = AllocMem<const char*>(json_immutable_samplers.size());
                 for (Json::Value::ArrayIndex i = 0; i < json_immutable_samplers.size(); ++i) {
                     auto sampler_iter = json_immutable_samplers[i].begin();
-                    immutable_sampler_names_.emplace_back(sampler_iter.key().asString());  // Remember sampler name
-                    immutable_sampler_indices_[immutable_sampler_names_.back()] = i;  // Remember which index sampler name is at
+                    std::string_view sampler_name = sampler_iter.key().asCString();
+                    state.ppImmutableSamplerNames[i] = alloc_and_copy_name(sampler_name);  // Remember sampler name
+                    immutable_sampler_indices[state.ppImmutableSamplerNames[i]] = i;       // Remember which index the name is at
                     if (auto ycbcr_info_ptr =
                             find_StructInChain(&(*sampler_iter)["pNext"], "VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_INFO");
                         ycbcr_info_ptr != nullptr) {
                         auto& ycbcr_conversion = (*ycbcr_info_ptr)["conversion"];
                         // Rewrite name to index
-                        auto sampler_name = ycbcr_conversion.asString();
-                        ycbcr_conversion = ycbcr_sampler_indices_[sampler_name];
+                        auto it = ycbcr_sampler_indices.find(ycbcr_conversion.asCString());
+                        if (it != ycbcr_sampler_indices.end()) {
+                            ycbcr_conversion = it->second;
+                        } else {
+                            Error() << "Invalid YcbcrSamplers name \"" << ycbcr_conversion.asCString() << '\"';
+                        }
                     }
                 }
             } else {
@@ -278,18 +296,24 @@ class Parser : private ParserBase {
         if (json.isMember("DescriptorSetLayouts")) {
             auto& json_ds_layouts = json["DescriptorSetLayouts"];
             if (json_ds_layouts.isArray()) {
-                ds_layout_names_.reserve(json_ds_layouts.size());
+                state.ppDescriptorSetLayoutNames = AllocMem<const char*>(json_ds_layouts.size());
                 for (Json::Value::ArrayIndex i = 0; i < json_ds_layouts.size(); ++i) {
                     auto ds_layout_iter = json_ds_layouts[i].begin();
-                    ds_layout_names_.emplace_back(ds_layout_iter.key().asString());  // Remember ds name
-                    ds_layout_indices_[ds_layout_names_.back()] = i;                 // Remember which index ds_is at
+                    std::string_view ds_layout_name = ds_layout_iter.key().asCString();
+                    state.ppDescriptorSetLayoutNames[i] =
+                        alloc_and_copy_name(ds_layout_name);                     // Remember descriptor set layout name
+                    ds_layout_indices[state.ppDescriptorSetLayoutNames[i]] = i;  // Remember which index the name is at
                     if (auto& bindings = (*ds_layout_iter)["pBindings"]; bindings.isArray()) {
                         for (Json::Value::ArrayIndex j = 0; j < bindings.size(); ++j) {
                             if (auto& immutable_samplers = bindings[j]["pImmutableSamplers"]; immutable_samplers.isArray()) {
                                 for (Json::Value::ArrayIndex k = 0; k < immutable_samplers.size(); ++k) {
                                     // Rewrite name to index
-                                    auto sampler_name = immutable_samplers[k].asString();
-                                    immutable_samplers[k] = immutable_sampler_indices_[sampler_name];
+                                    auto it = immutable_sampler_indices.find(immutable_samplers[k].asCString());
+                                    if (it != immutable_sampler_indices.end()) {
+                                        immutable_samplers[k] = it->second;
+                                    } else {
+                                        Error() << "Invalid ImmutableSamplers name \"" << immutable_samplers.asCString() << '\"';
+                                    }
                                 }
                             }
                         }
@@ -301,11 +325,15 @@ class Parser : private ParserBase {
         }
 
         if (json.isMember("PipelineLayout")) {
-            auto& layouts = json["PipelineLayout"]["pSetLayouts"];
-            for (Json::Value::ArrayIndex i = 0; i < layouts.size(); ++i) {
+            auto& ds_layouts = json["PipelineLayout"]["pSetLayouts"];
+            for (Json::Value::ArrayIndex i = 0; i < ds_layouts.size(); ++i) {
                 // Rewrite name to index
-                auto layout_name = layouts[i].asString();
-                layouts[i] = ds_layout_indices_[layout_name];
+                auto it = ds_layout_indices.find(ds_layouts[i].asCString());
+                if (it != ds_layout_indices.end()) {
+                    ds_layouts[i] = it->second;
+                } else {
+                    Error() << "Invalid DescriptorSetLayouts name \"" << ds_layouts[i].asCString() << '\"';
+                }
             }
         } else {
             Error() << "Missing PipelineLayout";
@@ -332,30 +360,11 @@ class Parser : private ParserBase {
         } else {
             Error() << "Missing ShaderFileNames";
         }
-
-        CommitObjectNames(state);
-    }
-
-    template <typename T>
-    void CommitObjectNames(T& state) {
-        auto commit_names = [this](std::vector<std::string>& from) -> const char** {
-            char** result = AllocMem<char*>(from.size());
-            for (size_t i = 0; i < from.size(); ++i) {
-                result[i] = AllocMem<char>(from[i].size() + 1);
-                std::copy(from[i].begin(), from[i].end(), result[i]);
-                result[i][from[i].size()] = '\0';
-            }
-            return const_cast<const char**>(result);
-        };
-
-        state.ppYcbrSamplerNames = commit_names(ycbcr_sampler_names_);
-        state.ppImmutableSamplerNames = commit_names(immutable_sampler_names_);
-        state.ppDescriptorSetLayoutNames = commit_names(ds_layout_names_);
     }
 
     void parse_GraphicsPipelineState(Json::Value& json) {
         if (json.isObject()) {
-            preprocess_CommonPipelineState(json, data_.graphicsPipelineState);
+            ResolveObjectNames(json, data_.graphicsPipelineState);
 
             auto graphics_pipeline_state_loc = CreateScope("$.GraphicsPipelineState");
             parse_CommonPipelineState(json, data_.graphicsPipelineState);
@@ -387,7 +396,7 @@ class Parser : private ParserBase {
 
     void parse_ComputePipelineState(Json::Value& json) {
         if (json.isObject()) {
-            preprocess_CommonPipelineState(json, data_.computePipelineState);
+            ResolveObjectNames(json, data_.computePipelineState);
 
             auto compute_pipeline_state_loc = CreateScope("$.ComputePipelineState");
             parse_CommonPipelineState(json, data_.computePipelineState);
@@ -440,16 +449,6 @@ class Parser : private ParserBase {
         }
     }
 
-    void ClearAcceleratingStructures() {
-        ycbcr_sampler_indices_.clear();
-        immutable_sampler_indices_.clear();
-        ds_layout_indices_.clear();
-
-        ycbcr_sampler_names_.clear();
-        immutable_sampler_names_.clear();
-        ds_layout_names_.clear();
-    }
-
     Json::Value* find_StructInChain(Json::Value* json, const char* sType) {
         while (json->isObject()) {
             if ((*json)["sType"].asString() == sType) {
@@ -460,14 +459,6 @@ class Parser : private ParserBase {
         }
         return nullptr;
     }
-
-    std::map<std::string, uint32_t> ycbcr_sampler_indices_;
-    std::map<std::string, uint32_t> immutable_sampler_indices_;
-    std::map<std::string, uint32_t> ds_layout_indices_;
-
-    std::vector<std::string> ycbcr_sampler_names_;
-    std::vector<std::string> immutable_sampler_names_;
-    std::vector<std::string> ds_layout_names_;
 
     VpjData data_;
 };

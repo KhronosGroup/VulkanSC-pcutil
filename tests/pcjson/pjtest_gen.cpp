@@ -11,10 +11,10 @@
 
 #include <gtest/gtest.h>
 
-#include <cassert>
-#include <cstddef>
+#include <assert.h>
+#include <stddef.h>
 #include <iostream>
-#include <cstring>
+#include <string.h>
 #include <vector>
 #include <string>
 #include <limits>
@@ -2279,7 +2279,7 @@ TEST_F(PJGenTest, ObjectNameRemapping) {
 
     data.computePipelineState.ycbcrSamplerCount = 3;
     data.computePipelineState.pYcbcrSamplers = ycbcrSamplers;
-    data.computePipelineState.ppYcbrSamplerNames = ycbcrSamplerNames;
+    data.computePipelineState.ppYcbcrSamplerNames = ycbcrSamplerNames;
 
     VkSamplerYcbcrConversionInfo ycbcrConversionInfo[2] = {};
 

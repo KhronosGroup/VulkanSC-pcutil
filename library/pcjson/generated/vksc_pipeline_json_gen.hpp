@@ -16,7 +16,7 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
-#include <cmath>
+#include <math.h>
 
 #include "vksc_pipeline_json_base.hpp"
 
@@ -7775,4 +7775,4 @@ class GeneratorBase : protected Base {
 };
 
 }  // namespace pcjson
-// NOLINTEND
+   // NOLINTEND

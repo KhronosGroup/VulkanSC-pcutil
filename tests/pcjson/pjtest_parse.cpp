@@ -11,13 +11,13 @@
 
 #include <gtest/gtest.h>
 
-#include <cassert>
-#include <cstddef>
+#include <assert.h>
+#include <stddef.h>
 #include <iostream>
-#include <cstring>
+#include <string.h>
 #include <vector>
 #include <string>
-#include <cmath>
+#include <math.h>
 
 class PJParseTest : public testing::Test {
   public:
@@ -29,7 +29,7 @@ class PJParseTest : public testing::Test {
     void TEST_DESCRIPTION(const char* desc) { RecordProperty("description", desc); }
     void CHECK_PARSE(bool success) {
         EXPECT_TRUE(success);
-        if (msg_ && std::strlen(msg_)) {
+        if (msg_ && strlen(msg_)) {
             FAIL() << msg_;
         }
     }
@@ -118,7 +118,7 @@ TEST_F(PJParseTest, BasicTypesVkBool32) {
         std::string json = get_json(frag);
         bool success = vpjParseSingleStructJson(this->parser_, json.c_str(), &data, &msg);
         EXPECT_TRUE(success);
-        if (msg && std::strlen(msg)) {
+        if (msg && strlen(msg)) {
             std::cerr << msg << std::endl;
         }
         EXPECT_EQ(data.features.robustBufferAccess, expect);
@@ -1761,7 +1761,7 @@ TEST_F(PJParseTest, SAXPY) {
     VpjData data;
     const char* msg = nullptr;
     EXPECT_TRUE(vpjParsePipelineJson(this->parser_, json.c_str(), &data, &msg));
-    if (msg && std::strlen(msg) != 0) {
+    if (msg && strlen(msg) != 0) {
         std::cerr << msg << std::endl;
     }
     // Check sufficiently deep, non-trivial entry
@@ -2052,9 +2052,9 @@ TEST_F(PJParseTest, ObjectNameRemapping) {
     EXPECT_TRUE(vpjParsePipelineJson(this->parser_, json.c_str(), &data, &msg_));
     CHECK_PARSE(true);
 
-    EXPECT_STREQ(data.computePipelineState.ppYcbrSamplerNames[0], "ycbcr_conversion_1");
-    EXPECT_STREQ(data.computePipelineState.ppYcbrSamplerNames[1], "ycbcr_conversion_2");
-    EXPECT_STREQ(data.computePipelineState.ppYcbrSamplerNames[2], "ycbcr_conversion_3");
+    EXPECT_STREQ(data.computePipelineState.ppYcbcrSamplerNames[0], "ycbcr_conversion_1");
+    EXPECT_STREQ(data.computePipelineState.ppYcbcrSamplerNames[1], "ycbcr_conversion_2");
+    EXPECT_STREQ(data.computePipelineState.ppYcbcrSamplerNames[2], "ycbcr_conversion_3");
 
     EXPECT_STREQ(data.computePipelineState.ppImmutableSamplerNames[0], "immutable_sampler_1");
     EXPECT_STREQ(data.computePipelineState.ppImmutableSamplerNames[1], "immutable_sampler_2");

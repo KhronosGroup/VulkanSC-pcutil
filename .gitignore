@@ -4,10 +4,11 @@
 # SPDX-License-Identifier: CC-BY-4.0
 
 # By default we install dependencies to the external directory
-/external/*
+external/
 
 # Ignore any build directories
 *build*/
+install/
 
 CMakeCache.txt
 CMakeLists.txt.user
@@ -37,6 +38,10 @@ out64/*
 .vs/
 .DS_Store
 .install
+
+# Python artifacts
+.venv/
+**__pycache__**
 
 # Chromium build artifacts
 .cipd/

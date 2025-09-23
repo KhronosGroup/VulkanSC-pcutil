@@ -10,6 +10,7 @@ project(VulkanSC-Pipeline-Cache-Utils)
 
 option(BUILD_TESTS "Build pipeline cache utils unit tests of built" ${PROJECT_IS_TOP_LEVEL})
 option(PCU_BUILD_PCINFO "Build pcinfo" ON)
+option(PCU_BUILD_JSON_GEN_LAYER "Build JSON gen layer" ON)
 option(PCU_WERROR "Treat pipeline cache utils compiler warnings as errors" ${PROJECT_IS_TOP_LEVEL})
 option(ENABLE_ADDRESS_SANITIZER "Use address sanitization")
 
@@ -125,7 +126,9 @@ endif()
 
 add_subdirectory(library/pcutil)
 add_subdirectory(library/pcjson)
-add_subdirectory(layers/json_gen)
+if(PCU_BUILD_JSON_GEN_LAYER)
+    add_subdirectory(layers/json_gen)
+endif()
 
 if(PCU_BUILD_PCINFO)
     add_subdirectory(vkscpcinfo)

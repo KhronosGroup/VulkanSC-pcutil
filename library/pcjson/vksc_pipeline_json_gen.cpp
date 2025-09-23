@@ -62,6 +62,8 @@ class Generator : private GeneratorBase {
                     break;
             }
 
+            EliminateIrrelevantHandleValues(json);
+
             // Pipeline UUID is set last to be able to do MD5 generation from the full data if needed
             if (md5_generator_enabled_) {
                 hashlib::md5 md5{};
@@ -506,6 +508,35 @@ class Generator : private GeneratorBase {
                                             state.ppImmutableSamplerNames, "ImmutableSampler");
                 }
             }
+        }
+    }
+
+    void EliminateIrrelevantHandleValues(Json::Value& json) {
+        // Here we eliminate all handle values that are irrelevant from the perspective of the pipeline JSON:
+        // * the VkRenderPass handle in VkGraphicsPipelineCreateInfo which always has a 1:1 association to
+        //   the render pass create info
+        // * the VkPipelineLayout handle in both graphics and compute pipeline create infos which always have
+        //   1:1 association to the pipeline layout create info
+        // * the basePipelineHandle in both graphics and compute pipeline create infos which is not relevant
+        // * the VkShaderModule handles in VkPipelineShaderStageCreateInfo which are not relevant
+
+        if (json.isMember("GraphicsPipelineState")) {
+            auto& pipeline_json = json["GraphicsPipelineState"];
+            pipeline_json["renderPass"] = "";
+            pipeline_json["basePipelineHandle"] = "";
+
+            auto& stages = pipeline_json["pStages"];
+            if (stages.isArray()) {
+                for (auto& stage_info : stages) {
+                    stage_info["module"] = "";
+                }
+            }
+        } else if (json.isMember("ComputePipelineState")) {
+            auto& pipeline_json = json["ComputePipelineState"];
+            pipeline_json["basePipelineHandle"] = "";
+
+            auto& stage_info = pipeline_json["stage"];
+            stage_info["module"] = "";
         }
     }
 

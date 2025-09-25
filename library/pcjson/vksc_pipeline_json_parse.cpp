@@ -370,7 +370,7 @@ class Parser : private ParserBase {
             parse_CommonPipelineState(json, data_.graphicsPipelineState);
 
             if (json.isMember("GraphicsPipeline")) {
-                auto& pipeline_json = json["ComputePipeline"];
+                auto& pipeline_json = json["GraphicsPipeline"];
                 auto graphics_pipeline = AllocMem<VkGraphicsPipelineCreateInfo>();
                 data_.graphicsPipelineState.pGraphicsPipeline = graphics_pipeline;
                 *graphics_pipeline = parse_VkGraphicsPipelineCreateInfo(pipeline_json, CreateScope("GraphicsPipeline"));

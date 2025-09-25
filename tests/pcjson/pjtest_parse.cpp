@@ -33,6 +33,11 @@ class PJParseTest : public testing::Test {
             FAIL() << msg_;
         }
     }
+    void EXPECT_UUIDEQ(uint8_t* it1, uint8_t* it2) {
+        for (unsigned int i = 0; i < VK_UUID_SIZE; ++i) {
+            EXPECT_EQ(it1[i], it2[i]);
+        }
+    }
 
   protected:
     VpjParser parser_;
@@ -136,7 +141,11 @@ TEST_F(PJParseTest, VkPhysicalDeviceFeatures2) {
     VkPhysicalDeviceFeatures2 pdf;
     std::string json = {R"({
         "sType" : "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2",
-        "pNext": "NULL",
+        "pNext": {
+            "sType" : "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES",
+            "pNext": "NULL",
+            "synchronization2" : "VK_TRUE"
+        },
         "features": {
             "robustBufferAccess": "VK_FALSE",
             "fullDrawIndexUint32" : "VK_TRUE",
@@ -197,9 +206,12 @@ TEST_F(PJParseTest, VkPhysicalDeviceFeatures2) {
     })"};
 
     CHECK_PARSE(vpjParseSingleStructJson(this->parser_, json.c_str(), &pdf, &msg_));
+    const auto& pdfsync2 = *reinterpret_cast<const VkPhysicalDeviceSynchronization2Features*>(pdf.pNext);
 
     EXPECT_EQ(pdf.sType, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2);
-    EXPECT_EQ(pdf.pNext, nullptr);
+    EXPECT_EQ(pdfsync2.sType, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES);
+    EXPECT_EQ(pdfsync2.pNext, nullptr);
+    EXPECT_EQ(pdfsync2.synchronization2, VK_TRUE);
     EXPECT_EQ(pdf.features.robustBufferAccess, VK_FALSE);
     EXPECT_EQ(pdf.features.fullDrawIndexUint32, VK_TRUE);
     EXPECT_EQ(pdf.features.imageCubeArray, VK_FALSE);
@@ -510,8 +522,18 @@ TEST_F(PJParseTest, VkGraphicsPipelineCreateInfo) {
                 0
                 ]
             },
-            "pDynamicState": 
-            "NULL",
+            "pDynamicState": {
+                "sType": "VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO",
+                "pNext": "NULL",
+                "flags": 0,
+                "dynamicStateCount": 3,
+                "pDynamicStates": [
+                    "VK_DYNAMIC_STATE_VIEWPORT",
+                    "VK_DYNAMIC_STATE_SCISSOR",
+                    "VK_DYNAMIC_STATE_DISCARD_RECTANGLE_EXT",
+
+                ]
+            },
             "layout" : 8,
             "renderPass" : 6,
             "subpass" : 0,
@@ -529,6 +551,7 @@ TEST_F(PJParseTest, VkGraphicsPipelineCreateInfo) {
     const auto& pmss_ci = *reinterpret_cast<const VkPipelineMultisampleStateCreateInfo*>(gp_ci.pMultisampleState);
     const auto& pdss_ci = *reinterpret_cast<const VkPipelineDepthStencilStateCreateInfo*>(gp_ci.pDepthStencilState);
     const auto& pcbs_ci = *reinterpret_cast<const VkPipelineColorBlendStateCreateInfo*>(gp_ci.pColorBlendState);
+    const auto& pds_ci = *reinterpret_cast<const VkPipelineDynamicStateCreateInfo*>(gp_ci.pDynamicState);
 
     EXPECT_EQ(gp_ci.sType, VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO);
     EXPECT_EQ(pdrs_ci.sType, VK_STRUCTURE_TYPE_PIPELINE_DISCARD_RECTANGLE_STATE_CREATE_INFO_EXT);
@@ -682,7 +705,13 @@ TEST_F(PJParseTest, VkGraphicsPipelineCreateInfo) {
     EXPECT_EQ(pcbs_ci.blendConstants[1], 0);
     EXPECT_EQ(pcbs_ci.blendConstants[2], 0);
     EXPECT_EQ(pcbs_ci.blendConstants[3], 0);
-    EXPECT_EQ(gp_ci.pDynamicState, nullptr);
+    EXPECT_EQ(pds_ci.sType, VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
+    EXPECT_EQ(pds_ci.pNext, nullptr);
+    EXPECT_EQ(pds_ci.flags, 0);
+    EXPECT_EQ(pds_ci.dynamicStateCount, 3);
+    EXPECT_EQ(pds_ci.pDynamicStates[0], VK_DYNAMIC_STATE_VIEWPORT);
+    EXPECT_EQ(pds_ci.pDynamicStates[1], VK_DYNAMIC_STATE_SCISSOR);
+    EXPECT_EQ(pds_ci.pDynamicStates[2], VK_DYNAMIC_STATE_DISCARD_RECTANGLE_EXT);
     EXPECT_EQ(gp_ci.layout, reinterpret_cast<void*>(8));
     EXPECT_EQ(gp_ci.renderPass, reinterpret_cast<void*>(6));
     EXPECT_EQ(gp_ci.subpass, 0);
@@ -1622,7 +1651,7 @@ TEST_F(PJParseTest, SAXPY) {
             "PipelineLayout" :
             {
                 "sType" : "VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO",
-                "pNext":"NULL",
+                "pNext": "NULL",
                 "flags" : 0,
                 "setLayoutCount" : 1,
                 "pSetLayouts":
@@ -1651,10 +1680,10 @@ TEST_F(PJParseTest, SAXPY) {
                     "stage" : "VK_SHADER_STAGE_COMPUTE_BIT",
                     "pName" : "main",
                     "pSpecializationInfo": "NULL",
-                    "module": "NULL"
+                    "module": ""
                 },
                 "layout" : 9,
-                "basePipelineHandle" : "NULL",
+                "basePipelineHandle" : "",
                 "basePipelineIndex" : 0
             },
             "ShaderFileNames" :
@@ -1759,20 +1788,632 @@ TEST_F(PJParseTest, SAXPY) {
     })"};
 
     VpjData data;
-    const char* msg = nullptr;
-    EXPECT_TRUE(vpjParsePipelineJson(this->parser_, json.c_str(), &data, &msg));
-    if (msg && strlen(msg) != 0) {
-        std::cerr << msg << std::endl;
-    }
-    // Check sufficiently deep, non-trivial entry
-    EXPECT_EQ(
-        reinterpret_cast<const VkDescriptorSetLayoutCreateInfo*>(data.computePipelineState.pDescriptorSetLayouts)[0].bindingCount,
-        2);
-    // Check ds layout name rewritten to index
-    EXPECT_EQ(
-        (size_t) reinterpret_cast<const VkPipelineLayoutCreateInfo*>(data.computePipelineState.pPipelineLayout)->pSetLayouts[0], 0);
-    // Check original name of ds layout is preserved
-    EXPECT_EQ(std::string_view{data.computePipelineState.ppDescriptorSetLayoutNames[0]}, "5");
+    EXPECT_TRUE(vpjParsePipelineJson(this->parser_, json.c_str(), &data, &msg_));
+    CHECK_PARSE(true);
+    const auto& dsl_cis = reinterpret_cast<const VkDescriptorSetLayoutCreateInfo*>(data.computePipelineState.pDescriptorSetLayouts);
+    const auto& dsl_names = data.computePipelineState.ppDescriptorSetLayoutNames;
+    const auto& pl_ci = *reinterpret_cast<const VkPipelineLayoutCreateInfo*>(data.computePipelineState.pPipelineLayout);
+    const auto& cp_ci = *reinterpret_cast<const VkComputePipelineCreateInfo*>(data.computePipelineState.pComputePipeline);
+    const auto& sfn = data.computePipelineState.pShaderFileNames;
+    const auto& pdf = *reinterpret_cast<const VkPhysicalDeviceFeatures2*>(data.computePipelineState.pPhysicalDeviceFeatures);
+    const auto& pdfsync2 = *reinterpret_cast<const VkPhysicalDeviceSynchronization2Features*>(pdf.pNext);
+
+    EXPECT_EQ(data.computePipelineState.descriptorSetLayoutCount, 1);
+    EXPECT_STREQ(dsl_names[0], "5");
+    EXPECT_EQ(dsl_cis[0].sType, VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO);
+    EXPECT_EQ(dsl_cis[0].pNext, nullptr);
+    EXPECT_EQ(dsl_cis[0].flags, 0);
+    EXPECT_EQ(dsl_cis[0].bindingCount, 2);
+    EXPECT_EQ(dsl_cis[0].pBindings[0].binding, 0);
+    EXPECT_EQ(dsl_cis[0].pBindings[0].descriptorType, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+    EXPECT_EQ(dsl_cis[0].pBindings[0].descriptorCount, 1);
+    EXPECT_EQ(dsl_cis[0].pBindings[0].stageFlags, VK_SHADER_STAGE_COMPUTE_BIT);
+    EXPECT_EQ(dsl_cis[0].pBindings[0].pImmutableSamplers, nullptr);
+    EXPECT_EQ(dsl_cis[0].pBindings[1].binding, 1);
+    EXPECT_EQ(dsl_cis[0].pBindings[1].descriptorType, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+    EXPECT_EQ(dsl_cis[0].pBindings[1].descriptorCount, 1);
+    EXPECT_EQ(dsl_cis[0].pBindings[1].stageFlags, VK_SHADER_STAGE_COMPUTE_BIT);
+    EXPECT_EQ(dsl_cis[0].pBindings[1].pImmutableSamplers, nullptr);
+    EXPECT_EQ(pl_ci.sType, VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
+    EXPECT_EQ(pl_ci.pNext, nullptr);
+    EXPECT_EQ(pl_ci.flags, 0);
+    EXPECT_EQ(pl_ci.setLayoutCount, 1);
+    EXPECT_EQ(pl_ci.pSetLayouts[0], reinterpret_cast<void*>(0));
+    EXPECT_EQ(pl_ci.pushConstantRangeCount, 1);
+    EXPECT_EQ(pl_ci.pPushConstantRanges[0].stageFlags, VK_SHADER_STAGE_COMPUTE_BIT);
+    EXPECT_EQ(pl_ci.pPushConstantRanges[0].offset, 0);
+    EXPECT_EQ(pl_ci.pPushConstantRanges[0].size, 4);
+    EXPECT_EQ(cp_ci.sType, VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO);
+    EXPECT_EQ(cp_ci.flags, 0);
+    EXPECT_EQ(cp_ci.stage.sType, VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
+    EXPECT_EQ(cp_ci.stage.pNext, nullptr);
+    EXPECT_EQ(cp_ci.stage.flags, 0);
+    EXPECT_EQ(cp_ci.stage.stage, VK_SHADER_STAGE_COMPUTE_BIT);
+    EXPECT_STREQ(cp_ci.stage.pName, "main");
+    EXPECT_EQ(cp_ci.stage.pSpecializationInfo, nullptr);
+    EXPECT_EQ(cp_ci.stage.module, VK_NULL_HANDLE);
+    EXPECT_EQ(cp_ci.layout, reinterpret_cast<void*>(9));
+    EXPECT_EQ(cp_ci.basePipelineHandle, VK_NULL_HANDLE);
+    EXPECT_EQ(cp_ci.basePipelineIndex, 0);
+    EXPECT_EQ(sfn[0].stage, VK_SHADER_STAGE_COMPUTE_BIT);
+    EXPECT_STREQ(sfn[0].pFilename, "saxpy.comp.spv");
+    EXPECT_EQ(pdf.sType, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2);
+    EXPECT_EQ(pdfsync2.sType, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES);
+    EXPECT_EQ(pdfsync2.pNext, nullptr);
+    EXPECT_EQ(pdfsync2.synchronization2, VK_TRUE);
+    EXPECT_EQ(pdf.features.robustBufferAccess, VK_FALSE);
+    EXPECT_EQ(pdf.features.fullDrawIndexUint32, VK_FALSE);
+    EXPECT_EQ(pdf.features.imageCubeArray, VK_FALSE);
+    EXPECT_EQ(pdf.features.independentBlend, VK_FALSE);
+    EXPECT_EQ(pdf.features.geometryShader, VK_FALSE);
+    EXPECT_EQ(pdf.features.tessellationShader, VK_FALSE);
+    EXPECT_EQ(pdf.features.sampleRateShading, VK_FALSE);
+    EXPECT_EQ(pdf.features.dualSrcBlend, VK_FALSE);
+    EXPECT_EQ(pdf.features.logicOp, VK_FALSE);
+    EXPECT_EQ(pdf.features.multiDrawIndirect, VK_FALSE);
+    EXPECT_EQ(pdf.features.drawIndirectFirstInstance, VK_FALSE);
+    EXPECT_EQ(pdf.features.depthClamp, VK_FALSE);
+    EXPECT_EQ(pdf.features.depthBiasClamp, VK_FALSE);
+    EXPECT_EQ(pdf.features.fillModeNonSolid, VK_FALSE);
+    EXPECT_EQ(pdf.features.depthBounds, VK_FALSE);
+    EXPECT_EQ(pdf.features.wideLines, VK_FALSE);
+    EXPECT_EQ(pdf.features.largePoints, VK_FALSE);
+    EXPECT_EQ(pdf.features.alphaToOne, VK_FALSE);
+    EXPECT_EQ(pdf.features.multiViewport, VK_FALSE);
+    EXPECT_EQ(pdf.features.samplerAnisotropy, VK_FALSE);
+    EXPECT_EQ(pdf.features.textureCompressionETC2, VK_FALSE);
+    EXPECT_EQ(pdf.features.textureCompressionASTC_LDR, VK_FALSE);
+    EXPECT_EQ(pdf.features.textureCompressionBC, VK_FALSE);
+    EXPECT_EQ(pdf.features.occlusionQueryPrecise, VK_FALSE);
+    EXPECT_EQ(pdf.features.pipelineStatisticsQuery, VK_FALSE);
+    EXPECT_EQ(pdf.features.vertexPipelineStoresAndAtomics, VK_FALSE);
+    EXPECT_EQ(pdf.features.fragmentStoresAndAtomics, VK_FALSE);
+    EXPECT_EQ(pdf.features.shaderTessellationAndGeometryPointSize, VK_FALSE);
+    EXPECT_EQ(pdf.features.shaderImageGatherExtended, VK_FALSE);
+    EXPECT_EQ(pdf.features.shaderStorageImageExtendedFormats, VK_FALSE);
+    EXPECT_EQ(pdf.features.shaderStorageImageMultisample, VK_FALSE);
+    EXPECT_EQ(pdf.features.shaderStorageImageReadWithoutFormat, VK_FALSE);
+    EXPECT_EQ(pdf.features.shaderStorageImageWriteWithoutFormat, VK_FALSE);
+    EXPECT_EQ(pdf.features.shaderUniformBufferArrayDynamicIndexing, VK_FALSE);
+    EXPECT_EQ(pdf.features.shaderSampledImageArrayDynamicIndexing, VK_FALSE);
+    EXPECT_EQ(pdf.features.shaderStorageBufferArrayDynamicIndexing, VK_FALSE);
+    EXPECT_EQ(pdf.features.shaderStorageImageArrayDynamicIndexing, VK_FALSE);
+    EXPECT_EQ(pdf.features.shaderClipDistance, VK_FALSE);
+    EXPECT_EQ(pdf.features.shaderCullDistance, VK_FALSE);
+    EXPECT_EQ(pdf.features.shaderFloat64, VK_FALSE);
+    EXPECT_EQ(pdf.features.shaderInt64, VK_FALSE);
+    EXPECT_EQ(pdf.features.shaderInt16, VK_FALSE);
+    EXPECT_EQ(pdf.features.shaderResourceResidency, VK_FALSE);
+    EXPECT_EQ(pdf.features.shaderResourceMinLod, VK_FALSE);
+    EXPECT_EQ(pdf.features.sparseBinding, VK_FALSE);
+    EXPECT_EQ(pdf.features.sparseResidencyBuffer, VK_FALSE);
+    EXPECT_EQ(pdf.features.sparseResidencyImage2D, VK_FALSE);
+    EXPECT_EQ(pdf.features.sparseResidencyImage3D, VK_FALSE);
+    EXPECT_EQ(pdf.features.sparseResidency2Samples, VK_FALSE);
+    EXPECT_EQ(pdf.features.sparseResidency4Samples, VK_FALSE);
+    EXPECT_EQ(pdf.features.sparseResidency8Samples, VK_FALSE);
+    EXPECT_EQ(pdf.features.sparseResidency16Samples, VK_FALSE);
+    EXPECT_EQ(pdf.features.sparseResidencyAliased, VK_FALSE);
+    EXPECT_EQ(pdf.features.variableMultisampleRate, VK_FALSE);
+    EXPECT_EQ(pdf.features.inheritedQueries, VK_FALSE);
+    EXPECT_EQ(data.enabledExtensionCount, 1);
+    EXPECT_STREQ(data.ppEnabledExtensions[0], "VK_KHR_synchronization2");
+    uint8_t expected_uuid[VK_UUID_SIZE] = {85, 43, 255, 24, 155, 64, 62, 24, 0, 0, 0, 0, 0, 0, 0, 0};
+    EXPECT_UUIDEQ(data.pipelineUUID, expected_uuid);
+}
+
+TEST_F(PJParseTest, vksccube) {
+    TEST_DESCRIPTION("Tests parsing of a reasonably simple graphics pipeline JSON");
+
+    const std::string json{R"({
+        "GraphicsPipelineState": {
+            "Renderpass": {
+                "sType": "VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO",
+                "pNext": "NULL",
+                "flags": "0",
+                "attachmentCount": 2,
+                "pAttachments": [
+                    {
+                        "flags": "0",
+                        "format": "VK_FORMAT_R8G8B8A8_UNORM",
+                        "samples": "VK_SAMPLE_COUNT_1_BIT",
+                        "loadOp": "VK_ATTACHMENT_LOAD_OP_CLEAR",
+                        "storeOp": "VK_ATTACHMENT_STORE_OP_STORE",
+                        "stencilLoadOp": "VK_ATTACHMENT_LOAD_OP_DONT_CARE",
+                        "stencilStoreOp": "VK_ATTACHMENT_STORE_OP_DONT_CARE",
+                        "initialLayout": "VK_IMAGE_LAYOUT_UNDEFINED",
+                        "finalLayout": "VK_IMAGE_LAYOUT_PRESENT_SRC_KHR"
+                    },
+                    {
+                        "flags": "0",
+                        "format": "VK_FORMAT_D16_UNORM",
+                        "samples": "VK_SAMPLE_COUNT_1_BIT",
+                        "loadOp": "VK_ATTACHMENT_LOAD_OP_CLEAR",
+                        "storeOp": "VK_ATTACHMENT_STORE_OP_DONT_CARE",
+                        "stencilLoadOp": "VK_ATTACHMENT_LOAD_OP_DONT_CARE",
+                        "stencilStoreOp": "VK_ATTACHMENT_STORE_OP_DONT_CARE",
+                        "initialLayout": "VK_IMAGE_LAYOUT_UNDEFINED",
+                        "finalLayout": "VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL"
+                    }
+                ],
+                "subpassCount": 1,
+                "pSubpasses": [
+                    {
+                        "flags": "0",
+                        "pipelineBindPoint": "VK_PIPELINE_BIND_POINT_GRAPHICS",
+                        "inputAttachmentCount": 0,
+                        "pInputAttachments": "NULL",
+                        "colorAttachmentCount": 1,
+                        "pColorAttachments": [
+                            {
+                                "attachment": 0,
+                                "layout": "VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL"
+                            }
+                        ],
+                        "pResolveAttachments": "NULL",
+                        "pDepthStencilAttachment": {
+                            "attachment": 1,
+                            "layout": "VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL"
+                        },
+                        "preserveAttachmentCount": 0,
+                        "pPreserveAttachments": "NULL"
+                    }
+                ],
+                "dependencyCount": 2,
+                "pDependencies": [
+                    {
+                        "srcSubpass": "VK_SUBPASS_EXTERNAL",
+                        "dstSubpass": 0,
+                        "srcStageMask": "VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT",
+                        "dstStageMask": "VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT",
+                        "srcAccessMask": "VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT",
+                        "dstAccessMask": "VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT",
+                        "dependencyFlags": 0
+                    },
+                    {
+                        "srcSubpass": "VK_SUBPASS_EXTERNAL",
+                        "dstSubpass": 0,
+                        "srcStageMask": "VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT",
+                        "dstStageMask": "VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT",
+                        "srcAccessMask": 0,
+                        "dstAccessMask": "VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT",
+                        "dependencyFlags": 0
+                    }
+                ]
+            },
+            "DescriptorSetLayouts": [
+                {
+                    "2": {
+                        "sType": "VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO",
+                        "pNext": "NULL",
+                        "flags": "0",
+                        "bindingCount": 2,
+                        "pBindings": [
+                            {
+                                "binding": 0,
+                                "descriptorType": "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER",
+                                "descriptorCount": 1,
+                                "stageFlags": "VK_SHADER_STAGE_VERTEX_BIT",
+                                "pImmutableSamplers": "NULL"
+                            },
+                            {
+                                "binding": 1,
+                                "descriptorType": "VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER",
+                                "descriptorCount": 1,
+                                "stageFlags": "VK_SHADER_STAGE_FRAGMENT_BIT",
+                                "pImmutableSamplers": "NULL"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "PipelineLayout": {
+                "sType": "VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO",
+                "pNext": "NULL",
+                "flags": 0,
+                "setLayoutCount": 1,
+                "pSetLayouts": [
+                    2
+                ],
+                "pushConstantRangeCount": 0,
+                "pPushConstantRanges": "NULL"
+            },
+            "GraphicsPipeline": {
+                "sType": "VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO",
+                "pNext": "NULL",
+                "flags": "0",
+                "stageCount": 2,
+                "pStages": [
+                    {
+                        "sType": "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
+                        "pNext": "NULL",
+                        "flags": "0",
+                        "stage": "VK_SHADER_STAGE_VERTEX_BIT",
+                        "module" : 38,
+                        "pName": "main",
+                        "pSpecializationInfo": "NULL"
+                    },
+                    {
+                        "sType": "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
+                        "pNext": "NULL",
+                        "flags": "0",
+                        "stage": "VK_SHADER_STAGE_FRAGMENT_BIT",
+                        "module" : 39,
+                        "pName": "main",
+                        "pSpecializationInfo": "NULL"
+                    }
+                ],
+                "pVertexInputState": {
+                    "sType": "VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO",
+                    "pNext": "NULL",
+                    "flags": 0,
+                    "vertexBindingDescriptionCount": 0,
+                    "pVertexBindingDescriptions": "NULL",
+                    "vertexAttributeDescriptionCount": 0,
+                    "pVertexAttributeDescriptions": "NULL"
+                },
+                "pInputAssemblyState": {
+                    "sType": "VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO",
+                    "pNext": "NULL",
+                    "flags": 0,
+                    "topology": "VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST",
+                    "primitiveRestartEnable": "VK_FALSE"
+                },
+                "pTessellationState": "NULL",
+                "pViewportState": {
+                    "sType": "VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO",
+                    "pNext": "NULL",
+                    "flags": 0,
+                    "viewportCount": 1,
+                    "pViewports": "NULL",
+                    "scissorCount": 1,
+                    "pScissors": "NULL"
+                },
+                "pRasterizationState": {
+                    "sType": "VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO",
+                    "pNext": "NULL",
+                    "flags": 0,
+                    "depthClampEnable": "VK_FALSE",
+                    "rasterizerDiscardEnable": "VK_FALSE",
+                    "polygonMode": "VK_POLYGON_MODE_FILL",
+                    "cullMode": "VK_CULL_MODE_BACK_BIT",
+                    "frontFace": "VK_FRONT_FACE_COUNTER_CLOCKWISE",
+                    "depthBiasEnable": "VK_FALSE",
+                    "depthBiasConstantFactor": 0,
+                    "depthBiasClamp": 0,
+                    "depthBiasSlopeFactor": 0,
+                    "lineWidth": 1
+                },
+                "pMultisampleState": {
+                    "sType": "VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO",
+                    "pNext": "NULL",
+                    "flags": 0,
+                    "rasterizationSamples": "VK_SAMPLE_COUNT_1_BIT",
+                    "sampleShadingEnable": "VK_FALSE",
+                    "minSampleShading": 0,
+                    "pSampleMask": "NULL",
+                    "alphaToCoverageEnable": "VK_FALSE",
+                    "alphaToOneEnable": "VK_FALSE"
+                },
+                "pDepthStencilState": {
+                    "sType": "VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO",
+                    "pNext": "NULL",
+                    "flags": 0,
+                    "depthTestEnable": "VK_TRUE",
+                    "depthWriteEnable": "VK_TRUE",
+                    "depthCompareOp": "VK_COMPARE_OP_LESS_OR_EQUAL",
+                    "depthBoundsTestEnable": "VK_FALSE",
+                    "stencilTestEnable": "VK_FALSE",
+                    "front": {
+                        "failOp": "VK_STENCIL_OP_KEEP",
+                        "passOp": "VK_STENCIL_OP_KEEP",
+                        "depthFailOp": "VK_STENCIL_OP_KEEP",
+                        "compareOp": "VK_COMPARE_OP_ALWAYS",
+                        "compareMask": 0,
+                        "writeMask": 0,
+                        "reference": 0
+                    },
+                    "back": {
+                        "failOp": "VK_STENCIL_OP_KEEP",
+                        "passOp": "VK_STENCIL_OP_KEEP",
+                        "depthFailOp": "VK_STENCIL_OP_KEEP",
+                        "compareOp": "VK_COMPARE_OP_ALWAYS",
+                        "compareMask": 0,
+                        "writeMask": 0,
+                        "reference": 0
+                    },
+                    "minDepthBounds": 0,
+                    "maxDepthBounds": 0
+                },
+                "pColorBlendState": {
+                    "sType": "VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO",
+                    "pNext": "NULL",
+                    "flags": 0,
+                    "logicOpEnable": "VK_FALSE",
+                    "logicOp": "VK_LOGIC_OP_CLEAR",
+                    "attachmentCount": 1,
+                    "pAttachments": [
+                        {
+                            "blendEnable": "VK_FALSE",
+                            "srcColorBlendFactor": "VK_BLEND_FACTOR_ZERO",
+                            "dstColorBlendFactor": "VK_BLEND_FACTOR_ZERO",
+                            "colorBlendOp": "VK_BLEND_OP_ADD",
+                            "srcAlphaBlendFactor": "VK_BLEND_FACTOR_ZERO",
+                            "dstAlphaBlendFactor": "VK_BLEND_FACTOR_ZERO",
+                            "alphaBlendOp": "VK_BLEND_OP_ADD",
+                            "colorWriteMask": "VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT"
+                        }
+                    ],
+                    "blendConstants": [
+                        0,
+                        0,
+                        0,
+                        0
+                    ]
+                },
+                "pDynamicState": {
+                    "sType": "VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO",
+                    "pNext": "NULL",
+                    "flags": 0,
+                    "dynamicStateCount": 2,
+                    "pDynamicStates": [
+                        "VK_DYNAMIC_STATE_VIEWPORT",
+                        "VK_DYNAMIC_STATE_SCISSOR"
+                    ]
+                },
+                "layout": 5,
+                "renderPass" : 16,
+                "subpass": 0,
+                "basePipelineHandle": "",
+                "basePipelineIndex": 0
+            },
+            "ShaderFileNames": [
+                {
+                    "stage": "VK_SHADER_STAGE_VERTEX_BIT",
+                    "filename": "cube.vert.spv"
+                },
+                {
+                    "stage": "VK_SHADER_STAGE_FRAGMENT_BIT",
+                    "filename": "cube.frag.spv"
+                }
+            ]
+        },
+        "EnabledExtensions": [],
+        "PipelineUUID": [
+            245,
+            154,
+            136,
+            152,
+            244,
+            195,
+            139,
+            123,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ]
+    })"};
+
+    VpjData data;
+    EXPECT_TRUE(vpjParsePipelineJson(this->parser_, json.c_str(), &data, &msg_));
+    CHECK_PARSE(true);
+    const auto& rp_ci = *reinterpret_cast<const VkRenderPassCreateInfo*>(data.graphicsPipelineState.pRenderPass);
+    const auto& dsl_cis =
+        reinterpret_cast<const VkDescriptorSetLayoutCreateInfo*>(data.graphicsPipelineState.pDescriptorSetLayouts);
+    const auto& dsl_names = data.graphicsPipelineState.ppDescriptorSetLayoutNames;
+    const auto& pl_ci = *reinterpret_cast<const VkPipelineLayoutCreateInfo*>(data.graphicsPipelineState.pPipelineLayout);
+    const auto& gp_ci = *reinterpret_cast<const VkGraphicsPipelineCreateInfo*>(data.graphicsPipelineState.pGraphicsPipeline);
+
+    const auto& pvis_ci = *reinterpret_cast<const VkPipelineVertexInputStateCreateInfo*>(gp_ci.pVertexInputState);
+    const auto& pias_ci = *reinterpret_cast<const VkPipelineInputAssemblyStateCreateInfo*>(gp_ci.pInputAssemblyState);
+    const auto& pvs_ci = *reinterpret_cast<const VkPipelineViewportStateCreateInfo*>(gp_ci.pViewportState);
+    const auto& prs_ci = *reinterpret_cast<const VkPipelineRasterizationStateCreateInfo*>(gp_ci.pRasterizationState);
+    const auto& pmss_ci = *reinterpret_cast<const VkPipelineMultisampleStateCreateInfo*>(gp_ci.pMultisampleState);
+    const auto& pdss_ci = *reinterpret_cast<const VkPipelineDepthStencilStateCreateInfo*>(gp_ci.pDepthStencilState);
+    const auto& pcbs_ci = *reinterpret_cast<const VkPipelineColorBlendStateCreateInfo*>(gp_ci.pColorBlendState);
+    const auto& pds_ci = *reinterpret_cast<const VkPipelineDynamicStateCreateInfo*>(gp_ci.pDynamicState);
+
+    const auto& sfn = data.graphicsPipelineState.pShaderFileNames;
+
+    EXPECT_EQ(rp_ci.sType, VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO);
+    EXPECT_EQ(rp_ci.pNext, nullptr);
+    EXPECT_EQ(rp_ci.flags, 0);
+    EXPECT_EQ(rp_ci.attachmentCount, 2);
+    EXPECT_EQ(rp_ci.pAttachments[0].flags, 0);
+    EXPECT_EQ(rp_ci.pAttachments[0].format, VK_FORMAT_R8G8B8A8_UNORM);
+    EXPECT_EQ(rp_ci.pAttachments[0].samples, VK_SAMPLE_COUNT_1_BIT);
+    EXPECT_EQ(rp_ci.pAttachments[0].loadOp, VK_ATTACHMENT_LOAD_OP_CLEAR);
+    EXPECT_EQ(rp_ci.pAttachments[0].storeOp, VK_ATTACHMENT_STORE_OP_STORE);
+    EXPECT_EQ(rp_ci.pAttachments[0].stencilLoadOp, VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+    EXPECT_EQ(rp_ci.pAttachments[0].stencilStoreOp, VK_ATTACHMENT_STORE_OP_DONT_CARE);
+    EXPECT_EQ(rp_ci.pAttachments[0].initialLayout, VK_IMAGE_LAYOUT_UNDEFINED);
+    EXPECT_EQ(rp_ci.pAttachments[0].finalLayout, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+    EXPECT_EQ(rp_ci.pAttachments[1].flags, 0);
+    EXPECT_EQ(rp_ci.pAttachments[1].format, VK_FORMAT_D16_UNORM);
+    EXPECT_EQ(rp_ci.pAttachments[1].samples, VK_SAMPLE_COUNT_1_BIT);
+    EXPECT_EQ(rp_ci.pAttachments[1].loadOp, VK_ATTACHMENT_LOAD_OP_CLEAR);
+    EXPECT_EQ(rp_ci.pAttachments[1].storeOp, VK_ATTACHMENT_STORE_OP_DONT_CARE);
+    EXPECT_EQ(rp_ci.pAttachments[1].stencilLoadOp, VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+    EXPECT_EQ(rp_ci.pAttachments[1].stencilStoreOp, VK_ATTACHMENT_STORE_OP_DONT_CARE);
+    EXPECT_EQ(rp_ci.pAttachments[1].initialLayout, VK_IMAGE_LAYOUT_UNDEFINED);
+    EXPECT_EQ(rp_ci.pAttachments[1].finalLayout, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+    EXPECT_EQ(rp_ci.subpassCount, 1);
+    EXPECT_EQ(rp_ci.pSubpasses[0].flags, 0);
+    EXPECT_EQ(rp_ci.pSubpasses[0].pipelineBindPoint, VK_PIPELINE_BIND_POINT_GRAPHICS);
+    EXPECT_EQ(rp_ci.pSubpasses[0].inputAttachmentCount, 0);
+    EXPECT_EQ(rp_ci.pSubpasses[0].pInputAttachments, nullptr);
+    EXPECT_EQ(rp_ci.pSubpasses[0].colorAttachmentCount, 1);
+    EXPECT_EQ(rp_ci.pSubpasses[0].pColorAttachments[0].attachment, 0);
+    EXPECT_EQ(rp_ci.pSubpasses[0].pColorAttachments[0].layout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    EXPECT_EQ(rp_ci.pSubpasses[0].pResolveAttachments, nullptr);
+    EXPECT_EQ(rp_ci.pSubpasses[0].pDepthStencilAttachment[0].attachment, 1);
+    EXPECT_EQ(rp_ci.pSubpasses[0].pDepthStencilAttachment[0].layout, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+    EXPECT_EQ(rp_ci.pSubpasses[0].preserveAttachmentCount, 0);
+    EXPECT_EQ(rp_ci.pSubpasses[0].pPreserveAttachments, nullptr);
+    EXPECT_EQ(rp_ci.dependencyCount, 2);
+    EXPECT_EQ(rp_ci.pDependencies[0].srcSubpass, VK_SUBPASS_EXTERNAL);
+    EXPECT_EQ(rp_ci.pDependencies[0].dstSubpass, 0);
+    EXPECT_EQ(rp_ci.pDependencies[0].srcStageMask,
+              VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT);
+    EXPECT_EQ(rp_ci.pDependencies[0].dstStageMask,
+              VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT);
+    EXPECT_EQ(rp_ci.pDependencies[0].srcAccessMask, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
+    EXPECT_EQ(rp_ci.pDependencies[0].dstAccessMask,
+              VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
+    EXPECT_EQ(rp_ci.pDependencies[0].dependencyFlags, 0);
+    EXPECT_EQ(rp_ci.pDependencies[1].srcSubpass, VK_SUBPASS_EXTERNAL);
+    EXPECT_EQ(rp_ci.pDependencies[1].dstSubpass, 0);
+    EXPECT_EQ(rp_ci.pDependencies[1].srcStageMask, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+    EXPECT_EQ(rp_ci.pDependencies[1].dstStageMask, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+    EXPECT_EQ(rp_ci.pDependencies[1].srcAccessMask, 0);
+    EXPECT_EQ(rp_ci.pDependencies[1].dstAccessMask, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT);
+    EXPECT_EQ(rp_ci.pDependencies[1].dependencyFlags, 0);
+    EXPECT_EQ(data.graphicsPipelineState.descriptorSetLayoutCount, 1);
+    EXPECT_STREQ(dsl_names[0], "2");
+    EXPECT_EQ(dsl_cis[0].sType, VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO);
+    EXPECT_EQ(dsl_cis[0].pNext, nullptr);
+    EXPECT_EQ(dsl_cis[0].flags, 0);
+    EXPECT_EQ(dsl_cis[0].bindingCount, 2);
+    EXPECT_EQ(dsl_cis[0].pBindings[0].binding, 0);
+    EXPECT_EQ(dsl_cis[0].pBindings[0].descriptorType, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+    EXPECT_EQ(dsl_cis[0].pBindings[0].descriptorCount, 1);
+    EXPECT_EQ(dsl_cis[0].pBindings[0].stageFlags, VK_SHADER_STAGE_VERTEX_BIT);
+    EXPECT_EQ(dsl_cis[0].pBindings[0].pImmutableSamplers, nullptr);
+    EXPECT_EQ(dsl_cis[0].pBindings[1].binding, 1);
+    EXPECT_EQ(dsl_cis[0].pBindings[1].descriptorType, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    EXPECT_EQ(dsl_cis[0].pBindings[1].descriptorCount, 1);
+    EXPECT_EQ(dsl_cis[0].pBindings[1].stageFlags, VK_SHADER_STAGE_FRAGMENT_BIT);
+    EXPECT_EQ(dsl_cis[0].pBindings[1].pImmutableSamplers, nullptr);
+    EXPECT_EQ(pl_ci.sType, VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
+    EXPECT_EQ(pl_ci.pNext, nullptr);
+    EXPECT_EQ(pl_ci.flags, 0);
+    EXPECT_EQ(pl_ci.setLayoutCount, 1);
+    EXPECT_EQ(pl_ci.pSetLayouts[0], reinterpret_cast<void*>(0));
+    EXPECT_EQ(pl_ci.pushConstantRangeCount, 0);
+    EXPECT_EQ(pl_ci.pPushConstantRanges, nullptr);
+    EXPECT_EQ(gp_ci.sType, VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO);
+    EXPECT_EQ(gp_ci.flags, 0);
+    EXPECT_EQ(gp_ci.stageCount, 2);
+    EXPECT_EQ(gp_ci.pStages[0].sType, VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
+    EXPECT_EQ(gp_ci.pStages[0].pNext, nullptr);
+    EXPECT_EQ(gp_ci.pStages[0].flags, 0);
+    EXPECT_EQ(gp_ci.pStages[0].stage, VK_SHADER_STAGE_VERTEX_BIT);
+    EXPECT_EQ(gp_ci.pStages[0].module, reinterpret_cast<void*>(38));
+    EXPECT_STREQ(gp_ci.pStages[0].pName, "main");
+    EXPECT_EQ(gp_ci.pStages[0].pSpecializationInfo, nullptr);
+    EXPECT_EQ(gp_ci.pStages[1].sType, VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
+    EXPECT_EQ(gp_ci.pStages[1].pNext, nullptr);
+    EXPECT_EQ(gp_ci.pStages[1].flags, 0);
+    EXPECT_EQ(gp_ci.pStages[1].stage, VK_SHADER_STAGE_FRAGMENT_BIT);
+    EXPECT_EQ(gp_ci.pStages[1].module, reinterpret_cast<void*>(39));
+    EXPECT_STREQ(gp_ci.pStages[1].pName, "main");
+    EXPECT_EQ(gp_ci.pStages[1].pSpecializationInfo, nullptr);
+    EXPECT_EQ(pvis_ci.sType, VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO);
+    EXPECT_EQ(pvis_ci.pNext, nullptr);
+    EXPECT_EQ(pvis_ci.flags, 0);
+    EXPECT_EQ(pvis_ci.vertexBindingDescriptionCount, 0);
+    EXPECT_EQ(pvis_ci.pVertexBindingDescriptions, nullptr);
+    EXPECT_EQ(pvis_ci.vertexAttributeDescriptionCount, 0);
+    EXPECT_EQ(pvis_ci.pVertexAttributeDescriptions, nullptr);
+    EXPECT_EQ(pias_ci.sType, VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO);
+    EXPECT_EQ(pias_ci.pNext, nullptr);
+    EXPECT_EQ(pias_ci.flags, 0);
+    EXPECT_EQ(pias_ci.topology, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+    EXPECT_EQ(pias_ci.primitiveRestartEnable, VK_FALSE);
+    EXPECT_EQ(gp_ci.pTessellationState, nullptr);
+    EXPECT_EQ(pvs_ci.sType, VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO);
+    EXPECT_EQ(pvs_ci.pNext, nullptr);
+    EXPECT_EQ(pvs_ci.flags, 0);
+    EXPECT_EQ(pvs_ci.viewportCount, 1);
+    EXPECT_EQ(pvs_ci.scissorCount, 1);
+    EXPECT_EQ(prs_ci.sType, VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO);
+    EXPECT_EQ(prs_ci.pNext, nullptr);
+    EXPECT_EQ(prs_ci.flags, 0);
+    EXPECT_EQ(prs_ci.depthClampEnable, VK_FALSE);
+    EXPECT_EQ(prs_ci.rasterizerDiscardEnable, VK_FALSE);
+    EXPECT_EQ(prs_ci.polygonMode, VK_POLYGON_MODE_FILL);
+    EXPECT_EQ(prs_ci.cullMode, VK_CULL_MODE_BACK_BIT);
+    EXPECT_EQ(prs_ci.frontFace, VK_FRONT_FACE_COUNTER_CLOCKWISE);
+    EXPECT_EQ(prs_ci.depthBiasEnable, VK_FALSE);
+    EXPECT_EQ(prs_ci.depthBiasConstantFactor, 0);
+    EXPECT_EQ(prs_ci.depthBiasClamp, 0);
+    EXPECT_EQ(prs_ci.depthBiasSlopeFactor, 0);
+    EXPECT_EQ(prs_ci.lineWidth, 1);
+    EXPECT_EQ(pmss_ci.sType, VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO);
+    EXPECT_EQ(pmss_ci.pNext, nullptr);
+    EXPECT_EQ(pmss_ci.flags, 0);
+    EXPECT_EQ(pmss_ci.rasterizationSamples, VK_SAMPLE_COUNT_1_BIT);
+    EXPECT_EQ(pmss_ci.sampleShadingEnable, VK_FALSE);
+    EXPECT_EQ(pmss_ci.minSampleShading, 0);
+    EXPECT_EQ(pmss_ci.pSampleMask, nullptr);
+    EXPECT_EQ(pmss_ci.alphaToCoverageEnable, VK_FALSE);
+    EXPECT_EQ(pmss_ci.alphaToOneEnable, VK_FALSE);
+    EXPECT_EQ(pdss_ci.sType, VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO);
+    EXPECT_EQ(pdss_ci.pNext, nullptr);
+    EXPECT_EQ(pdss_ci.flags, 0);
+    EXPECT_EQ(pdss_ci.depthTestEnable, VK_TRUE);
+    EXPECT_EQ(pdss_ci.depthWriteEnable, VK_TRUE);
+    EXPECT_EQ(pdss_ci.depthCompareOp, VK_COMPARE_OP_LESS_OR_EQUAL);
+    EXPECT_EQ(pdss_ci.depthBoundsTestEnable, VK_FALSE);
+    EXPECT_EQ(pdss_ci.stencilTestEnable, VK_FALSE);
+    EXPECT_EQ(pdss_ci.front.failOp, VK_STENCIL_OP_KEEP);
+    EXPECT_EQ(pdss_ci.front.passOp, VK_STENCIL_OP_KEEP);
+    EXPECT_EQ(pdss_ci.front.depthFailOp, VK_STENCIL_OP_KEEP);
+    EXPECT_EQ(pdss_ci.front.compareOp, VK_COMPARE_OP_ALWAYS);
+    EXPECT_EQ(pdss_ci.front.compareMask, 0);
+    EXPECT_EQ(pdss_ci.front.writeMask, 0);
+    EXPECT_EQ(pdss_ci.front.reference, 0);
+    EXPECT_EQ(pdss_ci.back.failOp, VK_STENCIL_OP_KEEP);
+    EXPECT_EQ(pdss_ci.back.passOp, VK_STENCIL_OP_KEEP);
+    EXPECT_EQ(pdss_ci.back.depthFailOp, VK_STENCIL_OP_KEEP);
+    EXPECT_EQ(pdss_ci.back.compareOp, VK_COMPARE_OP_ALWAYS);
+    EXPECT_EQ(pdss_ci.back.compareMask, 0);
+    EXPECT_EQ(pdss_ci.back.writeMask, 0);
+    EXPECT_EQ(pdss_ci.back.reference, 0);
+    EXPECT_EQ(pdss_ci.minDepthBounds, 0);
+    EXPECT_EQ(pdss_ci.maxDepthBounds, 0);
+    EXPECT_EQ(pcbs_ci.sType, VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO);
+    EXPECT_EQ(pcbs_ci.pNext, nullptr);
+    EXPECT_EQ(pcbs_ci.flags, 0);
+    EXPECT_EQ(pcbs_ci.logicOpEnable, VK_FALSE);
+    EXPECT_EQ(pcbs_ci.logicOp, VK_LOGIC_OP_CLEAR);
+    EXPECT_EQ(pcbs_ci.attachmentCount, 1);
+    EXPECT_EQ(pcbs_ci.pAttachments[0].blendEnable, VK_FALSE);
+    EXPECT_EQ(pcbs_ci.pAttachments[0].srcColorBlendFactor, VK_BLEND_FACTOR_ZERO);
+    EXPECT_EQ(pcbs_ci.pAttachments[0].dstColorBlendFactor, VK_BLEND_FACTOR_ZERO);
+    EXPECT_EQ(pcbs_ci.pAttachments[0].colorBlendOp, VK_BLEND_OP_ADD);
+    EXPECT_EQ(pcbs_ci.pAttachments[0].srcAlphaBlendFactor, VK_BLEND_FACTOR_ZERO);
+    EXPECT_EQ(pcbs_ci.pAttachments[0].dstAlphaBlendFactor, VK_BLEND_FACTOR_ZERO);
+    EXPECT_EQ(pcbs_ci.pAttachments[0].alphaBlendOp, VK_BLEND_OP_ADD);
+    EXPECT_EQ(pcbs_ci.pAttachments[0].colorWriteMask,
+              VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT);
+    EXPECT_EQ(pcbs_ci.blendConstants[0], 0);
+    EXPECT_EQ(pcbs_ci.blendConstants[1], 0);
+    EXPECT_EQ(pcbs_ci.blendConstants[2], 0);
+    EXPECT_EQ(pcbs_ci.blendConstants[3], 0);
+    EXPECT_EQ(pds_ci.sType, VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
+    EXPECT_EQ(pds_ci.pNext, nullptr);
+    EXPECT_EQ(pds_ci.flags, 0);
+    EXPECT_EQ(pds_ci.dynamicStateCount, 2);
+    EXPECT_EQ(pds_ci.pDynamicStates[0], VK_DYNAMIC_STATE_VIEWPORT);
+    EXPECT_EQ(pds_ci.pDynamicStates[1], VK_DYNAMIC_STATE_SCISSOR);
+    EXPECT_EQ(gp_ci.layout, reinterpret_cast<void*>(5));
+    EXPECT_EQ(gp_ci.subpass, 0);
+    EXPECT_EQ(gp_ci.basePipelineHandle, VK_NULL_HANDLE);
+    EXPECT_EQ(gp_ci.basePipelineIndex, 0);
+    EXPECT_EQ(data.graphicsPipelineState.shaderFileNameCount, 2);
+    EXPECT_EQ(sfn[0].stage, VK_SHADER_STAGE_VERTEX_BIT);
+    EXPECT_STREQ(sfn[0].pFilename, "cube.vert.spv");
+    EXPECT_EQ(sfn[1].stage, VK_SHADER_STAGE_FRAGMENT_BIT);
+    EXPECT_STREQ(sfn[1].pFilename, "cube.frag.spv");
+    EXPECT_EQ(data.enabledExtensionCount, 0);
+    uint8_t expected_uuid[VK_UUID_SIZE] = {245, 154, 136, 152, 244, 195, 139, 123, 0, 0, 0, 0, 0, 0, 0, 0};
+    EXPECT_UUIDEQ(data.pipelineUUID, expected_uuid);
 }
 
 TEST_F(PJParseTest, ObjectNameRemapping) {

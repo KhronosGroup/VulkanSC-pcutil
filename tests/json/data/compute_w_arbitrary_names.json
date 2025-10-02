@@ -1,0 +1,245 @@
+{
+    "ComputePipelineState": {
+        "ComputePipeline": {
+            "basePipelineHandle": "",
+            "basePipelineIndex": 0,
+            "flags": 0,
+            "layout": "",
+            "pNext": "NULL",
+            "sType": "VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO",
+            "stage": {
+                "flags": 0,
+                "module": "",
+                "pName": "main",
+                "pNext": "NULL",
+                "pSpecializationInfo": "NULL",
+                "sType": "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
+                "stage": "VK_SHADER_STAGE_COMPUTE_BIT"
+            }
+        },
+        "DescriptorSetLayouts": [
+            {
+                "descriptor_layout_1": {
+                    "bindingCount": 1,
+                    "flags": 0,
+                    "pBindings": [
+                        {
+                            "binding": 0,
+                            "descriptorCount": 2,
+                            "descriptorType": "VK_DESCRIPTOR_TYPE_SAMPLER",
+                            "pImmutableSamplers": [
+                                "immutable_sampler_3",
+                                "immutable_sampler_1"
+                            ],
+                            "stageFlags": 0
+                        }
+                    ],
+                    "pNext": "NULL",
+                    "sType": "VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO"
+                }
+            },
+            {
+                "descriptor_layout_2": {
+                    "bindingCount": 0,
+                    "flags": 0,
+                    "pBindings": "NULL",
+                    "pNext": "NULL",
+                    "sType": "VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO"
+                }
+            },
+            {
+                "descriptor_layout_3": {
+                    "bindingCount": 1,
+                    "flags": 0,
+                    "pBindings": [
+                        {
+                            "binding": 0,
+                            "descriptorCount": 2,
+                            "descriptorType": "VK_DESCRIPTOR_TYPE_SAMPLER",
+                            "pImmutableSamplers": [
+                                "immutable_sampler_1",
+                                "immutable_sampler_2"
+                            ],
+                            "stageFlags": 0
+                        }
+                    ],
+                    "pNext": "NULL",
+                    "sType": "VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO"
+                }
+            }
+        ],
+        "ImmutableSamplers": [
+            {
+                "immutable_sampler_1": {
+                    "addressModeU": "VK_SAMPLER_ADDRESS_MODE_REPEAT",
+                    "addressModeV": "VK_SAMPLER_ADDRESS_MODE_REPEAT",
+                    "addressModeW": "VK_SAMPLER_ADDRESS_MODE_REPEAT",
+                    "anisotropyEnable": "VK_FALSE",
+                    "borderColor": "VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK",
+                    "compareEnable": "VK_FALSE",
+                    "compareOp": "VK_COMPARE_OP_NEVER",
+                    "flags": 0,
+                    "magFilter": "VK_FILTER_NEAREST",
+                    "maxAnisotropy": 0.0,
+                    "maxLod": 0.0,
+                    "minFilter": "VK_FILTER_NEAREST",
+                    "minLod": 0.0,
+                    "mipLodBias": 0.0,
+                    "mipmapMode": "VK_SAMPLER_MIPMAP_MODE_NEAREST",
+                    "pNext": {
+                        "conversion": "ycbcr_conversion_3",
+                        "pNext": "NULL",
+                        "sType": "VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_INFO"
+                    },
+                    "sType": "VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO",
+                    "unnormalizedCoordinates": "VK_FALSE"
+                }
+            },
+            {
+                "immutable_sampler_2": {
+                    "addressModeU": "VK_SAMPLER_ADDRESS_MODE_REPEAT",
+                    "addressModeV": "VK_SAMPLER_ADDRESS_MODE_REPEAT",
+                    "addressModeW": "VK_SAMPLER_ADDRESS_MODE_REPEAT",
+                    "anisotropyEnable": "VK_FALSE",
+                    "borderColor": "VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK",
+                    "compareEnable": "VK_FALSE",
+                    "compareOp": "VK_COMPARE_OP_NEVER",
+                    "flags": 0,
+                    "magFilter": "VK_FILTER_NEAREST",
+                    "maxAnisotropy": 0.0,
+                    "maxLod": 0.0,
+                    "minFilter": "VK_FILTER_NEAREST",
+                    "minLod": 0.0,
+                    "mipLodBias": 0.0,
+                    "mipmapMode": "VK_SAMPLER_MIPMAP_MODE_NEAREST",
+                    "pNext": "NULL",
+                    "sType": "VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO",
+                    "unnormalizedCoordinates": "VK_FALSE"
+                }
+            },
+            {
+                "immutable_sampler_3": {
+                    "addressModeU": "VK_SAMPLER_ADDRESS_MODE_REPEAT",
+                    "addressModeV": "VK_SAMPLER_ADDRESS_MODE_REPEAT",
+                    "addressModeW": "VK_SAMPLER_ADDRESS_MODE_REPEAT",
+                    "anisotropyEnable": "VK_FALSE",
+                    "borderColor": "VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK",
+                    "compareEnable": "VK_FALSE",
+                    "compareOp": "VK_COMPARE_OP_NEVER",
+                    "flags": 0,
+                    "magFilter": "VK_FILTER_NEAREST",
+                    "maxAnisotropy": 0.0,
+                    "maxLod": 0.0,
+                    "minFilter": "VK_FILTER_NEAREST",
+                    "minLod": 0.0,
+                    "mipLodBias": 0.0,
+                    "mipmapMode": "VK_SAMPLER_MIPMAP_MODE_NEAREST",
+                    "pNext": {
+                        "conversion": "ycbcr_conversion_1",
+                        "pNext": "NULL",
+                        "sType": "VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_INFO"
+                    },
+                    "sType": "VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO",
+                    "unnormalizedCoordinates": "VK_FALSE"
+                }
+            }
+        ],
+        "PipelineLayout": {
+            "flags": 0,
+            "pNext": "NULL",
+            "pPushConstantRanges": "NULL",
+            "pSetLayouts": [
+                "descriptor_layout_3",
+                "descriptor_layout_1",
+                "descriptor_layout_2"
+            ],
+            "pushConstantRangeCount": 0,
+            "sType": "VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO",
+            "setLayoutCount": 3
+        },
+        "YcbcrSamplers": [
+            {
+                "ycbcr_conversion_1": {
+                    "chromaFilter": "VK_FILTER_NEAREST",
+                    "components": {
+                        "a": "VK_COMPONENT_SWIZZLE_IDENTITY",
+                        "b": "VK_COMPONENT_SWIZZLE_IDENTITY",
+                        "g": "VK_COMPONENT_SWIZZLE_IDENTITY",
+                        "r": "VK_COMPONENT_SWIZZLE_IDENTITY"
+                    },
+                    "forceExplicitReconstruction": "VK_FALSE",
+                    "format": "VK_FORMAT_UNDEFINED",
+                    "pNext": "NULL",
+                    "sType": "VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_CREATE_INFO",
+                    "xChromaOffset": "VK_CHROMA_LOCATION_COSITED_EVEN",
+                    "yChromaOffset": "VK_CHROMA_LOCATION_COSITED_EVEN",
+                    "ycbcrModel": "VK_SAMPLER_YCBCR_MODEL_CONVERSION_RGB_IDENTITY",
+                    "ycbcrRange": "VK_SAMPLER_YCBCR_RANGE_ITU_FULL"
+                }
+            },
+            {
+                "ycbcr_conversion_2": {
+                    "chromaFilter": "VK_FILTER_NEAREST",
+                    "components": {
+                        "a": "VK_COMPONENT_SWIZZLE_IDENTITY",
+                        "b": "VK_COMPONENT_SWIZZLE_IDENTITY",
+                        "g": "VK_COMPONENT_SWIZZLE_IDENTITY",
+                        "r": "VK_COMPONENT_SWIZZLE_IDENTITY"
+                    },
+                    "forceExplicitReconstruction": "VK_FALSE",
+                    "format": "VK_FORMAT_UNDEFINED",
+                    "pNext": "NULL",
+                    "sType": "VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_CREATE_INFO",
+                    "xChromaOffset": "VK_CHROMA_LOCATION_COSITED_EVEN",
+                    "yChromaOffset": "VK_CHROMA_LOCATION_COSITED_EVEN",
+                    "ycbcrModel": "VK_SAMPLER_YCBCR_MODEL_CONVERSION_RGB_IDENTITY",
+                    "ycbcrRange": "VK_SAMPLER_YCBCR_RANGE_ITU_FULL"
+                }
+            },
+            {
+                "ycbcr_conversion_3": {
+                    "chromaFilter": "VK_FILTER_NEAREST",
+                    "components": {
+                        "a": "VK_COMPONENT_SWIZZLE_IDENTITY",
+                        "b": "VK_COMPONENT_SWIZZLE_IDENTITY",
+                        "g": "VK_COMPONENT_SWIZZLE_IDENTITY",
+                        "r": "VK_COMPONENT_SWIZZLE_IDENTITY"
+                    },
+                    "forceExplicitReconstruction": "VK_FALSE",
+                    "format": "VK_FORMAT_UNDEFINED",
+                    "pNext": "NULL",
+                    "sType": "VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_CREATE_INFO",
+                    "xChromaOffset": "VK_CHROMA_LOCATION_COSITED_EVEN",
+                    "yChromaOffset": "VK_CHROMA_LOCATION_COSITED_EVEN",
+                    "ycbcrModel": "VK_SAMPLER_YCBCR_MODEL_CONVERSION_RGB_IDENTITY",
+                    "ycbcrRange": "VK_SAMPLER_YCBCR_RANGE_ITU_FULL"
+                }
+            }
+        ],
+        "ShaderFileNames": [
+            {
+                "stage": "VK_SHADER_STAGE_COMPUTE_BIT",
+                "filename": "compute.spv"
+            }
+        ],
+    },
+    "EnabledExtensions": [],
+    "PipelineUUID": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+    ]
+}

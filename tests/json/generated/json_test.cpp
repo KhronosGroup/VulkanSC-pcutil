@@ -52,6 +52,11 @@ TEST(test_validate_pipeline_json, compute_pipeline_3) {
     EXPECT_TRUE(ValidatePipelineJson(json_file.c_str()));
 }
 
+TEST(test_validate_pipeline_json, compute_w_arbitrary_names) {
+    std::string json_file = std::string(JSON_DATA_PATH) + "compute_w_arbitrary_names.json";
+    EXPECT_TRUE(ValidatePipelineJson(json_file.c_str()));
+}
+
 TEST(test_validate_pipeline_json, cube_pc) {
     std::string json_file = std::string(JSON_DATA_PATH) + "cube.pc.json";
     EXPECT_TRUE(ValidatePipelineJson(json_file.c_str()));

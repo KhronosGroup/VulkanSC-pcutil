@@ -247,7 +247,7 @@
             "oneOf": [
                 {
                     "type": "string",
-                    "pattern": "[0-9]*"
+                    "pattern": "^[0-9]*$"
                 },
                 {
                     "type": "integer"
@@ -3942,7 +3942,14 @@
             ]
         },
         "VkSamplerYcbcrConversion": {
-            "$ref": "#/definitions/uint64_t"
+            "oneOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "$ref": "#/definitions/uint64_t"
+                }
+            ]
         },
         "VkSamplerCreateInfo_pNext": {
             "oneOf": [
@@ -4174,7 +4181,14 @@
             ]
         },
         "VkSampler": {
-            "$ref": "#/definitions/uint64_t"
+            "oneOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "$ref": "#/definitions/uint64_t"
+                }
+            ]
         },
         "VkDescriptorSetLayoutBinding": {
             "additionalProperties": false,
@@ -4387,7 +4401,14 @@
             ]
         },
         "VkDescriptorSetLayout": {
-            "$ref": "#/definitions/uint64_t"
+            "oneOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "$ref": "#/definitions/uint64_t"
+                }
+            ]
         },
         "VkPushConstantRange": {
             "additionalProperties": false,

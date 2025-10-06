@@ -38,6 +38,7 @@ out64/*
 .vs/
 .DS_Store
 .install
+.venv/
 
 # Python artifacts
 .venv/

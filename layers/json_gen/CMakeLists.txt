@@ -17,13 +17,28 @@ endif()
 add_library(VulkanJSONGenLayer MODULE)
 
 target_sources(VulkanJSONGenLayer PRIVATE
-    json_gen.cpp
-    vk_layer_table.cpp
-    vk_layer_table.h
+    vk_json_layer.hpp
+    vk_json_layer.cpp
     ${LAYER_NAME}.def
+    allocator.cpp
 )
 
-target_link_libraries(VulkanJSONGenLayer PUBLIC Vulkan::Headers Vulkan::UtilityHeaders)
+target_include_directories(VulkanJSONGenLayer
+    PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/generated"
+        "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+target_link_libraries(VulkanJSONGenLayer
+    PRIVATE
+        Vulkan::Headers
+        Vulkan::UtilityHeaders
+        Vulkan::PCJson
+    PUBLIC
+        Vulkan::SafeStruct
+)
+
+target_compile_features(VulkanJSONGenLayer PRIVATE cxx_std_17)
 
 set_target_properties(VulkanJSONGenLayer PROPERTIES OUTPUT_NAME ${LAYER_NAME})
 

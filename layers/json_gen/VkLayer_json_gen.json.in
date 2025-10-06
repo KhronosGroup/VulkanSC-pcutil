@@ -3,8 +3,8 @@
     "layer" : {
         "name": "@JSON_LAYER_NAME@",
         "type": "GLOBAL",
-        "library_path": "@RELATIVE_LAYER_BINARY@",
-        "api_version": "@VK_VERSION@",
+        "library_path": "@JSON_LIBRARY_PATH@",
+        "api_version": "1.2",
         "implementation_version": "2",
         "description": "Khronos JSON generator layer",
         "device_extensions": [

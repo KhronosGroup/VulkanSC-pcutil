@@ -12,7 +12,13 @@
 #include <memory.h>
 #include <string.h>
 
+#ifdef _MSC_VER
+#pragma warning(push, 0)
+#endif
 #include "hashlib/md5.hpp"
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 namespace pcjson {
 

@@ -8,6 +8,7 @@
 #include "vk_json_layer.hpp"
 #include <vulkan/pcjson/vksc_pipeline_json.h>
 
+#include "atomic_max.hpp"
 #include "log.h"
 #include "vk_common.h"
 
@@ -26,6 +27,7 @@
 #include <iostream>       // std::cout
 #include <numeric>        // std::accumulate
 #include <fstream>        // std::ofstream
+#include <sstream>        // std::stringstream
 
 namespace vk_json {
 
@@ -233,6 +235,8 @@ static VkLayerInstanceCreateInfo* GetChainInfo(const VkInstanceCreateInfo* pCrea
     return chain_info;
 }
 
+static std::atomic<uint32_t> device_counter = 0;
+
 #define INIT_HOOK(_vt, _dev, fn) _vt.fn = reinterpret_cast<PFN_vk##fn>(vtable.GetDeviceProcAddr(_dev, "vk" #fn))
 #define INIT_HOOK_ALIAS(_vt, _dev, fn, fn_alias) \
     _vt.fn_alias = (_vt.fn_alias != nullptr) ? _vt.fn_alias : reinterpret_cast<PFN_vk##fn>(vtable.GetDeviceProcAddr(_dev, "vk" #fn))
@@ -254,9 +258,11 @@ DeviceData::DeviceData(VkDevice device, const VkDeviceCreateInfo* ci, PFN_vkGetD
       renderpass2_map{},
       obj_res_info{},
       obj_counter{0},
-      CreateImageView_mutex{} {
+      id{device_counter++} {
     if (enable) {
         INIT_HOOK(vtable, device, DestroyDevice);
+        INIT_HOOK(vtable, device, CreateSemaphore);
+        INIT_HOOK(vtable, device, DestroySemaphore);
         INIT_HOOK(vtable, device, CreateShaderModule);
         INIT_HOOK(vtable, device, DestroyShaderModule);
         INIT_HOOK(vtable, device, CreateGraphicsPipelines);
@@ -290,6 +296,68 @@ DeviceData::DeviceData(VkDevice device, const VkDeviceCreateInfo* ci, PFN_vkGetD
 }
 #undef INIT_HOOK
 #undef INIT_HOOK_ALIAS
+
+DeviceData::~DeviceData() { writeDeviceObjResHeader(); }
+
+void DeviceData::writeDeviceObjResHeader() {
+    std::stringstream result;
+    auto header_path =
+        std::string(getBaseDirectoryPath()) + std::string(getProcessName()) + "_objectResInfo_" + std::to_string(id) + ".hpp";
+    // clang-format off
+    result <<
+        "#ifndef " << getProcessName() << "_objectResInfo_HPP\n" <<
+        "#define " << getProcessName() << "_objectResInfo_HPP\n\n" <<
+        "#include <vulkan/vulkan_sc_core.h>\n\n" <<
+        "static VkDeviceObjectReservationCreateInfo g_objectResCreateInfo_" << id << " {};\n" <<
+        "static void SetObjectResCreateInfo()\n" <<
+        "{\n" <<
+        "\tg_objectResCreateInfo_" << id << ".sType                                      = VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO;\n" <<
+        "\tg_objectResCreateInfo_" << id << ".pNext                                      = nullptr;\n" <<
+        "\tg_objectResCreateInfo_" << id << ".semaphoreRequestCount                      = " << obj_res_info.semaphoreHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".commandBufferRequestCount                  = " << obj_res_info.commandBufferHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".fenceRequestCount                          = " << obj_res_info.fenceHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".deviceMemoryRequestCount                   = " << obj_res_info.deviceMemoryHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".bufferRequestCount                         = " << obj_res_info.bufferHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".imageRequestCount                          = " << obj_res_info.imageHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".eventRequestCount                          = " << obj_res_info.eventHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".queryPoolRequestCount                      = " << obj_res_info.queryPoolHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".bufferViewRequestCount                     = " << obj_res_info.bufferViewHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".imageViewRequestCount                      = " << obj_res_info.imageViewHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".layeredImageViewRequestCount               = " << obj_res_info.layeredImageViewHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".pipelineCacheRequestCount                  = " << obj_res_info.pipelineCacheHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".pipelineLayoutRequestCount                 = " << obj_res_info.pipelineLayoutHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".renderPassRequestCount                     = " << obj_res_info.renderPassHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".graphicsPipelineRequestCount               = " << obj_res_info.graphicsPipelineHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".computePipelineRequestCount                = " << obj_res_info.computePipelineHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".descriptorSetLayoutRequestCount            = " << obj_res_info.descriptorSetLayoutHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".samplerRequestCount                        = " << obj_res_info.samplerHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".descriptorPoolRequestCount                 = " << obj_res_info.descriptorPoolHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".descriptorSetRequestCount                  = " << obj_res_info.descriptorSetHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".framebufferRequestCount                    = " << obj_res_info.framebufferHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".commandPoolRequestCount                    = " << obj_res_info.commandPoolHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".samplerYcbcrConversionRequestCount         = " << obj_res_info.samplerYcbcrConversionHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".swapchainRequestCount                      = " << obj_res_info.swapchainHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".subpassDescriptionRequestCount             = " << obj_res_info.subpassDescriptionHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".attachmentDescriptionRequestCount          = " << obj_res_info.attachmentDescriptionHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".descriptorSetLayoutBindingRequestCount     = " << obj_res_info.descriptorSetLayoutBindingHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".descriptorSetLayoutBindingLimit            = " << obj_res_info.descriptorSetLayoutBindingLimit << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".maxImageViewMipLevels                      = " << obj_res_info.maxImageViewMipLevels << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".maxImageViewArrayLayers                    = " << obj_res_info.maxImageViewArrayLayers << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".maxLayeredImageViewMipLevels               = " << obj_res_info.maxLayeredImageViewMipLevels << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".maxOcclusionQueriesPerPool                 = " << obj_res_info.maxOcclusionQueriesPerPool << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".maxPipelineStatisticsQueriesPerPool        = " << obj_res_info.maxPipelineStatisticsQueriesPerPool << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".maxTimestampQueriesPerPool                 = " << obj_res_info.maxTimestampQueriesPerPool << ";\n" <<
+        "\tg_objectResCreateInfo_" << id << ".maxImmutableSamplersPerDescriptorSetLayout = " << obj_res_info.maxImmutableSamplersPerDescriptorSetLayout << ";\n" <<
+        "}\n\n" <<
+        "#endif\n";
+    // clang-format on
+    std::ofstream header_file(header_path);
+    if (header_file) {
+        header_file << result.rdbuf();
+    } else {
+        LOG("[%s] ERROR: Unable to open: %s", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME, header_path.c_str());
+    }
+}
 
 static VkLayerDeviceCreateInfo* GetChainInfo(const VkDeviceCreateInfo* pCreateInfo, VkLayerFunction func) {
     auto chain_info = reinterpret_cast<VkLayerDeviceCreateInfo*>(const_cast<void*>(pCreateInfo->pNext));
@@ -413,6 +481,8 @@ GraphicsPipelineData::GraphicsPipelineData(const VkGraphicsPipelineCreateInfo* c
                 VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
         }
     }
+
+    GenJsonUuidAndWriteToDisk(device_data.create_info);
 }
 
 ComputePipelineData::ComputePipelineData(const VkComputePipelineCreateInfo* ci, DeviceData& device_data)
@@ -433,6 +503,8 @@ ComputePipelineData::ComputePipelineData(const VkComputePipelineCreateInfo* ci, 
         LOG("[%s] ERROR: Failed to find shader module in accelerating structure referenced by graphics pipeline.",
             VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
     }
+
+    GenJsonUuidAndWriteToDisk(device_data.create_info);
 }
 
 // Begin layer logic
@@ -592,6 +664,23 @@ VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL GetPhysicalDeviceFeatures2(VkPhysicalDevic
 
 // Autogen device functions
 
+VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateSemaphore(VkDevice device, const VkSemaphoreCreateInfo* pCreateInfo,
+                                                          const VkAllocationCallbacks* pAllocator, VkSemaphore* pSemaphore) {
+    auto device_data = GetDeviceData(device);
+    VkResult result = device_data->vtable.CreateSemaphore(device, pCreateInfo, pAllocator, pSemaphore);
+    if (result >= 0) {
+        atomic_max(device_data->obj_res_info.semaphoreHighWatermark, ++device_data->obj_res_info.semaphoreRequestCount);
+    }
+    return result;
+}
+VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroySemaphore(VkDevice device, VkSemaphore fence,
+                                                       const VkAllocationCallbacks* pAllocator) {
+    auto device_data = GetDeviceData(device);
+    device_data->vtable.DestroySemaphore(device, fence, pAllocator);
+    if (fence != VK_NULL_HANDLE) {
+        device_data->obj_res_info.fenceRequestCount--;
+    }
+}
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateShaderModule(VkDevice device, const VkShaderModuleCreateInfo* pCreateInfo,
                                                              const VkAllocationCallbacks* pAllocator,
                                                              VkShaderModule* pShaderModule) {
@@ -616,10 +705,10 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateGraphicsPipelines(VkDevice devic
     if (result >= 0)
         for (uint32_t i = 0; i < createInfoCount; ++i)
             if (pPipelines[i] != VK_NULL_HANDLE) {
-                device_data->obj_res_info.graphicsPipelineRequestCount++;
+                atomic_max(device_data->obj_res_info.graphicsPipelineHighWatermark,
+                           ++device_data->obj_res_info.graphicsPipelineRequestCount);
                 auto graphics_pipeline_data = std::make_shared<GraphicsPipelineData>(&pCreateInfos[i], *device_data);
                 device_data->graphics_pipeline_map.insert(pPipelines[i], graphics_pipeline_data);
-                device_data->writePCJSON(*graphics_pipeline_data);
             }
 
     return result;
@@ -634,13 +723,28 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateComputePipelines(VkDevice device
     if (result >= 0)
         for (uint32_t i = 0; i < createInfoCount; ++i)
             if (pPipelines[i] != VK_NULL_HANDLE) {
-                device_data->obj_res_info.computePipelineRequestCount++;
+                atomic_max(device_data->obj_res_info.computePipelineHighWatermark,
+                           ++device_data->obj_res_info.computePipelineRequestCount);
                 auto compute_pipeline_data = std::make_shared<ComputePipelineData>(&pCreateInfos[i], *device_data);
                 device_data->compute_pipeline_map.insert(pPipelines[i], compute_pipeline_data);
-                device_data->writePCJSON(*compute_pipeline_data);
             }
 
     return result;
+}
+VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroyPipeline(VkDevice device, VkPipeline pipeline,
+                                                      const VkAllocationCallbacks* pAllocator) {
+    auto device_data = GetDeviceData(device);
+    device_data->vtable.DestroyPipeline(device, pipeline, pAllocator);
+    if (pipeline != VK_NULL_HANDLE) {
+        device_data->obj_res_info.renderPassRequestCount--;
+        if (auto result = device_data->graphics_pipeline_map.find(pipeline); result->first) {
+            device_data->graphics_pipeline_map.erase(pipeline);
+        } else if (auto result2 = device_data->compute_pipeline_map.find(pipeline); result2->first) {
+            device_data->compute_pipeline_map.erase(pipeline);
+        } else {
+            LOG("[%s] ERROR: Failed to find pipeline in accelerating structure.", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
+        }
+    }
 }
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateDescriptorSetLayout(VkDevice device,
                                                                     const VkDescriptorSetLayoutCreateInfo* pCreateInfo,
@@ -649,11 +753,38 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateDescriptorSetLayout(VkDevice dev
     auto device_data = GetDeviceData(device);
     VkResult result = device_data->vtable.CreateDescriptorSetLayout(device, pCreateInfo, pAllocator, pSetLayout);
     if (result >= 0) {
-        device_data->obj_res_info.descriptorSetLayoutRequestCount++;
+        atomic_max(device_data->obj_res_info.descriptorSetLayoutHighWatermark,
+                   ++device_data->obj_res_info.descriptorSetLayoutRequestCount);
+        atomic_max(device_data->obj_res_info.descriptorSetLayoutBindingHighWatermark,
+                   device_data->obj_res_info.descriptorSetLayoutBindingRequestCount += pCreateInfo->bindingCount);
+        atomic_max(device_data->obj_res_info.descriptorSetLayoutBindingLimit,
+                   std::max_element(
+                       pCreateInfo->pBindings, pCreateInfo->pBindings + pCreateInfo->bindingCount,
+                       [](const VkDescriptorSetLayoutBinding& lhs, const VkDescriptorSetLayoutBinding& rhs) {
+                           return lhs.binding < rhs.binding;
+                       })->binding +
+                       1);
+        atomic_max(device_data->obj_res_info.maxImmutableSamplersPerDescriptorSetLayout,
+                   std::accumulate(pCreateInfo->pBindings, pCreateInfo->pBindings + pCreateInfo->bindingCount, 0u,
+                                   [](const uint32_t& curr_max, const VkDescriptorSetLayoutBinding& dslb) {
+                                       return std::max(curr_max, dslb.pImmutableSamplers != nullptr ? dslb.descriptorCount : 0);
+                                   }));
         device_data->descriptor_set_layout_map.insert(*pSetLayout,
                                                       std::make_shared<DescriptorSetLayoutData>(pCreateInfo, *device_data));
     }
     return result;
+}
+VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroyDescriptorSetLayout(VkDevice device, VkDescriptorSetLayout descriptorSetLayout,
+                                                                 const VkAllocationCallbacks* pAllocator) {
+    auto device_data = GetDeviceData(device);
+    device_data->vtable.DestroyDescriptorSetLayout(device, descriptorSetLayout, pAllocator);
+    if (descriptorSetLayout != VK_NULL_HANDLE) {
+        device_data->obj_res_info.renderPassRequestCount--;
+        if (auto result = device_data->descriptor_set_layout_map.find(descriptorSetLayout); result->first) {
+            device_data->obj_res_info.descriptorSetLayoutBindingRequestCount -= result->second->create_info.bindingCount;
+        }
+        device_data->descriptor_set_layout_map.erase(descriptorSetLayout);
+    }
 }
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreatePipelineLayout(VkDevice device, const VkPipelineLayoutCreateInfo* pCreateInfo,
                                                                const VkAllocationCallbacks* pAllocator,
@@ -661,7 +792,7 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreatePipelineLayout(VkDevice device, 
     auto device_data = GetDeviceData(device);
     VkResult result = device_data->vtable.CreatePipelineLayout(device, pCreateInfo, pAllocator, pPipelineLayout);
     if (result >= 0) {
-        device_data->obj_res_info.pipelineLayoutRequestCount++;
+        atomic_max(device_data->obj_res_info.pipelineLayoutHighWatermark, ++device_data->obj_res_info.pipelineLayoutRequestCount);
         device_data->pipeline_layout_map.insert(*pPipelineLayout, std::make_shared<PipelineLayoutData>(pCreateInfo, *device_data));
     }
     return result;
@@ -671,7 +802,7 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateRenderPass(VkDevice device, cons
     auto device_data = GetDeviceData(device);
     VkResult result = device_data->vtable.CreateRenderPass(device, pCreateInfo, pAllocator, pRenderPass);
     if (result >= 0) {
-        device_data->obj_res_info.renderPassRequestCount++;
+        atomic_max(device_data->obj_res_info.renderPassHighWatermark, ++device_data->obj_res_info.renderPassRequestCount);
         device_data->renderpass_map.insert(*pRenderPass, std::make_shared<RenderPassData>(pCreateInfo));
     }
     return result;
@@ -681,20 +812,45 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateRenderPass2(VkDevice device, con
     auto device_data = GetDeviceData(device);
     VkResult result = device_data->vtable.CreateRenderPass2(device, pCreateInfo, pAllocator, pRenderPass);
     if (result >= 0) {
-        device_data->obj_res_info.renderPassRequestCount++;
+        atomic_max(device_data->obj_res_info.renderPassHighWatermark, ++device_data->obj_res_info.renderPassRequestCount);
+        atomic_max(device_data->obj_res_info.subpassDescriptionHighWatermark,
+                   device_data->obj_res_info.subpassDescriptionRequestCount += pCreateInfo->subpassCount);
+        atomic_max(device_data->obj_res_info.attachmentDescriptionHighWatermark,
+                   device_data->obj_res_info.attachmentDescriptionRequestCount += pCreateInfo->attachmentCount);
         device_data->renderpass2_map.insert(*pRenderPass, std::make_shared<RenderPass2Data>(pCreateInfo));
     }
     return result;
+}
+VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroyRenderPass(VkDevice device, VkRenderPass renderPass,
+                                                        const VkAllocationCallbacks* pAllocator) {
+    auto device_data = GetDeviceData(device);
+    device_data->vtable.DestroyRenderPass(device, renderPass, pAllocator);
+    if (renderPass != VK_NULL_HANDLE) {
+        device_data->obj_res_info.renderPassRequestCount--;
+        if (auto result = device_data->renderpass2_map.find(renderPass); result->first) {
+            device_data->obj_res_info.subpassDescriptionRequestCount -= result->second->create_info.subpassCount;
+            device_data->obj_res_info.attachmentDescriptionRequestCount -= result->second->create_info.attachmentCount;
+        }
+        device_data->renderpass_map.erase(renderPass);
+    }
 }
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateSampler(VkDevice device, const VkSamplerCreateInfo* pCreateInfo,
                                                         const VkAllocationCallbacks* pAllocator, VkSampler* pSampler) {
     auto device_data = GetDeviceData(device);
     VkResult result = device_data->vtable.CreateSampler(device, pCreateInfo, pAllocator, pSampler);
     if (result >= 0) {
-        device_data->obj_res_info.samplerRequestCount++;
+        atomic_max(device_data->obj_res_info.samplerHighWatermark, ++device_data->obj_res_info.samplerRequestCount);
         device_data->sampler_map.insert(*pSampler, std::make_shared<SamplerData>(pCreateInfo, *device_data));
     }
     return result;
+}
+VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroySampler(VkDevice device, VkSampler sampler, const VkAllocationCallbacks* pAllocator) {
+    auto device_data = GetDeviceData(device);
+    device_data->vtable.DestroySampler(device, sampler, pAllocator);
+    if (sampler != VK_NULL_HANDLE) {
+        device_data->obj_res_info.samplerRequestCount--;
+        device_data->sampler_map.erase(sampler);
+    }
 }
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateSamplerYcbcrConversion(VkDevice device,
                                                                        const VkSamplerYcbcrConversionCreateInfo* pCreateInfo,
@@ -703,23 +859,51 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateSamplerYcbcrConversion(VkDevice 
     auto device_data = GetDeviceData(device);
     VkResult result = device_data->vtable.CreateSamplerYcbcrConversion(device, pCreateInfo, pAllocator, pYcbcrConversion);
     if (result >= 0) {
+        atomic_max(device_data->obj_res_info.samplerYcbcrConversionHighWatermark,
+                   ++device_data->obj_res_info.samplerYcbcrConversionRequestCount);
         device_data->ycbcr_map.insert(*pYcbcrConversion, std::make_shared<YcbcrData>(pCreateInfo, *device_data));
     }
     return result;
+}
+VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroySamplerYcbcrConversion(VkDevice device, VkSamplerYcbcrConversion ycbcrConversion,
+                                                                    const VkAllocationCallbacks* pAllocator) {
+    auto device_data = GetDeviceData(device);
+    device_data->vtable.DestroySamplerYcbcrConversion(device, ycbcrConversion, pAllocator);
+    if (ycbcrConversion != VK_NULL_HANDLE) {
+        device_data->obj_res_info.samplerYcbcrConversionRequestCount--;
+        device_data->ycbcr_map.erase(ycbcrConversion);
+    }
+}
+VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateSwapchainKHR(VkDevice device, const VkSwapchainCreateInfoKHR* pCreateInfo,
+                                                             const VkAllocationCallbacks* pAllocator, VkSwapchainKHR* pSwapchain) {
+    auto device_data = GetDeviceData(device);
+    VkResult result = device_data->vtable.CreateSwapchainKHR(device, pCreateInfo, pAllocator, pSwapchain);
+    if (result >= 0) {
+        atomic_max(device_data->obj_res_info.swapchainHighWatermark, ++device_data->obj_res_info.swapchainRequestCount);
+    }
+    return result;
+}
+VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroySwapchainKHR(VkDevice device, VkSwapchainKHR swapchain,
+                                                          const VkAllocationCallbacks* pAllocator) {
+    auto device_data = GetDeviceData(device);
+    device_data->vtable.DestroySwapchainKHR(device, swapchain, pAllocator);
+    if (swapchain != VK_NULL_HANDLE) {
+        device_data->obj_res_info.swapchainRequestCount--;
+    }
 }
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateImage(VkDevice device, const VkImageCreateInfo* pCreateInfo,
                                                       const VkAllocationCallbacks* pAllocator, VkImage* pImage) {
     auto device_data = GetDeviceData(device);
     VkResult result = device_data->vtable.CreateImage(device, pCreateInfo, pAllocator, pImage);
     if (result >= 0) {
-        device_data->obj_res_info.imageRequestCount++;
+        atomic_max(device_data->obj_res_info.imageHighWatermark, ++device_data->obj_res_info.imageRequestCount);
     }
     return result;
 }
 VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroyImage(VkDevice device, VkImage image, const VkAllocationCallbacks* pAllocator) {
     auto device_data = GetDeviceData(device);
     device_data->vtable.DestroyImage(device, image, pAllocator);
-    if (image != VK_NULL_HANDLE) {
+    if (image != VK_NULL_HANDLE) {  /// TODO: Check all DestroyXyz predicates
         device_data->obj_res_info.imageRequestCount--;
     }
 }
@@ -727,27 +911,15 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateImageView(VkDevice device, const
                                                           const VkAllocationCallbacks* pAllocator, VkImageView* pView) {
     auto device_data = GetDeviceData(device);
     VkResult result = device_data->vtable.CreateImageView(device, pCreateInfo, pAllocator, pView);
-    if (pCreateInfo) {
-        device_data->obj_res_info.imageViewRequestCount++;
+    if (result >= 0) {
+        atomic_max(device_data->obj_res_info.imageViewHighWatermark, ++device_data->obj_res_info.imageViewRequestCount);
         if (pCreateInfo->subresourceRange.layerCount > 1) {
-            device_data->obj_res_info.layeredImageViewRequestCount++;
+            atomic_max(device_data->obj_res_info.layeredImageViewHighWatermark,
+                       ++device_data->obj_res_info.layeredImageViewRequestCount);
+            atomic_max(device_data->obj_res_info.maxLayeredImageViewMipLevels, pCreateInfo->subresourceRange.levelCount);
         }
-
-        {  // NOTE: mutex lock can be changed to load-op-exchange loop(s)
-            const std::lock_guard<std::mutex> lock(device_data->CreateImageView_mutex);
-
-            if (pCreateInfo->subresourceRange.levelCount > device_data->obj_res_info.maxImageViewMipLevels) {
-                device_data->obj_res_info.maxImageViewMipLevels = pCreateInfo->subresourceRange.levelCount;
-            }
-            if (pCreateInfo->subresourceRange.layerCount > device_data->obj_res_info.maxImageViewArrayLayers) {
-                device_data->obj_res_info.maxImageViewArrayLayers = pCreateInfo->subresourceRange.layerCount;
-            }
-            if (pCreateInfo->subresourceRange.layerCount > 1) {
-                if (pCreateInfo->subresourceRange.levelCount > device_data->obj_res_info.maxLayeredImageViewMipLevels) {
-                    device_data->obj_res_info.maxLayeredImageViewMipLevels = pCreateInfo->subresourceRange.levelCount;
-                }
-            }
-        }
+        atomic_max(device_data->obj_res_info.maxImageViewMipLevels, pCreateInfo->subresourceRange.levelCount);
+        atomic_max(device_data->obj_res_info.maxImageViewArrayLayers, pCreateInfo->subresourceRange.layerCount);
     }
     return result;
 }
@@ -764,7 +936,8 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL AllocateCommandBuffers(VkDevice device
     auto device_data = GetDeviceData(device);
     VkResult result = device_data->vtable.AllocateCommandBuffers(device, pAllocateInfo, pCommandBuffers);
     if (result >= 0 && pAllocateInfo != nullptr) {
-        device_data->obj_res_info.commandBufferRequestCount += pAllocateInfo->commandBufferCount;
+        atomic_max(device_data->obj_res_info.commandBufferHighWatermark,
+                   device_data->obj_res_info.commandBufferRequestCount += pAllocateInfo->commandBufferCount);
     }
     return result;
 }
@@ -773,7 +946,7 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateFence(VkDevice device, const VkF
     auto device_data = GetDeviceData(device);
     VkResult result = device_data->vtable.CreateFence(device, pCreateInfo, pAllocator, pFence);
     if (result >= 0) {
-        device_data->obj_res_info.fenceRequestCount++;
+        atomic_max(device_data->obj_res_info.fenceHighWatermark, ++device_data->obj_res_info.fenceRequestCount);
     }
     return result;
 }
@@ -784,12 +957,39 @@ VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroyFence(VkDevice device, VkFence fenc
         device_data->obj_res_info.fenceRequestCount--;
     }
 }
+VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL AllocateMemory(VkDevice device, const VkMemoryAllocateInfo* pAllocateInfo,
+                                                         const VkAllocationCallbacks* pAllocator, VkDeviceMemory* pMemory) {
+    auto device_data = GetDeviceData(device);
+    VkResult result = device_data->vtable.AllocateMemory(device, pAllocateInfo, pAllocator, pMemory);
+    if (result >= 0) {
+        atomic_max(device_data->obj_res_info.deviceMemoryHighWatermark, ++device_data->obj_res_info.deviceMemoryRequestCount);
+    }
+    return result;
+}
+VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreatePipelineCache(VkDevice device, const VkPipelineCacheCreateInfo* pCreateInfo,
+                                                              const VkAllocationCallbacks* pAllocator,
+                                                              VkPipelineCache* pPipelineCache) {
+    auto device_data = GetDeviceData(device);
+    VkResult result = device_data->vtable.CreatePipelineCache(device, pCreateInfo, pAllocator, pPipelineCache);
+    if (result >= 0) {
+        atomic_max(device_data->obj_res_info.pipelineCacheHighWatermark, ++device_data->obj_res_info.pipelineCacheRequestCount);
+    }
+    return result;
+}
+VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroyPipelineCache(VkDevice device, VkPipelineCache pipelineCache,
+                                                           const VkAllocationCallbacks* pAllocator) {
+    auto device_data = GetDeviceData(device);
+    device_data->vtable.DestroyPipelineCache(device, pipelineCache, pAllocator);
+    if (pipelineCache != VK_NULL_HANDLE) {
+        device_data->obj_res_info.pipelineCacheRequestCount--;
+    }
+}
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateBuffer(VkDevice device, const VkBufferCreateInfo* pCreateInfo,
                                                        const VkAllocationCallbacks* pAllocator, VkBuffer* pBuffer) {
     auto device_data = GetDeviceData(device);
     VkResult result = device_data->vtable.CreateBuffer(device, pCreateInfo, pAllocator, pBuffer);
     if (result >= 0) {
-        device_data->obj_res_info.bufferRequestCount++;
+        atomic_max(device_data->obj_res_info.bufferHighWatermark, ++device_data->obj_res_info.bufferRequestCount);
     }
     return result;
 }
@@ -805,7 +1005,7 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateBufferView(VkDevice device, cons
     auto device_data = GetDeviceData(device);
     VkResult result = device_data->vtable.CreateBufferView(device, pCreateInfo, pAllocator, pView);
     if (result >= 0) {
-        device_data->obj_res_info.bufferViewRequestCount++;
+        atomic_max(device_data->obj_res_info.bufferViewHighWatermark, ++device_data->obj_res_info.bufferViewRequestCount);
     }
     return result;
 }
@@ -822,7 +1022,7 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateEvent(VkDevice device, const VkE
     auto device_data = GetDeviceData(device);
     VkResult result = device_data->vtable.CreateEvent(device, pCreateInfo, pAllocator, pEvent);
     if (result >= 0) {
-        device_data->obj_res_info.eventRequestCount++;
+        atomic_max(device_data->obj_res_info.eventHighWatermark, ++device_data->obj_res_info.eventRequestCount);
     }
     return result;
 }
@@ -838,7 +1038,14 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateQueryPool(VkDevice device, const
     auto device_data = GetDeviceData(device);
     VkResult result = device_data->vtable.CreateQueryPool(device, pCreateInfo, pAllocator, pQueryPool);
     if (result >= 0) {
-        device_data->obj_res_info.queryPoolRequestCount++;
+        atomic_max(device_data->obj_res_info.queryPoolHighWatermark, ++device_data->obj_res_info.queryPoolRequestCount);
+        if (pCreateInfo->queryType == VK_QUERY_TYPE_OCCLUSION) {
+            atomic_max(device_data->obj_res_info.maxOcclusionQueriesPerPool, pCreateInfo->queryCount);
+        } else if (pCreateInfo->queryType == VK_QUERY_TYPE_PIPELINE_STATISTICS) {
+            atomic_max(device_data->obj_res_info.maxPipelineStatisticsQueriesPerPool, pCreateInfo->queryCount);
+        } else if (pCreateInfo->queryType == VK_QUERY_TYPE_TIMESTAMP) {
+            atomic_max(device_data->obj_res_info.maxTimestampQueriesPerPool, pCreateInfo->queryCount);
+        }
     }
     return result;
 }
@@ -848,7 +1055,7 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateDescriptorPool(VkDevice device, 
     auto device_data = GetDeviceData(device);
     VkResult result = device_data->vtable.CreateDescriptorPool(device, pCreateInfo, pAllocator, pDescriptorPool);
     if (pCreateInfo) {
-        device_data->obj_res_info.descriptorPoolRequestCount++;
+        atomic_max(device_data->obj_res_info.descriptorPoolHighWatermark, ++device_data->obj_res_info.descriptorPoolRequestCount);
     }
     return result;
 }
@@ -857,7 +1064,8 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL AllocateDescriptorSets(VkDevice device
     auto device_data = GetDeviceData(device);
     VkResult result = device_data->vtable.AllocateDescriptorSets(device, pAllocateInfo, pDescriptorSets);
     if (pAllocateInfo && pAllocateInfo != nullptr) {
-        device_data->obj_res_info.descriptorSetRequestCount += pAllocateInfo->descriptorSetCount;
+        atomic_max(device_data->obj_res_info.descriptorSetHighWatermark,
+                   device_data->obj_res_info.descriptorSetRequestCount += pAllocateInfo->descriptorSetCount);
     }
     return result;
 }
@@ -881,7 +1089,7 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateFramebuffer(VkDevice device, con
     auto device_data = GetDeviceData(device);
     VkResult result = device_data->vtable.CreateFramebuffer(device, pCreateInfo, pAllocator, pFramebuffer);
     if (result >= 0) {
-        device_data->obj_res_info.framebufferRequestCount++;
+        atomic_max(device_data->obj_res_info.framebufferHighWatermark, ++device_data->obj_res_info.framebufferRequestCount);
     }
     return result;
 }
@@ -898,28 +1106,27 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateCommandPool(VkDevice device, con
     auto device_data = GetDeviceData(device);
     VkResult result = device_data->vtable.CreateCommandPool(device, pCreateInfo, pAllocator, pCommandPool);
     if (result >= 0) {
-        device_data->obj_res_info.commandPoolRequestCount++;
+        atomic_max(device_data->obj_res_info.commandPoolHighWatermark, ++device_data->obj_res_info.commandPoolRequestCount);
     }
     return result;
 }
 
 // Gen logic
 
-void DeviceData::writePCJSON(GraphicsPipelineData& graphics_pipeline_data) {
+void GraphicsPipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInfo& device_create_info) {
     VpjGenerator generator = vpjCreateGenerator();
     vpjSetMD5PipelineUUIDGeneration(generator, true);
     VpjData data{};
     const char* msg_ = nullptr;
     const char* result_json = nullptr;
 
-    data.graphicsPipelineState.pGraphicsPipeline = graphics_pipeline_data.create_info.ptr();
-    if (std::holds_alternative<RenderPassData>(graphics_pipeline_data.renderpass_data)) {
-        data.graphicsPipelineState.pRenderPass = std::get<RenderPassData>(graphics_pipeline_data.renderpass_data).create_info.ptr();
+    data.graphicsPipelineState.pGraphicsPipeline = create_info.ptr();
+    if (std::holds_alternative<RenderPassData>(renderpass_data)) {
+        data.graphicsPipelineState.pRenderPass = std::get<RenderPassData>(renderpass_data).create_info.ptr();
     } else {
-        data.graphicsPipelineState.pRenderPass =
-            std::get<RenderPass2Data>(graphics_pipeline_data.renderpass_data).create_info.ptr();
+        data.graphicsPipelineState.pRenderPass = std::get<RenderPass2Data>(renderpass_data).create_info.ptr();
     }
-    data.graphicsPipelineState.pPipelineLayout = graphics_pipeline_data.pipeline_layout_data.create_info.ptr();
+    data.graphicsPipelineState.pPipelineLayout = pipeline_layout_data.create_info.ptr();
 
     // Descriptor set layouts, immutable samplers, ycbcr samplers
     std::vector<vku::safe_VkDescriptorSetLayoutCreateInfo> descriptor_set_layouts;
@@ -929,32 +1136,24 @@ void DeviceData::writePCJSON(GraphicsPipelineData& graphics_pipeline_data) {
     std::vector<const char*> descriptor_set_layout_names;
     std::vector<const char*> immutable_sampler_names;
     std::vector<const char*> ycbcr_sampler_names;
-    for (size_t i = 0; i < graphics_pipeline_data.pipeline_layout_data.descriptor_set_layout_data.size(); ++i) {
-        descriptor_set_layouts.push_back(graphics_pipeline_data.pipeline_layout_data.descriptor_set_layout_data[i].create_info);
+    for (size_t i = 0; i < pipeline_layout_data.descriptor_set_layout_data.size(); ++i) {
+        descriptor_set_layouts.push_back(pipeline_layout_data.descriptor_set_layout_data[i].create_info);
         names_storage.push_back(std::string{"DescriptorSetLayout"} +
-                                std::to_string(graphics_pipeline_data.pipeline_layout_data.descriptor_set_layout_data[i].id));
+                                std::to_string(pipeline_layout_data.descriptor_set_layout_data[i].id));
         descriptor_set_layout_names.push_back(names_storage.back().c_str());
-        for (size_t j = 0;
-             j < graphics_pipeline_data.pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data.size(); ++j) {
-            immutable_samplers.push_back(
-                graphics_pipeline_data.pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].create_info);
+        for (size_t j = 0; j < pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data.size(); ++j) {
+            immutable_samplers.push_back(pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].create_info);
             names_storage.push_back(
                 std::string{"ImmutableSampler"} +
-                std::to_string(
-                    graphics_pipeline_data.pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].id));
+                std::to_string(pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].id));
             immutable_sampler_names.push_back(names_storage.back().c_str());
-            if (graphics_pipeline_data.pipeline_layout_data.descriptor_set_layout_data[i]
-                    .immutable_sampler_data[j]
-                    .ycbcr_data.has_value()) {
-                ycbcr_samplers.push_back(graphics_pipeline_data.pipeline_layout_data.descriptor_set_layout_data[i]
-                                             .immutable_sampler_data[j]
-                                             .ycbcr_data.value()
-                                             .create_info);
-                names_storage.push_back(std::string{"YcbcrSampler"} +
-                                        std::to_string(graphics_pipeline_data.pipeline_layout_data.descriptor_set_layout_data[i]
-                                                           .immutable_sampler_data[j]
-                                                           .ycbcr_data.value()
-                                                           .id));
+            if (pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.has_value()) {
+                ycbcr_samplers.push_back(
+                    pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.value().create_info);
+                names_storage.push_back(
+                    std::string{"YcbcrSampler"} +
+                    std::to_string(
+                        pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.value().id));
                 ycbcr_sampler_names.push_back(names_storage.back().c_str());
             }
         }
@@ -970,10 +1169,9 @@ void DeviceData::writePCJSON(GraphicsPipelineData& graphics_pipeline_data) {
     data.graphicsPipelineState.ppYcbcrSamplerNames = ycbcr_sampler_names.data();
 
     // Shaders
-    auto shader_filenames = get_shader_filenames(*graphics_pipeline_data.create_info.ptr(), std::string(getProcessName()),
-                                                 static_cast<uint32_t>(graphics_pipeline_data.id));
-    for (size_t i = 0; i < graphics_pipeline_data.shader_module_data.size(); ++i) {
-        auto& shader_ci = graphics_pipeline_data.shader_module_data[i].create_info;
+    auto shader_filenames = get_shader_filenames(*create_info.ptr(), std::string(getProcessName()), static_cast<uint32_t>(id));
+    for (size_t i = 0; i < shader_module_data.size(); ++i) {
+        auto& shader_ci = shader_module_data[i].create_info;
         auto shader_path = std::string(getBaseDirectoryPath()) + shader_filenames.filenames[i].pFilename;
         std::ofstream spv_file(shader_path, std::ios::binary);
         if (spv_file) {
@@ -991,12 +1189,18 @@ void DeviceData::writePCJSON(GraphicsPipelineData& graphics_pipeline_data) {
     }
 
     // Enabled extensions
-    data.enabledExtensionCount = this->create_info.enabledExtensionCount;
-    data.ppEnabledExtensions = const_cast<const char**>(this->create_info.ppEnabledExtensionNames);
+    data.enabledExtensionCount = device_create_info.enabledExtensionCount;
+    data.ppEnabledExtensions = const_cast<const char**>(device_create_info.ppEnabledExtensionNames);
 
-    vpjGeneratePipelineJson(generator, &data, &result_json, &msg_);
-    auto pipeline_path = std::string(getBaseDirectoryPath()) + std::string(getProcessName()) + "_pipeline_" +
-                         std::to_string(graphics_pipeline_data.id) + ".json";
+    if (!vpjGeneratePipelineJson(generator, &data, &result_json, &msg_)) {
+        LOG("[%s] ERROR: Unable to generate pipeline JSON: %s", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME, msg_);
+    }
+    if (!vpjGetGeneratedPipelineUUID(generator, uuid.data(), &msg_)) {
+        LOG("[%s] ERROR: Unable to obtain generated pipeline UUID: %s", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME, msg_);
+    }
+
+    auto pipeline_path =
+        std::string(getBaseDirectoryPath()) + std::string(getProcessName()) + "_pipeline_" + std::to_string(id) + ".json";
     std::ofstream pipeline_file(pipeline_path);
     if (pipeline_file) {
         pipeline_file << result_json;
@@ -1005,15 +1209,15 @@ void DeviceData::writePCJSON(GraphicsPipelineData& graphics_pipeline_data) {
     }
 }
 
-void DeviceData::writePCJSON(ComputePipelineData& compute_pipeline_data) {
+void ComputePipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInfo& device_create_info) {
     VpjGenerator generator = vpjCreateGenerator();
     vpjSetMD5PipelineUUIDGeneration(generator, true);
     VpjData data{};
     const char* msg_ = nullptr;
     const char* result_json = nullptr;
 
-    data.computePipelineState.pComputePipeline = compute_pipeline_data.create_info.ptr();
-    data.computePipelineState.pPipelineLayout = compute_pipeline_data.pipeline_layout_data.create_info.ptr();
+    data.computePipelineState.pComputePipeline = create_info.ptr();
+    data.computePipelineState.pPipelineLayout = pipeline_layout_data.create_info.ptr();
 
     // Descriptor set layouts, immutable samplers, ycbcr samplers
     std::vector<vku::safe_VkDescriptorSetLayoutCreateInfo> descriptor_set_layouts;
@@ -1023,32 +1227,24 @@ void DeviceData::writePCJSON(ComputePipelineData& compute_pipeline_data) {
     std::vector<const char*> descriptor_set_layout_names;
     std::vector<const char*> immutable_sampler_names;
     std::vector<const char*> ycbcr_sampler_names;
-    for (size_t i = 0; i < compute_pipeline_data.pipeline_layout_data.descriptor_set_layout_data.size(); ++i) {
-        descriptor_set_layouts.push_back(compute_pipeline_data.pipeline_layout_data.descriptor_set_layout_data[i].create_info);
+    for (size_t i = 0; i < pipeline_layout_data.descriptor_set_layout_data.size(); ++i) {
+        descriptor_set_layouts.push_back(pipeline_layout_data.descriptor_set_layout_data[i].create_info);
         names_storage.push_back(std::string{"DescriptorSetLayout"} +
-                                std::to_string(compute_pipeline_data.pipeline_layout_data.descriptor_set_layout_data[i].id));
+                                std::to_string(pipeline_layout_data.descriptor_set_layout_data[i].id));
         descriptor_set_layout_names.push_back(names_storage.back().c_str());
-        for (size_t j = 0;
-             j < compute_pipeline_data.pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data.size(); ++j) {
-            immutable_samplers.push_back(
-                compute_pipeline_data.pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].create_info);
+        for (size_t j = 0; j < pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data.size(); ++j) {
+            immutable_samplers.push_back(pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].create_info);
             names_storage.push_back(
                 std::string{"ImmutableSampler"} +
-                std::to_string(
-                    compute_pipeline_data.pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].id));
+                std::to_string(pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].id));
             immutable_sampler_names.push_back(names_storage.back().c_str());
-            if (compute_pipeline_data.pipeline_layout_data.descriptor_set_layout_data[i]
-                    .immutable_sampler_data[j]
-                    .ycbcr_data.has_value()) {
-                ycbcr_samplers.push_back(compute_pipeline_data.pipeline_layout_data.descriptor_set_layout_data[i]
-                                             .immutable_sampler_data[j]
-                                             .ycbcr_data.value()
-                                             .create_info);
-                names_storage.push_back(std::string{"YcbcrSampler"} +
-                                        std::to_string(compute_pipeline_data.pipeline_layout_data.descriptor_set_layout_data[i]
-                                                           .immutable_sampler_data[j]
-                                                           .ycbcr_data.value()
-                                                           .id));
+            if (pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.has_value()) {
+                ycbcr_samplers.push_back(
+                    pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.value().create_info);
+                names_storage.push_back(
+                    std::string{"YcbcrSampler"} +
+                    std::to_string(
+                        pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.value().id));
                 ycbcr_sampler_names.push_back(names_storage.back().c_str());
             }
         }
@@ -1064,9 +1260,8 @@ void DeviceData::writePCJSON(ComputePipelineData& compute_pipeline_data) {
     data.computePipelineState.ppYcbcrSamplerNames = ycbcr_sampler_names.data();
 
     // Shaders
-    auto shader_filename = get_shader_filenames(*compute_pipeline_data.create_info.ptr(), std::string(getProcessName()),
-                                                static_cast<uint32_t>(compute_pipeline_data.id));
-    auto shader_ci = compute_pipeline_data.shader_module_data.create_info;
+    auto shader_filename = get_shader_filenames(*create_info.ptr(), std::string(getProcessName()), static_cast<uint32_t>(id));
+    auto shader_ci = shader_module_data.create_info;
     auto shader_path = std::string(getBaseDirectoryPath()) + shader_filename.filenames[0].pFilename;
     std::ofstream spv_file(shader_path, std::ios::binary);
     if (spv_file) {
@@ -1083,20 +1278,45 @@ void DeviceData::writePCJSON(ComputePipelineData& compute_pipeline_data) {
         LOG("[%s] ERROR: Unable to filter physical device features: %s", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME, msg_);
     }
 
-    data.enabledExtensionCount = create_info.enabledExtensionCount;
-    data.ppEnabledExtensions = const_cast<const char**>(create_info.ppEnabledExtensionNames);
+    data.enabledExtensionCount = device_create_info.enabledExtensionCount;
+    data.ppEnabledExtensions = const_cast<const char**>(device_create_info.ppEnabledExtensionNames);
 
     if (!vpjGeneratePipelineJson(generator, &data, &result_json, &msg_)) {
         LOG("[%s] ERROR: Unable to generate pipeline JSON: %s", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME, msg_);
     }
-    auto pipeline_path = std::string(getBaseDirectoryPath()) + std::string(getProcessName()) + "_pipeline_" +
-                         std::to_string(compute_pipeline_data.id) + ".json";
+    if (!vpjGetGeneratedPipelineUUID(generator, uuid.data(), &msg_)) {
+        LOG("[%s] ERROR: Unable to obtain generated pipeline UUID: %s", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME, msg_);
+    }
+
+    auto pipeline_path =
+        std::string(getBaseDirectoryPath()) + std::string(getProcessName()) + "_pipeline_" + std::to_string(id) + ".json";
     std::ofstream pipeline_file(pipeline_path);
     if (pipeline_file) {
         pipeline_file << result_json;
     } else {
         LOG("[%s] ERROR: Unable to open: %s", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME, pipeline_path.c_str());
     }
+}
+
+// VK_EXT_pipeline_properties
+
+VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL GetPipelinePropertiesEXT(VkDevice device, const VkPipelineInfoEXT* pPipelineInfo,
+                                                                   VkBaseOutStructure* pPipelineProperties) {
+    if (pPipelineProperties->sType != VK_STRUCTURE_TYPE_PIPELINE_PROPERTIES_IDENTIFIER_EXT) {
+        return VK_ERROR_VALIDATION_FAILED;
+    }
+    VkPipelinePropertiesIdentifierEXT* props = reinterpret_cast<VkPipelinePropertiesIdentifierEXT*>(pPipelineProperties);
+
+    auto device_data = GetDeviceData(device);
+    if (auto result = device_data->graphics_pipeline_map.find(pPipelineInfo->pipeline); result->first) {
+        std::copy(result->second->uuid.begin(), result->second->uuid.end(), props->pipelineIdentifier);
+    } else if (auto result2 = device_data->compute_pipeline_map.find(pPipelineInfo->pipeline); result2->first) {
+        std::copy(result2->second->uuid.begin(), result2->second->uuid.end(), props->pipelineIdentifier);
+    } else {
+        LOG("[%s] ERROR: Failed to find pipeline in accelerating structures.", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
+        return VK_ERROR_UNKNOWN;
+    }
+    return VK_SUCCESS;
 }
 
 // End layer logic
@@ -1119,6 +1339,8 @@ static const std::unordered_map<std::string, PFN_vkVoidFunction> kInstanceFuncti
 
 static const std::unordered_map<std::string, PFN_vkVoidFunction> kDeviceFunctions = {
     ADD_HOOK(DestroyDevice),
+    ADD_HOOK(CreateSemaphore),
+    ADD_HOOK(DestroySemaphore),
     ADD_HOOK(CreateShaderModule),
     ADD_HOOK(DestroyShaderModule),
     ADD_HOOK(CreateGraphicsPipelines),

@@ -1984,6 +1984,573 @@ TEST_F(PJGenTest, SAXPY) {
     EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
+TEST_F(PJGenTest, vksccube) {
+    TEST_DESCRIPTION("Tests generating of a reasonably simple graphics pipeline JSON");
+
+    const std::string ref_json{R"({
+        "GraphicsPipelineState": {
+            "Renderpass": {
+                "sType": "VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO",
+                "pNext": "NULL",
+                "flags": 0,
+                "attachmentCount": 2,
+                "pAttachments": [
+                    {
+                        "flags": 0,
+                        "format": "VK_FORMAT_R8G8B8A8_UNORM",
+                        "samples": "VK_SAMPLE_COUNT_1_BIT",
+                        "loadOp": "VK_ATTACHMENT_LOAD_OP_CLEAR",
+                        "storeOp": "VK_ATTACHMENT_STORE_OP_STORE",
+                        "stencilLoadOp": "VK_ATTACHMENT_LOAD_OP_DONT_CARE",
+                        "stencilStoreOp": "VK_ATTACHMENT_STORE_OP_DONT_CARE",
+                        "initialLayout": "VK_IMAGE_LAYOUT_UNDEFINED",
+                        "finalLayout": "VK_IMAGE_LAYOUT_PRESENT_SRC_KHR"
+                    },
+                    {
+                        "flags": 0,
+                        "format": "VK_FORMAT_D16_UNORM",
+                        "samples": "VK_SAMPLE_COUNT_1_BIT",
+                        "loadOp": "VK_ATTACHMENT_LOAD_OP_CLEAR",
+                        "storeOp": "VK_ATTACHMENT_STORE_OP_DONT_CARE",
+                        "stencilLoadOp": "VK_ATTACHMENT_LOAD_OP_DONT_CARE",
+                        "stencilStoreOp": "VK_ATTACHMENT_STORE_OP_DONT_CARE",
+                        "initialLayout": "VK_IMAGE_LAYOUT_UNDEFINED",
+                        "finalLayout": "VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL"
+                    }
+                ],
+                "subpassCount": 1,
+                "pSubpasses": [
+                    {
+                        "flags": 0,
+                        "pipelineBindPoint": "VK_PIPELINE_BIND_POINT_GRAPHICS",
+                        "inputAttachmentCount": 0,
+                        "pInputAttachments": "NULL",
+                        "colorAttachmentCount": 1,
+                        "pColorAttachments": [
+                            {
+                                "attachment": 0,
+                                "layout": "VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL"
+                            }
+                        ],
+                        "pResolveAttachments": "NULL",
+                        "pDepthStencilAttachment": {
+                            "attachment": 1,
+                            "layout": "VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL"
+                        },
+                        "preserveAttachmentCount": 0,
+                        "pPreserveAttachments": "NULL"
+                    }
+                ],
+                "dependencyCount": 2,
+                "pDependencies": [
+                    {
+                        "srcSubpass": 4294967295,
+                        "dstSubpass": 0,
+                        "srcStageMask": "VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT",
+                        "dstStageMask": "VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT",
+                        "srcAccessMask": "VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT",
+                        "dstAccessMask": "VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT",
+                        "dependencyFlags": 0
+                    },
+                    {
+                        "srcSubpass": 4294967295,
+                        "dstSubpass": 0,
+                        "srcStageMask": "VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT",
+                        "dstStageMask": "VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT",
+                        "srcAccessMask": 0,
+                        "dstAccessMask": "VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT",
+                        "dependencyFlags": 0
+                    }
+                ]
+            },
+            "DescriptorSetLayouts": [
+                {
+                    "2": {
+                        "sType": "VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO",
+                        "pNext": "NULL",
+                        "flags": 0,
+                        "bindingCount": 2,
+                        "pBindings": [
+                            {
+                                "binding": 0,
+                                "descriptorType": "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER",
+                                "descriptorCount": 1,
+                                "stageFlags": "VK_SHADER_STAGE_VERTEX_BIT",
+                                "pImmutableSamplers": "NULL"
+                            },
+                            {
+                                "binding": 1,
+                                "descriptorType": "VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER",
+                                "descriptorCount": 1,
+                                "stageFlags": "VK_SHADER_STAGE_FRAGMENT_BIT",
+                                "pImmutableSamplers": "NULL"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "PipelineLayout": {
+                "sType": "VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO",
+                "pNext": "NULL",
+                "flags": 0,
+                "setLayoutCount": 1,
+                "pSetLayouts": [
+                    "2"
+                ],
+                "pushConstantRangeCount": 0,
+                "pPushConstantRanges": "NULL"
+            },
+            "GraphicsPipeline": {
+                "sType": "VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO",
+                "pNext": "NULL",
+                "flags": 0,
+                "stageCount": 2,
+                "pStages": [
+                    {
+                        "sType": "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
+                        "pNext": "NULL",
+                        "flags": 0,
+                        "stage": "VK_SHADER_STAGE_VERTEX_BIT",
+                        "module" : "",
+                        "pName": "main",
+                        "pSpecializationInfo": "NULL"
+                    },
+                    {
+                        "sType": "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
+                        "pNext": "NULL",
+                        "flags": 0,
+                        "stage": "VK_SHADER_STAGE_FRAGMENT_BIT",
+                        "module" : "",
+                        "pName": "main",
+                        "pSpecializationInfo": "NULL"
+                    }
+                ],
+                "pVertexInputState": {
+                    "sType": "VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO",
+                    "pNext": "NULL",
+                    "flags": 0,
+                    "vertexBindingDescriptionCount": 0,
+                    "pVertexBindingDescriptions": "NULL",
+                    "vertexAttributeDescriptionCount": 0,
+                    "pVertexAttributeDescriptions": "NULL"
+                },
+                "pInputAssemblyState": {
+                    "sType": "VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO",
+                    "pNext": "NULL",
+                    "flags": 0,
+                    "topology": "VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST",
+                    "primitiveRestartEnable": "VK_FALSE"
+                },
+                "pTessellationState": "NULL",
+                "pViewportState": {
+                    "sType": "VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO",
+                    "pNext": "NULL",
+                    "flags": 0,
+                    "viewportCount": 1,
+                    "pViewports": "NULL",
+                    "scissorCount": 1,
+                    "pScissors": "NULL"
+                },
+                "pRasterizationState": {
+                    "sType": "VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO",
+                    "pNext": "NULL",
+                    "flags": 0,
+                    "depthClampEnable": "VK_FALSE",
+                    "rasterizerDiscardEnable": "VK_FALSE",
+                    "polygonMode": "VK_POLYGON_MODE_FILL",
+                    "cullMode": "VK_CULL_MODE_BACK_BIT",
+                    "frontFace": "VK_FRONT_FACE_COUNTER_CLOCKWISE",
+                    "depthBiasEnable": "VK_FALSE",
+                    "depthBiasConstantFactor": 0.0,
+                    "depthBiasClamp": 0.0,
+                    "depthBiasSlopeFactor": 0.0,
+                    "lineWidth": 1.0
+                },
+                "pMultisampleState": {
+                    "sType": "VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO",
+                    "pNext": "NULL",
+                    "flags": 0,
+                    "rasterizationSamples": "VK_SAMPLE_COUNT_1_BIT",
+                    "sampleShadingEnable": "VK_FALSE",
+                    "minSampleShading": 0.0,
+                    "pSampleMask": "NULL",
+                    "alphaToCoverageEnable": "VK_FALSE",
+                    "alphaToOneEnable": "VK_FALSE"
+                },
+                "pDepthStencilState": {
+                    "sType": "VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO",
+                    "pNext": "NULL",
+                    "flags": 0,
+                    "depthTestEnable": "VK_TRUE",
+                    "depthWriteEnable": "VK_TRUE",
+                    "depthCompareOp": "VK_COMPARE_OP_LESS_OR_EQUAL",
+                    "depthBoundsTestEnable": "VK_FALSE",
+                    "stencilTestEnable": "VK_FALSE",
+                    "front": {
+                        "failOp": "VK_STENCIL_OP_KEEP",
+                        "passOp": "VK_STENCIL_OP_KEEP",
+                        "depthFailOp": "VK_STENCIL_OP_KEEP",
+                        "compareOp": "VK_COMPARE_OP_ALWAYS",
+                        "compareMask": 0,
+                        "writeMask": 0,
+                        "reference": 0
+                    },
+                    "back": {
+                        "failOp": "VK_STENCIL_OP_KEEP",
+                        "passOp": "VK_STENCIL_OP_KEEP",
+                        "depthFailOp": "VK_STENCIL_OP_KEEP",
+                        "compareOp": "VK_COMPARE_OP_ALWAYS",
+                        "compareMask": 0,
+                        "writeMask": 0,
+                        "reference": 0
+                    },
+                    "minDepthBounds": 0.0,
+                    "maxDepthBounds": 0.0
+                },
+                "pColorBlendState": {
+                    "sType": "VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO",
+                    "pNext": "NULL",
+                    "flags": 0,
+                    "logicOpEnable": "VK_FALSE",
+                    "logicOp": "VK_LOGIC_OP_CLEAR",
+                    "attachmentCount": 1,
+                    "pAttachments": [
+                        {
+                            "blendEnable": "VK_FALSE",
+                            "srcColorBlendFactor": "VK_BLEND_FACTOR_ZERO",
+                            "dstColorBlendFactor": "VK_BLEND_FACTOR_ZERO",
+                            "colorBlendOp": "VK_BLEND_OP_ADD",
+                            "srcAlphaBlendFactor": "VK_BLEND_FACTOR_ZERO",
+                            "dstAlphaBlendFactor": "VK_BLEND_FACTOR_ZERO",
+                            "alphaBlendOp": "VK_BLEND_OP_ADD",
+                            "colorWriteMask": "VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT"
+                        }
+                    ],
+                    "blendConstants": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "pDynamicState": {
+                    "sType": "VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO",
+                    "pNext": "NULL",
+                    "flags": 0,
+                    "dynamicStateCount": 2,
+                    "pDynamicStates": [
+                        "VK_DYNAMIC_STATE_VIEWPORT",
+                        "VK_DYNAMIC_STATE_SCISSOR"
+                    ]
+                },
+                "layout": 5,
+                "renderPass" : "",
+                "subpass": 0,
+                "basePipelineHandle": "",
+                "basePipelineIndex": 0
+            },
+            "ShaderFileNames": [
+                {
+                    "stage": "VK_SHADER_STAGE_VERTEX_BIT",
+                    "filename": "cube.vert.spv"
+                },
+                {
+                    "stage": "VK_SHADER_STAGE_FRAGMENT_BIT",
+                    "filename": "cube.frag.spv"
+                }
+            ]
+        },
+        "EnabledExtensions": [],
+        "PipelineUUID": [
+            245,
+            154,
+            136,
+            152,
+            244,
+            195,
+            139,
+            123,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ]
+    })"};
+
+    VpjData data{};
+
+    VkRenderPassCreateInfo renderPass = {};
+    data.graphicsPipelineState.pRenderPass = &renderPass;
+    renderPass.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    renderPass.pNext = nullptr;
+    renderPass.flags = 0;
+    renderPass.attachmentCount = 2;
+    VkAttachmentDescription attachments[2] = {{}, {}};
+    renderPass.pAttachments = attachments;
+    attachments[0].flags = 0;
+    attachments[0].format = VK_FORMAT_R8G8B8A8_UNORM;
+    attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
+    attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    attachments[1].flags = 0;
+    attachments[1].format = VK_FORMAT_D16_UNORM;
+    attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
+    attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    renderPass.subpassCount = 1;
+    VkSubpassDescription subpasses[1] = {{}};
+    renderPass.pSubpasses = subpasses;
+    subpasses[0].flags = 0;
+    subpasses[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpasses[0].inputAttachmentCount = 0;
+    subpasses[0].pInputAttachments = nullptr;
+    subpasses[0].colorAttachmentCount = 1;
+    VkAttachmentReference colorAttachments[1] = {{}};
+    colorAttachments[0].attachment = 0;
+    colorAttachments[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    subpasses[0].pColorAttachments = colorAttachments;
+    subpasses[0].pResolveAttachments = nullptr;
+    VkAttachmentReference depthStencilAttachment[1] = {{}};
+    depthStencilAttachment[0].attachment = 1;
+    depthStencilAttachment[0].layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    subpasses[0].pDepthStencilAttachment = depthStencilAttachment;
+    subpasses[0].preserveAttachmentCount = 0;
+    subpasses[0].pPreserveAttachments = nullptr;
+    renderPass.dependencyCount = 2;
+    VkSubpassDependency dependencies[2] = {{}, {}};
+    dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependencies[0].dstSubpass = 0;
+    dependencies[0].srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+    dependencies[0].dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+    dependencies[0].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    dependencies[0].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    dependencies[0].dependencyFlags = 0;
+    dependencies[1].srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependencies[1].dstSubpass = 0;
+    dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependencies[1].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependencies[1].srcAccessMask = 0;
+    dependencies[1].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+    dependencies[1].dependencyFlags = 0;
+    renderPass.pDependencies = dependencies;
+
+    VkDescriptorSetLayoutCreateInfo descriptorSetLayouts[1] = {{}};
+    data.graphicsPipelineState.pDescriptorSetLayouts = descriptorSetLayouts;
+    const char* descriptorSetLayoutNames[1] = {"2"};
+    data.graphicsPipelineState.descriptorSetLayoutCount = 1;
+    data.graphicsPipelineState.ppDescriptorSetLayoutNames = descriptorSetLayoutNames;
+    descriptorSetLayouts[0].sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    descriptorSetLayouts[0].pNext = nullptr;
+    descriptorSetLayouts[0].flags = 0;
+    descriptorSetLayouts[0].bindingCount = 2;
+    VkDescriptorSetLayoutBinding bindings[2] = {{}, {}};
+    bindings[0].binding = 0;
+    bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    bindings[0].descriptorCount = 1;
+    bindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    bindings[0].pImmutableSamplers = nullptr;
+    bindings[1].binding = 1;
+    bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    bindings[1].descriptorCount = 1;
+    bindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    bindings[1].pImmutableSamplers = nullptr;
+    descriptorSetLayouts[0].pBindings = bindings;
+
+    VkPipelineLayoutCreateInfo pipelineLayout = {};
+    data.graphicsPipelineState.pPipelineLayout = &pipelineLayout;
+    pipelineLayout.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayout.pNext = nullptr;
+    pipelineLayout.flags = 0;
+    pipelineLayout.setLayoutCount = 1;
+    VkDescriptorSetLayout setLayouts[1] = {{}};
+    setLayouts[0] = reinterpret_cast<VkDescriptorSetLayout>(0);
+    pipelineLayout.pSetLayouts = setLayouts;
+    pipelineLayout.pushConstantRangeCount = 0;
+    pipelineLayout.pPushConstantRanges = nullptr;
+
+    VkGraphicsPipelineCreateInfo graphicsPipeline = {};
+    data.graphicsPipelineState.pGraphicsPipeline = &graphicsPipeline;
+    graphicsPipeline.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    graphicsPipeline.flags = 0;
+    graphicsPipeline.stageCount = 2;
+    VkPipelineShaderStageCreateInfo stages[2] = {{}, {}};
+    graphicsPipeline.pStages = stages;
+    stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    stages[0].pNext = nullptr;
+    stages[0].flags = 0;
+    stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+    stages[0].module = reinterpret_cast<VkShaderModule>(38);
+    stages[0].pName = "main";
+    stages[0].pSpecializationInfo = nullptr;
+    stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    stages[1].pNext = nullptr;
+    stages[1].flags = 0;
+    stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    stages[1].module = reinterpret_cast<VkShaderModule>(39);
+    stages[1].pName = "main";
+    stages[1].pSpecializationInfo = nullptr;
+
+    VkPipelineVertexInputStateCreateInfo vertexInputState = {};
+    graphicsPipeline.pVertexInputState = &vertexInputState;
+    vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    vertexInputState.pNext = nullptr;
+    vertexInputState.flags = 0;
+    vertexInputState.vertexBindingDescriptionCount = 0;
+    vertexInputState.pVertexBindingDescriptions = nullptr;
+    vertexInputState.vertexAttributeDescriptionCount = 0;
+    vertexInputState.pVertexAttributeDescriptions = nullptr;
+
+    VkPipelineInputAssemblyStateCreateInfo inputAssemblyState = {};
+    graphicsPipeline.pInputAssemblyState = &inputAssemblyState;
+    inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    inputAssemblyState.pNext = nullptr;
+    inputAssemblyState.flags = 0;
+    inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    inputAssemblyState.primitiveRestartEnable = VK_FALSE;
+
+    graphicsPipeline.pTessellationState = nullptr;
+
+    VkPipelineViewportStateCreateInfo viewportState = {};
+    graphicsPipeline.pViewportState = &viewportState;
+    viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    viewportState.pNext = nullptr;
+    viewportState.flags = 0;
+    viewportState.viewportCount = 1;
+    viewportState.scissorCount = 1;
+
+    VkPipelineRasterizationStateCreateInfo rasterizationState = {};
+    graphicsPipeline.pRasterizationState = &rasterizationState;
+    rasterizationState.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    rasterizationState.pNext = nullptr;
+    rasterizationState.flags = 0;
+    rasterizationState.depthClampEnable = VK_FALSE;
+    rasterizationState.rasterizerDiscardEnable = VK_FALSE;
+    rasterizationState.polygonMode = VK_POLYGON_MODE_FILL;
+    rasterizationState.cullMode = VK_CULL_MODE_BACK_BIT;
+    rasterizationState.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    rasterizationState.depthBiasEnable = VK_FALSE;
+    rasterizationState.depthBiasConstantFactor = 0;
+    rasterizationState.depthBiasClamp = 0;
+    rasterizationState.depthBiasSlopeFactor = 0;
+    rasterizationState.lineWidth = 1;
+
+    VkPipelineMultisampleStateCreateInfo multisampleState = {};
+    graphicsPipeline.pMultisampleState = &multisampleState;
+    multisampleState.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    multisampleState.pNext = nullptr;
+    multisampleState.flags = 0;
+    multisampleState.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+    multisampleState.sampleShadingEnable = VK_FALSE;
+    multisampleState.minSampleShading = 0;
+    multisampleState.pSampleMask = nullptr;
+    multisampleState.alphaToCoverageEnable = VK_FALSE;
+    multisampleState.alphaToOneEnable = VK_FALSE;
+
+    VkPipelineDepthStencilStateCreateInfo depthStencilState = {};
+    graphicsPipeline.pDepthStencilState = &depthStencilState;
+    depthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depthStencilState.pNext = nullptr;
+    depthStencilState.flags = 0;
+    depthStencilState.depthTestEnable = VK_TRUE;
+    depthStencilState.depthWriteEnable = VK_TRUE;
+    depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+    depthStencilState.depthBoundsTestEnable = VK_FALSE;
+    depthStencilState.stencilTestEnable = VK_FALSE;
+    depthStencilState.front.failOp = VK_STENCIL_OP_KEEP;
+    depthStencilState.front.passOp = VK_STENCIL_OP_KEEP;
+    depthStencilState.front.depthFailOp = VK_STENCIL_OP_KEEP;
+    depthStencilState.front.compareOp = VK_COMPARE_OP_ALWAYS;
+    depthStencilState.front.compareMask = 0;
+    depthStencilState.front.writeMask = 0;
+    depthStencilState.front.reference = 0;
+    depthStencilState.back.failOp = VK_STENCIL_OP_KEEP;
+    depthStencilState.back.passOp = VK_STENCIL_OP_KEEP;
+    depthStencilState.back.depthFailOp = VK_STENCIL_OP_KEEP;
+    depthStencilState.back.compareOp = VK_COMPARE_OP_ALWAYS;
+    depthStencilState.back.compareMask = 0;
+    depthStencilState.back.writeMask = 0;
+    depthStencilState.back.reference = 0;
+    depthStencilState.minDepthBounds = 0;
+    depthStencilState.maxDepthBounds = 0;
+
+    VkPipelineColorBlendStateCreateInfo colorBlendState = {};
+    graphicsPipeline.pColorBlendState = &colorBlendState;
+    colorBlendState.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    colorBlendState.pNext = nullptr;
+    colorBlendState.flags = 0;
+    colorBlendState.logicOpEnable = VK_FALSE;
+    colorBlendState.logicOp = VK_LOGIC_OP_CLEAR;
+    colorBlendState.attachmentCount = 1;
+    VkPipelineColorBlendAttachmentState cbs_attachments[1] = {{}};
+    colorBlendState.pAttachments = cbs_attachments;
+    cbs_attachments[0].blendEnable = VK_FALSE;
+    cbs_attachments[0].srcColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+    cbs_attachments[0].dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+    cbs_attachments[0].colorBlendOp = VK_BLEND_OP_ADD;
+    cbs_attachments[0].srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+    cbs_attachments[0].dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+    cbs_attachments[0].alphaBlendOp = VK_BLEND_OP_ADD;
+    cbs_attachments[0].colorWriteMask =
+        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    colorBlendState.blendConstants[0] = 0;
+    colorBlendState.blendConstants[1] = 0;
+    colorBlendState.blendConstants[2] = 0;
+    colorBlendState.blendConstants[3] = 0;
+
+    VkPipelineDynamicStateCreateInfo dynamicState = {};
+    graphicsPipeline.pDynamicState = &dynamicState;
+    dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    dynamicState.pNext = nullptr;
+    dynamicState.flags = 0;
+    dynamicState.dynamicStateCount = 2;
+    VkDynamicState dynamicStates[2] = {{}, {}};
+    dynamicState.pDynamicStates = dynamicStates;
+    dynamicStates[0] = VK_DYNAMIC_STATE_VIEWPORT;
+    dynamicStates[1] = VK_DYNAMIC_STATE_SCISSOR;
+
+    graphicsPipeline.layout = reinterpret_cast<VkPipelineLayout>(5);
+    graphicsPipeline.subpass = 0;
+    graphicsPipeline.basePipelineHandle = VK_NULL_HANDLE;
+    graphicsPipeline.basePipelineIndex = 0;
+
+    data.graphicsPipelineState.shaderFileNameCount = 2;
+    VpjShaderFileName shaderFileNames[2] = {{}, {}};
+    data.graphicsPipelineState.pShaderFileNames = shaderFileNames;
+    shaderFileNames[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+    shaderFileNames[0].pFilename = "cube.vert.spv";
+    shaderFileNames[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    shaderFileNames[1].pFilename = "cube.frag.spv";
+
+    data.enabledExtensionCount = 0;
+
+    data.pipelineUUID[0] = 245;
+    data.pipelineUUID[1] = 154;
+    data.pipelineUUID[2] = 136;
+    data.pipelineUUID[3] = 152;
+    data.pipelineUUID[4] = 244;
+    data.pipelineUUID[5] = 195;
+    data.pipelineUUID[6] = 139;
+    data.pipelineUUID[7] = 123;
+
+    const char* result_json = nullptr;
+
+    EXPECT_TRUE(vpjGeneratePipelineJson(generator_, &data, &result_json, &msg_));
+    CHECK_GEN();
+    EXPECT_TRUE(reformatJson(ref_json) == result_json);
+}
+
 TEST_F(PJGenTest, UUIDCompute) {
     TEST_DESCRIPTION("Tests generating UUID for a compute pipeline");
 
@@ -2235,6 +2802,565 @@ TEST_F(PJGenTest, UUIDCompute) {
     const char* enabledExtensions[1] = {"VK_KHR_synchronization2"};
     data.enabledExtensionCount = 1;
     data.ppEnabledExtensions = enabledExtensions;
+
+    const char* result_json = nullptr;
+
+    vpjSetMD5PipelineUUIDGeneration(generator_, true);
+    EXPECT_TRUE(vpjGeneratePipelineJson(generator_, &data, &result_json, &msg_));
+    CHECK_GEN();
+    EXPECT_TRUE(reformatJson(ref_json) == result_json);
+}
+
+TEST_F(PJGenTest, UUIDGraphics) {
+    TEST_DESCRIPTION("Tests generating UUID for a compute pipeline");
+
+    const std::string ref_json{R"({
+        "GraphicsPipelineState": {
+            "Renderpass": {
+                "sType": "VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO",
+                "pNext": "NULL",
+                "flags": 0,
+                "attachmentCount": 2,
+                "pAttachments": [
+                    {
+                        "flags": 0,
+                        "format": "VK_FORMAT_R8G8B8A8_UNORM",
+                        "samples": "VK_SAMPLE_COUNT_1_BIT",
+                        "loadOp": "VK_ATTACHMENT_LOAD_OP_CLEAR",
+                        "storeOp": "VK_ATTACHMENT_STORE_OP_STORE",
+                        "stencilLoadOp": "VK_ATTACHMENT_LOAD_OP_DONT_CARE",
+                        "stencilStoreOp": "VK_ATTACHMENT_STORE_OP_DONT_CARE",
+                        "initialLayout": "VK_IMAGE_LAYOUT_UNDEFINED",
+                        "finalLayout": "VK_IMAGE_LAYOUT_PRESENT_SRC_KHR"
+                    },
+                    {
+                        "flags": 0,
+                        "format": "VK_FORMAT_D16_UNORM",
+                        "samples": "VK_SAMPLE_COUNT_1_BIT",
+                        "loadOp": "VK_ATTACHMENT_LOAD_OP_CLEAR",
+                        "storeOp": "VK_ATTACHMENT_STORE_OP_DONT_CARE",
+                        "stencilLoadOp": "VK_ATTACHMENT_LOAD_OP_DONT_CARE",
+                        "stencilStoreOp": "VK_ATTACHMENT_STORE_OP_DONT_CARE",
+                        "initialLayout": "VK_IMAGE_LAYOUT_UNDEFINED",
+                        "finalLayout": "VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL"
+                    }
+                ],
+                "subpassCount": 1,
+                "pSubpasses": [
+                    {
+                        "flags": 0,
+                        "pipelineBindPoint": "VK_PIPELINE_BIND_POINT_GRAPHICS",
+                        "inputAttachmentCount": 0,
+                        "pInputAttachments": "NULL",
+                        "colorAttachmentCount": 1,
+                        "pColorAttachments": [
+                            {
+                                "attachment": 0,
+                                "layout": "VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL"
+                            }
+                        ],
+                        "pResolveAttachments": "NULL",
+                        "pDepthStencilAttachment": {
+                            "attachment": 1,
+                            "layout": "VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL"
+                        },
+                        "preserveAttachmentCount": 0,
+                        "pPreserveAttachments": "NULL"
+                    }
+                ],
+                "dependencyCount": 2,
+                "pDependencies": [
+                    {
+                        "srcSubpass": 4294967295,
+                        "dstSubpass": 0,
+                        "srcStageMask": "VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT",
+                        "dstStageMask": "VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT",
+                        "srcAccessMask": "VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT",
+                        "dstAccessMask": "VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT",
+                        "dependencyFlags": 0
+                    },
+                    {
+                        "srcSubpass": 4294967295,
+                        "dstSubpass": 0,
+                        "srcStageMask": "VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT",
+                        "dstStageMask": "VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT",
+                        "srcAccessMask": 0,
+                        "dstAccessMask": "VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT",
+                        "dependencyFlags": 0
+                    }
+                ]
+            },
+            "DescriptorSetLayouts": [
+                {
+                    "2": {
+                        "sType": "VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO",
+                        "pNext": "NULL",
+                        "flags": 0,
+                        "bindingCount": 2,
+                        "pBindings": [
+                            {
+                                "binding": 0,
+                                "descriptorType": "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER",
+                                "descriptorCount": 1,
+                                "stageFlags": "VK_SHADER_STAGE_VERTEX_BIT",
+                                "pImmutableSamplers": "NULL"
+                            },
+                            {
+                                "binding": 1,
+                                "descriptorType": "VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER",
+                                "descriptorCount": 1,
+                                "stageFlags": "VK_SHADER_STAGE_FRAGMENT_BIT",
+                                "pImmutableSamplers": "NULL"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "PipelineLayout": {
+                "sType": "VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO",
+                "pNext": "NULL",
+                "flags": 0,
+                "setLayoutCount": 1,
+                "pSetLayouts": [
+                    "2"
+                ],
+                "pushConstantRangeCount": 0,
+                "pPushConstantRanges": "NULL"
+            },
+            "GraphicsPipeline": {
+                "sType": "VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO",
+                "pNext": "NULL",
+                "flags": 0,
+                "stageCount": 2,
+                "pStages": [
+                    {
+                        "sType": "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
+                        "pNext": "NULL",
+                        "flags": 0,
+                        "stage": "VK_SHADER_STAGE_VERTEX_BIT",
+                        "module" : "",
+                        "pName": "main",
+                        "pSpecializationInfo": "NULL"
+                    },
+                    {
+                        "sType": "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
+                        "pNext": "NULL",
+                        "flags": 0,
+                        "stage": "VK_SHADER_STAGE_FRAGMENT_BIT",
+                        "module" : "",
+                        "pName": "main",
+                        "pSpecializationInfo": "NULL"
+                    }
+                ],
+                "pVertexInputState": {
+                    "sType": "VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO",
+                    "pNext": "NULL",
+                    "flags": 0,
+                    "vertexBindingDescriptionCount": 0,
+                    "pVertexBindingDescriptions": "NULL",
+                    "vertexAttributeDescriptionCount": 0,
+                    "pVertexAttributeDescriptions": "NULL"
+                },
+                "pInputAssemblyState": {
+                    "sType": "VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO",
+                    "pNext": "NULL",
+                    "flags": 0,
+                    "topology": "VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST",
+                    "primitiveRestartEnable": "VK_FALSE"
+                },
+                "pTessellationState": "NULL",
+                "pViewportState": {
+                    "sType": "VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO",
+                    "pNext": "NULL",
+                    "flags": 0,
+                    "viewportCount": 1,
+                    "pViewports": "NULL",
+                    "scissorCount": 1,
+                    "pScissors": "NULL"
+                },
+                "pRasterizationState": {
+                    "sType": "VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO",
+                    "pNext": "NULL",
+                    "flags": 0,
+                    "depthClampEnable": "VK_FALSE",
+                    "rasterizerDiscardEnable": "VK_FALSE",
+                    "polygonMode": "VK_POLYGON_MODE_FILL",
+                    "cullMode": "VK_CULL_MODE_BACK_BIT",
+                    "frontFace": "VK_FRONT_FACE_COUNTER_CLOCKWISE",
+                    "depthBiasEnable": "VK_FALSE",
+                    "depthBiasConstantFactor": 0.0,
+                    "depthBiasClamp": 0.0,
+                    "depthBiasSlopeFactor": 0.0,
+                    "lineWidth": 1.0
+                },
+                "pMultisampleState": {
+                    "sType": "VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO",
+                    "pNext": "NULL",
+                    "flags": 0,
+                    "rasterizationSamples": "VK_SAMPLE_COUNT_1_BIT",
+                    "sampleShadingEnable": "VK_FALSE",
+                    "minSampleShading": 0.0,
+                    "pSampleMask": "NULL",
+                    "alphaToCoverageEnable": "VK_FALSE",
+                    "alphaToOneEnable": "VK_FALSE"
+                },
+                "pDepthStencilState": {
+                    "sType": "VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO",
+                    "pNext": "NULL",
+                    "flags": 0,
+                    "depthTestEnable": "VK_TRUE",
+                    "depthWriteEnable": "VK_TRUE",
+                    "depthCompareOp": "VK_COMPARE_OP_LESS_OR_EQUAL",
+                    "depthBoundsTestEnable": "VK_FALSE",
+                    "stencilTestEnable": "VK_FALSE",
+                    "front": {
+                        "failOp": "VK_STENCIL_OP_KEEP",
+                        "passOp": "VK_STENCIL_OP_KEEP",
+                        "depthFailOp": "VK_STENCIL_OP_KEEP",
+                        "compareOp": "VK_COMPARE_OP_ALWAYS",
+                        "compareMask": 0,
+                        "writeMask": 0,
+                        "reference": 0
+                    },
+                    "back": {
+                        "failOp": "VK_STENCIL_OP_KEEP",
+                        "passOp": "VK_STENCIL_OP_KEEP",
+                        "depthFailOp": "VK_STENCIL_OP_KEEP",
+                        "compareOp": "VK_COMPARE_OP_ALWAYS",
+                        "compareMask": 0,
+                        "writeMask": 0,
+                        "reference": 0
+                    },
+                    "minDepthBounds": 0.0,
+                    "maxDepthBounds": 0.0
+                },
+                "pColorBlendState": {
+                    "sType": "VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO",
+                    "pNext": "NULL",
+                    "flags": 0,
+                    "logicOpEnable": "VK_FALSE",
+                    "logicOp": "VK_LOGIC_OP_CLEAR",
+                    "attachmentCount": 1,
+                    "pAttachments": [
+                        {
+                            "blendEnable": "VK_FALSE",
+                            "srcColorBlendFactor": "VK_BLEND_FACTOR_ZERO",
+                            "dstColorBlendFactor": "VK_BLEND_FACTOR_ZERO",
+                            "colorBlendOp": "VK_BLEND_OP_ADD",
+                            "srcAlphaBlendFactor": "VK_BLEND_FACTOR_ZERO",
+                            "dstAlphaBlendFactor": "VK_BLEND_FACTOR_ZERO",
+                            "alphaBlendOp": "VK_BLEND_OP_ADD",
+                            "colorWriteMask": "VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT"
+                        }
+                    ],
+                    "blendConstants": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "pDynamicState": {
+                    "sType": "VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO",
+                    "pNext": "NULL",
+                    "flags": 0,
+                    "dynamicStateCount": 2,
+                    "pDynamicStates": [
+                        "VK_DYNAMIC_STATE_VIEWPORT",
+                        "VK_DYNAMIC_STATE_SCISSOR"
+                    ]
+                },
+                "layout": 5,
+                "renderPass" : "",
+                "subpass": 0,
+                "basePipelineHandle": "",
+                "basePipelineIndex": 0
+            },
+            "ShaderFileNames": [
+                {
+                    "stage": "VK_SHADER_STAGE_VERTEX_BIT",
+                    "filename": "cube.vert.spv"
+                },
+                {
+                    "stage": "VK_SHADER_STAGE_FRAGMENT_BIT",
+                    "filename": "cube.frag.spv"
+                }
+            ]
+        },
+        "EnabledExtensions": [],
+        "PipelineUUID": [
+            191,
+            183,
+            82,
+            53,
+            38,
+            25,
+            130,
+            210,
+            50,
+            60,
+            218,
+            158,
+            248,
+            21,
+            176,
+            240
+        ]
+    })"};
+
+    VpjData data{};
+
+    VkRenderPassCreateInfo renderPass = {};
+    data.graphicsPipelineState.pRenderPass = &renderPass;
+    renderPass.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    renderPass.pNext = nullptr;
+    renderPass.flags = 0;
+    renderPass.attachmentCount = 2;
+    VkAttachmentDescription attachments[2] = {{}, {}};
+    renderPass.pAttachments = attachments;
+    attachments[0].flags = 0;
+    attachments[0].format = VK_FORMAT_R8G8B8A8_UNORM;
+    attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
+    attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    attachments[1].flags = 0;
+    attachments[1].format = VK_FORMAT_D16_UNORM;
+    attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
+    attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    renderPass.subpassCount = 1;
+    VkSubpassDescription subpasses[1] = {{}};
+    renderPass.pSubpasses = subpasses;
+    subpasses[0].flags = 0;
+    subpasses[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpasses[0].inputAttachmentCount = 0;
+    subpasses[0].pInputAttachments = nullptr;
+    subpasses[0].colorAttachmentCount = 1;
+    VkAttachmentReference colorAttachments[1] = {{}};
+    colorAttachments[0].attachment = 0;
+    colorAttachments[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    subpasses[0].pColorAttachments = colorAttachments;
+    subpasses[0].pResolveAttachments = nullptr;
+    VkAttachmentReference depthStencilAttachment[1] = {{}};
+    depthStencilAttachment[0].attachment = 1;
+    depthStencilAttachment[0].layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    subpasses[0].pDepthStencilAttachment = depthStencilAttachment;
+    subpasses[0].preserveAttachmentCount = 0;
+    subpasses[0].pPreserveAttachments = nullptr;
+    renderPass.dependencyCount = 2;
+    VkSubpassDependency dependencies[2] = {{}, {}};
+    dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependencies[0].dstSubpass = 0;
+    dependencies[0].srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+    dependencies[0].dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+    dependencies[0].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    dependencies[0].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    dependencies[0].dependencyFlags = 0;
+    dependencies[1].srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependencies[1].dstSubpass = 0;
+    dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependencies[1].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependencies[1].srcAccessMask = 0;
+    dependencies[1].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+    dependencies[1].dependencyFlags = 0;
+    renderPass.pDependencies = dependencies;
+
+    VkDescriptorSetLayoutCreateInfo descriptorSetLayouts[1] = {{}};
+    data.graphicsPipelineState.pDescriptorSetLayouts = descriptorSetLayouts;
+    const char* descriptorSetLayoutNames[1] = {"2"};
+    data.graphicsPipelineState.descriptorSetLayoutCount = 1;
+    data.graphicsPipelineState.ppDescriptorSetLayoutNames = descriptorSetLayoutNames;
+    descriptorSetLayouts[0].sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    descriptorSetLayouts[0].pNext = nullptr;
+    descriptorSetLayouts[0].flags = 0;
+    descriptorSetLayouts[0].bindingCount = 2;
+    VkDescriptorSetLayoutBinding bindings[2] = {{}, {}};
+    bindings[0].binding = 0;
+    bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    bindings[0].descriptorCount = 1;
+    bindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    bindings[0].pImmutableSamplers = nullptr;
+    bindings[1].binding = 1;
+    bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    bindings[1].descriptorCount = 1;
+    bindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    bindings[1].pImmutableSamplers = nullptr;
+    descriptorSetLayouts[0].pBindings = bindings;
+
+    VkPipelineLayoutCreateInfo pipelineLayout = {};
+    data.graphicsPipelineState.pPipelineLayout = &pipelineLayout;
+    pipelineLayout.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayout.pNext = nullptr;
+    pipelineLayout.flags = 0;
+    pipelineLayout.setLayoutCount = 1;
+    VkDescriptorSetLayout setLayouts[1] = {{}};
+    setLayouts[0] = reinterpret_cast<VkDescriptorSetLayout>(0);
+    pipelineLayout.pSetLayouts = setLayouts;
+    pipelineLayout.pushConstantRangeCount = 0;
+    pipelineLayout.pPushConstantRanges = nullptr;
+
+    VkGraphicsPipelineCreateInfo graphicsPipeline = {};
+    data.graphicsPipelineState.pGraphicsPipeline = &graphicsPipeline;
+    graphicsPipeline.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    graphicsPipeline.flags = 0;
+    graphicsPipeline.stageCount = 2;
+    VkPipelineShaderStageCreateInfo stages[2] = {{}, {}};
+    graphicsPipeline.pStages = stages;
+    stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    stages[0].pNext = nullptr;
+    stages[0].flags = 0;
+    stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+    stages[0].module = reinterpret_cast<VkShaderModule>(38);
+    stages[0].pName = "main";
+    stages[0].pSpecializationInfo = nullptr;
+    stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    stages[1].pNext = nullptr;
+    stages[1].flags = 0;
+    stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    stages[1].module = reinterpret_cast<VkShaderModule>(39);
+    stages[1].pName = "main";
+    stages[1].pSpecializationInfo = nullptr;
+
+    VkPipelineVertexInputStateCreateInfo vertexInputState = {};
+    graphicsPipeline.pVertexInputState = &vertexInputState;
+    vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    vertexInputState.pNext = nullptr;
+    vertexInputState.flags = 0;
+    vertexInputState.vertexBindingDescriptionCount = 0;
+    vertexInputState.pVertexBindingDescriptions = nullptr;
+    vertexInputState.vertexAttributeDescriptionCount = 0;
+    vertexInputState.pVertexAttributeDescriptions = nullptr;
+
+    VkPipelineInputAssemblyStateCreateInfo inputAssemblyState = {};
+    graphicsPipeline.pInputAssemblyState = &inputAssemblyState;
+    inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    inputAssemblyState.pNext = nullptr;
+    inputAssemblyState.flags = 0;
+    inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    inputAssemblyState.primitiveRestartEnable = VK_FALSE;
+
+    graphicsPipeline.pTessellationState = nullptr;
+
+    VkPipelineViewportStateCreateInfo viewportState = {};
+    graphicsPipeline.pViewportState = &viewportState;
+    viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    viewportState.pNext = nullptr;
+    viewportState.flags = 0;
+    viewportState.viewportCount = 1;
+    viewportState.scissorCount = 1;
+
+    VkPipelineRasterizationStateCreateInfo rasterizationState = {};
+    graphicsPipeline.pRasterizationState = &rasterizationState;
+    rasterizationState.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    rasterizationState.pNext = nullptr;
+    rasterizationState.flags = 0;
+    rasterizationState.depthClampEnable = VK_FALSE;
+    rasterizationState.rasterizerDiscardEnable = VK_FALSE;
+    rasterizationState.polygonMode = VK_POLYGON_MODE_FILL;
+    rasterizationState.cullMode = VK_CULL_MODE_BACK_BIT;
+    rasterizationState.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    rasterizationState.depthBiasEnable = VK_FALSE;
+    rasterizationState.depthBiasConstantFactor = 0;
+    rasterizationState.depthBiasClamp = 0;
+    rasterizationState.depthBiasSlopeFactor = 0;
+    rasterizationState.lineWidth = 1;
+
+    VkPipelineMultisampleStateCreateInfo multisampleState = {};
+    graphicsPipeline.pMultisampleState = &multisampleState;
+    multisampleState.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    multisampleState.pNext = nullptr;
+    multisampleState.flags = 0;
+    multisampleState.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+    multisampleState.sampleShadingEnable = VK_FALSE;
+    multisampleState.minSampleShading = 0;
+    multisampleState.pSampleMask = nullptr;
+    multisampleState.alphaToCoverageEnable = VK_FALSE;
+    multisampleState.alphaToOneEnable = VK_FALSE;
+
+    VkPipelineDepthStencilStateCreateInfo depthStencilState = {};
+    graphicsPipeline.pDepthStencilState = &depthStencilState;
+    depthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depthStencilState.pNext = nullptr;
+    depthStencilState.flags = 0;
+    depthStencilState.depthTestEnable = VK_TRUE;
+    depthStencilState.depthWriteEnable = VK_TRUE;
+    depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+    depthStencilState.depthBoundsTestEnable = VK_FALSE;
+    depthStencilState.stencilTestEnable = VK_FALSE;
+    depthStencilState.front.failOp = VK_STENCIL_OP_KEEP;
+    depthStencilState.front.passOp = VK_STENCIL_OP_KEEP;
+    depthStencilState.front.depthFailOp = VK_STENCIL_OP_KEEP;
+    depthStencilState.front.compareOp = VK_COMPARE_OP_ALWAYS;
+    depthStencilState.front.compareMask = 0;
+    depthStencilState.front.writeMask = 0;
+    depthStencilState.front.reference = 0;
+    depthStencilState.back.failOp = VK_STENCIL_OP_KEEP;
+    depthStencilState.back.passOp = VK_STENCIL_OP_KEEP;
+    depthStencilState.back.depthFailOp = VK_STENCIL_OP_KEEP;
+    depthStencilState.back.compareOp = VK_COMPARE_OP_ALWAYS;
+    depthStencilState.back.compareMask = 0;
+    depthStencilState.back.writeMask = 0;
+    depthStencilState.back.reference = 0;
+    depthStencilState.minDepthBounds = 0;
+    depthStencilState.maxDepthBounds = 0;
+
+    VkPipelineColorBlendStateCreateInfo colorBlendState = {};
+    graphicsPipeline.pColorBlendState = &colorBlendState;
+    colorBlendState.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    colorBlendState.pNext = nullptr;
+    colorBlendState.flags = 0;
+    colorBlendState.logicOpEnable = VK_FALSE;
+    colorBlendState.logicOp = VK_LOGIC_OP_CLEAR;
+    colorBlendState.attachmentCount = 1;
+    VkPipelineColorBlendAttachmentState cbs_attachments[1] = {{}};
+    colorBlendState.pAttachments = cbs_attachments;
+    cbs_attachments[0].blendEnable = VK_FALSE;
+    cbs_attachments[0].srcColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+    cbs_attachments[0].dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+    cbs_attachments[0].colorBlendOp = VK_BLEND_OP_ADD;
+    cbs_attachments[0].srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+    cbs_attachments[0].dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+    cbs_attachments[0].alphaBlendOp = VK_BLEND_OP_ADD;
+    cbs_attachments[0].colorWriteMask =
+        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    colorBlendState.blendConstants[0] = 0;
+    colorBlendState.blendConstants[1] = 0;
+    colorBlendState.blendConstants[2] = 0;
+    colorBlendState.blendConstants[3] = 0;
+
+    VkPipelineDynamicStateCreateInfo dynamicState = {};
+    graphicsPipeline.pDynamicState = &dynamicState;
+    dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    dynamicState.pNext = nullptr;
+    dynamicState.flags = 0;
+    dynamicState.dynamicStateCount = 2;
+    VkDynamicState dynamicStates[2] = {{}, {}};
+    dynamicState.pDynamicStates = dynamicStates;
+    dynamicStates[0] = VK_DYNAMIC_STATE_VIEWPORT;
+    dynamicStates[1] = VK_DYNAMIC_STATE_SCISSOR;
+
+    graphicsPipeline.layout = reinterpret_cast<VkPipelineLayout>(5);
+    graphicsPipeline.subpass = 0;
+    graphicsPipeline.basePipelineHandle = VK_NULL_HANDLE;
+    graphicsPipeline.basePipelineIndex = 0;
+
+    data.graphicsPipelineState.shaderFileNameCount = 2;
+    VpjShaderFileName shaderFileNames[2] = {{}, {}};
+    data.graphicsPipelineState.pShaderFileNames = shaderFileNames;
+    shaderFileNames[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+    shaderFileNames[0].pFilename = "cube.vert.spv";
+    shaderFileNames[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    shaderFileNames[1].pFilename = "cube.frag.spv";
+
+    data.enabledExtensionCount = 0;
 
     const char* result_json = nullptr;
 

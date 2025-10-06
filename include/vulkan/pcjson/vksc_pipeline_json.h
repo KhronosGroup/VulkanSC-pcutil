@@ -28,14 +28,20 @@ typedef struct VpjGraphicsPipelineState {
     /// Optional pointer to array of VkSamplerYcbcrConversionCreateInfo structures and their pNext chains
     uint32_t ycbcrSamplerCount;
     const void* pYcbcrSamplers;
+    /// Optional pointer to array of names to assign to each VkSamplerYcbcrConversion object
+    /// (for more details on their use during pipeline JSON generation and parsing, see the corresponding commands)
     const char** ppYcbcrSamplerNames;
     /// Optional pointer to array of VkSamplerCreateInfo structures and their pNext chains
     uint32_t immutableSamplerCount;
     const void* pImmutableSamplers;
+    /// Optional pointer to array of names to assign to each VkSampler object
+    /// (for more details on their use during pipeline JSON generation and parsing, see the corresponding commands)
     const char** ppImmutableSamplerNames;
     /// Optional pointer to array of VkDescriptorSetLayoutCreateInfo structures and their pNext chains
     uint32_t descriptorSetLayoutCount;
     const void* pDescriptorSetLayouts;
+    /// Optional pointer to array of names to assign to each VkDescriptorSetLayout object
+    /// (for more details on their use during pipeline JSON generation and parsing, see the corresponding commands)
     const char** ppDescriptorSetLayoutNames;
     /// Pointer to a VkPipelineLayoutCreateInfo structure and its pNext chain
     const void* pPipelineLayout;
@@ -56,14 +62,20 @@ typedef struct VpjComputePipelineState {
     /// Optional pointer to array of VkSamplerYcbcrConversionCreateInfo structures and their pNext chains
     uint32_t ycbcrSamplerCount;
     const void* pYcbcrSamplers;
+    /// Optional pointer to array of names to assign to each VkSamplerYcbcrConversion object
+    /// (for more details on their use during pipeline JSON generation and parsing, see the corresponding commands)
     const char** ppYcbcrSamplerNames;
     /// Optional pointer to array of VkSamplerCreateInfo structures and their pNext chains
     uint32_t immutableSamplerCount;
     const void* pImmutableSamplers;
+    /// Optional pointer to array of names to assign to each VkSampler object
+    /// (for more details on their use during pipeline JSON generation and parsing, see the corresponding commands)
     const char** ppImmutableSamplerNames;
     /// Optional pointer to array of VkDescriptorSetLayoutCreateInfo structures and their pNext chains
     uint32_t descriptorSetLayoutCount;
     const void* pDescriptorSetLayouts;
+    /// Optional pointer to array of names to assign to each VkDescriptorSetLayout object
+    /// (for more details on their use during pipeline JSON generation and parsing, see the corresponding commands)
     const char** ppDescriptorSetLayoutNames;
     /// Pointer to a VkPipelineLayoutCreateInfo structure and its pNext chain
     const void* pPipelineLayout;
@@ -111,6 +123,12 @@ void vpjSetMD5PipelineUUIDGeneration(VpjGenerator generator, bool enable);
  * @param ppMessages Optional pointer to the output messages (the backing storage remains valid until vpjFreeGeneratorOutputs,
  * vpjDestroyGenerator, or another vpjGenerate* command is called)
  * @return True, if the generation was successful, false otherwise.
+ *
+ * If the input VpjData specifies names for specific object types, then the handle members in create info structures
+ * referencing these object types are expected to be in the [0..count) range, where count is the corresponding member
+ * of the pipeline state structure specifying the number of create info structures for the object type in question.
+ * During generation, these handle values (effectively indices) are used to look up the name array and will replace
+ * the handle values with the specified names in the generated pipeline JSON.
  */
 bool vpjGeneratePipelineJson(VpjGenerator generator, const VpjData* pPipelineData, const char** ppPipelineJson,
                              const char** ppMessages);
@@ -202,6 +220,12 @@ VpjParser vpjCreateParser();
  * @param ppMessages Optional pointer to the output messages (the backing storage remains valid until vpjFreeParserOutputs,
  * vpjDestroyParser, or another vpjParse* command is called)
  * @return True, if the parsing was successful, false otherwise.
+ *
+ * The pipeline JSON allows handle names to be arbitrary strings. Therefore the output VpjData will return these in
+ * the name arrays corresponding to each object type. The handle values actually returned in the parsed API create
+ * info structures therefore will always be indices into these name arrays taking values in the range [0..count),
+ * where count is the corresponding member of the pipeline state structure containing the number of create info
+ * structures for the object type in question.
  */
 bool vpjParsePipelineJson(VpjParser parser, const char* pPipelineJson, VpjData* pPipelineData, const char** ppMessages);
 

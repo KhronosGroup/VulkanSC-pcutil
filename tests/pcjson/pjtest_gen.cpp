@@ -1984,6 +1984,266 @@ TEST_F(PJGenTest, SAXPY) {
     EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
+TEST_F(PJGenTest, UUIDCompute) {
+    TEST_DESCRIPTION("Tests generating UUID for a compute pipeline");
+
+    const std::string ref_json{R"({
+        "ComputePipelineState" :
+        {
+            "DescriptorSetLayouts" :
+            [
+                {
+                    "5":
+                    {
+                        "sType" : "VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO",
+                        "pNext":"NULL",
+                        "flags" : 0,
+                        "bindingCount" : 2,
+                        "pBindings":
+                        [
+                        {
+                            "binding" : 0,
+                            "descriptorType" : "VK_DESCRIPTOR_TYPE_STORAGE_BUFFER",
+                            "descriptorCount" : 1,
+                            "stageFlags" : "VK_SHADER_STAGE_COMPUTE_BIT",
+                            "pImmutableSamplers": "NULL"
+                        },
+                        {
+                            "binding" : 1,
+                            "descriptorType" : "VK_DESCRIPTOR_TYPE_STORAGE_BUFFER",
+                            "descriptorCount" : 1,
+                            "stageFlags" : "VK_SHADER_STAGE_COMPUTE_BIT",
+                            "pImmutableSamplers": "NULL"
+                        }
+                        ]
+                    }
+                }
+            ],
+            "PipelineLayout" :
+            {
+                "sType" : "VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO",
+                "pNext":"NULL",
+                "flags" : 0,
+                "setLayoutCount" : 1,
+                "pSetLayouts":
+                [
+                    "5"
+                ],
+                "pushConstantRangeCount" : 1,
+                "pPushConstantRanges": [
+                    {
+                        "stageFlags": "VK_SHADER_STAGE_COMPUTE_BIT",
+                        "offset": 0,
+                        "size": 4
+                    }
+                ]
+            },
+            "ComputePipeline" :
+            {
+                "sType" : "VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO",
+                "pNext": "NULL",
+                "flags" : 0,
+                "stage":
+                {
+                    "sType" : "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
+                    "pNext": "NULL",
+                    "flags" : 0,
+                    "stage" : "VK_SHADER_STAGE_COMPUTE_BIT",
+                    "pName" : "main",
+                    "pSpecializationInfo": "NULL",
+                    "module": ""
+                },
+                "layout" : 9,
+                "basePipelineHandle" : "",
+                "basePipelineIndex" : 0
+            },
+            "ShaderFileNames" :
+            [
+                {
+                    "stage" : "VK_SHADER_STAGE_COMPUTE_BIT",
+                    "filename" : "saxpy.comp.spv"
+                }
+            ],
+            "PhysicalDeviceFeatures" :
+            {
+                "sType" : "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2",
+                "pNext":
+                {
+                    "sType" : "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES",
+                    "pNext": "NULL",
+                    "synchronization2" : "VK_TRUE"
+                },
+                "features":
+                {
+                    "robustBufferAccess" : "VK_FALSE",
+                    "fullDrawIndexUint32" : "VK_FALSE",
+                    "imageCubeArray" : "VK_FALSE",
+                    "independentBlend" : "VK_FALSE",
+                    "geometryShader" : "VK_FALSE",
+                    "tessellationShader" : "VK_FALSE",
+                    "sampleRateShading" : "VK_FALSE",
+                    "dualSrcBlend" : "VK_FALSE",
+                    "logicOp" : "VK_FALSE",
+                    "multiDrawIndirect" : "VK_FALSE",
+                    "drawIndirectFirstInstance" : "VK_FALSE",
+                    "depthClamp" : "VK_FALSE",
+                    "depthBiasClamp" : "VK_FALSE",
+                    "fillModeNonSolid" : "VK_FALSE",
+                    "depthBounds" : "VK_FALSE",
+                    "wideLines" : "VK_FALSE",
+                    "largePoints" : "VK_FALSE",
+                    "alphaToOne" : "VK_FALSE",
+                    "multiViewport" : "VK_FALSE",
+                    "samplerAnisotropy" : "VK_FALSE",
+                    "textureCompressionETC2" : "VK_FALSE",
+                    "textureCompressionASTC_LDR" : "VK_FALSE",
+                    "textureCompressionBC" : "VK_FALSE",
+                    "occlusionQueryPrecise" : "VK_FALSE",
+                    "pipelineStatisticsQuery" : "VK_FALSE",
+                    "vertexPipelineStoresAndAtomics" : "VK_FALSE",
+                    "fragmentStoresAndAtomics" : "VK_FALSE",
+                    "shaderTessellationAndGeometryPointSize" : "VK_FALSE",
+                    "shaderImageGatherExtended" : "VK_FALSE",
+                    "shaderStorageImageExtendedFormats" : "VK_FALSE",
+                    "shaderStorageImageMultisample" : "VK_FALSE",
+                    "shaderStorageImageReadWithoutFormat" : "VK_FALSE",
+                    "shaderStorageImageWriteWithoutFormat" : "VK_FALSE",
+                    "shaderUniformBufferArrayDynamicIndexing" : "VK_FALSE",
+                    "shaderSampledImageArrayDynamicIndexing" : "VK_FALSE",
+                    "shaderStorageBufferArrayDynamicIndexing" : "VK_FALSE",
+                    "shaderStorageImageArrayDynamicIndexing" : "VK_FALSE",
+                    "shaderClipDistance" : "VK_FALSE",
+                    "shaderCullDistance" : "VK_FALSE",
+                    "shaderFloat64" : "VK_FALSE",
+                    "shaderInt64" : "VK_FALSE",
+                    "shaderInt16" : "VK_FALSE",
+                    "shaderResourceResidency" : "VK_FALSE",
+                    "shaderResourceMinLod" : "VK_FALSE",
+                    "sparseBinding" : "VK_FALSE",
+                    "sparseResidencyBuffer" : "VK_FALSE",
+                    "sparseResidencyImage2D" : "VK_FALSE",
+                    "sparseResidencyImage3D" : "VK_FALSE",
+                    "sparseResidency2Samples" : "VK_FALSE",
+                    "sparseResidency4Samples" : "VK_FALSE",
+                    "sparseResidency8Samples" : "VK_FALSE",
+                    "sparseResidency16Samples" : "VK_FALSE",
+                    "sparseResidencyAliased" : "VK_FALSE",
+                    "variableMultisampleRate" : "VK_FALSE",
+                    "inheritedQueries" : "VK_FALSE"
+                }
+            }
+        },
+        "EnabledExtensions" :
+        [
+            "VK_KHR_synchronization2"
+        ],
+        "PipelineUUID" :
+        [
+            156,
+            166,
+            110,
+            173,
+            202,
+            172,
+            1,
+            232,
+            46,
+            153,
+            32,
+            11,
+            23,
+            86,
+            179,
+            157
+        ]
+    })"};
+
+    VpjData data{};
+
+    VkDescriptorSetLayoutCreateInfo descriptorSetLayouts[1] = {};
+    const char* descriptorSetLayoutNames[1] = {"5"};
+    data.computePipelineState.descriptorSetLayoutCount = 1;
+    data.computePipelineState.ppDescriptorSetLayoutNames = descriptorSetLayoutNames;
+
+    descriptorSetLayouts[0].sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    descriptorSetLayouts[0].pNext = nullptr;
+    descriptorSetLayouts[0].flags = 0;
+
+    descriptorSetLayouts[0].bindingCount = 2;
+    VkDescriptorSetLayoutBinding bindings[2] = {};
+
+    bindings[0].binding = 0;
+    bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    bindings[0].descriptorCount = 1;
+    bindings[0].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+    bindings[0].pImmutableSamplers = nullptr;
+
+    bindings[1].binding = 1;
+    bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    bindings[1].descriptorCount = 1;
+    bindings[1].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+    bindings[1].pImmutableSamplers = nullptr;
+
+    descriptorSetLayouts[0].pBindings = bindings;
+    data.computePipelineState.pDescriptorSetLayouts = descriptorSetLayouts;
+
+    VkComputePipelineCreateInfo computePipeline_ci{};
+    computePipeline_ci.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+    computePipeline_ci.pNext = nullptr;
+    computePipeline_ci.basePipelineHandle = VK_NULL_HANDLE;
+    computePipeline_ci.layout = VkPipelineLayout(9);
+
+    computePipeline_ci.stage.pName = "main";
+    computePipeline_ci.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+    computePipeline_ci.stage.module = VK_NULL_HANDLE;
+
+    data.computePipelineState.pComputePipeline = &computePipeline_ci;
+
+    VkPipelineLayoutCreateInfo pipelineLayout_ci{};
+    pipelineLayout_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+
+    VkDescriptorSetLayout setLayouts[1] = {VkDescriptorSetLayout(0)};
+    pipelineLayout_ci.setLayoutCount = 1;
+    pipelineLayout_ci.pSetLayouts = setLayouts;
+
+    VkPushConstantRange pushConstantRanges[1] = {};
+    pipelineLayout_ci.pushConstantRangeCount = 1;
+    pushConstantRanges[0].size = 4;
+    pushConstantRanges[0].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+    pipelineLayout_ci.pPushConstantRanges = pushConstantRanges;
+
+    data.computePipelineState.pPipelineLayout = &pipelineLayout_ci;
+
+    VkPhysicalDeviceFeatures2 physicalDeviceFeatures{};
+    physicalDeviceFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+
+    VkPhysicalDeviceSynchronization2Features physicalDeviceSynchronization2Features{};
+    physicalDeviceSynchronization2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
+    physicalDeviceSynchronization2Features.synchronization2 = VK_TRUE;
+
+    physicalDeviceFeatures.pNext = &physicalDeviceSynchronization2Features;
+
+    data.computePipelineState.pPhysicalDeviceFeatures = &physicalDeviceFeatures;
+
+    VpjShaderFileName shaderFileNames[1] = {};
+    shaderFileNames[0].pFilename = "saxpy.comp.spv";
+    shaderFileNames[0].stage = VK_SHADER_STAGE_COMPUTE_BIT;
+
+    data.computePipelineState.shaderFileNameCount = 1;
+    data.computePipelineState.pShaderFileNames = shaderFileNames;
+
+    const char* enabledExtensions[1] = {"VK_KHR_synchronization2"};
+    data.enabledExtensionCount = 1;
+    data.ppEnabledExtensions = enabledExtensions;
+
+    const char* result_json = nullptr;
+
+    vpjSetMD5PipelineUUIDGeneration(generator_, true);
+    EXPECT_TRUE(vpjGeneratePipelineJson(generator_, &data, &result_json, &msg_));
+    CHECK_GEN();
+    EXPECT_TRUE(reformatJson(ref_json) == result_json);
+}
+
 TEST_F(PJGenTest, ObjectNameRemapping) {
     TEST_DESCRIPTION("Tests generating of a reasonably simple compute pipeline JSON");
 

@@ -546,7 +546,7 @@ class Generator : private GeneratorBase {
         // * the VkShaderModule handles in VkPipelineShaderStageCreateInfo which are not relevant
 
         if (json.isMember("GraphicsPipelineState")) {
-            auto& pipeline_json = json["GraphicsPipelineState"];
+            auto& pipeline_json = json["GraphicsPipelineState"]["GraphicsPipeline"];
             pipeline_json["renderPass"] = "";
             pipeline_json["basePipelineHandle"] = "";
 
@@ -557,7 +557,7 @@ class Generator : private GeneratorBase {
                 }
             }
         } else if (json.isMember("ComputePipelineState")) {
-            auto& pipeline_json = json["ComputePipelineState"];
+            auto& pipeline_json = json["ComputePipelineState"]["ComputePipeline"];
             pipeline_json["basePipelineHandle"] = "";
 
             auto& stage_info = pipeline_json["stage"];

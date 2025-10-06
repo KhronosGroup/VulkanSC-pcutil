@@ -10,20 +10,12 @@
 
 #include "log.h"
 #include "vk_common.h"
-#include "vk_util.h"
 
 #include <vulkan/vk_layer.h>
 
 #include <vulkan/utility/vk_concurrent_unordered_map.hpp>
 #include <vulkan/utility/vk_struct_helper.hpp>
 #include <vulkan/utility/vk_safe_struct.hpp>
-
-#ifdef _WIN32
-#include <libloaderapi.h>
-#endif
-#ifdef __linux__
-#include <unistd.h>  // readlink
-#endif
 
 #include <new>            // std::bad_alloc
 #include <memory>         // std::shared_ptr
@@ -36,69 +28,6 @@
 #include <fstream>        // std::ofstream
 
 namespace vk_json {
-
-std::string_view getProcessName() {
-    static constexpr int MAX_NAME_SIZE = 255;
-    static char m_exeName[MAX_NAME_SIZE] = {0};
-    static bool init = [&]() {
-#ifdef _WIN32
-        if (GetModuleFileName(0, m_exeName, MAX_NAME_SIZE) == 0) {
-            LOG("[%s] ERROR: Failed to obtaining process name.", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
-            exit(-1);
-        }
-
-        // Some raw C code to get the .exe name on Windows.
-        char* p = m_exeName + (strnlen(m_exeName, MAX_NAME_SIZE) - 1);
-        int writePos = 0;
-
-        while (*p != '.') --p;
-        while (*p != '\\') --p;
-        for (++p; *p != '.'; ++p) m_exeName[writePos++] = *p;
-        m_exeName[writePos] = 0;
-#endif
-
-#ifdef __linux__
-        char exeName[1024];
-        int ret = readlink("/proc/self/exe", exeName, sizeof(exeName) - 1);
-        if (ret == -1) {
-            LOG("[%s] ERROR: Failed to obtaining process name.", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
-            exit(-1);
-        }
-        exeName[ret] = 0;
-
-        char* p = exeName + (ret - 1);
-        int writePos = 0;
-        while (*p != '/') m_exeName[writePos++] = *p--;
-
-        m_exeName[writePos] = 0;
-        std::string tmp(m_exeName);
-        std::reverse(tmp.begin(), tmp.end());
-        strncpy(m_exeName, tmp.c_str(), sizeof(m_exeName) - 1);
-#endif
-        return true;
-    }();
-    std::ignore = init;
-    return m_exeName;
-}
-
-std::string_view getBaseDirectoryPath() {
-    static std::string baseDir = []() {
-        std::string m_baseDir = getenv("VK_JSON_FILE_PATH") ? getenv("VK_JSON_FILE_PATH") : "";
-        if (!m_baseDir.empty()) {
-#ifdef _WIN32
-            m_baseDir += "\\";
-#else
-            m_baseDir += "/";
-#endif
-        } else {
-            LOG("[%s] ERROR: Failed to query VK_JSON_FILE_PATH. Please set the environment variable.",
-                VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
-            exit(-1);
-        }
-        return m_baseDir;
-    }();
-    return baseDir;
-}
 
 const char* stage_bit_to_string(const VkShaderStageFlagBits stage, VkGraphicsPipelineCreateInfo) {
     switch (stage) {
@@ -255,9 +184,18 @@ VKAPI_ATTR VkResult VKAPI_CALL EnumerateDeviceExtensionProperties(VkPhysicalDevi
         return VK_SUCCESS;
     }
 
-    VK_OUTARRAY_MAKE(out, pProperties, pPropertyCount);
-    vk_outarray_append(&out, prop) { *prop = kDeviceExtension; }
-    return vk_outarray_status(&out);
+    if (!pProperties) {
+        *pPropertyCount = 1;
+        return VK_SUCCESS;
+    } else {
+        if (*pPropertyCount >= 1) {
+            *pPropertyCount = 1;
+            pProperties[0] = kDeviceExtension;
+            return VK_SUCCESS;
+        } else {
+            return VK_INCOMPLETE;
+        }
+    }
 }
 
 #define INIT_HOOK(_vt, _inst, fn) _vt.fn = reinterpret_cast<PFN_vk##fn>(vtable.GetInstanceProcAddr(_inst, "vk" #fn))
@@ -277,7 +215,6 @@ InstanceData::InstanceData(VkInstance inst, PFN_vkGetInstanceProcAddr gpa, const
 #undef INIT_HOOK
 
 std::shared_ptr<PhysicalDeviceData> InstanceData::GetPhysicalDeviceData(VkPhysicalDevice physical_device) const {
-    const auto result = physical_device_map.find(physical_device);
     if (const auto result = physical_device_map.find(physical_device); result->first) {
         return result->second;
     } else {
@@ -461,8 +398,8 @@ GraphicsPipelineData::GraphicsPipelineData(const VkGraphicsPipelineCreateInfo* c
 
     if (auto result = device_data.renderpass_map.find(create_info.renderPass); result->first) {
         renderpass_data.emplace<RenderPassData>(result->second->create_info.ptr());
-    } else if (auto result = device_data.renderpass2_map.find(create_info.renderPass); result->first) {
-        renderpass_data.emplace<RenderPass2Data>(result->second->create_info.ptr());
+    } else if (auto result2 = device_data.renderpass2_map.find(create_info.renderPass); result2->first) {
+        renderpass_data.emplace<RenderPass2Data>(result2->second->create_info.ptr());
     } else {
         LOG("[%s] ERROR: Failed to find renderpass(2) in accelerating structure referenced by graphics pipeline.",
             VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
@@ -1033,8 +970,8 @@ void DeviceData::writePCJSON(GraphicsPipelineData& graphics_pipeline_data) {
     data.graphicsPipelineState.ppYcbcrSamplerNames = ycbcr_sampler_names.data();
 
     // Shaders
-    auto shader_filenames =
-        get_shader_filenames(*graphics_pipeline_data.create_info.ptr(), std::string(getProcessName()), graphics_pipeline_data.id);
+    auto shader_filenames = get_shader_filenames(*graphics_pipeline_data.create_info.ptr(), std::string(getProcessName()),
+                                                 static_cast<uint32_t>(graphics_pipeline_data.id));
     for (size_t i = 0; i < graphics_pipeline_data.shader_module_data.size(); ++i) {
         auto& shader_ci = graphics_pipeline_data.shader_module_data[i].create_info;
         auto shader_path = std::string(getBaseDirectoryPath()) + shader_filenames.filenames[i].pFilename;
@@ -1127,8 +1064,8 @@ void DeviceData::writePCJSON(ComputePipelineData& compute_pipeline_data) {
     data.computePipelineState.ppYcbcrSamplerNames = ycbcr_sampler_names.data();
 
     // Shaders
-    auto shader_filename =
-        get_shader_filenames(*compute_pipeline_data.create_info.ptr(), std::string(getProcessName()), compute_pipeline_data.id);
+    auto shader_filename = get_shader_filenames(*compute_pipeline_data.create_info.ptr(), std::string(getProcessName()),
+                                                static_cast<uint32_t>(compute_pipeline_data.id));
     auto shader_ci = compute_pipeline_data.shader_module_data.create_info;
     auto shader_path = std::string(getBaseDirectoryPath()) + shader_filename.filenames[0].pFilename;
     std::ofstream spv_file(shader_path, std::ios::binary);
@@ -1239,8 +1176,7 @@ VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL GetInstanceProcAddr(VkInstance instance
 
 VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL GetDeviceProcAddr(VkDevice device, const char* pName) {
     auto device_data = GetDeviceData(device);
-    auto result = kDeviceFunctions.find(pName);
-    if (result != kDeviceFunctions.end()) {
+    if (auto result = kDeviceFunctions.find(pName); result != kDeviceFunctions.end()) {
         return result->second;
     }
     if (device_data && device_data->vtable.GetDeviceProcAddr) {

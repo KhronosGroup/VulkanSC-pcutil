@@ -94,6 +94,14 @@ typedef void* VpjGenerator;
 VpjGenerator vpjCreateGenerator();
 
 /**
+ * @brief Controls whether the generator will generate pipeline UUIDs by constructing the MD5 hash of the input pipeline data.
+ *
+ * @param generator The JSON generator object
+ * @param enable If true, MD5 pipeline UUID is enabled, otherwise it is disabled (by default it is disabled).
+ */
+void vpjSetMD5PipelineUUIDGeneration(VpjGenerator generator, bool enable);
+
+/**
  * @brief Generates a pipeline JSON from the input pipeline data.
  *
  * @param generator The JSON generator object
@@ -106,6 +114,17 @@ VpjGenerator vpjCreateGenerator();
  */
 bool vpjGeneratePipelineJson(VpjGenerator generator, const VpjData* pPipelineData, const char** ppPipelineJson,
                              const char** ppMessages);
+
+/**
+ * @brief Retrieves the generated pipeline UUID for the pipeline JSON produced by the last vpjGeneratePipelineJson call.
+ *
+ * @param generator The JSON generator object
+ * @param pPipelineUUID Pointer to the pipeline UUID storage to return the generated pipeline UUID to.
+ * @param ppMessages Optional pointer to the output messages (the backing storage remains valid until vpjFreeGeneratorOutputs,
+ * vpjDestroyGenerator, or another vpjGenerate* command is called)
+ * @return True, if retreival was successful, false otherwise.
+ */
+bool vpjGetGeneratedPipelineUUID(VpjGenerator generator, uint8_t* pPipelineUUID, const char** ppMessages);
 
 /**
  * @brief Generates a JSON from a single input structure (including its pNext chain).

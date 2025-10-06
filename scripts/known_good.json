@@ -52,6 +52,14 @@
             "commit": "v1.0.6"
         },
         {
+            "name": "hashlib",
+            "url": "https://github.com/Cra3z/hashlib.git",
+            "sub_dir": "hashlib",
+            "build_dir": "hashlib/build",
+            "install_dir": "hashlib/build/install",
+            "commit": "v1.0.1"
+        },
+        {
             "name": "googletest",
             "url": "https://github.com/google/googletest.git",
             "sub_dir": "googletest",
@@ -227,6 +235,7 @@
         "Vulkan-Utility-Libraries": "VULKAN_UTILITY_LIBRARIES_INSTALL_DIR",
         "jsoncpp": "JSONCPP_INSTALL_DIR",
         "valijson": "VALIJSON_INSTALL_DIR",
+        "hashlib": "HASHLIB_INSTALL_DIR",
         "googletest": "GOOGLETEST_INSTALL_DIR",
         "Vulkan-Loader": "VULKAN_LOADER_INSTALL_DIR",
         "SPIRV-Headers": "SPIRV_HEADERS_INSTALL_DIR",

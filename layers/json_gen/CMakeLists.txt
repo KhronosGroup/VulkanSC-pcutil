@@ -19,6 +19,7 @@ add_library(VulkanJSONGenLayer MODULE)
 target_sources(VulkanJSONGenLayer PRIVATE
     vk_json_layer.hpp
     vk_json_layer.cpp
+    vk_json_layer_platform.cpp
     ${LAYER_NAME}.def
     allocator.cpp
 )

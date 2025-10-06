@@ -12,6 +12,8 @@ LIBRARY VkLayer_json_gen
 EXPORTS
 vkGetInstanceProcAddr
 vkGetDeviceProcAddr
+vkNegotiateLoaderLayerInterfaceVersion
 vkEnumerateInstanceLayerProperties
 vkEnumerateInstanceExtensionProperties
-vkCreateInstance
+vkEnumerateDeviceExtensionProperties
+vkEnumerateDeviceLayerProperties

@@ -104,6 +104,7 @@ class JsonGenGenerator(BaseGenerator):
         self.gen_basic_methods.append('''
             void* filter_VkPhysicalDeviceFeatures2(const void* pDeviceCreateInfoPNext, const LocationScope& l) {
                 auto base = AllocMem<VkPhysicalDeviceFeatures2>();
+                *base = {};
                 void* pnext = nullptr;
                 auto p = reinterpret_cast<const VkBaseInStructure*>(pDeviceCreateInfoPNext);
                 while (p != nullptr) {

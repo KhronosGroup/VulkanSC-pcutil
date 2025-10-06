@@ -56,7 +56,6 @@ jobs:
       run: |
         python3 scripts/update_deps.py --dir external --no-build
         python3 scripts/generate_source.py external/Vulkan-Headers/registry/
-        git restore layers/json_gen/json_gen.cpp # JSONGenOutputGenerator is known to be non-deterministic
         git diff --exit-code
 
   linux:

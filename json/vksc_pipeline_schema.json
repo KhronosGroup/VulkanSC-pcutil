@@ -399,7 +399,14 @@
             ]
         },
         "VkShaderModule": {
-            "$ref": "#/definitions/uint64_t"
+            "anyOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "$ref": "#/definitions/uint64_t"
+                }
+            ]
         },
         "VkSpecializationMapEntry": {
             "additionalProperties": false,
@@ -2738,13 +2745,34 @@
             "type": "object"
         },
         "VkPipelineLayout": {
-            "$ref": "#/definitions/uint64_t"
+            "anyOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "$ref": "#/definitions/uint64_t"
+                }
+            ]
         },
         "VkRenderPass": {
-            "$ref": "#/definitions/uint64_t"
+            "anyOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "$ref": "#/definitions/uint64_t"
+                }
+            ]
         },
         "VkPipeline": {
-            "$ref": "#/definitions/uint64_t"
+            "anyOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "$ref": "#/definitions/uint64_t"
+                }
+            ]
         },
         "VkPipelineCreateFlags2": {
             "anyOf": [
@@ -3942,7 +3970,7 @@
             ]
         },
         "VkSamplerYcbcrConversion": {
-            "oneOf": [
+            "anyOf": [
                 {
                     "type": "string"
                 },
@@ -4181,7 +4209,7 @@
             ]
         },
         "VkSampler": {
-            "oneOf": [
+            "anyOf": [
                 {
                     "type": "string"
                 },
@@ -4401,7 +4429,7 @@
             ]
         },
         "VkDescriptorSetLayout": {
-            "oneOf": [
+            "anyOf": [
                 {
                     "type": "string"
                 },

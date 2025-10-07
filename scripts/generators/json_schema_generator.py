@@ -161,16 +161,12 @@ class JsonSchemaGenerator(BaseGenerator):
             raise Exception(f'Unexpected type name "{typeName}"')
 
     def genHandleDefinition(self, handle: Handle):
-        handles_with_arbitrary_names = [ "VkSampler", "VkDescriptorSetLayout", "VkSamplerYcbcrConversion" ]
-        if handle.name in handles_with_arbitrary_names:
-            self.schema["definitions"][handle.name] = { "oneOf" :
-                [
-                    { "type": "string" },
-                    { "$ref": "#/definitions/uint64_t"}
-                ]
-            }
-        else:
-            self.schema["definitions"][handle.name] = {"$ref": "#/definitions/uint64_t"}
+        self.schema["definitions"][handle.name] = { "anyOf" :
+            [
+                { "type": "string" },
+                { "$ref": "#/definitions/uint64_t"}
+            ]
+        }
         self.genAliases(handle.name, handle.aliases)
 
     def genEnumDefinition(self, enum: Enum):

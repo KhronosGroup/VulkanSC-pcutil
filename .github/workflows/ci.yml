@@ -125,7 +125,6 @@ jobs:
           -G "Visual Studio 17 2022" `
           -A ${{ matrix.arch }} `
           -D CMAKE_BUILD_TYPE=${{matrix.config}} `
-          -D CMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug> `
           -D BUILD_TESTS=ON `
           -D UPDATE_DEPS=ON
       - name: Build

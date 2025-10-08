@@ -18,9 +18,6 @@
             "build_dir": "Vulkan-Utility-Libraries/build",
             "install_dir": "Vulkan-Utility-Libraries/build/install",
             "commit": "vksc1.0.18",
-            "cmake_options": [
-                "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug>"
-            ],
             "deps": [
                 {
                     "var_name": "VULKAN_HEADERS_INSTALL_DIR",
@@ -41,7 +38,6 @@
                 "-DJSONCPP_WITH_POST_BUILD_UNITTEST=OFF",
                 "-DJSONCPP_WITH_WARNING_AS_ERROR=OFF",
                 "-DJSONCPP_WITH_PKGCONFIG_SUPPORT=OFF",
-                "-DJSONCPP_STATIC_WINDOWS_RUNTIME=ON",
                 "-DBUILD_SHARED_LIBS=OFF",
                 "-DBUILD_STATIC_LIBS=ON",
                 "-DBUILD_OBJECT_LIBS=OFF"
@@ -63,7 +59,7 @@
             "install_dir": "googletest/build/install",
             "cmake_options": [
                 "-DBUILD_GMOCK=OFF",
-                "-Dgtest_force_shared_crt=OFF",
+                "-Dgtest_force_shared_crt=ON",
                 "-DBUILD_SHARED_LIBS=OFF"
             ],
             "commit": "v1.14.0",
@@ -118,8 +114,7 @@
                 "-DSPIRV-Headers_SOURCE_DIR={repo_dir}/../SPIRV-Headers",
                 "-DSPIRV_WERROR=OFF",
                 "-DSPIRV_SKIP_TESTS=ON",
-                "-DSPIRV_SKIP_EXECUTABLES=ON",
-                "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug>"
+                "-DSPIRV_SKIP_EXECUTABLES=ON"
             ],
             "commit": "f289d047f49fb60488301ec62bafab85573668cc",
             "optional": [
@@ -199,7 +194,6 @@
                 "tests"
             ],
             "cmake_options": [
-                "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug>",
                 "-DBUILD_WSI_XCB_SUPPORT=OFF",
                 "-DBUILD_WSI_XLIB_SUPPORT=OFF",
                 "-DBUILD_WSI_WAYLAND_SUPPORT=OFF"

@@ -69,6 +69,9 @@ jobs:
         os: [ ubuntu-22.04, ubuntu-24.04 ]
         compiler: [ {cc: gcc, cxx: g++}, {cc: clang, cxx: clang++} ]
         config: [ Debug, Release ]
+    env:
+      CC: ${{matrix.compiler.cc}}
+      CXX: ${{matrix.compiler.cxx}}
     steps:
       - name: ${{ format('Checkout {0}', github.repository) }}
         uses: actions/checkout@v4
@@ -95,7 +98,7 @@ jobs:
         run: cmake --install build --prefix build/install
 
   windows:
-    name: ${{ format('{0} ({1}), {2} ({3})', matrix.os, matrix.arch, matrix.toolset, matrix.config) }}
+    name: ${{ format('{0} ({1}), {2} ({3}, {4})', matrix.os, matrix.arch, matrix.toolset, matrix.config, matrix.runtime == 'DLL' && 'MD' || 'MT') }}
     needs: pre_build
     runs-on: ${{ matrix.os }}
     strategy:
@@ -104,8 +107,10 @@ jobs:
         arch: [ x64 ]
         toolset: [ v143, ClangCL ]
         config: [ Debug, Release ]
+        runtime: [ DLL, '' ]
     env:
-      UseMultiToolTask: 'true' # Better parallel MSBuild execution
+      # Better parallel MSBuild execution
+      UseMultiToolTask: 'true'
       EnforceProcessCountAcrossBuilds: 'true'
       MultiProcMaxCount: '3'
     steps:
@@ -125,7 +130,8 @@ jobs:
           -G "Visual Studio 17 2022" `
           -A ${{ matrix.arch }} `
           -D CMAKE_BUILD_TYPE=${{matrix.config}} `
-          -D BUILD_TESTS=ON `
+          -D CMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug>${{matrix.runtime}} `
+          -D BUILD_TESTS=${{ matrix.runtime == 'DLL' && 'ON' || 'OFF' }} `
           -D UPDATE_DEPS=ON
       - name: Build
         run: cmake --build build/ --config ${{matrix.config}}

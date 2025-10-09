@@ -25,7 +25,7 @@ class PJGenTest : public testing::Test {
   public:
     PJGenTest() : generator_{vpjCreateGenerator()}, msg_{nullptr} {}
     PJGenTest(const PJGenTest&) = delete;
-    PJGenTest(PJGenTest&&) = default;
+    PJGenTest(PJGenTest&&) = delete;
     ~PJGenTest() { vpjDestroyGenerator(generator_); }
 
     void TEST_DESCRIPTION(const char* desc) { RecordProperty("description", desc); }

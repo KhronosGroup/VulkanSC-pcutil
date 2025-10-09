@@ -23,7 +23,7 @@ class PJParseTest : public testing::Test {
   public:
     PJParseTest() : parser_{vpjCreateParser()}, msg_{nullptr} {}
     PJParseTest(const PJParseTest&) = delete;
-    PJParseTest(PJParseTest&&) = default;
+    PJParseTest(PJParseTest&&) = delete;
     ~PJParseTest() { vpjDestroyParser(parser_); }
 
     void TEST_DESCRIPTION(const char* desc) { RecordProperty("description", desc); }

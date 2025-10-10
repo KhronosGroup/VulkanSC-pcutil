@@ -46,10 +46,14 @@ find_package(jsoncpp REQUIRED CONFIG QUIET)
 include(GNUInstallDirs)
 
 if (PCU_WERROR)
-    add_compile_options("$<IF:$<CXX_COMPILER_ID:MSVC>,/WX,-Werror>")
+    if (${CMAKE_CXX_COMPILER_ID} MATCHES "(GNU|Clang)" AND NOT CMAKE_CXX_COMPILER_FRONTEND_VARIANT MATCHES "MSVC")
+        add_compile_options(-Werror)
+    elseif(MSVC OR CMAKE_CXX_COMPILER_FRONTEND_VARIANT MATCHES "MSVC")
+        add_compile_options(/WX)
+    endif()
 endif()
 
-if (${CMAKE_CXX_COMPILER_ID} MATCHES "(GNU|Clang)")
+if (${CMAKE_CXX_COMPILER_ID} MATCHES "(GNU|Clang)" AND NOT CMAKE_CXX_COMPILER_FRONTEND_VARIANT MATCHES "MSVC")
     add_compile_options(
         -Wall
         -Wextra
@@ -76,7 +80,7 @@ if (${CMAKE_CXX_COMPILER_ID} MATCHES "(GNU|Clang)")
             -Wno-enum-enum-conversion
         )
     endif()
-elseif(MSVC)
+elseif(MSVC OR CMAKE_CXX_COMPILER_FRONTEND_VARIANT MATCHES "MSVC")
     add_compile_options("/W3")
     # Warn about nested declarations
     add_compile_options("/w34456")

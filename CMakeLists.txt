@@ -67,7 +67,6 @@ if (${CMAKE_CXX_COMPILER_ID} MATCHES "(GNU|Clang)" AND NOT CMAKE_CXX_COMPILER_FR
             -Wno-stringop-truncation
             -Wl,--no-undefined
             -Wno-address         # TODO: JOSN lib generator generates non-null address checks for stack arrays
-            -Wno-unused-function # TODO: JSON gen layer generates pointer and non-pointer versions of many methods, but use only one
         )
     endif()
 

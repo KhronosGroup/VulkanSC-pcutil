@@ -448,12 +448,7 @@ RenderPassData::RenderPassData(const VkRenderPassCreateInfo* ci) : create_info(c
 RenderPass2Data::RenderPass2Data(const VkRenderPassCreateInfo2* ci) : create_info(ci) {}
 
 GraphicsPipelineData::GraphicsPipelineData(const VkGraphicsPipelineCreateInfo* ci, DeviceData& device_data)
-    : create_info{ci, true, true}  // TODO: check booleans for validity
-      ,
-      pipeline_layout_data{},
-      renderpass_data{},
-      shader_module_data{},
-      id{++device_data.obj_counter} {
+    : create_info{ci, true, true}, pipeline_layout_data{}, renderpass_data{}, shader_module_data{}, id{++device_data.obj_counter} {
     if (auto result = device_data.pipeline_layout_map.find(create_info.layout); result->first) {
         // Save pipeline layout
         pipeline_layout_data = *result->second;

@@ -18,6 +18,7 @@ set(API_TYPE "vulkansc")
 add_definitions(-DVULKANSC)
 
 add_subdirectory(scripts)
+include(cmake/Modules/ImportVulkanEcosystemComponent.cmake)
 
 set(CMAKE_CXX_VISIBILITY_PRESET "hidden")
 set(CMAKE_C_VISIBILITY_PRESET "hidden")
@@ -42,6 +43,11 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 find_package(VulkanHeaders REQUIRED CONFIG QUIET)
 find_package(VulkanUtilityLibraries REQUIRED CONFIG QUIET)
 find_package(jsoncpp REQUIRED CONFIG QUIET)
+if (BUILD_TESTS) # Layer testing needs the loader
+    find_package(VulkanLoader REQUIRED CONFIG QUIET)
+    find_vk_package(VulkanHeaders ${VULKAN_HEADERS_INSTALL_DIR})
+    find_vk_package(VulkanLoader ${VULKAN_LOADER_INSTALL_DIR})
+endif()
 
 include(GNUInstallDirs)
 

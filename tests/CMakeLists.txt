@@ -6,6 +6,7 @@
 # ~~~
 
 add_subdirectory(json)
+add_subdirectory(json_gen)
 add_subdirectory(pcjson)
 add_subdirectory(pcutil)
 add_subdirectory(vkscpcinfo)

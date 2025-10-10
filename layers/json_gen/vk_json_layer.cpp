@@ -1365,6 +1365,7 @@ static const std::unordered_map<std::string, PFN_vkVoidFunction> kDeviceFunction
     ADD_HOOK(CreateFramebuffer),
     ADD_HOOK(DestroyFramebuffer),
     ADD_HOOK(CreateCommandPool),
+    ADD_HOOK(GetPipelinePropertiesEXT),
 
     // Needs to point to itself as Android loaders calls vkGet*ProcAddr to itself. Without these hooks, when the app calls
     // vkGetDeviceProcAddr to get layer functions it will fail on Android

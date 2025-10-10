@@ -261,9 +261,9 @@ struct DeviceData {
         DECLARE_HOOK(CreateCommandPool);
         // DestroyCommandPool does not exist in SC.
         // Releasing memory upon command pool reset requires command buffer tracking
+        DECLARE_HOOK(GetPipelinePropertiesEXT);
     } vtable;
     const VkAllocationCallbacks* allocator;
-    VkDeviceObjectReservationCreateInfo a;
 
     vku::concurrent::unordered_map<VkSamplerYcbcrConversion, std::shared_ptr<YcbcrData>> ycbcr_map;
     vku::concurrent::unordered_map<VkSampler, std::shared_ptr<SamplerData>> sampler_map;

@@ -72,18 +72,18 @@ endif()
 add_test(NAME pctest.writerdevice COMMAND pctest_writerdevice)
 
 if (WIN32)
-    set(PATH "PATH=path_list_prepend:${VULKAN_TOOLS_INSTALL_DIR}/bin/"
-        "PATH=path_list_prepend:${VULKAN_LOADER_INSTALL_DIR}/bin/")
-    set(DRIVER_PATH "${VULKAN_TOOLS_INSTALL_DIR}/bin/VkICD_mock_icd_vksc.json")
-    set(LAYER_PATH "${VULKAN_VALIDATION_LAYERS_INSTALL_DIR}/bin/")
+    set(PATH "PATH=path_list_prepend:${VULKANSC_TOOLS_INSTALL_DIR}/bin/"
+        "PATH=path_list_prepend:${VULKANSC_LOADER_INSTALL_DIR}/bin/")
+    set(DRIVER_PATH "${VULKANSC_TOOLS_INSTALL_DIR}/bin/VkICD_mock_icd_vksc.json")
+    set(LAYER_PATH "${VULKANSC_VALIDATION_LAYERS_INSTALL_DIR}/bin/")
 
     cmake_path(CONVERT "${PATH}" TO_NATIVE_PATH_LIST PATH)
 else()
-    set(LAYER_PATH "${VULKAN_VALIDATION_LAYERS_INSTALL_DIR}/share/vulkansc/explicit_layer.d/")
-    set(DRIVER_PATH "${VULKAN_TOOLS_INSTALL_DIR}/share/vulkansc/icd.d/VkICD_mock_icd_vksc.json")
-    set(LD_LIBRARY_PATH "LD_LIBRARY_PATH=path_list_prepend:${VULKAN_TOOLS_INSTALL_DIR}/lib/"
-        "LD_LIBRARY_PATH=path_list_prepend:${VULKAN_LOADER_INSTALL_DIR}/lib/"
-        "LD_LIBRARY_PATH=path_list_prepend:${VULKAN_VALIDATION_LAYERS_INSTALL_DIR}/lib/")
+    set(LAYER_PATH "${VULKANSC_VALIDATION_LAYERS_INSTALL_DIR}/share/vulkansc/explicit_layer.d/")
+    set(DRIVER_PATH "${VULKANSC_TOOLS_INSTALL_DIR}/share/vulkansc/icd.d/VkICD_mock_icd_vksc.json")
+    set(LD_LIBRARY_PATH "LD_LIBRARY_PATH=path_list_prepend:${VULKANSC_TOOLS_INSTALL_DIR}/lib/"
+        "LD_LIBRARY_PATH=path_list_prepend:${VULKANSC_LOADER_INSTALL_DIR}/lib/"
+        "LD_LIBRARY_PATH=path_list_prepend:${VULKANSC_VALIDATION_LAYERS_INSTALL_DIR}/lib/")
 
     cmake_path(CONVERT "${LD_LIBRARY_PATH}" TO_NATIVE_PATH_LIST LD_LIBRARY_PATH)
 endif()

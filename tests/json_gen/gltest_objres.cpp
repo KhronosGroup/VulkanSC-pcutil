@@ -12,14 +12,16 @@
 
 #include <string>
 #include <vector>
-#include <array>
+#include <filesystem>
+#include <fstream>
+#include <regex>
 
-class GenLayerUUIDTest : public testing::Test {
+class GenLayerObjResTest : public testing::Test {
   public:
-    GenLayerUUIDTest() = default;
-    GenLayerUUIDTest(const GenLayerUUIDTest&) = delete;
-    GenLayerUUIDTest(GenLayerUUIDTest&&) = delete;
-    ~GenLayerUUIDTest() = default;
+    GenLayerObjResTest() = default;
+    GenLayerObjResTest(const GenLayerObjResTest&) = delete;
+    GenLayerObjResTest(GenLayerObjResTest&&) = delete;
+    ~GenLayerObjResTest() = default;
 
     void TEST_DESCRIPTION(const char* desc) { RecordProperty("description", desc); }
 
@@ -47,10 +49,12 @@ class GenLayerUUIDTest : public testing::Test {
               pipeline_layout{VK_NULL_HANDLE},
               pipeline_cache{VK_NULL_HANDLE},
               pipeline{VK_NULL_HANDLE},
+              fence{VK_NULL_HANDLE},
               sizeof_push_constant{push_constant_size} {}
         SAXPY(const SAXPY&) = delete;
         SAXPY(SAXPY&&) = delete;
         ~SAXPY() {
+            vkDestroyFence(device, fence, NULL);
             vkDestroyPipeline(device, pipeline, nullptr);
             vkDestroyPipelineCache(device, pipeline_cache, NULL);
             vkDestroyPipelineLayout(device, pipeline_layout, NULL);
@@ -67,7 +71,7 @@ class GenLayerUUIDTest : public testing::Test {
         VkDevice get_device() const { return device; }
         VkPipeline get_pipeline() const { return pipeline; }
 
-        std::array<uint8_t, VK_UUID_SIZE> run() {
+        std::string run() {
             uint32_t inst_ext_count = 0;
             bool inst_supp_portability_khr = false;
             VKCHECK(vkEnumerateInstanceExtensionProperties(NULL, &inst_ext_count, NULL));
@@ -182,7 +186,9 @@ class GenLayerUUIDTest : public testing::Test {
             VkQueue queue;
             vkGetDeviceQueue(device, queue_fam, 0, &queue);
 
-            const size_t length = 16384;  // 2^14
+            const uint32_t kMaxWorkGroupCountX = 65535;
+            const uint32_t kMaxComputeWorkGroupInvocations = 128;
+            const size_t length = kMaxWorkGroupCountX * kMaxComputeWorkGroupInvocations;
 
             VkBufferCreateInfo buf_info = {.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
                                            .pNext = NULL,
@@ -258,6 +264,8 @@ class GenLayerUUIDTest : public testing::Test {
                                                   .size = VK_WHOLE_SIZE}};
             VKCHECK(vkFlushMappedMemoryRanges(device, 2, map_ranges));
 
+            float a = 1;
+
             VkBindBufferMemoryInfo buf_mem_bind_infos[2] = {{.sType = VK_STRUCTURE_TYPE_BIND_BUFFER_MEMORY_INFO,
                                                              .pNext = NULL,
                                                              .buffer = buf_x,
@@ -320,21 +328,160 @@ class GenLayerUUIDTest : public testing::Test {
                                                          .basePipelineIndex = -1};
             VKCHECK(vkCreateComputePipelines(device, pipeline_cache, 1, &pipeline_info, NULL, &pipeline));
 
-            PFN_vkGetPipelinePropertiesEXT vkGetPipelinePropertiesEXT =
-                (PFN_vkGetPipelinePropertiesEXT)vkGetDeviceProcAddr(device, "vkGetPipelinePropertiesEXT");
-            EXPECT_TRUE(vkGetPipelinePropertiesEXT);
+            VkDescriptorPoolSize desc_pool_size = {
+                .type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                .descriptorCount = 2
+            };
+            VkDescriptorPoolCreateInfo desc_pool_info = {
+                .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+                .pNext = NULL,
+                .flags = 0,
+                .maxSets = 1,
+                .poolSizeCount = 1,
+                .pPoolSizes = &desc_pool_size
+            };
+            VkDescriptorPool desc_pool;
+            VKCHECK(vkCreateDescriptorPool(device, &desc_pool_info, NULL, &desc_pool));
 
-            VkPipelineInfoEXT pipeline_info_ext{
-                .sType = VK_STRUCTURE_TYPE_PIPELINE_INFO_EXT, .pNext = nullptr, .pipeline = pipeline};
-            VkPipelinePropertiesIdentifierEXT pipeline_props{
-                .sType = VK_STRUCTURE_TYPE_PIPELINE_PROPERTIES_IDENTIFIER_EXT,
+            VkDescriptorSetAllocateInfo ds_alloc_info = {
+                .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+                .pNext = NULL,
+                .descriptorPool = desc_pool,
+                .descriptorSetCount = 1,
+                .pSetLayouts = &buf_ds_layout
+            };
+            VkDescriptorSet desc_set;
+            VKCHECK(vkAllocateDescriptorSets(device, &ds_alloc_info, &desc_set));
+            VkDescriptorBufferInfo desc_buf_x_info = {
+                .buffer = buf_x,
+                .offset = 0,
+                .range = VK_WHOLE_SIZE
+            };
+            VkDescriptorBufferInfo desc_buf_y_info = {
+                .buffer = buf_y,
+                .offset = 0,
+                .range = VK_WHOLE_SIZE
+            };
+            VkWriteDescriptorSet write_desc_sets[2] = {{
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .pNext = NULL,
+                .dstSet = desc_set,
+                .dstBinding = 0,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                .pImageInfo = NULL,
+                .pBufferInfo = &desc_buf_x_info,
+                .pTexelBufferView = NULL
+            },{
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .pNext = NULL,
+                .dstSet = desc_set,
+                .dstBinding = 1,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                .pImageInfo = NULL,
+                .pBufferInfo = &desc_buf_y_info,
+                .pTexelBufferView = NULL
+            }};
+            vkUpdateDescriptorSets(device, 2, write_desc_sets, 0, NULL);
+
+            VkCommandPoolCreateInfo cmd_pool_info = {
+                .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
                 .pNext = nullptr,
-                .pipelineIdentifier = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
-            VKCHECK(vkGetPipelinePropertiesEXT(device, &pipeline_info_ext, reinterpret_cast<VkBaseOutStructure*>(&pipeline_props)));
+                .flags = 0,
+                .queueFamilyIndex = queue_fam
+            };
+            VkCommandPool cmd_pool;
+            VKCHECK(vkCreateCommandPool(device, &cmd_pool_info, NULL, &cmd_pool));
 
-            std::array<uint8_t, VK_UUID_SIZE> result;
-            std::copy(pipeline_props.pipelineIdentifier, pipeline_props.pipelineIdentifier + VK_UUID_SIZE, result.begin());
-            return result;
+            VkCommandBufferAllocateInfo cmd_buf_info = {
+                .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+                .pNext = NULL,
+                .commandPool = cmd_pool,
+                .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+                .commandBufferCount = 1
+            };
+
+            VkCommandBuffer cmd_buf;
+            VKCHECK(vkAllocateCommandBuffers(device, &cmd_buf_info, &cmd_buf));
+
+            VkCommandBufferBeginInfo cmd_buf_begin_info = {
+                VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+                NULL,
+                VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+                NULL
+            };
+
+            VkBufferMemoryBarrier buf_in_barriers[2] = {{
+                .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+                .srcAccessMask = VK_ACCESS_HOST_WRITE_BIT,
+                .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED, // no ownership transfer
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .buffer = buf_x,
+                .offset = 0,
+                .size = VK_WHOLE_SIZE
+            },{
+                .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+                .srcAccessMask = VK_ACCESS_HOST_WRITE_BIT,
+                .dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED, // no ownership transfer
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .buffer = buf_y,
+                .offset = 0,
+                .size = VK_WHOLE_SIZE
+            }};
+
+            VkBufferMemoryBarrier buf_out_barrier = {
+                .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+                .srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT,
+                .dstAccessMask = VK_ACCESS_HOST_READ_BIT,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED, // no ownership transfer
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .buffer = buf_y,
+                .offset = 0,
+                .size = VK_WHOLE_SIZE
+            };
+
+            VKCHECK(vkBeginCommandBuffer(cmd_buf, &cmd_buf_begin_info));
+            {
+                vkCmdPipelineBarrier(cmd_buf, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 0, NULL, 2, buf_in_barriers, 0, NULL);
+                vkCmdBindPipeline(cmd_buf, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
+                vkCmdPushConstants(cmd_buf, pipeline_layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(float), &a);
+                vkCmdBindDescriptorSets(cmd_buf, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_layout, 0, 1, &desc_set, 0, NULL);
+                vkCmdDispatch(cmd_buf, kMaxWorkGroupCountX, 1, 1);
+                vkCmdPipelineBarrier(cmd_buf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_HOST_BIT, 0, 0, NULL, 1, &buf_out_barrier, 0, NULL);
+            }
+            VKCHECK(vkEndCommandBuffer(cmd_buf));
+
+            VkFenceCreateInfo fence_info = {
+                .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+                .pNext = NULL,
+                .flags = 0
+            };
+            VKCHECK(vkCreateFence(device, &fence_info, NULL, &fence));
+            VkSubmitInfo submit_info = {
+                .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+                .pNext = NULL,
+                .waitSemaphoreCount = 0,
+                .pWaitSemaphores = NULL,
+                .commandBufferCount = 1,
+                .pCommandBuffers = &cmd_buf,
+                .signalSemaphoreCount = 0,
+                .pSignalSemaphores = NULL
+            };
+            VKCHECK(vkQueueSubmit(queue, 1, &submit_info, fence));
+
+            VKCHECK(vkWaitForFences(device, 1, &fence, VK_TRUE, UINT64_MAX));
+
+            std::filesystem::path header_path = "./gltest_objres_objectResInfo_0.hpp";
+            auto header_size = std::filesystem::file_size(header_path);
+            std::string header_str(header_size, '\0');
+            std::ifstream header_stream{header_path};
+            header_stream.read(header_str.data(), header_size);
+            return header_str;
         }
 
       private:
@@ -347,6 +494,7 @@ class GenLayerUUIDTest : public testing::Test {
         VkPipelineLayout pipeline_layout;
         VkPipelineCache pipeline_cache;
         VkPipeline pipeline;
+        VkFence fence;
 
         size_t sizeof_push_constant;
     };
@@ -356,34 +504,59 @@ class GenLayerUUIDTest : public testing::Test {
   protected:
 };
 
-TEST_F(GenLayerUUIDTest, NonZeroCompute) {
-    TEST_DESCRIPTION("Tests whether generated UUID for a compute pipeline is non-zero");
+TEST_F(GenLayerObjResTest, Compute) {
+    TEST_DESCRIPTION("Tests whether generated object reservation counts for a compute pipeline are as expected");
 
     SAXPY saxpy;
-    auto uuid = saxpy.run();
+    auto header = saxpy.run();
 
-    auto pipeline_identifier_all_zeros = std::all_of(uuid.begin(), uuid.end(), [](const auto& val) { return val == 0; });
-    EXPECT_FALSE(pipeline_identifier_all_zeros);
+    EXPECT_EQ(header, std::string(R"(#ifndef gltest_objres_objectResInfo_HPP
+#define gltest_objres_objectResInfo_HPP
+
+#include <vulkan/vulkan_sc_core.h>
+
+static VkDeviceObjectReservationCreateInfo g_objectResCreateInfo_0 {};
+static void SetObjectResCreateInfo()
+{
+	g_objectResCreateInfo_0.sType                                      = VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO;
+	g_objectResCreateInfo_0.pNext                                      = nullptr;
+	g_objectResCreateInfo_0.semaphoreRequestCount                      = 0;
+	g_objectResCreateInfo_0.commandBufferRequestCount                  = 1;
+	g_objectResCreateInfo_0.fenceRequestCount                          = 1;
+	g_objectResCreateInfo_0.deviceMemoryRequestCount                   = 2;
+	g_objectResCreateInfo_0.bufferRequestCount                         = 2;
+	g_objectResCreateInfo_0.imageRequestCount                          = 0;
+	g_objectResCreateInfo_0.eventRequestCount                          = 0;
+	g_objectResCreateInfo_0.queryPoolRequestCount                      = 0;
+	g_objectResCreateInfo_0.bufferViewRequestCount                     = 0;
+	g_objectResCreateInfo_0.imageViewRequestCount                      = 0;
+	g_objectResCreateInfo_0.layeredImageViewRequestCount               = 0;
+	g_objectResCreateInfo_0.pipelineCacheRequestCount                  = 1;
+	g_objectResCreateInfo_0.pipelineLayoutRequestCount                 = 1;
+	g_objectResCreateInfo_0.renderPassRequestCount                     = 0;
+	g_objectResCreateInfo_0.graphicsPipelineRequestCount               = 0;
+	g_objectResCreateInfo_0.computePipelineRequestCount                = 1;
+	g_objectResCreateInfo_0.descriptorSetLayoutRequestCount            = 1;
+	g_objectResCreateInfo_0.samplerRequestCount                        = 0;
+	g_objectResCreateInfo_0.descriptorPoolRequestCount                 = 1;
+	g_objectResCreateInfo_0.descriptorSetRequestCount                  = 1;
+	g_objectResCreateInfo_0.framebufferRequestCount                    = 0;
+	g_objectResCreateInfo_0.commandPoolRequestCount                    = 1;
+	g_objectResCreateInfo_0.samplerYcbcrConversionRequestCount         = 0;
+	g_objectResCreateInfo_0.swapchainRequestCount                      = 0;
+	g_objectResCreateInfo_0.subpassDescriptionRequestCount             = 0;
+	g_objectResCreateInfo_0.attachmentDescriptionRequestCount          = 0;
+	g_objectResCreateInfo_0.descriptorSetLayoutBindingRequestCount     = 2;
+	g_objectResCreateInfo_0.descriptorSetLayoutBindingLimit            = 2;
+	g_objectResCreateInfo_0.maxImageViewMipLevels                      = 0;
+	g_objectResCreateInfo_0.maxImageViewArrayLayers                    = 0;
+	g_objectResCreateInfo_0.maxLayeredImageViewMipLevels               = 0;
+	g_objectResCreateInfo_0.maxOcclusionQueriesPerPool                 = 0;
+	g_objectResCreateInfo_0.maxPipelineStatisticsQueriesPerPool        = 0;
+	g_objectResCreateInfo_0.maxTimestampQueriesPerPool                 = 0;
+	g_objectResCreateInfo_0.maxImmutableSamplersPerDescriptorSetLayout = 0;
 }
 
-TEST_F(GenLayerUUIDTest, ReproducibleCompute) {
-    TEST_DESCRIPTION("Tests whether generated UUIDs for identical compute pipelines match");
-
-    SAXPY saxpy1, saxpy2;
-    auto uuid1 = saxpy1.run();
-    auto uuid2 = saxpy2.run();
-
-    auto pipeline_identifiers_match = std::equal(uuid1.begin(), uuid1.end(), uuid2.begin(), uuid2.end());
-    EXPECT_FALSE(pipeline_identifiers_match);
-}
-
-TEST_F(GenLayerUUIDTest, DifferentCompute) {
-    TEST_DESCRIPTION("Tests whether generated UUIDs for different compute pipelines differ");
-
-    SAXPY saxpy1, saxpy2(8);
-    auto uuid1 = saxpy1.run();
-    auto uuid2 = saxpy2.run();
-
-    auto pipeline_identifiers_match = std::equal(uuid1.begin(), uuid1.end(), uuid2.begin(), uuid2.end());
-    EXPECT_FALSE(pipeline_identifiers_match);
+#endif
+)"));
 }

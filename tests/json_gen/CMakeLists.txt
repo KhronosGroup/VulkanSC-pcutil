@@ -104,7 +104,50 @@ else()
 endif()
 
 # 4. Test object count tracking
+# 4.0. SAXPY, Cube
 # 4.1. Single-device, high watermark behavior (mix destroys and creates)
 # 4.2. Single-device, max and limit tracking (query the tricky-to-track members of objres)
 # 4.3. Multi-device, 2nd created after 1st destroyed
 # 4.4. Multi-device, create concurrently
+
+add_executable(gltest_objres gltest_objres.cpp)
+
+target_link_libraries(gltest_objres PRIVATE
+    Vulkan::PCJson
+    Vk::Headers
+    Vk::Loader
+    GTest::gtest
+    GTest::gtest_main
+)
+
+add_test(NAME genlayer.objectreservation
+    COMMAND gltest_objres
+)
+
+if (WIN32)
+    set(PATH_VALUE "PATH=${VULKAN_TOOLS_INSTALL_DIR}/bin/$<SEMICOLON>${VULKAN_LOADER_INSTALL_DIR}/bin$<SEMICOLON>$ENV{PATH}")
+    set(DRIVER_PATH_VALUE "${VULKAN_TOOLS_INSTALL_DIR}/bin/VkICD_mock_icd.json")
+    set(LAYER_PATH "$<TARGET_FILE_DIR:VulkanJSONGenLayer>")
+
+    cmake_path(CONVERT "${PATH}" TO_NATIVE_PATH_LIST PATH)
+else()
+    set(LAYER_PATH_VALUE "$<TARGET_FILE_DIR:VulkanJSONGenLayer>")
+    set(DRIVER_PATH_VALUE "${VULKAN_TOOLS_INSTALL_DIR}/share/vulkan/icd.d/VkICD_mock_icd.json")
+    set(LD_LIBRARY_PATH_VALUE "${VULKAN_TOOLS_INSTALL_DIR}/lib/"
+        "${VULKAN_LOADER_INSTALL_DIR}/lib/"
+        "${VULKAN_VALIDATION_LAYERS_INSTALL_DIR}/lib/")
+
+    cmake_path(CONVERT "${LD_LIBRARY_PATH_VALUE}" TO_NATIVE_PATH_LIST LD_LIBRARY_PATH_VALUE)
+    cmake_path(CONVERT "${DRIVER_PATH_VALUE}" TO_NATIVE_PATH_LIST DRIVER_PATH_VALUE)
+
+    set_property(TEST genlayer.objectreservation PROPERTY ENVIRONMENT
+        "VK_LAYER_PATH=${LAYER_PATH_VALUE}"
+        "LD_LIBRARY_PATH=${LD_LIBRARY_PATH_VALUE}"
+        "VK_DRIVER_FILES=${DRIVER_PATH_VALUE}"
+        "VK_LOADER_LAYERS_DISABLE=~implicit~"
+        "VK_INSTANCE_LAYERS=VK_LAYER_KHRONOS_json_gen"
+        "VK_JSON_FILE_PATH=${CMAKE_CURRENT_BINARY_DIR}")
+endif()
+
+# 5. Workflow/integration tests
+# 5.1. How to relay pipelinecache create infos in objres from VK to VKSC?

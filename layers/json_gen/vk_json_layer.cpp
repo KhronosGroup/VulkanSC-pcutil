@@ -274,6 +274,7 @@ DeviceData::DeviceData(VkDevice device, const VkDeviceCreateInfo* ci, PFN_vkGetD
         INIT_HOOK(vtable, device, CreateDescriptorSetLayout);
         INIT_HOOK(vtable, device, DestroyDescriptorSetLayout);
         INIT_HOOK(vtable, device, CreatePipelineLayout);
+        INIT_HOOK(vtable, device, DestroyPipelineLayout);
         INIT_HOOK(vtable, device, CreateRenderPass);
         INIT_HOOK(vtable, device, CreateRenderPass2);
         INIT_HOOK(vtable, device, DestroyRenderPass);
@@ -317,8 +318,8 @@ void DeviceData::writeDeviceObjResHeader() {
         std::string(getBaseDirectoryPath()) + std::string(getProcessName()) + "_objectResInfo_" + std::to_string(id) + ".hpp";
     // clang-format off
     result <<
-        "#ifndef " << getProcessName() << "_objectResInfo_HPP\n" <<
-        "#define " << getProcessName() << "_objectResInfo_HPP\n\n" <<
+        "#ifndef " << getProcessName() << "_objectResInfo_" << id << "_HPP\n" <<
+        "#define " << getProcessName() << "_objectResInfo_" << id << "_HPP\n\n" <<
         "#include <vulkan/vulkan_sc_core.h>\n\n" <<
         "static VkDeviceObjectReservationCreateInfo g_objectResCreateInfo_" << id << " {};\n" <<
         "static void SetObjectResCreateInfo()\n" <<
@@ -804,6 +805,15 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreatePipelineLayout(VkDevice device, 
         device_data->pipeline_layout_map.insert(*pPipelineLayout, std::make_shared<PipelineLayoutData>(pCreateInfo, *device_data));
     }
     return result;
+}
+VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroyPipelineLayout(VkDevice device, VkPipelineLayout pipelineLayout,
+                                                            const VkAllocationCallbacks* pAllocator) {
+    auto device_data = GetDeviceData(device);
+    device_data->vtable.DestroyPipelineLayout(device, pipelineLayout, pAllocator);
+    if (pipelineLayout != VK_NULL_HANDLE) {
+        device_data->obj_res_info.pipelineLayoutRequestCount--;
+        device_data->pipeline_layout_map.erase(pipelineLayout);
+    }
 }
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateRenderPass(VkDevice device, const VkRenderPassCreateInfo* pCreateInfo,
                                                            const VkAllocationCallbacks* pAllocator, VkRenderPass* pRenderPass) {
@@ -1348,25 +1358,52 @@ static const std::unordered_map<std::string, PFN_vkVoidFunction> kInstanceFuncti
 static const std::unordered_map<std::string, PFN_vkVoidFunction> kDeviceFunctions = {
     // Needs to point to itself as Android loaders calls vkGet*ProcAddr to itself. Without these hooks, when the app calls
     // vkGetDeviceProcAddr to get layer functions it will fail on Android
-    ADD_HOOK(GetInstanceProcAddr), ADD_HOOK(GetDeviceProcAddr), ADD_HOOK(DestroyDevice), ADD_HOOK(CreateSemaphore),
-    ADD_HOOK(DestroySemaphore), ADD_HOOK(CreateShaderModule), ADD_HOOK(DestroyShaderModule), ADD_HOOK(AllocateMemory),
-    // FreeMemory doesn not exist in SC.
-    ADD_HOOK(CreatePipelineCache), ADD_HOOK(DestroyPipelineCache), ADD_HOOK(CreateGraphicsPipelines),
-    ADD_HOOK(CreateComputePipelines), ADD_HOOK(DestroyPipeline), ADD_HOOK(CreateDescriptorSetLayout),
-    ADD_HOOK(DestroyDescriptorSetLayout), ADD_HOOK(CreatePipelineLayout), ADD_HOOK(CreateRenderPass), ADD_HOOK(CreateRenderPass2),
-    ADD_HOOK(DestroyRenderPass), ADD_HOOK(CreateSampler), ADD_HOOK(DestroySampler), ADD_HOOK(CreateSamplerYcbcrConversion),
-    ADD_HOOK(DestroySamplerYcbcrConversion), ADD_HOOK(CreateSwapchainKHR), ADD_HOOK(DestroySwapchainKHR), ADD_HOOK(CreateImage),
-    ADD_HOOK(DestroyImage), ADD_HOOK(CreateImageView), ADD_HOOK(DestroyImageView), ADD_HOOK(AllocateCommandBuffers),
-    // FreeCommandBuffers does not release memory, only CommandPool reset does.
-    ADD_HOOK(CreateFence), ADD_HOOK(DestroyFence), ADD_HOOK(CreateBuffer), ADD_HOOK(DestroyBuffer), ADD_HOOK(CreateBufferView),
-    ADD_HOOK(DestroyBufferView), ADD_HOOK(CreateEvent), ADD_HOOK(DestroyEvent), ADD_HOOK(CreateQueryPool),
-    // DestroyQueryPool does not exist in SC.
+    ADD_HOOK(GetInstanceProcAddr),
+    ADD_HOOK(GetDeviceProcAddr),
+    ADD_HOOK(DestroyDevice),
+    ADD_HOOK(CreateSemaphore),
+    ADD_HOOK(DestroySemaphore),
+    ADD_HOOK(CreateShaderModule),
+    ADD_HOOK(DestroyShaderModule),
+    ADD_HOOK(AllocateMemory),
+    ADD_HOOK(CreatePipelineCache),
+    ADD_HOOK(DestroyPipelineCache),
+    ADD_HOOK(CreateGraphicsPipelines),
+    ADD_HOOK(CreateComputePipelines),
+    ADD_HOOK(DestroyPipeline),
+    ADD_HOOK(CreateDescriptorSetLayout),
+    ADD_HOOK(DestroyDescriptorSetLayout),
+    ADD_HOOK(CreatePipelineLayout),
+    ADD_HOOK(DestroyPipelineLayout),
+    ADD_HOOK(CreateRenderPass),
+    ADD_HOOK(CreateRenderPass2),
+    ADD_HOOK(DestroyRenderPass),
+    ADD_HOOK(CreateSampler),
+    ADD_HOOK(DestroySampler),
+    ADD_HOOK(CreateSamplerYcbcrConversion),
+    ADD_HOOK(DestroySamplerYcbcrConversion),
+    ADD_HOOK(CreateSwapchainKHR),
+    ADD_HOOK(DestroySwapchainKHR),
+    ADD_HOOK(CreateImage),
+    ADD_HOOK(DestroyImage),
+    ADD_HOOK(CreateImageView),
+    ADD_HOOK(DestroyImageView),
+    ADD_HOOK(AllocateCommandBuffers),
+    ADD_HOOK(CreateFence),
+    ADD_HOOK(DestroyFence),
+    ADD_HOOK(CreateBuffer),
+    ADD_HOOK(DestroyBuffer),
+    ADD_HOOK(CreateBufferView),
+    ADD_HOOK(DestroyBufferView),
+    ADD_HOOK(CreateEvent),
+    ADD_HOOK(DestroyEvent),
+    ADD_HOOK(CreateQueryPool),
     ADD_HOOK(CreateDescriptorPool),
-    // DestroyDescriptorPool does not exist in SC.
-    ADD_HOOK(AllocateDescriptorSets), ADD_HOOK(FreeDescriptorSets), ADD_HOOK(CreateFramebuffer), ADD_HOOK(DestroyFramebuffer),
+    ADD_HOOK(AllocateDescriptorSets),
+    ADD_HOOK(FreeDescriptorSets),
+    ADD_HOOK(CreateFramebuffer),
+    ADD_HOOK(DestroyFramebuffer),
     ADD_HOOK(CreateCommandPool),
-    // DestroyCommandPool does not exist in SC.
-    // Releasing memory upon command pool reset requires command buffer tracking
     ADD_HOOK(GetPipelinePropertiesEXT)};
 #undef ADD_HOOK
 #undef ADD_HOOK_ALIAS

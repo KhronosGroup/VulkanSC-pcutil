@@ -37,9 +37,11 @@ class GenLayerObjResTest : public testing::Test {
 
     class SAXPY {
       public:
-        SAXPY(size_t push_constant_size = 4)
-            : instance{VK_NULL_HANDLE},
-              device{VK_NULL_HANDLE},
+        struct Objects;
+
+        SAXPY(VkInstance inst, VkDevice dev, size_t push_constant_size = 4)
+            : instance{inst},
+              device{dev},
               shader_module{VK_NULL_HANDLE},
               buf_x{VK_NULL_HANDLE},
               buf_y{VK_NULL_HANDLE},
@@ -64,14 +66,9 @@ class GenLayerObjResTest : public testing::Test {
             vkDestroyBuffer(device, buf_y, NULL);
             vkDestroyBuffer(device, buf_x, NULL);
             vkDestroyShaderModule(device, shader_module, NULL);
-            vkDestroyDevice(device, NULL);
-            vkDestroyInstance(instance, NULL);
         }
 
-        VkDevice get_device() const { return device; }
-        VkPipeline get_pipeline() const { return pipeline; }
-
-        std::string run() {
+        static VkInstance create_instance() {
             uint32_t inst_ext_count = 0;
             bool inst_supp_portability_khr = false;
             VKCHECK(vkEnumerateInstanceExtensionProperties(NULL, &inst_ext_count, NULL));
@@ -102,7 +99,13 @@ class GenLayerObjResTest : public testing::Test {
                                               .ppEnabledLayerNames = NULL,
                                               .enabledExtensionCount = 1,
                                               .ppEnabledExtensionNames = &portability_khr_str};
+            VkInstance instance;
             VKCHECK(vkCreateInstance(&inst_info, NULL, &instance));
+            return instance;
+        }
+
+        static VkDevice create_device(VkInstance instance) {
+            ++device_counter;
 
             uint32_t phys_dev_count;
             VKCHECK(vkEnumeratePhysicalDevices(instance, &phys_dev_count, NULL));
@@ -170,7 +173,33 @@ class GenLayerObjResTest : public testing::Test {
                                            .ppEnabledExtensionNames = &synchronization2_khr_str,
                                            .pEnabledFeatures = NULL};
 
+            VkDevice device;
             VKCHECK(vkCreateDevice(phys_dev, &dev_info, NULL, &device));
+            return device;
+        }
+
+        void run() {
+            uint32_t phys_dev_count;
+            VKCHECK(vkEnumeratePhysicalDevices(instance, &phys_dev_count, NULL));
+            VKCHECK(phys_dev_count == 0);
+
+            std::vector<VkPhysicalDevice> phys_devs(phys_dev_count);
+            VKCHECK(vkEnumeratePhysicalDevices(instance, &phys_dev_count, phys_devs.data()));
+
+            VkPhysicalDevice phys_dev = phys_devs[0];
+
+            uint32_t queue_fam_prop_count;
+            vkGetPhysicalDeviceQueueFamilyProperties(phys_dev, &queue_fam_prop_count, NULL);
+            std::vector<VkQueueFamilyProperties> queue_fam_props(queue_fam_prop_count);
+            vkGetPhysicalDeviceQueueFamilyProperties(phys_dev, &queue_fam_prop_count, queue_fam_props.data());
+
+            uint32_t queue_fam = UINT32_MAX;
+            for (uint32_t i = 0; i < queue_fam_prop_count; ++i) {
+                if (queue_fam_props[i].queueFlags & VK_QUEUE_COMPUTE_BIT) {
+                    queue_fam = i;
+                    break;
+                }
+            }
 
             const uint32_t cs_code[] = {
 #include "saxpy.comp.inc"
@@ -328,160 +357,116 @@ class GenLayerObjResTest : public testing::Test {
                                                          .basePipelineIndex = -1};
             VKCHECK(vkCreateComputePipelines(device, pipeline_cache, 1, &pipeline_info, NULL, &pipeline));
 
-            VkDescriptorPoolSize desc_pool_size = {
-                .type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-                .descriptorCount = 2
-            };
-            VkDescriptorPoolCreateInfo desc_pool_info = {
-                .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-                .pNext = NULL,
-                .flags = 0,
-                .maxSets = 1,
-                .poolSizeCount = 1,
-                .pPoolSizes = &desc_pool_size
-            };
+            VkDescriptorPoolSize desc_pool_size = {.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .descriptorCount = 2};
+            VkDescriptorPoolCreateInfo desc_pool_info = {.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+                                                         .pNext = NULL,
+                                                         .flags = 0,
+                                                         .maxSets = 1,
+                                                         .poolSizeCount = 1,
+                                                         .pPoolSizes = &desc_pool_size};
             VkDescriptorPool desc_pool;
             VKCHECK(vkCreateDescriptorPool(device, &desc_pool_info, NULL, &desc_pool));
 
-            VkDescriptorSetAllocateInfo ds_alloc_info = {
-                .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-                .pNext = NULL,
-                .descriptorPool = desc_pool,
-                .descriptorSetCount = 1,
-                .pSetLayouts = &buf_ds_layout
-            };
+            VkDescriptorSetAllocateInfo ds_alloc_info = {.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+                                                         .pNext = NULL,
+                                                         .descriptorPool = desc_pool,
+                                                         .descriptorSetCount = 1,
+                                                         .pSetLayouts = &buf_ds_layout};
             VkDescriptorSet desc_set;
             VKCHECK(vkAllocateDescriptorSets(device, &ds_alloc_info, &desc_set));
-            VkDescriptorBufferInfo desc_buf_x_info = {
-                .buffer = buf_x,
-                .offset = 0,
-                .range = VK_WHOLE_SIZE
-            };
-            VkDescriptorBufferInfo desc_buf_y_info = {
-                .buffer = buf_y,
-                .offset = 0,
-                .range = VK_WHOLE_SIZE
-            };
-            VkWriteDescriptorSet write_desc_sets[2] = {{
-                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .pNext = NULL,
-                .dstSet = desc_set,
-                .dstBinding = 0,
-                .dstArrayElement = 0,
-                .descriptorCount = 1,
-                .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-                .pImageInfo = NULL,
-                .pBufferInfo = &desc_buf_x_info,
-                .pTexelBufferView = NULL
-            },{
-                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .pNext = NULL,
-                .dstSet = desc_set,
-                .dstBinding = 1,
-                .dstArrayElement = 0,
-                .descriptorCount = 1,
-                .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-                .pImageInfo = NULL,
-                .pBufferInfo = &desc_buf_y_info,
-                .pTexelBufferView = NULL
-            }};
+            VkDescriptorBufferInfo desc_buf_x_info = {.buffer = buf_x, .offset = 0, .range = VK_WHOLE_SIZE};
+            VkDescriptorBufferInfo desc_buf_y_info = {.buffer = buf_y, .offset = 0, .range = VK_WHOLE_SIZE};
+            VkWriteDescriptorSet write_desc_sets[2] = {{.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                                                        .pNext = NULL,
+                                                        .dstSet = desc_set,
+                                                        .dstBinding = 0,
+                                                        .dstArrayElement = 0,
+                                                        .descriptorCount = 1,
+                                                        .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                                                        .pImageInfo = NULL,
+                                                        .pBufferInfo = &desc_buf_x_info,
+                                                        .pTexelBufferView = NULL},
+                                                       {.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                                                        .pNext = NULL,
+                                                        .dstSet = desc_set,
+                                                        .dstBinding = 1,
+                                                        .dstArrayElement = 0,
+                                                        .descriptorCount = 1,
+                                                        .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                                                        .pImageInfo = NULL,
+                                                        .pBufferInfo = &desc_buf_y_info,
+                                                        .pTexelBufferView = NULL}};
             vkUpdateDescriptorSets(device, 2, write_desc_sets, 0, NULL);
 
             VkCommandPoolCreateInfo cmd_pool_info = {
-                .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-                .pNext = nullptr,
-                .flags = 0,
-                .queueFamilyIndex = queue_fam
-            };
+                .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO, .pNext = nullptr, .flags = 0, .queueFamilyIndex = queue_fam};
             VkCommandPool cmd_pool;
             VKCHECK(vkCreateCommandPool(device, &cmd_pool_info, NULL, &cmd_pool));
 
-            VkCommandBufferAllocateInfo cmd_buf_info = {
-                .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-                .pNext = NULL,
-                .commandPool = cmd_pool,
-                .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-                .commandBufferCount = 1
-            };
+            VkCommandBufferAllocateInfo cmd_buf_info = {.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+                                                        .pNext = NULL,
+                                                        .commandPool = cmd_pool,
+                                                        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+                                                        .commandBufferCount = 1};
 
             VkCommandBuffer cmd_buf;
             VKCHECK(vkAllocateCommandBuffers(device, &cmd_buf_info, &cmd_buf));
 
-            VkCommandBufferBeginInfo cmd_buf_begin_info = {
-                VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-                NULL,
-                VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-                NULL
-            };
+            VkCommandBufferBeginInfo cmd_buf_begin_info = {VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, NULL,
+                                                           VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, NULL};
 
-            VkBufferMemoryBarrier buf_in_barriers[2] = {{
-                .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
-                .srcAccessMask = VK_ACCESS_HOST_WRITE_BIT,
-                .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
-                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED, // no ownership transfer
-                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                .buffer = buf_x,
-                .offset = 0,
-                .size = VK_WHOLE_SIZE
-            },{
-                .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
-                .srcAccessMask = VK_ACCESS_HOST_WRITE_BIT,
-                .dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
-                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED, // no ownership transfer
-                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                .buffer = buf_y,
-                .offset = 0,
-                .size = VK_WHOLE_SIZE
-            }};
+            VkBufferMemoryBarrier buf_in_barriers[2] = {{.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+                                                         .srcAccessMask = VK_ACCESS_HOST_WRITE_BIT,
+                                                         .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+                                                         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,  // no ownership transfer
+                                                         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                                                         .buffer = buf_x,
+                                                         .offset = 0,
+                                                         .size = VK_WHOLE_SIZE},
+                                                        {.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+                                                         .srcAccessMask = VK_ACCESS_HOST_WRITE_BIT,
+                                                         .dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
+                                                         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,  // no ownership transfer
+                                                         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                                                         .buffer = buf_y,
+                                                         .offset = 0,
+                                                         .size = VK_WHOLE_SIZE}};
 
-            VkBufferMemoryBarrier buf_out_barrier = {
-                .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
-                .srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT,
-                .dstAccessMask = VK_ACCESS_HOST_READ_BIT,
-                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED, // no ownership transfer
-                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                .buffer = buf_y,
-                .offset = 0,
-                .size = VK_WHOLE_SIZE
-            };
+            VkBufferMemoryBarrier buf_out_barrier = {.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+                                                     .srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT,
+                                                     .dstAccessMask = VK_ACCESS_HOST_READ_BIT,
+                                                     .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,  // no ownership transfer
+                                                     .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                                                     .buffer = buf_y,
+                                                     .offset = 0,
+                                                     .size = VK_WHOLE_SIZE};
 
             VKCHECK(vkBeginCommandBuffer(cmd_buf, &cmd_buf_begin_info));
             {
-                vkCmdPipelineBarrier(cmd_buf, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 0, NULL, 2, buf_in_barriers, 0, NULL);
+                vkCmdPipelineBarrier(cmd_buf, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 0, NULL, 2,
+                                     buf_in_barriers, 0, NULL);
                 vkCmdBindPipeline(cmd_buf, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
                 vkCmdPushConstants(cmd_buf, pipeline_layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(float), &a);
                 vkCmdBindDescriptorSets(cmd_buf, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_layout, 0, 1, &desc_set, 0, NULL);
                 vkCmdDispatch(cmd_buf, kMaxWorkGroupCountX, 1, 1);
-                vkCmdPipelineBarrier(cmd_buf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_HOST_BIT, 0, 0, NULL, 1, &buf_out_barrier, 0, NULL);
+                vkCmdPipelineBarrier(cmd_buf, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_HOST_BIT, 0, 0, NULL, 1,
+                                     &buf_out_barrier, 0, NULL);
             }
             VKCHECK(vkEndCommandBuffer(cmd_buf));
 
-            VkFenceCreateInfo fence_info = {
-                .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-                .pNext = NULL,
-                .flags = 0
-            };
+            VkFenceCreateInfo fence_info = {.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, .pNext = NULL, .flags = 0};
             VKCHECK(vkCreateFence(device, &fence_info, NULL, &fence));
-            VkSubmitInfo submit_info = {
-                .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-                .pNext = NULL,
-                .waitSemaphoreCount = 0,
-                .pWaitSemaphores = NULL,
-                .commandBufferCount = 1,
-                .pCommandBuffers = &cmd_buf,
-                .signalSemaphoreCount = 0,
-                .pSignalSemaphores = NULL
-            };
+            VkSubmitInfo submit_info = {.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+                                        .pNext = NULL,
+                                        .waitSemaphoreCount = 0,
+                                        .pWaitSemaphores = NULL,
+                                        .commandBufferCount = 1,
+                                        .pCommandBuffers = &cmd_buf,
+                                        .signalSemaphoreCount = 0,
+                                        .pSignalSemaphores = NULL};
             VKCHECK(vkQueueSubmit(queue, 1, &submit_info, fence));
 
             VKCHECK(vkWaitForFences(device, 1, &fence, VK_TRUE, UINT64_MAX));
-
-            std::filesystem::path header_path = "./gltest_objres_objectResInfo_0.hpp";
-            auto header_size = std::filesystem::file_size(header_path);
-            std::string header_str(header_size, '\0');
-            std::ifstream header_stream{header_path};
-            header_stream.read(header_str.data(), header_size);
-            return header_str;
         }
 
       private:
@@ -495,23 +480,42 @@ class GenLayerObjResTest : public testing::Test {
         VkPipelineCache pipeline_cache;
         VkPipeline pipeline;
         VkFence fence;
-
         size_t sizeof_push_constant;
     };
 
     class Cube {};
 
+    std::string get_header(size_t i) {
+        std::filesystem::path header_path = std::string("./gltest_objres_objectResInfo_") + std::to_string(i) + ".hpp";
+        auto header_size = std::filesystem::file_size(header_path);
+        std::string header_str(header_size, '\0');
+        std::ifstream header_stream{header_path};
+        header_stream.read(header_str.data(), header_size);
+        return header_str;
+    }
+
+    static inline int32_t device_counter = -1;
+
   protected:
+    static int32_t get_device_counter() { return device_counter; }
 };
 
-TEST_F(GenLayerObjResTest, Compute) {
+TEST_F(GenLayerObjResTest, ComputeSimple) {
     TEST_DESCRIPTION("Tests whether generated object reservation counts for a compute pipeline are as expected");
 
-    SAXPY saxpy;
-    auto header = saxpy.run();
+    auto instance = SAXPY::create_instance();
+    auto device = SAXPY::create_device(instance);
 
-    EXPECT_EQ(header, std::string(R"(#ifndef gltest_objres_objectResInfo_HPP
-#define gltest_objres_objectResInfo_HPP
+    {
+        SAXPY saxpy{instance, device};
+        saxpy.run();
+    }
+    vkDestroyDevice(device, nullptr);
+    vkDestroyInstance(instance, nullptr);
+
+    auto header = get_header(get_device_counter());
+    std::string ref = R"(#ifndef gltest_objres_objectResInfo_0_HPP
+#define gltest_objres_objectResInfo_0_HPP
 
 #include <vulkan/vulkan_sc_core.h>
 
@@ -558,5 +562,140 @@ static void SetObjectResCreateInfo()
 }
 
 #endif
-)"));
+)";
+    EXPECT_EQ(header, ref);
+}
+
+TEST_F(GenLayerObjResTest, ComputeMultiDeviceHighWatermark) {
+    TEST_DESCRIPTION("Tests generated object reservation counts for a compute pipelines in a simple multi-device scenario");
+
+    auto instance = SAXPY::create_instance();
+    auto device = SAXPY::create_device(instance);
+    auto device_counter = get_device_counter();
+    auto device2 = SAXPY::create_device(instance);
+    auto device_counter2 = get_device_counter();
+
+    {
+        SAXPY saxpy{instance, device2};
+        saxpy.run();
+
+        {
+            SAXPY saxpy2{instance, device2};
+            saxpy2.run();
+        }
+
+        SAXPY saxpy2{instance, device2};
+        saxpy2.run();
+        SAXPY saxpy3{instance, device};
+        saxpy3.run();
+        SAXPY saxpy4{instance, device2};
+        saxpy4.run();
+    }
+    vkDestroyDevice(device2, nullptr);
+    vkDestroyDevice(device, nullptr);
+    vkDestroyInstance(instance, nullptr);
+
+    auto header = get_header(device_counter);
+    std::string ref = R"(#ifndef gltest_objres_objectResInfo_1_HPP
+#define gltest_objres_objectResInfo_1_HPP
+
+#include <vulkan/vulkan_sc_core.h>
+
+static VkDeviceObjectReservationCreateInfo g_objectResCreateInfo_1 {};
+static void SetObjectResCreateInfo()
+{
+	g_objectResCreateInfo_1.sType                                      = VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO;
+	g_objectResCreateInfo_1.pNext                                      = nullptr;
+	g_objectResCreateInfo_1.semaphoreRequestCount                      = 0;
+	g_objectResCreateInfo_1.commandBufferRequestCount                  = 1;
+	g_objectResCreateInfo_1.fenceRequestCount                          = 1;
+	g_objectResCreateInfo_1.deviceMemoryRequestCount                   = 2;
+	g_objectResCreateInfo_1.bufferRequestCount                         = 2;
+	g_objectResCreateInfo_1.imageRequestCount                          = 0;
+	g_objectResCreateInfo_1.eventRequestCount                          = 0;
+	g_objectResCreateInfo_1.queryPoolRequestCount                      = 0;
+	g_objectResCreateInfo_1.bufferViewRequestCount                     = 0;
+	g_objectResCreateInfo_1.imageViewRequestCount                      = 0;
+	g_objectResCreateInfo_1.layeredImageViewRequestCount               = 0;
+	g_objectResCreateInfo_1.pipelineCacheRequestCount                  = 1;
+	g_objectResCreateInfo_1.pipelineLayoutRequestCount                 = 1;
+	g_objectResCreateInfo_1.renderPassRequestCount                     = 0;
+	g_objectResCreateInfo_1.graphicsPipelineRequestCount               = 0;
+	g_objectResCreateInfo_1.computePipelineRequestCount                = 1;
+	g_objectResCreateInfo_1.descriptorSetLayoutRequestCount            = 1;
+	g_objectResCreateInfo_1.samplerRequestCount                        = 0;
+	g_objectResCreateInfo_1.descriptorPoolRequestCount                 = 1;
+	g_objectResCreateInfo_1.descriptorSetRequestCount                  = 1;
+	g_objectResCreateInfo_1.framebufferRequestCount                    = 0;
+	g_objectResCreateInfo_1.commandPoolRequestCount                    = 1;
+	g_objectResCreateInfo_1.samplerYcbcrConversionRequestCount         = 0;
+	g_objectResCreateInfo_1.swapchainRequestCount                      = 0;
+	g_objectResCreateInfo_1.subpassDescriptionRequestCount             = 0;
+	g_objectResCreateInfo_1.attachmentDescriptionRequestCount          = 0;
+	g_objectResCreateInfo_1.descriptorSetLayoutBindingRequestCount     = 2;
+	g_objectResCreateInfo_1.descriptorSetLayoutBindingLimit            = 2;
+	g_objectResCreateInfo_1.maxImageViewMipLevels                      = 0;
+	g_objectResCreateInfo_1.maxImageViewArrayLayers                    = 0;
+	g_objectResCreateInfo_1.maxLayeredImageViewMipLevels               = 0;
+	g_objectResCreateInfo_1.maxOcclusionQueriesPerPool                 = 0;
+	g_objectResCreateInfo_1.maxPipelineStatisticsQueriesPerPool        = 0;
+	g_objectResCreateInfo_1.maxTimestampQueriesPerPool                 = 0;
+	g_objectResCreateInfo_1.maxImmutableSamplersPerDescriptorSetLayout = 0;
+}
+
+#endif
+)";
+    EXPECT_EQ(header, ref);
+
+    auto header2 = get_header(device_counter2);
+    std::string ref2 = R"(#ifndef gltest_objres_objectResInfo_2_HPP
+#define gltest_objres_objectResInfo_2_HPP
+
+#include <vulkan/vulkan_sc_core.h>
+
+static VkDeviceObjectReservationCreateInfo g_objectResCreateInfo_2 {};
+static void SetObjectResCreateInfo()
+{
+	g_objectResCreateInfo_2.sType                                      = VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO;
+	g_objectResCreateInfo_2.pNext                                      = nullptr;
+	g_objectResCreateInfo_2.semaphoreRequestCount                      = 0;
+	g_objectResCreateInfo_2.commandBufferRequestCount                  = 4;
+	g_objectResCreateInfo_2.fenceRequestCount                          = 3;
+	g_objectResCreateInfo_2.deviceMemoryRequestCount                   = 8;
+	g_objectResCreateInfo_2.bufferRequestCount                         = 6;
+	g_objectResCreateInfo_2.imageRequestCount                          = 0;
+	g_objectResCreateInfo_2.eventRequestCount                          = 0;
+	g_objectResCreateInfo_2.queryPoolRequestCount                      = 0;
+	g_objectResCreateInfo_2.bufferViewRequestCount                     = 0;
+	g_objectResCreateInfo_2.imageViewRequestCount                      = 0;
+	g_objectResCreateInfo_2.layeredImageViewRequestCount               = 0;
+	g_objectResCreateInfo_2.pipelineCacheRequestCount                  = 3;
+	g_objectResCreateInfo_2.pipelineLayoutRequestCount                 = 3;
+	g_objectResCreateInfo_2.renderPassRequestCount                     = 0;
+	g_objectResCreateInfo_2.graphicsPipelineRequestCount               = 0;
+	g_objectResCreateInfo_2.computePipelineRequestCount                = 3;
+	g_objectResCreateInfo_2.descriptorSetLayoutRequestCount            = 3;
+	g_objectResCreateInfo_2.samplerRequestCount                        = 0;
+	g_objectResCreateInfo_2.descriptorPoolRequestCount                 = 4;
+	g_objectResCreateInfo_2.descriptorSetRequestCount                  = 4;
+	g_objectResCreateInfo_2.framebufferRequestCount                    = 0;
+	g_objectResCreateInfo_2.commandPoolRequestCount                    = 4;
+	g_objectResCreateInfo_2.samplerYcbcrConversionRequestCount         = 0;
+	g_objectResCreateInfo_2.swapchainRequestCount                      = 0;
+	g_objectResCreateInfo_2.subpassDescriptionRequestCount             = 0;
+	g_objectResCreateInfo_2.attachmentDescriptionRequestCount          = 0;
+	g_objectResCreateInfo_2.descriptorSetLayoutBindingRequestCount     = 6;
+	g_objectResCreateInfo_2.descriptorSetLayoutBindingLimit            = 2;
+	g_objectResCreateInfo_2.maxImageViewMipLevels                      = 0;
+	g_objectResCreateInfo_2.maxImageViewArrayLayers                    = 0;
+	g_objectResCreateInfo_2.maxLayeredImageViewMipLevels               = 0;
+	g_objectResCreateInfo_2.maxOcclusionQueriesPerPool                 = 0;
+	g_objectResCreateInfo_2.maxPipelineStatisticsQueriesPerPool        = 0;
+	g_objectResCreateInfo_2.maxTimestampQueriesPerPool                 = 0;
+	g_objectResCreateInfo_2.maxImmutableSamplersPerDescriptorSetLayout = 0;
+}
+
+#endif
+)";
+    EXPECT_EQ(header2, ref2);
 }

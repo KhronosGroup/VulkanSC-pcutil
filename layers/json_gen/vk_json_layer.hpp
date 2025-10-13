@@ -230,6 +230,7 @@ struct DeviceData {
         DECLARE_HOOK(CreateDescriptorSetLayout);
         DECLARE_HOOK(DestroyDescriptorSetLayout);
         DECLARE_HOOK(CreatePipelineLayout);
+        DECLARE_HOOK(DestroyPipelineLayout);
         DECLARE_HOOK(CreateRenderPass);
         DECLARE_HOOK(CreateRenderPass2);
         DECLARE_HOOK(DestroyRenderPass);

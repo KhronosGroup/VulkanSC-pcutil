@@ -149,5 +149,48 @@ else()
         "VK_JSON_FILE_PATH=${CMAKE_CURRENT_BINARY_DIR}")
 endif()
 
-# 5. Workflow/integration tests
-# 5.1. How to relay pipelinecache create infos in objres from VK to VKSC?
+# 5. Test pipeline JSON
+# 5.1. Simple compute
+# 5.2. Simple compute
+
+add_executable(gltest_json gltest_json.cpp)
+
+target_link_libraries(gltest_json PRIVATE
+    Vulkan::PCJson
+    Vk::Headers
+    Vk::Loader
+    GTest::gtest
+    GTest::gtest_main
+)
+
+add_test(NAME genlayer.json
+    COMMAND gltest_json
+)
+
+if (WIN32)
+    set(PATH_VALUE "PATH=${VULKAN_TOOLS_INSTALL_DIR}/bin/$<SEMICOLON>${VULKAN_LOADER_INSTALL_DIR}/bin$<SEMICOLON>$ENV{PATH}")
+    set(DRIVER_PATH_VALUE "${VULKAN_TOOLS_INSTALL_DIR}/bin/VkICD_mock_icd.json")
+    set(LAYER_PATH "$<TARGET_FILE_DIR:VulkanJSONGenLayer>")
+
+    cmake_path(CONVERT "${PATH}" TO_NATIVE_PATH_LIST PATH)
+else()
+    set(LAYER_PATH_VALUE "$<TARGET_FILE_DIR:VulkanJSONGenLayer>")
+    set(DRIVER_PATH_VALUE "${VULKAN_TOOLS_INSTALL_DIR}/share/vulkan/icd.d/VkICD_mock_icd.json")
+    set(LD_LIBRARY_PATH_VALUE "${VULKAN_TOOLS_INSTALL_DIR}/lib/"
+        "${VULKAN_LOADER_INSTALL_DIR}/lib/"
+        "${VULKAN_VALIDATION_LAYERS_INSTALL_DIR}/lib/")
+
+    cmake_path(CONVERT "${LD_LIBRARY_PATH_VALUE}" TO_NATIVE_PATH_LIST LD_LIBRARY_PATH_VALUE)
+    cmake_path(CONVERT "${DRIVER_PATH_VALUE}" TO_NATIVE_PATH_LIST DRIVER_PATH_VALUE)
+
+    set_property(TEST genlayer.json PROPERTY ENVIRONMENT
+        "VK_LAYER_PATH=${LAYER_PATH_VALUE}"
+        "LD_LIBRARY_PATH=${LD_LIBRARY_PATH_VALUE}"
+        "VK_DRIVER_FILES=${DRIVER_PATH_VALUE}"
+        "VK_LOADER_LAYERS_DISABLE=~implicit~"
+        "VK_INSTANCE_LAYERS=VK_LAYER_KHRONOS_json_gen"
+        "VK_JSON_FILE_PATH=${CMAKE_CURRENT_BINARY_DIR}")
+endif()
+
+# 6. Workflow/integration tests
+# 6.1. How to relay pipelinecache create infos in objres from VK to VKSC?

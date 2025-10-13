@@ -374,7 +374,7 @@ TEST_F(GenLayerUUIDTest, ReproducibleCompute) {
     auto uuid2 = saxpy2.run();
 
     auto pipeline_identifiers_match = std::equal(uuid1.begin(), uuid1.end(), uuid2.begin(), uuid2.end());
-    EXPECT_FALSE(pipeline_identifiers_match);
+    EXPECT_TRUE(pipeline_identifiers_match);
 }
 
 TEST_F(GenLayerUUIDTest, DifferentCompute) {

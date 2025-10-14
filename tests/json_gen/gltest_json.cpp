@@ -501,10 +501,10 @@ class GenLayerJSONTest : public testing::Test {
 
     class Cube {
       public:
-        Cube() { demo_init(); }
+        Cube() : surface{VK_NULL_HANDLE} { demo_init(); }
         Cube(const Cube &) = delete;
         Cube(Cube &&) = delete;
-        ~Cube() {}
+        ~Cube() { demo_cleanup(); }
 
 #define APP_SHORT_NAME "vkcube"
 #define APP_LONG_NAME "Vulkan Cube"
@@ -1389,21 +1389,21 @@ class GenLayerJSONTest : public testing::Test {
                                              .tiling = VK_IMAGE_TILING_OPTIMAL,
                                              .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT};
 
-            VkImageViewCreateInfo view = {.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-                                          .pNext = NULL,
-                                          .flags = 0,
-                                          .image = VK_NULL_HANDLE,
-                                          .viewType = VK_IMAGE_VIEW_TYPE_2D,
-                                          .format = depth_format,
-                                          .subresourceRange = {.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
-                                                               .baseMipLevel = 0,
-                                                               .levelCount = 1,
-                                                               .baseArrayLayer = 0,
-                                                               .layerCount = 1}};
+            VkImageViewCreateInfo view_info = {.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+                                               .pNext = NULL,
+                                               .flags = 0,
+                                               .image = VK_NULL_HANDLE,
+                                               .viewType = VK_IMAGE_VIEW_TYPE_2D,
+                                               .format = depth_format,
+                                               .subresourceRange = {.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+                                                                    .baseMipLevel = 0,
+                                                                    .levelCount = 1,
+                                                                    .baseArrayLayer = 0,
+                                                                    .layerCount = 1}};
 
             if (force_errors) {
                 // Intentionally force a bad pNext value to generate a validation layer error
-                view.pNext = &image;
+                view_info.pNext = &image;
             }
 
             VkMemoryRequirements mem_reqs;
@@ -1437,8 +1437,8 @@ class GenLayerJSONTest : public testing::Test {
             assert(!err);
 
             /* create image view */
-            view.image = depth.image;
-            err = vkCreateImageView(device, &view, NULL, &depth.view);
+            view_info.image = depth.image;
+            err = vkCreateImageView(device, &view_info, NULL, &depth.view);
             assert(!err);
         }
 
@@ -2612,6 +2612,9 @@ class GenLayerJSONTest : public testing::Test {
             float attr[12 * 3][4];
         };
 
+#if defined(VK_USE_PLATFORM_DISPLAY_KHR)
+        VkDisplayKHR display;
+#endif
         WSI_PLATFORM wsi_platform;
         VkSurfaceKHR surface;
         bool prepared;
@@ -3037,6 +3040,70 @@ class GenLayerJSONTest : public testing::Test {
                                          swapchain_image_resources[i].uniform_memory, 0);
                 assert(!err);
             }
+        }
+
+        void demo_cleanup() {
+            uint32_t i;
+
+            prepared = false;
+            vkDeviceWaitIdle(device);
+
+            // Wait for fences from present operations
+            for (i = 0; i < FRAME_LAG; i++) {
+                vkWaitForFences(device, 1, &fences[i], VK_TRUE, UINT64_MAX);
+                vkDestroyFence(device, fences[i], NULL);
+            }
+
+            for (i = 0; i < swapchainImageCount; i++) {
+                vkDestroySemaphore(device, image_acquired_semaphores[i], NULL);
+                vkDestroySemaphore(device, draw_complete_semaphores[i], NULL);
+                if (separate_present_queue) {
+                    vkDestroySemaphore(device, image_ownership_semaphores[i], NULL);
+                }
+            }
+
+            // If the window is currently minimized, demo_resize has already done some cleanup for us.
+            if (!is_minimized) {
+                for (i = 0; i < swapchainImageCount; i++) {
+                    vkDestroyFramebuffer(device, swapchain_image_resources[i].framebuffer, NULL);
+                }
+
+                vkDestroyPipeline(device, pipeline, NULL);
+                vkDestroyPipelineCache(device, pipeline_cache, NULL);
+                vkDestroyRenderPass(device, render_pass, NULL);
+                vkDestroyPipelineLayout(device, pipeline_layout, NULL);
+                vkDestroyDescriptorSetLayout(device, desc_layout, NULL);
+
+                for (i = 0; i < DEMO_TEXTURE_COUNT; i++) {
+                    vkDestroyImageView(device, textures[i].view, NULL);
+                    vkDestroyImage(device, textures[i].image, NULL);
+                    vkDestroySampler(device, textures[i].sampler, NULL);
+                }
+
+                vkDestroyImageView(device, depth.view, NULL);
+                vkDestroyImage(device, depth.image, NULL);
+
+                for (i = 0; i < swapchainImageCount; i++) {
+                    vkDestroyImageView(device, swapchain_image_resources[i].view, NULL);
+                    vkFreeCommandBuffers(device, cmd_pool, 1, &swapchain_image_resources[i].cmd);
+                    vkDestroyBuffer(device, swapchain_image_resources[i].uniform_buffer, NULL);
+                    vkUnmapMemory(device, swapchain_image_resources[i].uniform_memory);
+                }
+
+                if (wsi_platform == WSI_PLATFORM_FILE) {
+                    vkDestroyImage(device, offscreen_texture.img.image, NULL);
+                    vkDestroyBuffer(device, offscreen_texture.staging.buffer, NULL);
+                }
+            }
+            vkDeviceWaitIdle(device);
+            vkDestroyDevice(device, NULL);
+#if defined(VK_USE_PLATFORM_DISPLAY_KHR)
+            if (VK_NV_acquire_winrt_display_supported && wsi_platform == WSI_PLATFORM_DISPLAY) {
+                pfnReleaseDisplayEXT(gpu, display);
+            }
+#endif
+            vkDestroySurfaceKHR(inst, surface, NULL);
+            vkDestroyInstance(inst, NULL);
         }
 
         bool memory_type_from_properties(uint32_t typeBits, VkFlags requirements_mask, uint32_t *typeIndex) {

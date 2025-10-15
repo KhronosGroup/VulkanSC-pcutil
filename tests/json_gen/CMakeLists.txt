@@ -9,6 +9,13 @@ enable_testing()
 
 find_package(GTest REQUIRED CONFIG)
 
+add_library(test_applications OBJECT saxpy.cpp cube.cpp)
+
+target_link_libraries(test_applications PUBLIC
+    Vk::Headers
+    GTest::gtest
+)
+
 # 1. ABI testing
 # 1.1. Exported functions are really exported (ld/ojbdump.exe/dependencies.exe)
 # 1.2. No unexpected external dependencies (CRT, hashlib, etc.)
@@ -156,6 +163,7 @@ endif()
 add_executable(gltest_json gltest_json.cpp)
 
 target_link_libraries(gltest_json PRIVATE
+    test_applications
     Vulkan::PCJson
     Vk::Headers
     Vk::Loader

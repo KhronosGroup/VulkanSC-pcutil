@@ -41,6 +41,7 @@ target_link_libraries(gltest_activation PRIVATE
 add_executable(gltest_uuid gltest_uuid.cpp)
 
 target_link_libraries(gltest_uuid PRIVATE
+    test_applications
     Vulkan::PCJson
     Vk::Headers
     Vk::Loader
@@ -120,6 +121,7 @@ endif()
 add_executable(gltest_objres gltest_objres.cpp)
 
 target_link_libraries(gltest_objres PRIVATE
+    test_applications
     Vulkan::PCJson
     Vk::Headers
     Vk::Loader

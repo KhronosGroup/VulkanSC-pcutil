@@ -23,6 +23,7 @@ class Cube {
     ~Cube();
 
     static const int pipeline_increment = 1;
+    VkPipeline get_pipeline() const;
 
     void run();
 

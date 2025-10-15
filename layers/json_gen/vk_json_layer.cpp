@@ -71,9 +71,10 @@ struct OwningVpjShaderFilenames {
 };
 
 OwningVpjShaderFilenames get_shader_filenames(const VkGraphicsPipelineCreateInfo& ci, const std::string& prefix,
-                                              const uint32_t index) {
+                                              const uint32_t device_index, const uint32_t pipeline_index) {
     const auto shader_filename = [&](const VkPipelineShaderStageCreateInfo& pss_ci) -> std::string {
-        return prefix + "_pipeline_" + std::to_string(index) + '.' + stage_bit_to_string(pss_ci.stage, ci) + ".spv";
+        return prefix + "_device_" + std::to_string(device_index) + "_pipeline_" + std::to_string(pipeline_index) + '.' +
+               stage_bit_to_string(pss_ci.stage, ci) + ".spv";
     };
     const auto filename_accumulator = [&](OwningVpjShaderFilenames& acc,
                                           const VkPipelineShaderStageCreateInfo& pss_ci) -> OwningVpjShaderFilenames& {
@@ -85,9 +86,10 @@ OwningVpjShaderFilenames get_shader_filenames(const VkGraphicsPipelineCreateInfo
 };
 
 OwningVpjShaderFilenames get_shader_filenames(const VkComputePipelineCreateInfo& ci, const std::string& prefix,
-                                              const uint32_t index) {
+                                              const uint32_t device_index, const uint32_t pipeline_index) {
     const auto shader_filename = [&](const VkPipelineShaderStageCreateInfo& pss_ci) -> std::string {
-        return prefix + "_pipeline_" + std::to_string(index) + '.' + stage_bit_to_string(pss_ci.stage, ci) + ".spv";
+        return prefix + "_device_" + std::to_string(device_index) + "_pipeline_" + std::to_string(pipeline_index) + '.' +
+               stage_bit_to_string(pss_ci.stage, ci) + ".spv";
     };
     OwningVpjShaderFilenames res;
     res.storage.emplace_back(shader_filename(ci.stage));
@@ -490,7 +492,7 @@ GraphicsPipelineData::GraphicsPipelineData(const VkGraphicsPipelineCreateInfo* c
         }
     }
 
-    GenJsonUuidAndWriteToDisk(device_data.create_info);
+    GenJsonUuidAndWriteToDisk(device_data.create_info, device_data.id);
 }
 
 ComputePipelineData::ComputePipelineData(const VkComputePipelineCreateInfo* ci, DeviceData& device_data)
@@ -512,7 +514,7 @@ ComputePipelineData::ComputePipelineData(const VkComputePipelineCreateInfo* ci, 
             VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
     }
 
-    GenJsonUuidAndWriteToDisk(device_data.create_info);
+    GenJsonUuidAndWriteToDisk(device_data.create_info, device_data.id);
 }
 
 // Begin layer logic
@@ -1131,7 +1133,7 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateCommandPool(VkDevice device, con
 
 // Gen logic
 
-void GraphicsPipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInfo& device_create_info) {
+void GraphicsPipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInfo& device_create_info, std::uintptr_t device_id) {
     VpjGenerator generator = vpjCreateGenerator();
     vpjSetMD5PipelineUUIDGeneration(generator, true);
     VpjData data{};
@@ -1187,7 +1189,8 @@ void GraphicsPipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInf
     data.graphicsPipelineState.ppYcbcrSamplerNames = ycbcr_sampler_names.data();
 
     // Shaders
-    auto shader_filenames = get_shader_filenames(*create_info.ptr(), std::string(getProcessName()), static_cast<uint32_t>(id));
+    auto shader_filenames = get_shader_filenames(*create_info.ptr(), std::string(getProcessName()),
+                                                 static_cast<uint32_t>(device_id), static_cast<uint32_t>(id));
     for (size_t i = 0; i < shader_module_data.size(); ++i) {
         auto& shader_ci = shader_module_data[i].create_info;
         auto shader_path = std::string(getBaseDirectoryPath()) + shader_filenames.filenames[i].pFilename;
@@ -1217,8 +1220,8 @@ void GraphicsPipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInf
         LOG("[%s] ERROR: Unable to obtain generated pipeline UUID: %s", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME, msg_);
     }
 
-    auto pipeline_path =
-        std::string(getBaseDirectoryPath()) + std::string(getProcessName()) + "_pipeline_" + std::to_string(id) + ".json";
+    auto pipeline_path = std::string(getBaseDirectoryPath()) + std::string(getProcessName()) + "_device_" +
+                         std::to_string(device_id) + "_pipeline_" + std::to_string(id) + ".json";
     std::ofstream pipeline_file(pipeline_path);
     if (pipeline_file) {
         pipeline_file << result_json;
@@ -1227,7 +1230,7 @@ void GraphicsPipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInf
     }
 }
 
-void ComputePipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInfo& device_create_info) {
+void ComputePipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInfo& device_create_info, std::uintptr_t device_id) {
     VpjGenerator generator = vpjCreateGenerator();
     vpjSetMD5PipelineUUIDGeneration(generator, true);
     VpjData data{};
@@ -1278,7 +1281,8 @@ void ComputePipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInfo
     data.computePipelineState.ppYcbcrSamplerNames = ycbcr_sampler_names.data();
 
     // Shaders
-    auto shader_filename = get_shader_filenames(*create_info.ptr(), std::string(getProcessName()), static_cast<uint32_t>(id));
+    auto shader_filename = get_shader_filenames(*create_info.ptr(), std::string(getProcessName()), static_cast<uint32_t>(device_id),
+                                                static_cast<uint32_t>(id));
     auto shader_ci = shader_module_data.create_info;
     auto shader_path = std::string(getBaseDirectoryPath()) + shader_filename.filenames[0].pFilename;
     std::ofstream spv_file(shader_path, std::ios::binary);
@@ -1306,8 +1310,8 @@ void ComputePipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInfo
         LOG("[%s] ERROR: Unable to obtain generated pipeline UUID: %s", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME, msg_);
     }
 
-    auto pipeline_path =
-        std::string(getBaseDirectoryPath()) + std::string(getProcessName()) + "_pipeline_" + std::to_string(id) + ".json";
+    auto pipeline_path = std::string(getBaseDirectoryPath()) + std::string(getProcessName()) + "_device_" +
+                         std::to_string(device_id) + "_pipeline_" + std::to_string(id) + ".json";
     std::ofstream pipeline_file(pipeline_path);
     if (pipeline_file) {
         pipeline_file << result_json;

@@ -109,7 +109,7 @@ struct GraphicsPipelineData {
     std::array<uint8_t, VK_UUID_SIZE> uuid;
     std::uintptr_t id;
 
-    void GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInfo& device_create_info);
+    void GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInfo& device_create_info, std::uintptr_t device_id);
 };
 
 struct ComputePipelineData {
@@ -122,7 +122,7 @@ struct ComputePipelineData {
     std::array<uint8_t, VK_UUID_SIZE> uuid;
     std::uintptr_t id;
 
-    void GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInfo& device_create_info);
+    void GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInfo& device_create_info, std::uintptr_t device_id);
 };
 
 struct ObjectResCreateInfo {

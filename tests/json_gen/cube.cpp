@@ -32,6 +32,8 @@ static std::vector<const char *> tex_files{"logo.ppm"};
 
     Cube::~Cube() { demo_cleanup(); }
 
+    VkPipeline Cube::get_pipeline() const { return pipeline; }
+
     void Cube::demo_init() {
         vec3 eye = {0.0f, 3.0f, 5.0f};
         vec3 origin = {0, 0, 0};

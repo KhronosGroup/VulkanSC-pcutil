@@ -23,6 +23,7 @@ class SAXPY {
     static VkInstance create_instance();
     static VkDevice create_device(VkInstance instance);
     static const int pipeline_increment = 3;
+    VkPipeline get_pipeline() const;
 
     void run();
 
@@ -33,9 +34,12 @@ class SAXPY {
     VkBuffer buf_x, buf_y;
     VkDeviceMemory mem_x, mem_y;
     VkDescriptorSetLayout buf_ds_layout;
+    VkCommandPool cmd_pool;
+    VkCommandBuffer cmd_buf;
     VkPipelineLayout pipeline_layout;
     VkPipelineCache pipeline_cache;
     VkPipeline pipeline;
+    VkDescriptorPool desc_pool;
     VkFence fence;
     size_t sizeof_push_constant;
 };

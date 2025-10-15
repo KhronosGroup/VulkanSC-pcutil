@@ -8,36 +8,34 @@
 
 #include "saxpy.hpp"
 
-#define VKCHECK(func)                                                                                                    \
-    do {                                                                                                                 \
-        if (auto res = func) {                                                                                           \
-            std::string msg{#func};                                                                                      \
-            msg.append(std::to_string(res));                                                                             \
-            throw testing::AssertionException{                                                                           \
-                testing::TestPartResult{testing::TestPartResult::Type::kFatalFailure, __FILE__, __LINE__, msg.c_str()}}; \
-        }                                                                                                                \
-    } while (0)
+#include "vkresult_gtest_adapter.hpp"
 
 SAXPY::SAXPY(VkInstance inst, VkDevice dev, size_t push_constant_size)
     : instance{inst},
-        device{dev},
-        shader_module{VK_NULL_HANDLE},
-        buf_x{VK_NULL_HANDLE},
-        buf_y{VK_NULL_HANDLE},
-        mem_x{VK_NULL_HANDLE},
-        mem_y{VK_NULL_HANDLE},
-        buf_ds_layout{VK_NULL_HANDLE},
-        pipeline_layout{VK_NULL_HANDLE},
-        pipeline_cache{VK_NULL_HANDLE},
-        pipeline{VK_NULL_HANDLE},
-        fence{VK_NULL_HANDLE},
-        sizeof_push_constant{push_constant_size} {}
+      device{dev},
+      shader_module{VK_NULL_HANDLE},
+      buf_x{VK_NULL_HANDLE},
+      buf_y{VK_NULL_HANDLE},
+      mem_x{VK_NULL_HANDLE},
+      mem_y{VK_NULL_HANDLE},
+      buf_ds_layout{VK_NULL_HANDLE},
+      cmd_pool{VK_NULL_HANDLE},
+      cmd_buf{VK_NULL_HANDLE},
+      pipeline_layout{VK_NULL_HANDLE},
+      pipeline_cache{VK_NULL_HANDLE},
+      pipeline{VK_NULL_HANDLE},
+      desc_pool{VK_NULL_HANDLE},
+      fence{VK_NULL_HANDLE},
+      sizeof_push_constant{push_constant_size} {}
 
 SAXPY::~SAXPY() {
     vkDestroyFence(device, fence, NULL);
+    vkDestroyDescriptorPool(device, desc_pool, NULL);
     vkDestroyPipeline(device, pipeline, nullptr);
     vkDestroyPipelineCache(device, pipeline_cache, NULL);
     vkDestroyPipelineLayout(device, pipeline_layout, NULL);
+    vkFreeCommandBuffers(device, cmd_pool, 1, &cmd_buf);
+    vkDestroyCommandPool(device, cmd_pool, NULL);
     vkDestroyDescriptorSetLayout(device, buf_ds_layout, NULL);
     vkFreeMemory(device, mem_y, NULL);
     vkFreeMemory(device, mem_x, NULL);
@@ -85,7 +83,7 @@ VkInstance SAXPY::create_instance() {
 VkDevice SAXPY::create_device(VkInstance instance) {
     uint32_t phys_dev_count;
     VKCHECK(vkEnumeratePhysicalDevices(instance, &phys_dev_count, NULL));
-    VKCHECK(phys_dev_count == 0);
+    VKCHECK(phys_dev_count != 0 ? VK_SUCCESS : VK_ERROR_DEVICE_LOST);
 
     std::vector<VkPhysicalDevice> phys_devs(phys_dev_count);
     VKCHECK(vkEnumeratePhysicalDevices(instance, &phys_dev_count, phys_devs.data()));
@@ -108,7 +106,7 @@ VkDevice SAXPY::create_device(VkInstance instance) {
     for (uint32_t i = 0; i < dev_ext_count; ++i) {
         if (strstr(dev_exts[i].extensionName, synchronization2_khr_str) != NULL) dev_supp_synchronization2_khr = true;
     }
-    VKCHECK(!dev_supp_synchronization2_khr);
+    VKCHECK(dev_supp_synchronization2_khr ? VK_SUCCESS : VK_ERROR_EXTENSION_NOT_PRESENT);
 
     uint32_t queue_fam_prop_count;
     vkGetPhysicalDeviceQueueFamilyProperties(phys_dev, &queue_fam_prop_count, NULL);
@@ -154,10 +152,12 @@ VkDevice SAXPY::create_device(VkInstance instance) {
     return device;
 }
 
+VkPipeline SAXPY::get_pipeline() const { return pipeline; }
+
 void SAXPY::run() {
     uint32_t phys_dev_count;
     VKCHECK(vkEnumeratePhysicalDevices(instance, &phys_dev_count, NULL));
-    VKCHECK(phys_dev_count == 0);
+    VKCHECK(phys_dev_count != 0 ? VK_SUCCESS : VK_ERROR_DEVICE_LOST);
 
     std::vector<VkPhysicalDevice> phys_devs(phys_dev_count);
     VKCHECK(vkEnumeratePhysicalDevices(instance, &phys_dev_count, phys_devs.data()));
@@ -335,12 +335,11 @@ void SAXPY::run() {
 
     VkDescriptorPoolSize desc_pool_size = {.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .descriptorCount = 2};
     VkDescriptorPoolCreateInfo desc_pool_info = {.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-                                                    .pNext = NULL,
-                                                    .flags = 0,
-                                                    .maxSets = 1,
-                                                    .poolSizeCount = 1,
-                                                    .pPoolSizes = &desc_pool_size};
-    VkDescriptorPool desc_pool;
+                                                 .pNext = NULL,
+                                                 .flags = 0,
+                                                 .maxSets = 1,
+                                                 .poolSizeCount = 1,
+                                                 .pPoolSizes = &desc_pool_size};
     VKCHECK(vkCreateDescriptorPool(device, &desc_pool_info, NULL, &desc_pool));
 
     VkDescriptorSetAllocateInfo ds_alloc_info = {.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
@@ -376,7 +375,6 @@ void SAXPY::run() {
 
     VkCommandPoolCreateInfo cmd_pool_info = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO, .pNext = nullptr, .flags = 0, .queueFamilyIndex = queue_fam};
-    VkCommandPool cmd_pool;
     VKCHECK(vkCreateCommandPool(device, &cmd_pool_info, NULL, &cmd_pool));
 
     VkCommandBufferAllocateInfo cmd_buf_info = {.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -385,7 +383,6 @@ void SAXPY::run() {
                                                 .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
                                                 .commandBufferCount = 1};
 
-    VkCommandBuffer cmd_buf;
     VKCHECK(vkAllocateCommandBuffers(device, &cmd_buf_info, &cmd_buf));
 
     VkCommandBufferBeginInfo cmd_buf_begin_info = {VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, NULL,

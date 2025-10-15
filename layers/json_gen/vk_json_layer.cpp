@@ -243,7 +243,7 @@ static std::atomic<uint32_t> device_counter = 0;
 #define INIT_HOOK_ALIAS(_vt, _dev, fn, fn_alias) \
     _vt.fn_alias = (_vt.fn_alias != nullptr) ? _vt.fn_alias : reinterpret_cast<PFN_vk##fn>(vtable.GetDeviceProcAddr(_dev, "vk" #fn))
 
-DeviceData::DeviceData(VkDevice device, const VkDeviceCreateInfo* ci, PFN_vkGetDeviceProcAddr gpa, bool enable,
+DeviceData::DeviceData(VkDevice device, const VkDeviceCreateInfo* ci, PFN_vkGetDeviceProcAddr gpa, bool enable_ext,
                        const VkAllocationCallbacks* alloc)
     : device(device),
       create_info(ci),
@@ -261,51 +261,51 @@ DeviceData::DeviceData(VkDevice device, const VkDeviceCreateInfo* ci, PFN_vkGetD
       obj_res_info{},
       obj_counter{0},
       id{device_counter++} {
-    if (enable) {
-        INIT_HOOK(vtable, device, DestroyDevice);
-        INIT_HOOK(vtable, device, CreateSemaphore);
-        INIT_HOOK(vtable, device, DestroySemaphore);
-        INIT_HOOK(vtable, device, CreateShaderModule);
-        INIT_HOOK(vtable, device, DestroyShaderModule);
-        INIT_HOOK(vtable, device, AllocateMemory);
-        INIT_HOOK(vtable, device, CreatePipelineCache);
-        INIT_HOOK(vtable, device, DestroyPipelineCache);
-        INIT_HOOK(vtable, device, CreateGraphicsPipelines);
-        INIT_HOOK(vtable, device, CreateComputePipelines);
-        INIT_HOOK(vtable, device, DestroyPipeline);
-        INIT_HOOK(vtable, device, CreateDescriptorSetLayout);
-        INIT_HOOK(vtable, device, DestroyDescriptorSetLayout);
-        INIT_HOOK(vtable, device, CreatePipelineLayout);
-        INIT_HOOK(vtable, device, DestroyPipelineLayout);
-        INIT_HOOK(vtable, device, CreateRenderPass);
-        INIT_HOOK(vtable, device, CreateRenderPass2);
-        INIT_HOOK(vtable, device, DestroyRenderPass);
-        INIT_HOOK(vtable, device, CreateSampler);
-        INIT_HOOK(vtable, device, DestroySampler);
-        INIT_HOOK(vtable, device, CreateSamplerYcbcrConversion);
-        INIT_HOOK(vtable, device, DestroySamplerYcbcrConversion);
-        INIT_HOOK(vtable, device, CreateSwapchainKHR);
-        INIT_HOOK(vtable, device, DestroySwapchainKHR);
-        INIT_HOOK(vtable, device, CreateImage);
-        INIT_HOOK(vtable, device, DestroyImage);
-        INIT_HOOK(vtable, device, CreateImageView);
-        INIT_HOOK(vtable, device, DestroyImageView);
-        INIT_HOOK(vtable, device, AllocateCommandBuffers);
-        INIT_HOOK(vtable, device, CreateFence);
-        INIT_HOOK(vtable, device, DestroyFence);
-        INIT_HOOK(vtable, device, CreateBuffer);
-        INIT_HOOK(vtable, device, DestroyBuffer);
-        INIT_HOOK(vtable, device, CreateBufferView);
-        INIT_HOOK(vtable, device, DestroyBufferView);
-        INIT_HOOK(vtable, device, CreateEvent);
-        INIT_HOOK(vtable, device, DestroyEvent);
-        INIT_HOOK(vtable, device, CreateQueryPool);
-        INIT_HOOK(vtable, device, CreateDescriptorPool);
-        INIT_HOOK(vtable, device, AllocateDescriptorSets);
-        INIT_HOOK(vtable, device, FreeDescriptorSets);
-        INIT_HOOK(vtable, device, CreateFramebuffer);
-        INIT_HOOK(vtable, device, DestroyFramebuffer);
-        INIT_HOOK(vtable, device, CreateCommandPool);
+    INIT_HOOK(vtable, device, DestroyDevice);
+    INIT_HOOK(vtable, device, CreateSemaphore);
+    INIT_HOOK(vtable, device, DestroySemaphore);
+    INIT_HOOK(vtable, device, CreateShaderModule);
+    INIT_HOOK(vtable, device, DestroyShaderModule);
+    INIT_HOOK(vtable, device, AllocateMemory);
+    INIT_HOOK(vtable, device, CreatePipelineCache);
+    INIT_HOOK(vtable, device, DestroyPipelineCache);
+    INIT_HOOK(vtable, device, CreateGraphicsPipelines);
+    INIT_HOOK(vtable, device, CreateComputePipelines);
+    INIT_HOOK(vtable, device, DestroyPipeline);
+    INIT_HOOK(vtable, device, CreateDescriptorSetLayout);
+    INIT_HOOK(vtable, device, DestroyDescriptorSetLayout);
+    INIT_HOOK(vtable, device, CreatePipelineLayout);
+    INIT_HOOK(vtable, device, DestroyPipelineLayout);
+    INIT_HOOK(vtable, device, CreateRenderPass);
+    INIT_HOOK(vtable, device, CreateRenderPass2);
+    INIT_HOOK(vtable, device, DestroyRenderPass);
+    INIT_HOOK(vtable, device, CreateSampler);
+    INIT_HOOK(vtable, device, DestroySampler);
+    INIT_HOOK(vtable, device, CreateSamplerYcbcrConversion);
+    INIT_HOOK(vtable, device, DestroySamplerYcbcrConversion);
+    INIT_HOOK(vtable, device, CreateSwapchainKHR);
+    INIT_HOOK(vtable, device, DestroySwapchainKHR);
+    INIT_HOOK(vtable, device, CreateImage);
+    INIT_HOOK(vtable, device, DestroyImage);
+    INIT_HOOK(vtable, device, CreateImageView);
+    INIT_HOOK(vtable, device, DestroyImageView);
+    INIT_HOOK(vtable, device, AllocateCommandBuffers);
+    INIT_HOOK(vtable, device, CreateFence);
+    INIT_HOOK(vtable, device, DestroyFence);
+    INIT_HOOK(vtable, device, CreateBuffer);
+    INIT_HOOK(vtable, device, DestroyBuffer);
+    INIT_HOOK(vtable, device, CreateBufferView);
+    INIT_HOOK(vtable, device, DestroyBufferView);
+    INIT_HOOK(vtable, device, CreateEvent);
+    INIT_HOOK(vtable, device, DestroyEvent);
+    INIT_HOOK(vtable, device, CreateQueryPool);
+    INIT_HOOK(vtable, device, CreateDescriptorPool);
+    INIT_HOOK(vtable, device, AllocateDescriptorSets);
+    INIT_HOOK(vtable, device, FreeDescriptorSets);
+    INIT_HOOK(vtable, device, CreateFramebuffer);
+    INIT_HOOK(vtable, device, DestroyFramebuffer);
+    INIT_HOOK(vtable, device, CreateCommandPool);
+    if (enable_ext) {
         INIT_HOOK(vtable, device, GetPipelinePropertiesEXT);
     }
 }
@@ -612,11 +612,11 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateDevice(VkPhysicalDevice physical
     chain_info->u.pLayerInfo = chain_info->u.pLayerInfo->pNext;
 
     try {
-        bool enable_layer = features.pipeline_props && !pdd->lower_has_pipeline_props;
+        bool enable_layer_ext = features.pipeline_props && !pdd->lower_has_pipeline_props;
         // Filter out our extension name and feature struct, in a copy of the create info.
         // Only enable device hooks if synchronization2 extension is enabled AND
         // the physical device doesn't support it already or we are force enabled.
-        if (enable_layer) {
+        if (enable_layer_ext) {
             vku::safe_VkDeviceCreateInfo create_info(pCreateInfo);
             vku::RemoveExtension(create_info, VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
             vku::RemoveFromPnext(create_info, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_PROPERTIES_FEATURES_EXT);
@@ -630,7 +630,7 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateDevice(VkPhysicalDevice physical
             return result;
         }
         auto alloccb = pAllocator ? pAllocator : instance_data->allocator;
-        auto device_data = std::make_shared<DeviceData>(*pDevice, pCreateInfo, gdpa, enable_layer, alloccb);
+        auto device_data = std::make_shared<DeviceData>(*pDevice, pCreateInfo, gdpa, enable_layer_ext, alloccb);
 
         device_data_map.insert(DispatchKey(*pDevice), device_data);
     } catch (const std::bad_alloc&) {

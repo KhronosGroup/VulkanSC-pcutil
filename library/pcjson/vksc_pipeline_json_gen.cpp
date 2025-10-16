@@ -8,9 +8,13 @@
 #include "vksc_pipeline_json_gen.hpp"
 #include "vksc_pipeline_json.h"
 
-#include <assert.h>
 #include <memory.h>
 #include <string.h>
+
+#include <fstream>
+#include <vector>
+#include <string>
+#include <unordered_map>
 
 #ifdef _MSC_VER
 #pragma warning(push, 0)
@@ -73,7 +77,7 @@ class Generator : private GeneratorBase {
             // Pipeline UUID is set last to be able to do MD5 generation from the full data if needed
             if (md5_generator_enabled_) {
                 hashlib::md5 md5{};
-                gen_JsonMD5(md5, json);
+                gen_PipelineMD5(md5, json);
                 generated_uuid_ = AllocMem<uint8_t>(VK_UUID_SIZE);
                 memcpy(generated_uuid_, md5.digest().data(), VK_UUID_SIZE);
                 json["PipelineUUID"] = gen_PipelineUUID(generated_uuid_);
@@ -274,6 +278,144 @@ class Generator : private GeneratorBase {
             gen_MD5(md5, value.asUInt());
         } else {
             Error() << "Unexpected JSON value type";
+        }
+    }
+
+    void gen_ShaderFilesMD5(hashlib::md5& md5, const Json::Value& json_shaders) {
+        for (Json::Value::ArrayIndex i = 0; i < json_shaders.size(); ++i) {
+            gen_JsonMD5(md5, json_shaders[i]["stage"]);
+
+            std::ifstream shader_file(json_shaders[i]["filename"].asString(), std::ios::binary);
+            std::vector<char> buffer(std::istreambuf_iterator<char>(shader_file), {});
+
+            gen_MD5(md5, buffer.data(), buffer.size());
+        }
+    }
+
+    std::unordered_map<std::string, const Json::Value&> GenObjectCreateInfoMap(const Json::Value& json) {
+        std::unordered_map<std::string, const Json::Value&> result{};
+        if (json.isArray()) {
+            for (Json::Value::ArrayIndex i = 0; i < json.size(); ++i) {
+                auto iter = json[i].begin();
+                result.emplace(iter.key().asString(), *iter);
+            }
+        }
+        return result;
+    }
+
+    Json::Value gen_HashablePipelineLayoutData(const Json::Value& state) {
+        const Json::Value& in_pipeline_layout = state["PipelineLayout"];
+
+        auto descriptor_set_layout_map = GenObjectCreateInfoMap(state["DescriptorSetLayouts"]);
+        auto immutable_sampler_map = GenObjectCreateInfoMap(state["ImmutableSamplers"]);
+        auto ycbcr_sampler_map = GenObjectCreateInfoMap(state["YcbcrSamplers"]);
+
+        Json::Value out_pipeline_layout = in_pipeline_layout;
+
+        // Unwrap set layouts
+        uint32_t set_layout_count = in_pipeline_layout["setLayoutCount"].asUInt();
+        const Json::Value& in_set_layouts = in_pipeline_layout["pSetLayouts"];
+        for (Json::Value::ArrayIndex ds_idx = 0; ds_idx < set_layout_count; ++ds_idx) {
+            auto descriptor_set_name = in_set_layouts[ds_idx].asString();
+            if (descriptor_set_name.length() == 0) {
+                continue;
+            }
+
+            auto descriptor_set_layout_it = descriptor_set_layout_map.find(descriptor_set_name);
+            if (descriptor_set_layout_it != descriptor_set_layout_map.end()) {
+                const Json::Value& in_set_layout = descriptor_set_layout_it->second;
+                Json::Value& out_set_layout = out_pipeline_layout["pSetLayouts"][ds_idx];
+
+                out_set_layout = in_set_layout;
+
+                // Unwrap immutable samplers in set layouts
+                uint32_t binding_count = in_set_layout["bindingCount"].asUInt();
+                const Json::Value& in_bindings = in_set_layout["pBindings"];
+                for (Json::Value::ArrayIndex bind_idx = 0; bind_idx < binding_count; ++bind_idx) {
+                    uint32_t desc_count = in_bindings[bind_idx]["descriptorCount"].asUInt();
+                    const Json::Value& in_samplers = in_bindings[bind_idx]["pImmutableSamplers"];
+                    if (in_samplers.isArray()) {
+                        for (Json::Value::ArrayIndex smp_idx = 0; smp_idx < desc_count; ++smp_idx) {
+                            auto sampler_name = in_samplers[smp_idx].asString();
+                            if (sampler_name.length() == 0) {
+                                continue;
+                            }
+
+                            auto immutable_sampler_it = immutable_sampler_map.find(sampler_name);
+                            if (immutable_sampler_it != immutable_sampler_map.end()) {
+                                const Json::Value& in_sampler = immutable_sampler_it->second;
+                                Json::Value& out_sampler = out_set_layout["pBindings"][bind_idx]["pImmutableSamplers"][smp_idx];
+
+                                out_sampler = in_sampler;
+
+                                // Finally, unwrap YCbCr sampler conversions in immutable samplers
+                                const Json::Value* in_sampler_pnext = &in_sampler["pNext"];
+                                Json::Value* out_sampler_pnext = &out_sampler["pNext"];
+                                while (in_sampler_pnext->isObject()) {
+                                    if ((*in_sampler_pnext)["sType"] == "VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_INFO") {
+                                        auto ycbcr_name = (*in_sampler_pnext)["conversion"].asString();
+                                        if (ycbcr_name.length() == 0) {
+                                            continue;
+                                        }
+
+                                        auto ycbcr_it = ycbcr_sampler_map.find(ycbcr_name);
+                                        if (ycbcr_it != ycbcr_sampler_map.end()) {
+                                            (*out_sampler_pnext)["conversion"] = ycbcr_it->second;
+                                        } else {
+                                            Error() << "Failed to unwrap YCbCr sampler conversion " << ycbcr_name;
+                                        }
+                                    }
+
+                                    in_sampler_pnext = &(*in_sampler_pnext)["pNext"];
+                                    out_sampler_pnext = &(*out_sampler_pnext)["pNext"];
+                                }
+                            } else {
+                                Error() << "Failed to unwrap immutable sampler " << sampler_name;
+                            }
+                        }
+                    }
+                }
+
+            } else {
+                Error() << "Failed to unwrap descriptor set layout " << descriptor_set_name;
+            }
+        }
+
+        return out_pipeline_layout;
+    }
+
+    void gen_PipelineMD5(hashlib::md5& md5, const Json::Value& json) {
+        // Because of handle names, the whole concept of determinism is compromised
+        // therefore we have to create a version of the generated data from which
+        // we can reliably generate a deterministic MD5 hash which can be done by
+        // resolving and inlining all create info
+
+        if (json.isMember("GraphicsPipelineState")) {
+            const auto& state = json["GraphicsPipelineState"];
+            Json::Value hashable_data = state["GraphicsPipeline"];
+
+            if (state.isMember("Renderpass")) {
+                hashable_data["renderPass"] = state["Renderpass"];
+            } else if (state.isMember("Renderpass2")) {
+                hashable_data["renderPass"] = state["Renderpass2"];
+            }
+
+            hashable_data["layout"] = gen_HashablePipelineLayoutData(state);
+
+            gen_JsonMD5(md5, hashable_data);
+
+            gen_ShaderFilesMD5(md5, state["ShaderFileNames"]);
+        }
+
+        if (json.isMember("ComputePipelineState")) {
+            const auto& state = json["ComputePipelineState"];
+            Json::Value hashable_data = state["ComputePipeline"];
+
+            hashable_data["layout"] = gen_HashablePipelineLayoutData(state);
+
+            gen_JsonMD5(md5, hashable_data);
+
+            gen_ShaderFilesMD5(md5, state["ShaderFileNames"]);
         }
     }
 

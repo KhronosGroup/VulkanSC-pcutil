@@ -1716,7 +1716,7 @@ TEST_F(PJGenTest, VkPipelineOfflineCreateInfo) {
     EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
-TEST_F(PJGenTest, SAXPY) {
+TEST_F(PJGenTest, ComputePipelineJSON) {
     TEST_DESCRIPTION("Tests generating of a reasonably simple compute pipeline JSON");
 
     const std::string ref_json{R"({
@@ -1984,7 +1984,7 @@ TEST_F(PJGenTest, SAXPY) {
     EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
-TEST_F(PJGenTest, vksccube) {
+TEST_F(PJGenTest, GraphicsPipelineJSON) {
     TEST_DESCRIPTION("Tests generating of a reasonably simple graphics pipeline JSON");
 
     const std::string ref_json{R"({
@@ -2551,8 +2551,8 @@ TEST_F(PJGenTest, vksccube) {
     EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
-TEST_F(PJGenTest, UUIDCompute) {
-    TEST_DESCRIPTION("Tests generating UUID for a compute pipeline");
+TEST_F(PJGenTest, ComputePipelineJSONWithMD5) {
+    TEST_DESCRIPTION("Tests generating pipeline JSON with MD5 UUID for a compute pipeline");
 
     const std::string ref_json{R"({
         "ComputePipelineState" :
@@ -2811,8 +2811,8 @@ TEST_F(PJGenTest, UUIDCompute) {
     EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
-TEST_F(PJGenTest, UUIDGraphics) {
-    TEST_DESCRIPTION("Tests generating UUID for a compute pipeline");
+TEST_F(PJGenTest, GraphicsPipelineJSONWithMD5) {
+    TEST_DESCRIPTION("Tests generating pipeline JSON with MD5 UUID for a graphics pipeline");
 
     const std::string ref_json{R"({
         "GraphicsPipelineState": {
@@ -3371,7 +3371,7 @@ TEST_F(PJGenTest, UUIDGraphics) {
 }
 
 TEST_F(PJGenTest, ObjectNameRemapping) {
-    TEST_DESCRIPTION("Tests generating of a reasonably simple compute pipeline JSON");
+    TEST_DESCRIPTION("Tests object name remapping in a compute pipeline JSON");
 
     const std::string ref_json{R"({
         "ComputePipelineState" : 

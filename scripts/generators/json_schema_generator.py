@@ -40,7 +40,7 @@ class JsonSchemaGenerator(BaseGenerator):
                         "DescriptorSetLayouts": {"type": "array", "minItems": 0, "maxItems": 255, "items": {"type": "object", "patternProperties": {"^\\w+$": {"$ref": "#/definitions/VkDescriptorSetLayoutCreateInfo"}}}},
                         "PipelineLayout": {"$ref": "#/definitions/VkPipelineLayoutCreateInfo"},
                         "GraphicsPipeline": {"$ref": "#/definitions/VkGraphicsPipelineCreateInfo"},
-                        "ShaderFileNames": {"type": "array", "minItems": 0, "maxItems": 255, "items": {"$ref": "#/definitions/ShaderInfo"}},
+                        "ShaderFileNames": {"type": "array", "minItems": 1, "maxItems": 255, "items": {"$ref": "#/definitions/ShaderInfo"}},
                         "PhysicalDeviceFeatures": {"$ref": "#/definitions/VkPhysicalDeviceFeatures2"}
                     },
                     "oneOf" : [{"required" : ["Renderpass"]}, {"required" : ["Renderpass2"]}],
@@ -56,7 +56,7 @@ class JsonSchemaGenerator(BaseGenerator):
                         "DescriptorSetLayouts": {"type": "array", "minItems": 0, "maxItems": 255, "items": {"type": "object", "patternProperties": {"^\\w+$": {"$ref": "#/definitions/VkDescriptorSetLayoutCreateInfo"}}}},
                         "PipelineLayout": {"$ref": "#/definitions/VkPipelineLayoutCreateInfo"},
                         "ComputePipeline": {"$ref": "#/definitions/VkComputePipelineCreateInfo"},
-                        "ShaderFileNames": {"$ref": "#/definitions/ShaderInfo"},
+                        "ShaderFileNames": {"type": "array", "minItems": 1, "maxItems": 1, "items": {"$ref": "#/definitions/ShaderInfo"}},
                         "PhysicalDeviceFeatures": {"$ref": "#/definitions/VkPhysicalDeviceFeatures2"}
                     },
                     "required" : ["PipelineLayout", "ComputePipeline", "ShaderFileNames"]

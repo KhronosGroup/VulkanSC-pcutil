@@ -1645,7 +1645,7 @@ TEST_F(PJParseTest, VkPipelineOfflineCreateInfo) {
     EXPECT_EQ(po_ci.poolEntrySize, 1048576);
 }
 
-TEST_F(PJParseTest, SAXPY) {
+TEST_F(PJParseTest, ComputePipelineJSON) {
     TEST_DESCRIPTION("Tests parsing of a reasonably simple compute pipeline JSON");
 
     const std::string json{R"({
@@ -1935,7 +1935,7 @@ TEST_F(PJParseTest, SAXPY) {
     EXPECT_UUIDEQ(data.pipelineUUID, expected_uuid);
 }
 
-TEST_F(PJParseTest, vksccube) {
+TEST_F(PJParseTest, GraphicsPipelineJSON) {
     TEST_DESCRIPTION("Tests parsing of a reasonably simple graphics pipeline JSON");
 
     const std::string json{R"({

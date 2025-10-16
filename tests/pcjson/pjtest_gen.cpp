@@ -21,6 +21,8 @@
 
 #include <json/json.h>
 
+#include "json_validator.h"
+
 class PJGenTest : public testing::Test {
   public:
     PJGenTest() : generator_{vpjCreateGenerator()}, msg_{nullptr} {}
@@ -46,6 +48,36 @@ class PJGenTest : public testing::Test {
     VpjGenerator generator_;
     const char* msg_;
 };
+
+bool ValidatePipelineJson(const std::string& json_str) {
+    JsonValidator json_validator;
+
+    const std::string schema_path = std::string(SCHEMA_PATH) + "vksc_pipeline_schema.json";
+
+    auto success = json_validator.LoadAndValidateSchema(schema_path);
+
+    if (!success) {
+        std::cout << json_validator.GetMessage() << std::endl;
+        return success;
+    }
+
+    Json::String err;
+    Json::Value json;
+    Json::CharReaderBuilder builder;
+    const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
+    if (!reader->parse(json_str.c_str(), json_str.c_str() + json_str.size() + 1, &json, &err)) {
+        std::cout << "error: " << err << std::endl;
+        return EXIT_FAILURE;
+    }
+    success = json_validator.ValidateJson(json);
+
+    if (!success) {
+        std::cout << json_validator.GetMessage() << std::endl;
+        return success;
+    }
+
+    return true;
+}
 
 std::string reformatJson(const std::string& json_str) {
     Json::Value json{};
@@ -1981,6 +2013,7 @@ TEST_F(PJGenTest, SAXPY) {
 
     EXPECT_TRUE(vpjGeneratePipelineJson(generator_, &data, &result_json, &msg_));
     CHECK_GEN();
+    EXPECT_TRUE(ValidatePipelineJson(std::string(result_json)));
     EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
@@ -2548,6 +2581,7 @@ TEST_F(PJGenTest, vksccube) {
 
     EXPECT_TRUE(vpjGeneratePipelineJson(generator_, &data, &result_json, &msg_));
     CHECK_GEN();
+    EXPECT_TRUE(ValidatePipelineJson(std::string(result_json)));
     EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
@@ -2808,6 +2842,7 @@ TEST_F(PJGenTest, UUIDCompute) {
     vpjSetMD5PipelineUUIDGeneration(generator_, true);
     EXPECT_TRUE(vpjGeneratePipelineJson(generator_, &data, &result_json, &msg_));
     CHECK_GEN();
+    EXPECT_TRUE(ValidatePipelineJson(std::string(result_json)));
     EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
@@ -3367,6 +3402,7 @@ TEST_F(PJGenTest, UUIDGraphics) {
     vpjSetMD5PipelineUUIDGeneration(generator_, true);
     EXPECT_TRUE(vpjGeneratePipelineJson(generator_, &data, &result_json, &msg_));
     CHECK_GEN();
+    EXPECT_TRUE(ValidatePipelineJson(std::string(result_json)));
     EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
@@ -3395,6 +3431,13 @@ TEST_F(PJGenTest, ObjectNameRemapping) {
                     "stage" : "VK_SHADER_STAGE_COMPUTE_BIT"
                 }
             },
+            "ShaderFileNames" :
+            [
+                {
+                    "stage" : "VK_SHADER_STAGE_COMPUTE_BIT",
+                    "filename" : "saxpy.comp.spv"
+                }
+            ],
             "DescriptorSetLayouts" : 
             [
                 {
@@ -3715,9 +3758,17 @@ TEST_F(PJGenTest, ObjectNameRemapping) {
     data.computePipelineState.pDescriptorSetLayouts = descriptorSetLayouts;
     data.computePipelineState.ppDescriptorSetLayoutNames = descriptorLayoutNames;
 
+    VpjShaderFileName shaderFileNames[1] = {};
+    shaderFileNames[0].pFilename = "saxpy.comp.spv";
+    shaderFileNames[0].stage = VK_SHADER_STAGE_COMPUTE_BIT;
+
+    data.computePipelineState.shaderFileNameCount = 1;
+    data.computePipelineState.pShaderFileNames = shaderFileNames;
+
     const char* result_json = nullptr;
 
     EXPECT_TRUE(vpjGeneratePipelineJson(generator_, &data, &result_json, &msg_));
     CHECK_GEN();
+    EXPECT_TRUE(ValidatePipelineJson(std::string(result_json)));
     EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }

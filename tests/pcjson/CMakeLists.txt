@@ -7,6 +7,8 @@
 
 enable_testing()
 
+find_package(valijson REQUIRED CONFIG)
+find_package(jsoncpp REQUIRED CONFIG)
 find_package(GTest REQUIRED CONFIG)
 
 add_executable(pjtest_parse pjtest_parse.cpp)
@@ -16,6 +18,7 @@ target_link_libraries(pjtest_parse PRIVATE
     Vulkan::PCJson
     GTest::gtest
     GTest::gtest_main
+    json_validator
 )
 
 add_test(NAME pjtest.parse COMMAND pjtest_parse)
@@ -28,6 +31,7 @@ target_link_libraries(pjtest_gen PRIVATE
     GTest::gtest
     GTest::gtest_main
     jsoncpp_static
+    json_validator
 )
 
 add_test(NAME pjtest.gen COMMAND pjtest_gen)

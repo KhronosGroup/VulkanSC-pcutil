@@ -31,7 +31,7 @@ class GenLayerUUIDTest : public testing::Test {
     std::array<uint8_t, VK_UUID_SIZE> get_uuid(VkDevice device, VkPipeline pipeline) {
         PFN_vkGetPipelinePropertiesEXT vkGetPipelinePropertiesEXT =
             (PFN_vkGetPipelinePropertiesEXT)vkGetDeviceProcAddr(device, "vkGetPipelinePropertiesEXT");
-        EXPECT_TRUE(vkGetPipelinePropertiesEXT);
+        VKCHECK(vkGetPipelinePropertiesEXT ? VK_SUCCESS : VK_ERROR_EXTENSION_NOT_PRESENT);
 
         VkPipelineInfoEXT pipeline_info_ext{.sType = VK_STRUCTURE_TYPE_PIPELINE_INFO_EXT, .pNext = nullptr, .pipeline = pipeline};
         VkPipelinePropertiesIdentifierEXT pipeline_props{.sType = VK_STRUCTURE_TYPE_PIPELINE_PROPERTIES_IDENTIFIER_EXT,

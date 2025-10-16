@@ -2,29 +2,21 @@
     "repos": [
         {
             "name": "Vulkan-Headers",
-            "url": "https://github.com/KhronosGroup/Vulkan-Headers.git",
+            "url": "https://github.com/KhronosGroup/VulkanSC-Headers.git",
             "sub_dir": "Vulkan-Headers",
             "build_dir": "Vulkan-Headers/build",
             "install_dir": "Vulkan-Headers/build/install",
-            "commit": "v1.4.319"
-        },
-        {
-            "name": "VulkanSC-Headers",
-            "url": "https://github.com/KhronosGroup/VulkanSC-Headers.git",
-            "sub_dir": "VulkanSC-Headers",
-            "build_dir": "VulkanSC-Headers/build",
-            "install_dir": "VulkanSC-Headers/build/install",
             "cmake_options": [
                 "-DGEN_VULKANSC_COMBINED=ON"
             ],
             "commit": "vksc1.0.19"
         },
         {
-            "name": "VulkanSC-Utility-Libraries",
+            "name": "Vulkan-Utility-Libraries",
             "url": "https://github.com/KhronosGroup/VulkanSC-Utility-Libraries.git",
-            "sub_dir": "VulkanSC-Utility-Libraries",
-            "build_dir": "VulkanSC-Utility-Libraries/build",
-            "install_dir": "VulkanSC-Utility-Libraries/build/install",
+            "sub_dir": "Vulkan-Utility-Libraries",
+            "build_dir": "Vulkan-Utility-Libraries/build",
+            "install_dir": "Vulkan-Utility-Libraries/build/install",
             "commit": "vksc1.0.19",
             "cmake_options": [
                 "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug>"
@@ -32,7 +24,7 @@
             "deps": [
                 {
                     "var_name": "VULKAN_HEADERS_INSTALL_DIR",
-                    "repo_name": "VulkanSC-Headers"
+                    "repo_name": "Vulkan-Headers"
                 }
             ]
         },
@@ -122,7 +114,7 @@
             "deps": [
                 {
                     "var_name": "VULKAN_HEADERS_INSTALL_DIR",
-                    "repo_name": "VulkanSC-Headers"
+                    "repo_name": "Vulkan-Headers"
                 }
             ]
         },
@@ -170,7 +162,7 @@
             "deps": [
                 {
                     "var_name": "VULKAN_HEADERS_INSTALL_DIR",
-                    "repo_name": "VulkanSC-Headers"
+                    "repo_name": "Vulkan-Headers"
                 }
             ]
         },
@@ -198,10 +190,6 @@
                 {
                     "var_name": "VOLK_INSTALL_DIR",
                     "repo_name": "volk"
-                },
-                {
-                    "var_name": "VULKAN_UTILITY_LIBRARIES_INSTALL_DIR",
-                    "repo_name": "Vulkan-Utility-Libraries"
                 },
                 {
                     "var_name": "JSONCPP_INSTALL_DIR",
@@ -233,7 +221,7 @@
             "deps": [
                 {
                     "var_name": "VULKAN_HEADERS_INSTALL_DIR",
-                    "repo_name": "VulkanSC-Headers"
+                    "repo_name": "Vulkan-Headers"
                 },
                 {
                     "var_name": "VOLK_INSTALL_DIR",
@@ -241,7 +229,7 @@
                 },
                 {
                     "var_name": "VULKAN_UTILITY_LIBRARIES_INSTALL_DIR",
-                    "repo_name": "VulkanSC-Utility-Libraries"
+                    "repo_name": "Vulkan-Utility-Libraries"
                 },
                 {
                     "var_name": "JSONCPP_INSTALL_DIR",
@@ -276,11 +264,11 @@
                 },
                 {
                     "var_name": "VULKAN_HEADERS_INSTALL_DIR",
-                    "repo_name": "VulkanSC-Headers"
+                    "repo_name": "Vulkan-Headers"
                 },
                 {
                     "var_name": "VULKAN_UTILITY_LIBRARIES_INSTALL_DIR",
-                    "repo_name": "VulkanSC-Utility-Libraries"
+                    "repo_name": "Vulkan-Utility-Libraries"
                 },
                 {
                     "var_name": "SPIRV_HEADERS_INSTALL_DIR",
@@ -295,7 +283,6 @@
     ],
     "install_names": {
         "Vulkan-Headers": "VULKAN_HEADERS_INSTALL_DIR",
-        "VulkanSC-Headers": "VULKANSC_HEADERS_INSTALL_DIR",
         "Vulkan-Utility-Libraries": "VULKAN_UTILITY_LIBRARIES_INSTALL_DIR",
         "jsoncpp": "JSONCPP_INSTALL_DIR",
         "valijson": "VALIJSON_INSTALL_DIR",
@@ -308,6 +295,7 @@
         "volk": "VOLK_INSTALL_DIR",
         "Vulkan-Tools": "VULKAN_TOOLS_INSTALL_DIR",
         "VulkanSC-Tools": "VULKANSC_TOOLS_INSTALL_DIR",
-        "VulkanSC-ValidationLayers": "VULKAN_VALIDATION_LAYERS_INSTALL_DIR"
+        "Vulkan-ValidationLayers": "VULKAN_VALIDATION_LAYERS_INSTALL_DIR",
+        "VulkanSC-ValidationLayers": "VULKANSC_VALIDATION_LAYERS_INSTALL_DIR"
     }
 }

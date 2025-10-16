@@ -22,3 +22,12 @@
                 testing::TestPartResult(testing::TestPartResult::kFatalFailure, __FILE__, __LINE__, "")); \
         }                                                                                                 \
     } while (0)
+
+#define ERR_EXIT(err_msg, err_class)                                                                                 \
+    do {                                                                                                             \
+        std::string msg{err_msg};                                                                                    \
+        msg.append(err_class);                                                                                       \
+        GTEST_MESSAGE_AT_(__FILE__, __LINE__, msg.c_str(), ::testing::TestPartResult::kFatalFailure);                \
+        throw testing::AssertionException{                                                                           \
+            testing::TestPartResult{testing::TestPartResult::Type::kFatalFailure, __FILE__, __LINE__, msg.c_str()}}; \
+    } while (0)

@@ -45,7 +45,7 @@ find_package(VulkanUtilityLibraries REQUIRED CONFIG QUIET)
 find_package(jsoncpp REQUIRED CONFIG QUIET)
 if (BUILD_TESTS) # Layer testing needs the loader
     find_package(VulkanLoader REQUIRED CONFIG QUIET)
-    find_vk_package(VulkanHeaders ${VULKAN_HEADERS_INSTALL_DIR})
+    add_library(Vk::Headers ALIAS Vulkan::Headers)
     find_vk_package(VulkanLoader ${VULKAN_LOADER_INSTALL_DIR})
 endif()
 

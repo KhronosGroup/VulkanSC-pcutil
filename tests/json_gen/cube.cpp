@@ -8,13 +8,7 @@
 
 #include "cube.hpp"
 
-#define ERR_EXIT(err_msg, err_class)                                                                                 \
-    do {                                                                                                             \
-        std::string msg{err_msg};                                                                                    \
-        msg.append(err_class);                                                                                       \
-        throw testing::AssertionException{                                                                           \
-            testing::TestPartResult{testing::TestPartResult::Type::kFatalFailure, __FILE__, __LINE__, msg.c_str()}}; \
-    } while (0)
+#include "vkresult_gtest_adapter.hpp"
 
 #if defined(NDEBUG) && defined(__GNUC__)
 #define U_ASSERT_ONLY __attribute__((unused))
@@ -28,7 +22,9 @@
 
 static std::vector<const char *> tex_files{"logo.ppm"};
 
-    Cube::Cube() : surface{VK_NULL_HANDLE} { demo_init(); }
+Cube::Cube() : surface{VK_NULL_HANDLE}, image_acquired_semaphores{}, draw_complete_semaphores{}, image_ownership_semaphores{} {
+    demo_init();
+}
 
     Cube::~Cube() { demo_cleanup(); }
 

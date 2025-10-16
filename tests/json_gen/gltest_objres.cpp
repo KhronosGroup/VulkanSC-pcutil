@@ -17,10 +17,18 @@
 #include <vector>
 #include <filesystem>
 #include <fstream>
+#include <regex>
 
 class GenLayerObjResTest : public testing::Test {
   public:
-    GenLayerObjResTest() = default;
+    GenLayerObjResTest() {
+        std::for_each(std::filesystem::directory_iterator{"."}, std::filesystem::directory_iterator{},
+                      [](const std::filesystem::directory_entry& entry) {
+                          if (std::regex_search(entry.path().generic_string(), std::regex{R"(gltest_objres_objectResInfo_)"})) {
+                              std::filesystem::remove(entry);
+                          }
+                      });
+    }
     GenLayerObjResTest(const GenLayerObjResTest&) = delete;
     GenLayerObjResTest(GenLayerObjResTest&&) = delete;
     ~GenLayerObjResTest() = default;

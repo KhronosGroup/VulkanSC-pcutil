@@ -22,7 +22,7 @@ class Cube {
     Cube(Cube &&) = delete;
     ~Cube();
 
-    static const int pipeline_increment = 1;
+    static const int pipeline_increment = 4;
     VkPipeline get_pipeline() const;
 
     void run();

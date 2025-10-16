@@ -17,10 +17,18 @@
 #include <vector>
 #include <filesystem>
 #include <fstream>
+#include <regex>
 
 class GenLayerJSONTest : public testing::Test {
   public:
-    GenLayerJSONTest() = default;
+    GenLayerJSONTest() {
+        std::for_each(std::filesystem::directory_iterator{"."}, std::filesystem::directory_iterator{},
+                      [](const std::filesystem::directory_entry& entry) {
+                          if (std::regex_search(entry.path().generic_string(), std::regex{R"(gltest_json_)"})) {
+                              std::filesystem::remove(entry);
+                          }
+                      });
+    }
     GenLayerJSONTest(const GenLayerJSONTest&) = delete;
     GenLayerJSONTest(GenLayerJSONTest&&) = delete;
     ~GenLayerJSONTest() = default;
@@ -45,13 +53,18 @@ class GenLayerJSONTest : public testing::Test {
         spirv_stream.read(reinterpret_cast<char *>(spirv_vec.data()), spirv_size);
         return spirv_vec;
     }
+
+  protected:
 };
+
+inline size_t device_counter = 0;
 
 TEST_F(GenLayerJSONTest, ComputeSimple) {
     TEST_DESCRIPTION("Tests whether generated pipeline JSON for a compute pipeline is as expected");
 
     auto instance = SAXPY::create_instance();
     auto device = SAXPY::create_device(instance);
+    size_t device_id = device_counter++;
     int32_t pipeline_counter = 0;
     {
         SAXPY saxpy{instance, device};
@@ -61,8 +74,8 @@ TEST_F(GenLayerJSONTest, ComputeSimple) {
     vkDestroyDevice(device, nullptr);
     vkDestroyInstance(instance, nullptr);
 
-    auto json = get_json(0, pipeline_counter);
-    auto spirv = get_spirv(0, pipeline_counter, "compute");
+    auto json = get_json(device_id, pipeline_counter);
+    auto spirv = get_spirv(device_id, pipeline_counter, "compute");
 
     std::string json_ref = R"({
 	"ComputePipelineState" : 
@@ -244,7 +257,9 @@ TEST_F(GenLayerJSONTest, ComputeReproducible) {
 
     auto instance = SAXPY::create_instance();
     auto device1 = SAXPY::create_device(instance);
+    size_t device1_id = device_counter++;
     auto device2 = SAXPY::create_device(instance);
+    size_t device2_id = device_counter++;
 
     int32_t pipeline_counter1 = 0, pipeline_counter2 = 0;
     {
@@ -260,8 +275,8 @@ TEST_F(GenLayerJSONTest, ComputeReproducible) {
     vkDestroyDevice(device2, nullptr);
     vkDestroyInstance(instance, nullptr);
 
-    auto json1 = get_json(0, pipeline_counter1);
-    auto json2 = get_json(1, pipeline_counter2);
+    auto json1 = get_json(device1_id, pipeline_counter1);
+    auto json2 = get_json(device2_id, pipeline_counter2);
     GTEST_SKIP() << "Undecided if this should hold true or not.";
     EXPECT_EQ(json1, json2);
 }
@@ -270,9 +285,10 @@ TEST_F(GenLayerJSONTest, GraphicsSimple) {
     TEST_DESCRIPTION("Tests whether generated pipeline JSON for a graphics pipeline is as expected");
 
     auto cube = Cube{};
+    size_t device_id = device_counter++;
     cube.run();
 
-    auto json = get_json(0, Cube::pipeline_increment);
+    auto json = get_json(device_id, Cube::pipeline_increment);
 
     std::string json_ref = R"({
 	"EnabledExtensions" : 
@@ -633,33 +649,33 @@ TEST_F(GenLayerJSONTest, GraphicsSimple) {
 		"ShaderFileNames" : 
 		[
 			{
-				"filename" : "gltest_json_pipeline_4.vert.spv",
+				"filename" : "gltest_json_device_3_pipeline_4.vert.spv",
 				"stage" : "VK_SHADER_STAGE_VERTEX_BIT"
 			},
 			{
-				"filename" : "gltest_json_pipeline_4.frag.spv",
+				"filename" : "gltest_json_device_3_pipeline_4.frag.spv",
 				"stage" : "VK_SHADER_STAGE_FRAGMENT_BIT"
 			}
 		]
 	},
 	"PipelineUUID" : 
 	[
-		167,
-		2,
-		151,
-		57,
-		21,
-		89,
-		96,
-		29,
-		93,
-		107,
-		31,
-		96,
-		109,
-		136,
+		158,
+		238,
+		47,
+		141,
+		172,
+		224,
+		250,
+		113,
+		193,
+		187,
+		46,
+		64,
+		123,
+		77,
 		214,
-		202
+		145
 	]
 })";
     EXPECT_EQ(json, json_ref);

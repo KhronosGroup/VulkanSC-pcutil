@@ -56,7 +56,7 @@ TEST_F(GenLayerUUIDTest, ComputeSimple) {
 
     auto uuid = get_uuid(device, saxpy.get_pipeline());
 
-    std::array<uint8_t, VK_UUID_SIZE> ref{{233, 98, 9, 169, 133, 102, 54, 165, 209, 57, 210, 42, 228, 112, 1, 134}};
+    std::array<uint8_t, VK_UUID_SIZE> ref{{192, 167, 88, 108, 121, 232, 13, 22, 245, 130, 62, 52, 149, 71, 254, 59}};
     EXPECT_EQ(uuid, ref);
 }
 
@@ -78,7 +78,6 @@ TEST_F(GenLayerUUIDTest, ComputeReproducible) {
     auto uuid2 = get_uuid(device2, saxpy2.get_pipeline());
     auto uuid3 = get_uuid(device3, saxpy3.get_pipeline());
 
-    GTEST_SKIP() << "Undecided if this should hold true or not.";
     EXPECT_EQ(uuid1, uuid2);
     EXPECT_EQ(uuid1, uuid3);
 }

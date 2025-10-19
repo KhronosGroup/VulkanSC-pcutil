@@ -21,12 +21,12 @@
 
 #include "json_validator.h"
 
-class PJParseTest : public testing::Test {
+class Parse : public testing::Test {
   public:
-    PJParseTest() : parser_{vpjCreateParser()}, msg_{nullptr} {}
-    PJParseTest(const PJParseTest&) = delete;
-    PJParseTest(PJParseTest&&) = delete;
-    ~PJParseTest() { vpjDestroyParser(parser_); }
+    Parse() : parser_{vpjCreateParser()}, msg_{nullptr} {}
+    Parse(const Parse&) = delete;
+    Parse(Parse&&) = delete;
+    ~Parse() { vpjDestroyParser(parser_); }
 
     void TEST_DESCRIPTION(const char* desc) { RecordProperty("description", desc); }
     void CHECK_PARSE(bool success) {
@@ -76,7 +76,7 @@ bool ValidatePipelineJson(const std::string& json_str) {
     return true;
 }
 
-TEST_F(PJParseTest, BasicTypesVkBool32) {
+TEST_F(Parse, BasicTypesVkBool32) {
     TEST_DESCRIPTION("Tests value equivalence of written and parsed VkBool32 values");
 
     VkPhysicalDeviceFeatures2 data;
@@ -167,7 +167,7 @@ TEST_F(PJParseTest, BasicTypesVkBool32) {
     test_eq(R"(4294967295)", 4294967295);
 }
 
-TEST_F(PJParseTest, VkPhysicalDeviceFeatures2) {
+TEST_F(Parse, VkPhysicalDeviceFeatures2) {
     TEST_DESCRIPTION("Tests parsing of a reasonably complex physical device features 2 JSON");
 
     VkPhysicalDeviceFeatures2 pdf;
@@ -301,7 +301,7 @@ TEST_F(PJParseTest, VkPhysicalDeviceFeatures2) {
     EXPECT_EQ(pdf.features.inheritedQueries, VK_FALSE);
 }
 
-TEST_F(PJParseTest, VkGraphicsPipelineCreateInfo) {
+TEST_F(Parse, VkGraphicsPipelineCreateInfo) {
     TEST_DESCRIPTION("Tests parsing of a reasonably complex compute pipeline create info JSON");
 
     VkGraphicsPipelineCreateInfo gp_ci;
@@ -758,7 +758,7 @@ TEST_F(PJParseTest, VkGraphicsPipelineCreateInfo) {
     EXPECT_EQ(gp_ci.basePipelineIndex, 0);
 }
 
-TEST_F(PJParseTest, VkComputePipelineCreateInfo) {
+TEST_F(Parse, VkComputePipelineCreateInfo) {
     TEST_DESCRIPTION("Tests parsing of a reasonably complex compute pipeline create info JSON");
 
     VkComputePipelineCreateInfo cp_ci;
@@ -825,7 +825,7 @@ TEST_F(PJParseTest, VkComputePipelineCreateInfo) {
     EXPECT_EQ(cp_ci.basePipelineIndex, 0);
 }
 
-TEST_F(PJParseTest, VkSamplerYcbcrConversionCreateInfo) {
+TEST_F(Parse, VkSamplerYcbcrConversionCreateInfo) {
     TEST_DESCRIPTION("Tests parsing of a reasonably complex ycbcr conversion create info JSON");
 
 #ifdef VK_USE_PLATFORM_SCREEN_QNX
@@ -884,7 +884,7 @@ TEST_F(PJParseTest, VkSamplerYcbcrConversionCreateInfo) {
     EXPECT_EQ(ycbcr_ci.forceExplicitReconstruction, VK_TRUE);
 }
 
-TEST_F(PJParseTest, VkSamplerCreateInfo) {
+TEST_F(Parse, VkSamplerCreateInfo) {
     TEST_DESCRIPTION("Tests parsing of a reasonably complex sampler create info JSON");
 
     VkSamplerCreateInfo sampler_ci;
@@ -938,7 +938,7 @@ TEST_F(PJParseTest, VkSamplerCreateInfo) {
     EXPECT_EQ(sampler_ci.unnormalizedCoordinates, VK_TRUE);
 }
 
-TEST_F(PJParseTest, VkDescriptorSetLayoutCreateInfo) {
+TEST_F(Parse, VkDescriptorSetLayoutCreateInfo) {
     TEST_DESCRIPTION("Tests parsing of a reasonably complex descriptor set layout create info JSON");
 
     VkDescriptorSetLayoutCreateInfo dsl_ci;
@@ -982,7 +982,7 @@ TEST_F(PJParseTest, VkDescriptorSetLayoutCreateInfo) {
     EXPECT_EQ(dsl_ci.pBindings[0].pImmutableSamplers, nullptr);
 }
 
-TEST_F(PJParseTest, VkPipelineLayoutCreateInfo) {
+TEST_F(Parse, VkPipelineLayoutCreateInfo) {
     TEST_DESCRIPTION("Tests parsing of a reasonably complex pipeline layout create info JSON");
 
     VkPipelineLayoutCreateInfo pl_ci;
@@ -1017,7 +1017,7 @@ TEST_F(PJParseTest, VkPipelineLayoutCreateInfo) {
     EXPECT_EQ(pl_ci.pPushConstantRanges[0].size, 8);
 }
 
-TEST_F(PJParseTest, VkRenderPassCreateInfo) {
+TEST_F(Parse, VkRenderPassCreateInfo) {
     TEST_DESCRIPTION("Tests parsing of a reasonably complex render pass create info JSON");
 
     VkRenderPassCreateInfo rp_ci;
@@ -1199,7 +1199,7 @@ TEST_F(PJParseTest, VkRenderPassCreateInfo) {
     EXPECT_EQ(rp_ci.pDependencies[0].dependencyFlags, VK_DEPENDENCY_DEVICE_GROUP_BIT);
 }
 
-TEST_F(PJParseTest, VkRenderPassCreateInfo2) {
+TEST_F(Parse, VkRenderPassCreateInfo2) {
     TEST_DESCRIPTION("Tests parsing of a reasonably complex render pass 2 layout create info JSON");
 
     VkRenderPassCreateInfo2 rp2_ci;
@@ -1456,7 +1456,7 @@ TEST_F(PJParseTest, VkRenderPassCreateInfo2) {
     EXPECT_EQ(rp2_ci.pCorrelatedViewMasks[0], 8);
 }
 
-TEST_F(PJParseTest, VkShaderModuleCreateInfo) {
+TEST_F(Parse, VkShaderModuleCreateInfo) {
     TEST_DESCRIPTION("Tests parsing of a reasonably complex shader module create info JSON");
 
     VkShaderModuleCreateInfo sm_ci;
@@ -1477,7 +1477,7 @@ TEST_F(PJParseTest, VkShaderModuleCreateInfo) {
     EXPECT_EQ(sm_ci.pCode[0], (25 << 0) + (123 << 8) + (42 << 16) + (8 << 24));
 }
 
-TEST_F(PJParseTest, VkDeviceObjectReservationCreateInfo) {
+TEST_F(Parse, VkDeviceObjectReservationCreateInfo) {
     TEST_DESCRIPTION("Tests parsing of a reasonably complex object reservation create info JSON");
 
     VkDeviceObjectReservationCreateInfo dor_ci;
@@ -1599,7 +1599,7 @@ TEST_F(PJParseTest, VkDeviceObjectReservationCreateInfo) {
     EXPECT_EQ(dor_ci.maxImmutableSamplersPerDescriptorSetLayout, 0);
 }
 
-TEST_F(PJParseTest, VkPipelineOfflineCreateInfo) {
+TEST_F(Parse, VkPipelineOfflineCreateInfo) {
     TEST_DESCRIPTION("Tests parsing of a reasonably complex pipeline offline create info JSON");
 
     VkPipelineOfflineCreateInfo po_ci;
@@ -1652,7 +1652,7 @@ TEST_F(PJParseTest, VkPipelineOfflineCreateInfo) {
     EXPECT_EQ(po_ci.poolEntrySize, 1048576);
 }
 
-TEST_F(PJParseTest, ComputePipelineJSON) {
+TEST_F(Parse, ComputePipelineJSON) {
     TEST_DESCRIPTION("Tests parsing of a reasonably simple compute pipeline JSON");
 
     const std::string json{R"({
@@ -2130,7 +2130,7 @@ TEST_F(PJParseTest, ComputePipelineJSON) {
     EXPECT_UUIDEQ(data.pipelineUUID, expected_uuid);
 }
 
-TEST_F(PJParseTest, GraphicsPipelineJSON) {
+TEST_F(Parse, GraphicsPipelineJSON) {
     TEST_DESCRIPTION("Tests parsing of a reasonably simple graphics pipeline JSON");
 
 #ifdef VK_USE_PLATFORM_SCREEN_QNX
@@ -3123,7 +3123,7 @@ TEST_F(PJParseTest, GraphicsPipelineJSON) {
     EXPECT_UUIDEQ(data.pipelineUUID, expected_uuid);
 }
 
-TEST_F(PJParseTest, ObjectNameRemapping) {
+TEST_F(Parse, ObjectNameRemapping) {
     TEST_DESCRIPTION("Tests parsing of a reasonably simple compute pipeline JSON");
 
     const std::string json{R"({

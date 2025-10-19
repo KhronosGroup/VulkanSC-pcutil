@@ -19,12 +19,12 @@
 #include <vector>
 #include <array>
 
-class GenLayerUUIDTest : public testing::Test {
+class UUID : public testing::Test {
   public:
-    GenLayerUUIDTest() = default;
-    GenLayerUUIDTest(const GenLayerUUIDTest&) = delete;
-    GenLayerUUIDTest(GenLayerUUIDTest&&) = delete;
-    ~GenLayerUUIDTest() = default;
+    UUID() = default;
+    UUID(const UUID&) = delete;
+    UUID(UUID&&) = delete;
+    ~UUID() = default;
 
     void TEST_DESCRIPTION(const char* desc) { RecordProperty("description", desc); }
 
@@ -45,7 +45,7 @@ class GenLayerUUIDTest : public testing::Test {
     }
 };
 
-TEST_F(GenLayerUUIDTest, ComputeSimple) {
+TEST_F(UUID, ComputeSimple) {
     TEST_DESCRIPTION("Tests whether generated UUID for a compute pipeline is as expected");
 
     auto instance = SAXPY::create_instance();
@@ -60,7 +60,7 @@ TEST_F(GenLayerUUIDTest, ComputeSimple) {
     EXPECT_EQ(uuid, ref);
 }
 
-TEST_F(GenLayerUUIDTest, ComputeReproducible) {
+TEST_F(UUID, ComputeReproducible) {
     TEST_DESCRIPTION("Tests whether generated UUIDs for identical compute pipelines match");
 
     auto instance = SAXPY::create_instance();
@@ -82,7 +82,7 @@ TEST_F(GenLayerUUIDTest, ComputeReproducible) {
     EXPECT_EQ(uuid1, uuid3);
 }
 
-TEST_F(GenLayerUUIDTest, DifferentCompute) {
+TEST_F(UUID, DifferentCompute) {
     TEST_DESCRIPTION("Tests whether generated UUIDs for different compute pipelines differ");
 
     auto instance = SAXPY::create_instance();

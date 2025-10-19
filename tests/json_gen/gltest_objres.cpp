@@ -19,9 +19,9 @@
 #include <fstream>
 #include <regex>
 
-class GenLayerObjResTest : public testing::Test {
+class ObjectReservation : public testing::Test {
   public:
-    GenLayerObjResTest() {
+    ObjectReservation() {
         std::for_each(std::filesystem::directory_iterator{"."}, std::filesystem::directory_iterator{},
                       [](const std::filesystem::directory_entry& entry) {
                           if (std::regex_search(entry.path().generic_string(), std::regex{R"(gltest_objres_objectResInfo_)"})) {
@@ -29,9 +29,9 @@ class GenLayerObjResTest : public testing::Test {
                           }
                       });
     }
-    GenLayerObjResTest(const GenLayerObjResTest&) = delete;
-    GenLayerObjResTest(GenLayerObjResTest&&) = delete;
-    ~GenLayerObjResTest() = default;
+    ObjectReservation(const ObjectReservation&) = delete;
+    ObjectReservation(ObjectReservation&&) = delete;
+    ~ObjectReservation() = default;
 
     void TEST_DESCRIPTION(const char* desc) { RecordProperty("description", desc); }
 
@@ -54,7 +54,7 @@ class GenLayerObjResTest : public testing::Test {
     static inline int32_t device_counter = 0;
 };
 
-TEST_F(GenLayerObjResTest, ComputeSimple) {
+TEST_F(ObjectReservation, ComputeSimple) {
     TEST_DESCRIPTION("Tests whether generated object reservation counts for a compute pipeline are as expected");
 
     auto instance = SAXPY::create_instance();
@@ -123,7 +123,7 @@ static void SetObjectResCreateInfo()
     EXPECT_EQ(header, ref);
 }
 
-TEST_F(GenLayerObjResTest, ComputeMultiDeviceHighWatermark) {
+TEST_F(ObjectReservation, ComputeMultiDeviceHighWatermark) {
     TEST_DESCRIPTION("Tests generated object reservation counts for a compute pipelines in a simple multi-device scenario");
 
     auto instance = SAXPY::create_instance();
@@ -259,7 +259,7 @@ static void SetObjectResCreateInfo()
     EXPECT_EQ(header2, ref2);
 }
 
-TEST_F(GenLayerObjResTest, GraphicsSimple) {
+TEST_F(ObjectReservation, GraphicsSimple) {
     TEST_DESCRIPTION("Tests whether generated object reservation counts for a graphics pipeline are as expected");
 
     {

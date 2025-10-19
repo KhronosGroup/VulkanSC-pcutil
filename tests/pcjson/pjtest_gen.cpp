@@ -23,12 +23,12 @@
 
 #include "json_validator.h"
 
-class PJGenTest : public testing::Test {
+class Gen : public testing::Test {
   public:
-    PJGenTest() : generator_{vpjCreateGenerator()}, msg_{nullptr} {}
-    PJGenTest(const PJGenTest&) = delete;
-    PJGenTest(PJGenTest&&) = delete;
-    ~PJGenTest() { vpjDestroyGenerator(generator_); }
+    Gen() : generator_{vpjCreateGenerator()}, msg_{nullptr} {}
+    Gen(const Gen&) = delete;
+    Gen(Gen&&) = delete;
+    ~Gen() { vpjDestroyGenerator(generator_); }
 
     void TEST_DESCRIPTION(const char* desc) { RecordProperty("description", desc); }
 
@@ -93,7 +93,7 @@ std::string reformatJson(const std::string& json_str) {
     return Json::writeString(streamWriterBuilder, json);
 }
 
-TEST_F(PJGenTest, VkPhysicalDeviceFeatures2) {
+TEST_F(Gen, VkPhysicalDeviceFeatures2) {
     TEST_DESCRIPTION("Tests generating of a reasonably complex physical device features 2 JSON");
 
     std::string ref_json_str = {R"({
@@ -224,7 +224,7 @@ TEST_F(PJGenTest, VkPhysicalDeviceFeatures2) {
     EXPECT_TRUE(reformatJson(ref_json_str) == result_json);
 }
 
-TEST_F(PJGenTest, VkGraphicsPipelineCreateInfo) {
+TEST_F(Gen, VkGraphicsPipelineCreateInfo) {
     TEST_DESCRIPTION("Tests generating of a reasonably complex graphics pipeline create info JSON");
 
     const char* ref_json_str = {R"({
@@ -699,7 +699,7 @@ TEST_F(PJGenTest, VkGraphicsPipelineCreateInfo) {
     EXPECT_TRUE(reformatJson(ref_json_str) == result_json);
 }
 
-TEST_F(PJGenTest, VkComputePipelineCreateInfo) {
+TEST_F(Gen, VkComputePipelineCreateInfo) {
     TEST_DESCRIPTION("Tests generating of a reasonably complex compute pipeline create info JSON");
 
     std::string ref_json = {R"({
@@ -780,7 +780,7 @@ TEST_F(PJGenTest, VkComputePipelineCreateInfo) {
     EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
-TEST_F(PJGenTest, VkSamplerYcbcrConversionCreateInfo) {
+TEST_F(Gen, VkSamplerYcbcrConversionCreateInfo) {
     TEST_DESCRIPTION("Tests generating of a reasonably complex ycbcr conversion create info JSON");
 
 #ifdef VK_USE_PLATFORM_SCREEN_QNX
@@ -842,7 +842,7 @@ TEST_F(PJGenTest, VkSamplerYcbcrConversionCreateInfo) {
     EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
-TEST_F(PJGenTest, VkSamplerCreateInfo) {
+TEST_F(Gen, VkSamplerCreateInfo) {
     TEST_DESCRIPTION("Tests generating of a reasonably complex sampler create info JSON");
 
     std::string ref_json = {R"({
@@ -904,7 +904,7 @@ TEST_F(PJGenTest, VkSamplerCreateInfo) {
     EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
-TEST_F(PJGenTest, VkDescriptorSetLayoutCreateInfo) {
+TEST_F(Gen, VkDescriptorSetLayoutCreateInfo) {
     TEST_DESCRIPTION("Tests generating of a reasonably complex descriptor set layout create info JSON");
 
     std::string ref_json = {R"({
@@ -962,7 +962,7 @@ TEST_F(PJGenTest, VkDescriptorSetLayoutCreateInfo) {
     EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
-TEST_F(PJGenTest, VkPipelineLayoutCreateInfo) {
+TEST_F(Gen, VkPipelineLayoutCreateInfo) {
     TEST_DESCRIPTION("Tests generating of a reasonably complex pipeline layout create info JSON");
 
     std::string ref_json = {R"({
@@ -1007,7 +1007,7 @@ TEST_F(PJGenTest, VkPipelineLayoutCreateInfo) {
     EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
-TEST_F(PJGenTest, VkRenderPassCreateInfo) {
+TEST_F(Gen, VkRenderPassCreateInfo) {
     TEST_DESCRIPTION("Tests generating of a reasonably complex render pass create info JSON");
 
     std::string ref_json = {R"({
@@ -1221,7 +1221,7 @@ TEST_F(PJGenTest, VkRenderPassCreateInfo) {
     EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
-TEST_F(PJGenTest, VkRenderPassCreateInfo2) {
+TEST_F(Gen, VkRenderPassCreateInfo2) {
     TEST_DESCRIPTION("Tests generating of a reasonably complex render pass 2 layout create info JSON");
 
     std::string ref_json = {R"({
@@ -1528,7 +1528,7 @@ TEST_F(PJGenTest, VkRenderPassCreateInfo2) {
     EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
-TEST_F(PJGenTest, VkShaderModuleCreateInfo) {
+TEST_F(Gen, VkShaderModuleCreateInfo) {
     TEST_DESCRIPTION("Tests generating of a reasonably complex shader module create info JSON");
 
     std::string ref_json = {R"({
@@ -1555,7 +1555,7 @@ TEST_F(PJGenTest, VkShaderModuleCreateInfo) {
     EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
-TEST_F(PJGenTest, VkDeviceObjectReservationCreateInfo) {
+TEST_F(Gen, VkDeviceObjectReservationCreateInfo) {
     TEST_DESCRIPTION("Tests generating of a reasonably complex object reservation create info JSON");
 
     std::string ref_json = {R"({
@@ -1690,7 +1690,7 @@ TEST_F(PJGenTest, VkDeviceObjectReservationCreateInfo) {
     EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
-TEST_F(PJGenTest, VkPipelineOfflineCreateInfo) {
+TEST_F(Gen, VkPipelineOfflineCreateInfo) {
     TEST_DESCRIPTION("Tests generating of a reasonably complex pipeline offline create info JSON");
 
     std::string ref_json = {R"({
@@ -1748,7 +1748,7 @@ TEST_F(PJGenTest, VkPipelineOfflineCreateInfo) {
     EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
-TEST_F(PJGenTest, ComputePipelineJSON) {
+TEST_F(Gen, ComputePipelineJSON) {
     TEST_DESCRIPTION("Tests generation of a reasonably complex compute pipeline JSON");
 
     const std::string ref_json{R"({
@@ -2208,7 +2208,7 @@ TEST_F(PJGenTest, ComputePipelineJSON) {
     EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
-TEST_F(PJGenTest, GraphicsPipelineJSON) {
+TEST_F(Gen, GraphicsPipelineJSON) {
     TEST_DESCRIPTION("Tests generation of a reasonably complex graphics pipeline JSON");
 
     const std::string ref_json{R"({
@@ -2852,7 +2852,7 @@ TEST_F(PJGenTest, GraphicsPipelineJSON) {
     EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
-TEST_F(PJGenTest, ComputePipelineJSONWithMD5) {
+TEST_F(Gen, ComputePipelineJSONWithMD5) {
     TEST_DESCRIPTION("Tests generating pipeline JSON with MD5 UUID for a compute pipeline");
 
     const std::string ref_json{R"({
@@ -3303,7 +3303,7 @@ TEST_F(PJGenTest, ComputePipelineJSONWithMD5) {
     EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
-TEST_F(PJGenTest, GraphicsPipelineJSONWithMD5) {
+TEST_F(Gen, GraphicsPipelineJSONWithMD5) {
     TEST_DESCRIPTION("Tests generating pipeline JSON with MD5 UUID for a graphics pipeline");
 
     const std::string ref_json{R"({
@@ -3939,7 +3939,7 @@ TEST_F(PJGenTest, GraphicsPipelineJSONWithMD5) {
     EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
 
-TEST_F(PJGenTest, ObjectNameRemapping) {
+TEST_F(Gen, ObjectNameRemapping) {
     TEST_DESCRIPTION("Tests object name remapping in a compute pipeline JSON");
 
     const std::string ref_json{R"({

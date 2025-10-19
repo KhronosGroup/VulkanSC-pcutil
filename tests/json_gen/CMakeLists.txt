@@ -7,6 +7,8 @@
 
 enable_testing()
 
+find_package(valijson REQUIRED CONFIG)
+find_package(jsoncpp REQUIRED CONFIG)
 find_package(GTest REQUIRED CONFIG)
 include(GoogleTest)
 
@@ -79,6 +81,51 @@ else()
     list(JOIN COMMON_TEST_ENVIRONMENT "$<SEMICOLON>" COMMON_TEST_ENVIRONMENT)
 endif()
 
+macro(pcu_add_test)
+    cmake_parse_arguments(""
+        ""
+        "TEST_NAME;TEST_PREFIX;TEST_LIST"
+        "LABELS"
+        ${ARGN}
+    )
+    add_executable(${_TEST_NAME} ${_TEST_NAME}.cpp)
+
+    target_link_libraries(${_TEST_NAME} PRIVATE
+        test_applications
+        Vulkan::PCJson
+        Vulkan::Headers
+        Vulkan::UtilityHeaders
+        Vulkan::SafeStruct
+        Vk::Loader
+        GTest::gtest
+        GTest::gtest_main
+        jsoncpp_static
+        json_validator
+    )
+
+    # gtest_discover_tests requires running the output binaries which will not
+    # work with cross-compiling, thus we fall back to using gtest_add_tests
+    if (CMAKE_CROSSCOMPILING)
+        gtest_add_tests(
+            TARGET ${_TEST_NAME}
+            TEST_PREFIX "${_TEST_PREFIX}"
+            TEST_LIST ${_TEST_LIST}
+        )
+        foreach(TEST_I IN LISTS ${_TEST_LIST})
+            set_tests_properties("${TEST_I}" PROPERTIES
+                LABELS "${_LABELS}"
+                ENVIRONMENT "${COMMON_TEST_ENVIRONMENT}"
+            )
+        endforeach()
+    else()
+        gtest_discover_tests(${_TEST_NAME}
+            TEST_PREFIX "${_TEST_PREFIX}"
+            TEST_LIST ${_TEST_LIST}
+            DISCOVERY_TIMEOUT 100
+        )
+    endif()
+endmacro()
+
 # 1. ABI testing
 # 1.1. Exported functions are really exported (ld/ojbdump.exe/dependencies.exe)
 # 1.2. No unexpected external dependencies (CRT, hashlib, etc.)
@@ -92,37 +139,12 @@ endif()
 # 3.1. UUIDs are non-zero
 # 3.2. UUIDs are reproducible (two identical API streams produce the same UUID)
 
-add_executable(gltest_uuid gltest_uuid.cpp)
-
-target_link_libraries(gltest_uuid PRIVATE
-    test_applications
-    Vulkan::PCJson
-    Vulkan::Headers
-    Vk::Loader
-    GTest::gtest
-    GTest::gtest_main
+pcu_add_test(
+    TEST_NAME gltest_uuid
+    TEST_PREFIX "Layer."
+    TEST_LIST UUID_TESTS
+    LABLELS Layer UUID
 )
-
-set(UUID_LABELS Layer UUID)
-if (CMAKE_CROSSCOMPILING)
-    gtest_add_tests(
-        TARGET gltest_uuid
-        TEST_PREFIX "Layer.UUID."
-        TEST_LIST UUID_TESTS
-    )
-    foreach(UUID_TEST IN LISTS UUID_TESTS)
-        set_tests_properties("${UUID_TEST}" PROPERTIES
-            LABELS "${UUID_LABELS}"
-            ENVIRONMENT "${COMMON_TEST_ENVIRONMENT}"
-        )
-    endforeach()
-else()
-    gtest_discover_tests(gltest_uuid
-        TEST_PREFIX "Layer.UUID."
-        TEST_LIST UUID_TESTS
-        DISCOVERY_TIMEOUT 100
-    )
-endif()
 
 # 4. Test object count tracking
 # 4.0. SAXPY, Cube
@@ -131,73 +153,23 @@ endif()
 # 4.3. Multi-device, 2nd created after 1st destroyed
 # 4.4. Multi-device, create concurrently
 
-add_executable(gltest_objres gltest_objres.cpp)
-
-target_link_libraries(gltest_objres PRIVATE
-    test_applications
-    Vulkan::PCJson
-    Vulkan::Headers
-    Vk::Loader
-    GTest::gtest
-    GTest::gtest_main
+pcu_add_test(
+    TEST_NAME gltest_objres
+    TEST_PREFIX "Layer."
+    TEST_LIST OBJRES_TESTS
+    LABLELS Layer ObjectReservation
 )
-
-set(OBJRES_LABELS Layer ObjectReservation)
-if (CMAKE_CROSSCOMPILING)
-    gtest_add_tests(
-        TARGET gltest_objres
-        TEST_PREFIX "Layer.ObjectReservation."
-        TEST_LIST OBJRES_TESTS
-    )
-    foreach(OBJRES_TEST IN LISTS OBJRES_TESTS)
-        set_tests_properties("${OBJRES_TEST}" PROPERTIES
-            LABELS "${OBJRES_LABELS}"
-            ENVIRONMENT ${COMMON_TEST_ENVIRONMENT}
-        )
-    endforeach()
-else()
-    gtest_discover_tests(gltest_objres
-        TEST_PREFIX "Layer.ObjectReservation."
-        TEST_LIST OBJRES_TESTS
-        DISCOVERY_TIMEOUT 100
-    )
-endif()
 
 # 5. Test pipeline JSON
 # 5.1. Simple compute
 # 5.2. Simple compute
 
-add_executable(gltest_json gltest_json.cpp)
-
-target_link_libraries(gltest_json PRIVATE
-    test_applications
-    Vulkan::PCJson
-    Vulkan::Headers
-    Vk::Loader
-    GTest::gtest
-    GTest::gtest_main
+pcu_add_test(
+    TEST_NAME gltest_json
+    TEST_PREFIX "Layer."
+    TEST_LIST JSONGEN_TESTS
+    LABLELS Layer JSONGen
 )
-
-set(JSONGEN_LABELS Layer JSONGen)
-if (CMAKE_CROSSCOMPILING)
-    gtest_add_tests(
-        TARGET gltest_json
-        TEST_PREFIX "Layer.JSONGen."
-        TEST_LIST JSONGEN_TESTS
-    )
-    foreach(JSONGEN_TEST IN LISTS JSONGEN_TESTS)
-        set_tests_properties("${JSONGEN_TEST}" PROPERTIES
-            LABELS "${JSONGEN_LABELS}"
-            ENVIRONMENT "${COMMON_TEST_ENVIRONMENT}"
-        )
-    endforeach()
-else()
-    gtest_discover_tests(gltest_json
-        TEST_PREFIX "Layer.JSONGen."
-        TEST_LIST JSONGEN_TESTS
-        DISCOVERY_TIMEOUT 100
-    )
-endif()
 
 # 6. Workflow/integration tests
 # 6.1. How to relay pipelinecache create infos in objres from VK to VKSC?

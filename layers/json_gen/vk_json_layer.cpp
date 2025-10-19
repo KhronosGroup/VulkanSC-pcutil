@@ -446,7 +446,7 @@ PipelineLayoutData::PipelineLayoutData(const VkPipelineLayoutCreateInfo* ci, Dev
     for (uint32_t i = 0; i < create_info.setLayoutCount; ++i) {
         if (auto result = device_data.descriptor_set_layout_map.find(create_info.pSetLayouts[i]); result->first) {
             // Rewrite handle(s) in create info to id(s)
-            create_info.pSetLayouts[i] = reinterpret_cast<VkDescriptorSetLayout>(static_cast<std::uintptr_t>(i));
+            create_info.pSetLayouts[i] = reinterpret_cast<VkDescriptorSetLayout>(static_cast<std::uintptr_t>(result->second->id));
             // Store local copy of dependent create info
             descriptor_set_layout_data.emplace_back(*result->second);
         } else {
@@ -470,7 +470,7 @@ GraphicsPipelineData::GraphicsPipelineData(const VkGraphicsPipelineCreateInfo* c
         // Rewrite handle of pipeline layout in graphics pipeline with autoinc id
         create_info.layout = reinterpret_cast<VkPipelineLayout>(result->second->id);
     } else {
-        LOG("[%s] ERROR: Failed to find pipeline in accelerating structure referenced by graphics pipeline.",
+        LOG("[%s] ERROR: Failed to find pipeline layout in accelerating structure referenced by graphics pipeline.",
             VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
     }
 
@@ -503,14 +503,14 @@ ComputePipelineData::ComputePipelineData(const VkComputePipelineCreateInfo* ci, 
         // Rewrite handle of pipeline layout in graphics pipeline with autoinc id
         create_info.layout = reinterpret_cast<VkPipelineLayout>(result->second->id);
     } else {
-        LOG("[%s] ERROR: Failed to find pipeline in accelerating structure referenced by graphics pipeline.",
+        LOG("[%s] ERROR: Failed to find pipeline layout in accelerating structure referenced by compute pipeline.",
             VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
     }
 
     if (auto result = device_data.shader_module_map.find(create_info.stage.module); result->first) {
         shader_module_data = *result->second;
     } else {
-        LOG("[%s] ERROR: Failed to find shader module in accelerating structure referenced by graphics pipeline.",
+        LOG("[%s] ERROR: Failed to find shader module in accelerating structure referenced by compute pipeline.",
             VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
     }
 
@@ -769,11 +769,13 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateDescriptorSetLayout(VkDevice dev
         atomic_max(device_data->obj_res_info.descriptorSetLayoutBindingHighWatermark,
                    device_data->obj_res_info.descriptorSetLayoutBindingRequestCount += pCreateInfo->bindingCount);
         atomic_max(device_data->obj_res_info.descriptorSetLayoutBindingLimit,
-                   std::max_element(
-                       pCreateInfo->pBindings, pCreateInfo->pBindings + pCreateInfo->bindingCount,
-                       [](const VkDescriptorSetLayoutBinding& lhs, const VkDescriptorSetLayoutBinding& rhs) {
-                           return lhs.binding < rhs.binding;
-                       })->binding +
+                   [=](auto first, auto last) {
+                       auto it = std::max_element(
+                           first, last, [](const VkDescriptorSetLayoutBinding& lhs, const VkDescriptorSetLayoutBinding& rhs) {
+                               return lhs.binding < rhs.binding;
+                           });
+                       return it != last ? it->binding : 0;
+                   }(pCreateInfo->pBindings, pCreateInfo->pBindings + pCreateInfo->bindingCount) +
                        1);
         atomic_max(device_data->obj_res_info.maxImmutableSamplersPerDescriptorSetLayout,
                    std::accumulate(pCreateInfo->pBindings, pCreateInfo->pBindings + pCreateInfo->bindingCount, 0u,
@@ -1140,13 +1142,15 @@ void GraphicsPipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInf
     const char* msg_ = nullptr;
     const char* result_json = nullptr;
 
+    // Graphics pipeline
     data.graphicsPipelineState.pGraphicsPipeline = create_info.ptr();
+
+    // Renderpass
     if (std::holds_alternative<RenderPassData>(renderpass_data)) {
         data.graphicsPipelineState.pRenderPass = std::get<RenderPassData>(renderpass_data).create_info.ptr();
     } else {
         data.graphicsPipelineState.pRenderPass = std::get<RenderPass2Data>(renderpass_data).create_info.ptr();
     }
-    data.graphicsPipelineState.pPipelineLayout = pipeline_layout_data.create_info.ptr();
 
     // Descriptor set layouts, immutable samplers, ycbcr samplers
     std::vector<vku::safe_VkDescriptorSetLayoutCreateInfo> descriptor_set_layouts;
@@ -1154,30 +1158,73 @@ void GraphicsPipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInf
     std::vector<vku::safe_VkSamplerYcbcrConversionCreateInfo> ycbcr_samplers;
     std::vector<std::string> names_storage;
     std::vector<const char*> descriptor_set_layout_names;
+    std::vector<uintptr_t> descriptor_set_layout_ids;
     std::vector<const char*> immutable_sampler_names;
+    std::vector<uintptr_t> immutable_sampler_ids;
     std::vector<const char*> ycbcr_sampler_names;
+    std::vector<uintptr_t> ycbcr_sampler_ids;
+    // Serialize unique object create infos and generate names
+    auto not_contains = [](const auto& container, const uintptr_t id) {
+        return std::find(std::cbegin(container), std::cend(container), id) == std::cend(container);
+    };
+    using namespace std::string_literals;
     for (size_t i = 0; i < pipeline_layout_data.descriptor_set_layout_data.size(); ++i) {
-        descriptor_set_layouts.push_back(pipeline_layout_data.descriptor_set_layout_data[i].create_info);
-        names_storage.push_back(std::string{"DescriptorSetLayout"} +
-                                std::to_string(pipeline_layout_data.descriptor_set_layout_data[i].id));
-        descriptor_set_layout_names.push_back(names_storage.back().c_str());
+        const auto& descriptor_set_layout_data = pipeline_layout_data.descriptor_set_layout_data[i];
+        if (not_contains(descriptor_set_layout_ids, descriptor_set_layout_data.id)) {
+            names_storage.push_back("DescriptorSetLayout"s + std::to_string(descriptor_set_layout_ids.size() + 1));
+            descriptor_set_layout_ids.push_back(descriptor_set_layout_data.id);
+            descriptor_set_layout_names.push_back(names_storage.back().c_str());
+            descriptor_set_layouts.push_back(descriptor_set_layout_data.create_info);
+        }
         for (size_t j = 0; j < pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data.size(); ++j) {
-            immutable_samplers.push_back(pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].create_info);
-            names_storage.push_back(
-                std::string{"ImmutableSampler"} +
-                std::to_string(pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].id));
-            immutable_sampler_names.push_back(names_storage.back().c_str());
+            const auto& immutable_sampler_data = pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j];
+            if (not_contains(immutable_sampler_ids, immutable_sampler_data.id)) {
+                names_storage.push_back("ImmutableSampler"s + std::to_string(immutable_sampler_names.size() + 1));
+                immutable_sampler_ids.push_back(immutable_sampler_data.id);
+                immutable_sampler_names.push_back(names_storage.back().c_str());
+                immutable_samplers.push_back(immutable_sampler_data.create_info);
+            }
             if (pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.has_value()) {
-                ycbcr_samplers.push_back(
-                    pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.value().create_info);
-                names_storage.push_back(
-                    std::string{"YcbcrSampler"} +
-                    std::to_string(
-                        pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.value().id));
-                ycbcr_sampler_names.push_back(names_storage.back().c_str());
+                const auto& ycbcr_sampler_data =
+                    pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.value();
+                if (not_contains(ycbcr_sampler_ids, ycbcr_sampler_data.id)) {
+                    names_storage.push_back("YcbcrSampler"s + std::to_string(ycbcr_sampler_names.size() + 1));
+                    ycbcr_sampler_ids.push_back(ycbcr_sampler_data.id);
+                    ycbcr_sampler_names.push_back(names_storage.back().c_str());
+                    ycbcr_samplers.push_back(ycbcr_sampler_data.create_info);
+                }
             }
         }
     }
+    // Rewrite autoinc ids to indices
+    auto find_id = [](const auto& container, const uintptr_t id) {
+        return std::find(std::cbegin(container), std::cend(container), id);
+    };
+    for (size_t i = 0; i < pipeline_layout_data.create_info.setLayoutCount; ++i) {
+        pipeline_layout_data.create_info.pSetLayouts[i] = reinterpret_cast<VkDescriptorSetLayout>(
+            std::distance(std::cbegin(descriptor_set_layout_ids),
+                          find_id(descriptor_set_layout_ids, (uintptr_t)pipeline_layout_data.create_info.pSetLayouts[i])));
+    }
+    for (auto& descriptor_set_layout : descriptor_set_layouts) {
+        for (size_t i = 0; i < descriptor_set_layout.bindingCount; ++i) {
+            if (descriptor_set_layout.pBindings[i].pImmutableSamplers) {
+                for (size_t j = 0; j < descriptor_set_layout.pBindings[i].descriptorCount; ++j) {
+                    descriptor_set_layout.pBindings[i].pImmutableSamplers[j] = reinterpret_cast<VkSampler>(std::distance(
+                        std::cbegin(immutable_sampler_ids),
+                        find_id(immutable_sampler_ids, (uintptr_t)descriptor_set_layout.pBindings[i].pImmutableSamplers[j])));
+                }
+            }
+        }
+    }
+    for (auto& immutable_sampler : immutable_samplers) {
+        auto ycbcr = vku::FindStructInPNextChain<VkSamplerYcbcrConversionInfo>(const_cast<void*>(immutable_sampler.pNext));
+        if (ycbcr) {
+            ycbcr->conversion = reinterpret_cast<VkSamplerYcbcrConversion>(
+                std::distance(std::cbegin(ycbcr_sampler_ids), find_id(ycbcr_sampler_ids, (uintptr_t)ycbcr->conversion)));
+        }
+    }
+    // Commit
+    data.graphicsPipelineState.pPipelineLayout = pipeline_layout_data.create_info.ptr();
     data.graphicsPipelineState.descriptorSetLayoutCount = static_cast<uint32_t>(descriptor_set_layouts.size());
     data.graphicsPipelineState.pDescriptorSetLayouts = descriptor_set_layouts.size() ? descriptor_set_layouts.data() : nullptr;
     data.graphicsPipelineState.ppDescriptorSetLayoutNames = descriptor_set_layout_names.data();
@@ -1237,8 +1284,8 @@ void ComputePipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInfo
     const char* msg_ = nullptr;
     const char* result_json = nullptr;
 
+    // Compute pipeline
     data.computePipelineState.pComputePipeline = create_info.ptr();
-    data.computePipelineState.pPipelineLayout = pipeline_layout_data.create_info.ptr();
 
     // Descriptor set layouts, immutable samplers, ycbcr samplers
     std::vector<vku::safe_VkDescriptorSetLayoutCreateInfo> descriptor_set_layouts;
@@ -1246,30 +1293,73 @@ void ComputePipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInfo
     std::vector<vku::safe_VkSamplerYcbcrConversionCreateInfo> ycbcr_samplers;
     std::vector<std::string> names_storage;
     std::vector<const char*> descriptor_set_layout_names;
+    std::vector<uintptr_t> descriptor_set_layout_ids;
     std::vector<const char*> immutable_sampler_names;
+    std::vector<uintptr_t> immutable_sampler_ids;
     std::vector<const char*> ycbcr_sampler_names;
+    std::vector<uintptr_t> ycbcr_sampler_ids;
+    // Serialize unique object create infos and generate names
+    auto not_contains = [](const auto& container, const uintptr_t id) {
+        return std::find(std::cbegin(container), std::cend(container), id) == std::cend(container);
+    };
+    using namespace std::string_literals;
     for (size_t i = 0; i < pipeline_layout_data.descriptor_set_layout_data.size(); ++i) {
-        descriptor_set_layouts.push_back(pipeline_layout_data.descriptor_set_layout_data[i].create_info);
-        names_storage.push_back(std::string{"DescriptorSetLayout"} +
-                                std::to_string(pipeline_layout_data.descriptor_set_layout_data[i].id));
-        descriptor_set_layout_names.push_back(names_storage.back().c_str());
+        const auto& descriptor_set_layout_data = pipeline_layout_data.descriptor_set_layout_data[i];
+        if (not_contains(descriptor_set_layout_ids, descriptor_set_layout_data.id)) {
+            names_storage.push_back("DescriptorSetLayout"s + std::to_string(descriptor_set_layout_ids.size() + 1));
+            descriptor_set_layout_ids.push_back(descriptor_set_layout_data.id);
+            descriptor_set_layout_names.push_back(names_storage.back().c_str());
+            descriptor_set_layouts.push_back(descriptor_set_layout_data.create_info);
+        }
         for (size_t j = 0; j < pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data.size(); ++j) {
-            immutable_samplers.push_back(pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].create_info);
-            names_storage.push_back(
-                std::string{"ImmutableSampler"} +
-                std::to_string(pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].id));
-            immutable_sampler_names.push_back(names_storage.back().c_str());
+            const auto& immutable_sampler_data = pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j];
+            if (not_contains(immutable_sampler_ids, immutable_sampler_data.id)) {
+                names_storage.push_back("ImmutableSampler"s + std::to_string(immutable_sampler_names.size() + 1));
+                immutable_sampler_ids.push_back(immutable_sampler_data.id);
+                immutable_sampler_names.push_back(names_storage.back().c_str());
+                immutable_samplers.push_back(immutable_sampler_data.create_info);
+            }
             if (pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.has_value()) {
-                ycbcr_samplers.push_back(
-                    pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.value().create_info);
-                names_storage.push_back(
-                    std::string{"YcbcrSampler"} +
-                    std::to_string(
-                        pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.value().id));
-                ycbcr_sampler_names.push_back(names_storage.back().c_str());
+                const auto& ycbcr_sampler_data =
+                    pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.value();
+                if (not_contains(ycbcr_sampler_ids, ycbcr_sampler_data.id)) {
+                    names_storage.push_back("YcbcrSampler"s + std::to_string(ycbcr_sampler_names.size() + 1));
+                    ycbcr_sampler_ids.push_back(ycbcr_sampler_data.id);
+                    ycbcr_sampler_names.push_back(names_storage.back().c_str());
+                    ycbcr_samplers.push_back(ycbcr_sampler_data.create_info);
+                }
             }
         }
     }
+    // Rewrite autoinc ids to indices
+    auto find_id = [](const auto& container, const uintptr_t id) {
+        return std::find(std::cbegin(container), std::cend(container), id);
+    };
+    for (size_t i = 0; i < pipeline_layout_data.create_info.setLayoutCount; ++i) {
+        pipeline_layout_data.create_info.pSetLayouts[i] = reinterpret_cast<VkDescriptorSetLayout>(
+            std::distance(std::cbegin(descriptor_set_layout_ids),
+                          find_id(descriptor_set_layout_ids, (uintptr_t)pipeline_layout_data.create_info.pSetLayouts[i])));
+    }
+    for (auto& descriptor_set_layout : descriptor_set_layouts) {
+        for (size_t i = 0; i < descriptor_set_layout.bindingCount; ++i) {
+            if (descriptor_set_layout.pBindings[i].pImmutableSamplers) {
+                for (size_t j = 0; j < descriptor_set_layout.pBindings[i].descriptorCount; ++j) {
+                    descriptor_set_layout.pBindings[i].pImmutableSamplers[j] = reinterpret_cast<VkSampler>(std::distance(
+                        std::cbegin(immutable_sampler_ids),
+                        find_id(immutable_sampler_ids, (uintptr_t)descriptor_set_layout.pBindings[i].pImmutableSamplers[j])));
+                }
+            }
+        }
+    }
+    for (auto& immutable_sampler : immutable_samplers) {
+        auto ycbcr = vku::FindStructInPNextChain<VkSamplerYcbcrConversionInfo>(const_cast<void*>(immutable_sampler.pNext));
+        if (ycbcr) {
+            ycbcr->conversion = reinterpret_cast<VkSamplerYcbcrConversion>(
+                std::distance(std::cbegin(ycbcr_sampler_ids), find_id(ycbcr_sampler_ids, (uintptr_t)ycbcr->conversion)));
+        }
+    }
+    // Commit
+    data.computePipelineState.pPipelineLayout = pipeline_layout_data.create_info.ptr();
     data.computePipelineState.descriptorSetLayoutCount = static_cast<uint32_t>(descriptor_set_layouts.size());
     data.computePipelineState.pDescriptorSetLayouts = descriptor_set_layouts.size() ? descriptor_set_layouts.data() : nullptr;
     data.computePipelineState.ppDescriptorSetLayoutNames = descriptor_set_layout_names.data();

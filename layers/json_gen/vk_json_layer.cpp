@@ -1164,6 +1164,23 @@ void GraphicsPipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInf
     std::vector<const char*> ycbcr_sampler_names;
     std::vector<uintptr_t> ycbcr_sampler_ids;
     // Serialize unique object create infos and generate names
+    //
+    // NOTE: names_storage persists object names until serialization. The xyz_names variables hold pointers to the
+    //       persisted data. However, names_storage is built incrementally, and without pre-reserving storage, the
+    //       xyz_names variables will hold pointers to possibly (and really) small-string-optimized storage, so
+    //       they'll be referring to non-stable heap pointers, but the of inside reallocated std::vector heap. We
+    //       allocate slightly pessimistically, assuming all objects are unique.
+    uint32_t names_required = 0;
+    for (size_t i = 0; i < pipeline_layout_data.descriptor_set_layout_data.size(); ++i) {
+        ++names_required;
+        for (size_t j = 0; j < pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data.size(); ++j) {
+            ++names_required;
+            if (pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.has_value()) {
+                ++names_required;
+            }
+        }
+    }
+    names_storage.reserve(names_required);
     auto not_contains = [](const auto& container, const uintptr_t id) {
         return std::find(std::cbegin(container), std::cend(container), id) == std::cend(container);
     };
@@ -1227,13 +1244,14 @@ void GraphicsPipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInf
     data.graphicsPipelineState.pPipelineLayout = pipeline_layout_data.create_info.ptr();
     data.graphicsPipelineState.descriptorSetLayoutCount = static_cast<uint32_t>(descriptor_set_layouts.size());
     data.graphicsPipelineState.pDescriptorSetLayouts = descriptor_set_layouts.size() ? descriptor_set_layouts.data() : nullptr;
-    data.graphicsPipelineState.ppDescriptorSetLayoutNames = descriptor_set_layout_names.data();
+    data.graphicsPipelineState.ppDescriptorSetLayoutNames =
+        descriptor_set_layouts.size() ? descriptor_set_layout_names.data() : nullptr;
     data.graphicsPipelineState.immutableSamplerCount = static_cast<uint32_t>(immutable_samplers.size());
     data.graphicsPipelineState.pImmutableSamplers = immutable_samplers.size() ? immutable_samplers.data() : 0;
-    data.graphicsPipelineState.ppImmutableSamplerNames = immutable_sampler_names.data();
+    data.graphicsPipelineState.ppImmutableSamplerNames = immutable_samplers.size() ? immutable_sampler_names.data() : nullptr;
     data.graphicsPipelineState.ycbcrSamplerCount = static_cast<uint32_t>(ycbcr_samplers.size());
     data.graphicsPipelineState.pYcbcrSamplers = ycbcr_samplers.size() ? ycbcr_samplers.data() : nullptr;
-    data.graphicsPipelineState.ppYcbcrSamplerNames = ycbcr_sampler_names.data();
+    data.graphicsPipelineState.ppYcbcrSamplerNames = ycbcr_samplers.size() ? ycbcr_sampler_names.data() : nullptr;
 
     // Shaders
     auto shader_filenames = get_shader_filenames(*create_info.ptr(), std::string(getProcessName()),
@@ -1299,6 +1317,23 @@ void ComputePipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInfo
     std::vector<const char*> ycbcr_sampler_names;
     std::vector<uintptr_t> ycbcr_sampler_ids;
     // Serialize unique object create infos and generate names
+    //
+    // NOTE: names_storage persists object names until serialization. The xyz_names variables hold pointers to the
+    //       persisted data. However, names_storage is built incrementally, and without pre-reserving storage, the
+    //       xyz_names variables will hold pointers to possibly (and really) small-string-optimized storage, so
+    //       they'll be referring to non-stable heap pointers, but the of inside reallocated std::vector heap. We
+    //       allocate slightly pessimistically, assuming all objects are unique.
+    uint32_t names_required = 0;
+    for (size_t i = 0; i < pipeline_layout_data.descriptor_set_layout_data.size(); ++i) {
+        ++names_required;
+        for (size_t j = 0; j < pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data.size(); ++j) {
+            ++names_required;
+            if (pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.has_value()) {
+                ++names_required;
+            }
+        }
+    }
+    names_storage.reserve(names_required);
     auto not_contains = [](const auto& container, const uintptr_t id) {
         return std::find(std::cbegin(container), std::cend(container), id) == std::cend(container);
     };
@@ -1362,13 +1397,14 @@ void ComputePipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInfo
     data.computePipelineState.pPipelineLayout = pipeline_layout_data.create_info.ptr();
     data.computePipelineState.descriptorSetLayoutCount = static_cast<uint32_t>(descriptor_set_layouts.size());
     data.computePipelineState.pDescriptorSetLayouts = descriptor_set_layouts.size() ? descriptor_set_layouts.data() : nullptr;
-    data.computePipelineState.ppDescriptorSetLayoutNames = descriptor_set_layout_names.data();
+    data.computePipelineState.ppDescriptorSetLayoutNames =
+        descriptor_set_layout_names.size() ? descriptor_set_layout_names.data() : nullptr;
     data.computePipelineState.immutableSamplerCount = static_cast<uint32_t>(immutable_samplers.size());
     data.computePipelineState.pImmutableSamplers = immutable_samplers.size() ? immutable_samplers.data() : 0;
-    data.computePipelineState.ppImmutableSamplerNames = immutable_sampler_names.data();
+    data.computePipelineState.ppImmutableSamplerNames = immutable_sampler_names.size() ? immutable_sampler_names.data() : nullptr;
     data.computePipelineState.ycbcrSamplerCount = static_cast<uint32_t>(ycbcr_samplers.size());
     data.computePipelineState.pYcbcrSamplers = ycbcr_samplers.size() ? ycbcr_samplers.data() : nullptr;
-    data.computePipelineState.ppYcbcrSamplerNames = ycbcr_sampler_names.data();
+    data.computePipelineState.ppYcbcrSamplerNames = ycbcr_sampler_names.size() ? ycbcr_sampler_names.data() : nullptr;
 
     // Shaders
     auto shader_filename = get_shader_filenames(*create_info.ptr(), std::string(getProcessName()), static_cast<uint32_t>(device_id),

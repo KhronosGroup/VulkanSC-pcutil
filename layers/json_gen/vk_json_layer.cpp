@@ -825,6 +825,10 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateRenderPass(VkDevice device, cons
     VkResult result = device_data->vtable.CreateRenderPass(device, pCreateInfo, pAllocator, pRenderPass);
     if (result >= 0) {
         atomic_max(device_data->obj_res_info.renderPassHighWatermark, ++device_data->obj_res_info.renderPassRequestCount);
+        atomic_max(device_data->obj_res_info.subpassDescriptionHighWatermark,
+                   device_data->obj_res_info.subpassDescriptionRequestCount += pCreateInfo->subpassCount);
+        atomic_max(device_data->obj_res_info.attachmentDescriptionHighWatermark,
+                   device_data->obj_res_info.attachmentDescriptionRequestCount += pCreateInfo->attachmentCount);
         device_data->renderpass_map.insert(*pRenderPass, std::make_shared<RenderPassData>(pCreateInfo));
     }
     return result;
@@ -1168,7 +1172,7 @@ void GraphicsPipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInf
     // NOTE: names_storage persists object names until serialization. The xyz_names variables hold pointers to the
     //       persisted data. However, names_storage is built incrementally, and without pre-reserving storage, the
     //       xyz_names variables will hold pointers to possibly (and really) small-string-optimized storage, so
-    //       they'll be referring to non-stable heap pointers, but the of inside reallocated std::vector heap. We
+    //       they'll be referring to non-stable heap pointers, but to the inside reallocated std::vector heap. We
     //       allocate slightly pessimistically, assuming all objects are unique.
     uint32_t names_required = 0;
     for (size_t i = 0; i < pipeline_layout_data.descriptor_set_layout_data.size(); ++i) {
@@ -1321,7 +1325,7 @@ void ComputePipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInfo
     // NOTE: names_storage persists object names until serialization. The xyz_names variables hold pointers to the
     //       persisted data. However, names_storage is built incrementally, and without pre-reserving storage, the
     //       xyz_names variables will hold pointers to possibly (and really) small-string-optimized storage, so
-    //       they'll be referring to non-stable heap pointers, but the of inside reallocated std::vector heap. We
+    //       they'll be referring to non-stable heap pointers, but to the inside reallocated std::vector heap. We
     //       allocate slightly pessimistically, assuming all objects are unique.
     uint32_t names_required = 0;
     for (size_t i = 0; i < pipeline_layout_data.descriptor_set_layout_data.size(); ++i) {

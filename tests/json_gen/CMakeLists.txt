@@ -12,13 +12,6 @@ find_package(jsoncpp REQUIRED CONFIG)
 find_package(GTest REQUIRED CONFIG)
 include(GoogleTest)
 
-add_library(test_applications OBJECT saxpy.cpp cube.cpp)
-
-target_link_libraries(test_applications PUBLIC
-    Vulkan::Headers
-    GTest::gtest
-)
-
 # The correct way of handling environment variables for tests
 #[[
     if (WIN32)
@@ -91,7 +84,6 @@ macro(pcu_add_test)
     add_executable(${_TEST_NAME} ${_TEST_NAME}.cpp)
 
     target_link_libraries(${_TEST_NAME} PRIVATE
-        test_applications
         Vulkan::PCJson
         Vulkan::Headers
         Vulkan::UtilityHeaders

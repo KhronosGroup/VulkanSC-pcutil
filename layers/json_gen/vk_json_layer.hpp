@@ -98,6 +98,13 @@ struct RenderPass2Data {
     vku::safe_VkRenderPassCreateInfo2 create_info;
 };
 
+struct ImageViewData {
+    ImageViewData(const VkImageViewCreateInfo* ci);
+    ImageViewData() = default;
+
+    vku::safe_VkImageViewCreateInfo create_info;
+};
+
 struct GraphicsPipelineData {
     GraphicsPipelineData(const VkGraphicsPipelineCreateInfo* ci, DeviceData& device_data);
     GraphicsPipelineData() = default;
@@ -278,6 +285,7 @@ struct DeviceData {
     vku::concurrent::unordered_map<VkPipeline, std::shared_ptr<ComputePipelineData>> compute_pipeline_map;
     vku::concurrent::unordered_map<VkRenderPass, std::shared_ptr<RenderPassData>> renderpass_map;
     vku::concurrent::unordered_map<VkRenderPass, std::shared_ptr<RenderPass2Data>> renderpass2_map;
+    vku::concurrent::unordered_map<VkImageView, std::shared_ptr<ImageViewData>> image_view_map;
     ObjectResCreateInfo obj_res_info;
     std::atomic<std::uintptr_t> obj_counter;
     uint32_t id;  // NOTE: not JSON id

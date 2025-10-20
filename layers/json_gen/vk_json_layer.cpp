@@ -462,6 +462,8 @@ RenderPassData::RenderPassData(const VkRenderPassCreateInfo* ci) : create_info(c
 
 RenderPass2Data::RenderPass2Data(const VkRenderPassCreateInfo2* ci) : create_info(ci) {}
 
+ImageViewData::ImageViewData(const VkImageViewCreateInfo* ci) : create_info(ci) {}
+
 GraphicsPipelineData::GraphicsPipelineData(const VkGraphicsPipelineCreateInfo* ci, DeviceData& device_data)
     : create_info{ci, true, true}, pipeline_layout_data{}, renderpass_data{}, shader_module_data{}, id{++device_data.obj_counter} {
     if (auto result = device_data.pipeline_layout_map.find(create_info.layout); result->first) {
@@ -688,7 +690,7 @@ VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroySemaphore(VkDevice device, VkSemaph
     auto device_data = GetDeviceData(device);
     device_data->vtable.DestroySemaphore(device, fence, pAllocator);
     if (fence != VK_NULL_HANDLE) {
-        device_data->obj_res_info.fenceRequestCount--;
+        device_data->obj_res_info.semaphoreRequestCount--;
     }
 }
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateShaderModule(VkDevice device, const VkShaderModuleCreateInfo* pCreateInfo,
@@ -853,11 +855,17 @@ VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroyRenderPass(VkDevice device, VkRende
     device_data->vtable.DestroyRenderPass(device, renderPass, pAllocator);
     if (renderPass != VK_NULL_HANDLE) {
         device_data->obj_res_info.renderPassRequestCount--;
-        if (auto result = device_data->renderpass2_map.find(renderPass); result->first) {
+        if (auto result = device_data->renderpass_map.find(renderPass); result->first) {
             device_data->obj_res_info.subpassDescriptionRequestCount -= result->second->create_info.subpassCount;
             device_data->obj_res_info.attachmentDescriptionRequestCount -= result->second->create_info.attachmentCount;
+            device_data->renderpass_map.erase(renderPass);
+        } else if (auto result2 = device_data->renderpass2_map.find(renderPass); result2->first) {
+            device_data->obj_res_info.subpassDescriptionRequestCount -= result2->second->create_info.subpassCount;
+            device_data->obj_res_info.attachmentDescriptionRequestCount -= result2->second->create_info.attachmentCount;
+            device_data->renderpass2_map.erase(renderPass);
+        } else {
+            LOG("[%s] ERROR: Failed to find renderpass in accelerating structure.", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
         }
-        device_data->renderpass_map.erase(renderPass);
     }
 }
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateSampler(VkDevice device, const VkSamplerCreateInfo* pCreateInfo,
@@ -946,6 +954,7 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateImageView(VkDevice device, const
         }
         atomic_max(device_data->obj_res_info.maxImageViewMipLevels, pCreateInfo->subresourceRange.levelCount);
         atomic_max(device_data->obj_res_info.maxImageViewArrayLayers, pCreateInfo->subresourceRange.layerCount);
+        device_data->image_view_map.insert(*pView, std::make_shared<ImageViewData>(pCreateInfo));
     }
     return result;
 }
@@ -955,6 +964,12 @@ VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroyImageView(VkDevice device, VkImageV
     device_data->vtable.DestroyImageView(device, imageView, pAllocator);
     if (imageView != VK_NULL_HANDLE) {
         device_data->obj_res_info.imageViewRequestCount--;
+        if (auto result = device_data->image_view_map.find(imageView); result->first) {
+            if (result->second->create_info.subresourceRange.layerCount > 1) {
+                device_data->obj_res_info.layeredImageViewRequestCount--;
+            }
+        }
+        device_data->image_view_map.erase(imageView);
     }
 }
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL AllocateCommandBuffers(VkDevice device, const VkCommandBufferAllocateInfo* pAllocateInfo,

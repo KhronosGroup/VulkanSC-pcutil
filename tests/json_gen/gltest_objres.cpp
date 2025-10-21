@@ -16,30 +16,21 @@
 #include <filesystem>
 #include <fstream>
 #include <regex>
+#include <array>
 
 class ObjectReservation : public testing::Test {
   public:
-    ObjectReservation() {
-        std::for_each(std::filesystem::directory_iterator{"."}, std::filesystem::directory_iterator{},
-                      [](const std::filesystem::directory_entry& entry) {
-                          if (std::regex_search(entry.path().generic_string(), std::regex{R"(gltest_objres_)"})) {
-                              std::filesystem::remove(entry);
-                          }
-                      });
-    }
+    ObjectReservation() { clean_data_files(); }
     ObjectReservation(const ObjectReservation&) = delete;
     ObjectReservation(ObjectReservation&&) = delete;
-    ~ObjectReservation() = default;
+    ~ObjectReservation() { clean_data_files(); }
 
     void TEST_DESCRIPTION(const char* desc) { RecordProperty("description", desc); }
 
     std::string get_header(size_t i) {
         std::filesystem::path header_path = std::string("./gltest_objres_objectResInfo_") + std::to_string(i) + ".hpp";
-        auto header_size = std::filesystem::file_size(header_path);
-        std::string header_str(header_size, '\0');
         std::ifstream header_stream{header_path};
-        header_stream.read(header_str.data(), header_size);
-        return header_str;
+        return std::string(std::istreambuf_iterator<char>{header_stream}, std::istreambuf_iterator<char>{});
     }
 
     void write_id(std::string& ref, int32_t id) {
@@ -50,6 +41,16 @@ class ObjectReservation : public testing::Test {
 
   protected:
     static inline int32_t device_counter = 0;
+
+  private:
+    void clean_data_files() {
+        std::for_each(std::filesystem::directory_iterator{"."}, std::filesystem::directory_iterator{},
+                      [](const std::filesystem::directory_entry& entry) {
+                          if (std::regex_search(entry.path().generic_string(), std::regex{R"(gltest_json_)"})) {
+                              std::filesystem::remove(entry);
+                          }
+                      });
+    }
 };
 
 TEST_F(ObjectReservation, Simple) {

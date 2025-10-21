@@ -11,16 +11,18 @@
 
 #include <gtest/gtest.h>
 
+#include <filesystem>
+#include <regex>
 #include <string>
 #include <vector>
 #include <array>
 
 class UUID : public testing::Test {
   public:
-    UUID() = default;
+    UUID() { clean_data_files(); }
     UUID(const UUID&) = delete;
     UUID(UUID&&) = delete;
-    ~UUID() = default;
+    ~UUID() { clean_data_files(); }
 
     void TEST_DESCRIPTION(const char* desc) { RecordProperty("description", desc); }
 
@@ -37,6 +39,16 @@ class UUID : public testing::Test {
         std::array<uint8_t, VK_UUID_SIZE> result;
         std::copy(pipeline_props.pipelineIdentifier, pipeline_props.pipelineIdentifier + VK_UUID_SIZE, result.begin());
         return result;
+    }
+
+  private:
+    void clean_data_files() {
+        std::for_each(std::filesystem::directory_iterator{"."}, std::filesystem::directory_iterator{},
+                      [](const std::filesystem::directory_entry& entry) {
+                          if (std::regex_search(entry.path().generic_string(), std::regex{R"(gltest_uuid_)"})) {
+                              std::filesystem::remove(entry);
+                          }
+                      });
     }
 };
 

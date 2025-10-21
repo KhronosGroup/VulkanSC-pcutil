@@ -7,7 +7,6 @@
  */
 
 #include <vulkan/vulkan.h>
-#include <vulkan/utility/vk_safe_struct.hpp>
 #include <vulkan/utility/vk_struct_helper.hpp>
 
 #include <gtest/gtest.h>
@@ -17,22 +16,16 @@
 #include <filesystem>
 #include <fstream>
 #include <regex>
+#include <iterator>
 
 #include "json_validator.h"
 
 class JSON : public testing::Test {
   public:
-    JSON() {
-        std::for_each(std::filesystem::directory_iterator{"."}, std::filesystem::directory_iterator{},
-                      [](const std::filesystem::directory_entry& entry) {
-                          if (std::regex_search(entry.path().generic_string(), std::regex{R"(gltest_json_)"})) {
-                              std::filesystem::remove(entry);
-                          }
-                      });
-    }
+    JSON() { clean_data_files(); }
     JSON(const JSON&) = delete;
     JSON(JSON&&) = delete;
-    ~JSON() = default;
+    ~JSON() { clean_data_files(); }
 
     void TEST_DESCRIPTION(const char* desc) { RecordProperty("description", desc); }
 
@@ -54,11 +47,8 @@ class JSON : public testing::Test {
     std::string get_json(size_t device_id, size_t pipeline_id) {
         std::filesystem::path json_path =
             std::string("./gltest_json_device_") + std::to_string(device_id) + "_pipeline_" + std::to_string(pipeline_id) + ".json";
-        auto json_size = std::filesystem::file_size(json_path);
-        std::string json_str(json_size, '\0');
         std::ifstream json_stream{json_path};
-        json_stream.read(json_str.data(), json_size);
-        return json_str;
+        return std::string(std::istreambuf_iterator<char>{json_stream}, std::istreambuf_iterator<char>{});
     }
     std::vector<uint32_t> get_spirv(size_t device_id, size_t pipeline_id, const char *stage) {
         std::filesystem::path spirv_path = std::string("./gltest_json_device_") + std::to_string(device_id) + "_pipeline_" +
@@ -70,7 +60,15 @@ class JSON : public testing::Test {
         return spirv_vec;
     }
 
-  protected:
+  private:
+    void clean_data_files() {
+        std::for_each(std::filesystem::directory_iterator{"."}, std::filesystem::directory_iterator{},
+                      [](const std::filesystem::directory_entry& entry) {
+                          if (std::regex_search(entry.path().generic_string(), std::regex{R"(gltest_json_)"})) {
+                              std::filesystem::remove(entry);
+                          }
+                      });
+    }
 };
 
 bool ValidatePipelineJson(const std::string& json_str) {
@@ -108,46 +106,42 @@ inline size_t device_counter = 0;
 TEST_F(JSON, ComputeSimple) {
     TEST_DESCRIPTION("Tests whether generated pipeline JSON for a minimal compute pipeline is as expected");
 
-    vku::safe_VkInstanceCreateInfo instance_ci;
+    auto instance_ci = std::make_unique<VkInstanceCreateInfo>(vku::InitStructHelper());
     VkInstance instance;
-    vkCreateInstance(instance_ci.ptr(), NULL, &instance);
+    vkCreateInstance(instance_ci.get(), nullptr, &instance);
 
     uint32_t phys_dev_count = 1;
     std::vector<VkPhysicalDevice> phys_devs(phys_dev_count);
     vkEnumeratePhysicalDevices(instance, &phys_dev_count, phys_devs.data());
 
-    vku::safe_VkDeviceCreateInfo device_ci;
+    auto device_ci = std::make_unique<VkDeviceCreateInfo>(vku::InitStructHelper());
     VkDevice device;
-    vkCreateDevice(phys_devs[0], device_ci.ptr(), NULL, &device);
+    vkCreateDevice(phys_devs[0], device_ci.get(), nullptr, &device);
 
-    vku::safe_VkShaderModuleCreateInfo shader_module_ci;
+    auto shader_module_ci = std::make_unique<VkShaderModuleCreateInfo>(vku::InitStructHelper());
     std::vector<uint32_t> ref_spirv{1, 2, 3, 4};
-    uint32_t* code = new uint32_t[ref_spirv.size()];
-    std::copy(ref_spirv.begin(), ref_spirv.end(), code);
-    shader_module_ci.codeSize = ref_spirv.size() * sizeof(uint32_t);
-    shader_module_ci.pCode = code;
+    shader_module_ci->codeSize = ref_spirv.size() * sizeof(uint32_t);
+    shader_module_ci->pCode = ref_spirv.data();
     VkShaderModule shader_module;
-    vkCreateShaderModule(device, shader_module_ci.ptr(), NULL, &shader_module);
+    vkCreateShaderModule(device, shader_module_ci.get(), nullptr, &shader_module);
 
-    vku::safe_VkDescriptorSetLayoutCreateInfo ds_layout_ci;
+    auto ds_layout_ci = std::make_unique<VkDescriptorSetLayoutCreateInfo>(vku::InitStructHelper());
     VkDescriptorSetLayout ds_layout;
-    vkCreateDescriptorSetLayout(device, ds_layout_ci.ptr(), NULL, &ds_layout);
+    vkCreateDescriptorSetLayout(device, ds_layout_ci.get(), NULL, &ds_layout);
 
-    vku::safe_VkPipelineLayoutCreateInfo pipeline_layout_ci;
+    auto pipeline_layout_ci = std::make_unique<VkPipelineLayoutCreateInfo>(vku::InitStructHelper());
     VkPipelineLayout pipeline_layout;
-    vkCreatePipelineLayout(device, pipeline_layout_ci.ptr(), NULL, &pipeline_layout);
+    vkCreatePipelineLayout(device, pipeline_layout_ci.get(), NULL, &pipeline_layout);
 
-    vku::safe_VkPipelineShaderStageCreateInfo pipeline_stage_ci{};
-    char* name = new char[strlen("main") + 1];
-    strcpy(name, "main");
-    pipeline_stage_ci.module = shader_module;
-    pipeline_stage_ci.stage = VK_SHADER_STAGE_COMPUTE_BIT;
-    pipeline_stage_ci.pName = name;
-    vku::safe_VkComputePipelineCreateInfo compute_pipeline_ci;
-    compute_pipeline_ci.layout = pipeline_layout;
-    compute_pipeline_ci.stage = pipeline_stage_ci;
+    auto pipeline_stage_ci = std::make_unique<VkPipelineShaderStageCreateInfo>(vku::InitStructHelper());
+    pipeline_stage_ci->module = shader_module;
+    pipeline_stage_ci->stage = VK_SHADER_STAGE_COMPUTE_BIT;
+    pipeline_stage_ci->pName = "main";
+    auto compute_pipeline_ci = std::make_unique<VkComputePipelineCreateInfo>(vku::InitStructHelper());
+    compute_pipeline_ci->layout = pipeline_layout;
+    compute_pipeline_ci->stage = *pipeline_stage_ci;
     VkPipeline pipeline;
-    vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, compute_pipeline_ci.ptr(), NULL, &pipeline);
+    vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, compute_pipeline_ci.get(), NULL, &pipeline);
 
     vkDestroyPipeline(device, pipeline, nullptr);
     vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
@@ -2301,8 +2295,8 @@ TEST_F(JSON, GraphicsComplex) {
     rpmv_ci->correlationMaskCount = 1;
     rpmv_ci->pCorrelationMasks = correlationMasks;
 
-    rpiaa_ci->pNext = &rpmv_ci;
-    renderpass_ci->pNext = &rpiaa_ci;
+    rpiaa_ci->pNext = rpmv_ci.get();
+    renderpass_ci->pNext = rpiaa_ci.get();
     renderpass_ci->flags = 0;
 
     VkAttachmentDescription attachments[1] = {};
@@ -2730,24 +2724,37 @@ TEST_F(JSON, GraphicsComplex) {
 			],
 			"pNext" : 
 			{
-				"correlationMaskCount" : 1,
-				"dependencyCount" : 2,
-				"pCorrelationMasks" : 
+				"aspectReferenceCount" : 1,
+				"pAspectReferences" : 
 				[
-					8
+					{
+						"aspectMask" : "VK_IMAGE_ASPECT_COLOR_BIT",
+						"inputAttachmentIndex" : 2,
+						"subpass" : 1
+					}
 				],
-				"pNext" : "NULL",
-				"pViewMasks" : 
-				[
-					1
-				],
-				"pViewOffsets" : 
-				[
-					0,
-					1
-				],
-				"sType" : "VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO",
-				"subpassCount" : 1
+				"pNext" : 
+				{
+					"correlationMaskCount" : 1,
+					"dependencyCount" : 2,
+					"pCorrelationMasks" : 
+					[
+						8
+					],
+					"pNext" : "NULL",
+					"pViewMasks" : 
+					[
+						1
+					],
+					"pViewOffsets" : 
+					[
+						0,
+						1
+					],
+					"sType" : "VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO",
+					"subpassCount" : 1
+				},
+				"sType" : "VK_STRUCTURE_TYPE_RENDER_PASS_INPUT_ATTACHMENT_ASPECT_CREATE_INFO"
 			},
 			"pSubpasses" : 
 			[
@@ -2820,11 +2827,11 @@ TEST_F(JSON, GraphicsComplex) {
 		"ShaderFileNames" : 
 		[
 			{
-				"filename" : "gltest_json_device_@_pipeline_#.vert.spv",
+				"filename" : "gltest_json_device_0_pipeline_9.vert.spv",
 				"stage" : "VK_SHADER_STAGE_VERTEX_BIT"
 			},
 			{
-				"filename" : "gltest_json_device_@_pipeline_#.frag.spv",
+				"filename" : "gltest_json_device_0_pipeline_9.frag.spv",
 				"stage" : "VK_SHADER_STAGE_FRAGMENT_BIT"
 			}
 		],
@@ -2857,20 +2864,20 @@ TEST_F(JSON, GraphicsComplex) {
 	[
 		184,
 		103,
-		149,
-		174,
-		185,
-		166,
-		77,
-		33,
-		213,
-		190,
-		252,
-		18,
-		122,
-		120,
+		245,
+		177,
+		20,
+		69,
+		151,
 		123,
-		145
+		32,
+		13,
+		228,
+		201,
+		206,
+		87,
+		147,
+		188
 	]
 })"};
     write_ids(ref_json, device_counter, pipeline_id);

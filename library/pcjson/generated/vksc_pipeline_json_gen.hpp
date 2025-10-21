@@ -2660,9 +2660,12 @@ class GeneratorBase : protected Base {
         else
             return v;
     }
-    Json::Value gen_size_t(const size_t v, const LocationScope&) { return v; }
     Json::Value gen_VkDeviceSize(const VkDeviceSize v, const LocationScope&) { return v; }
     Json::Value gen_VkSampleMask(const VkSampleMask v, const LocationScope&) { return v; }
+
+    // Apple Clang has distinct size_t type (not typedef)
+    // Json::Value CTOR requires disambiguation
+    Json::Value gen_size_t(const size_t v, const LocationScope&) { return static_cast<Json::UInt64>(v); }
 
     Json::Value gen_VkBool32(const VkBool32 v, const LocationScope&) { return Json::Value(v ? "VK_TRUE" : "VK_FALSE"); }
 
@@ -3495,7 +3498,7 @@ class GeneratorBase : protected Base {
         json["sType"] = "VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO";
         json["pNext"] = "NULL";
         json["flags"] = 0;
-        json["codeSize"] = s.codeSize;
+        json["codeSize"] = gen_size_t(s.codeSize, CreateScope("codeSize"));
         json["pCode"] = gen_binary(s.pCode, s.codeSize);
         return json;
     }

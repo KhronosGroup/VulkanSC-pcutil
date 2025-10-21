@@ -94,7 +94,7 @@ class JsonGenGenerator(BaseGenerator):
                 json["sType"] = "VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO";
                 json["pNext"] = "NULL";
                 json["flags"] = 0;
-                json["codeSize"] = s.codeSize;
+                json["codeSize"] = gen_size_t(s.codeSize, CreateScope("codeSize"));
                 json["pCode"] = gen_binary(s.pCode, s.codeSize);
                 return json;
             }
@@ -143,7 +143,7 @@ class JsonGenGenerator(BaseGenerator):
 
     def genBasicMethods(self):
         # For basic types we generate simple wrappers
-        self.basicTypes = ['int8_t', 'uint8_t', 'int16_t', 'uint16_t', 'int32_t', 'uint32_t', 'int64_t', 'uint64_t', 'float', 'size_t']
+        self.basicTypes = ['int8_t', 'uint8_t', 'int16_t', 'uint16_t', 'int32_t', 'uint32_t', 'int64_t', 'uint64_t', 'float']
         self.basicTypes.extend(['VkDeviceSize', 'VkSampleMask'])
 
         for typeName in self.basicTypes:
@@ -151,9 +151,15 @@ class JsonGenGenerator(BaseGenerator):
             return_statement = 'return v;' if typeName != 'float' else 'if (std::isnan(v)) return "NaN"; else return v;'
             self.gen_basic_methods.append(f'Json::Value gen_{typeName}(const {typeName} v, const LocationScope&) {{ {return_statement} }}\n')
 
+        self.basicTypes.append('size_t')
         self.basicTypes.append('VkBool32')
+        self.generatedMethods['size_t'] = 'gen_size_t'
         self.generatedMethods['VkBool32'] = 'gen_VkBool32'
         self.gen_basic_methods.append('''
+            // Apple Clang has distinct size_t type (not typedef)
+            // Json::Value CTOR requires disambiguation
+            Json::Value gen_size_t(const size_t v, const LocationScope&) { return static_cast<Json::UInt64>(v); }
+
             Json::Value gen_VkBool32(const VkBool32 v, const LocationScope&) {
                 return Json::Value(v ? "VK_TRUE" : "VK_FALSE");
             }

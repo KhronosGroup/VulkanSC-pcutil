@@ -177,6 +177,9 @@
             "install_dir": "Vulkan-Tools/build/install",
             "commit": "v1.4.319",
             "cmake_options": [
+                "-DBUILD_WSI_XCB_SUPPORT=OFF",
+                "-DBUILD_WSI_XLIB_SUPPORT=OFF",
+                "-DBUILD_WSI_WAYLAND_SUPPORT=OFF",
                 "-DBUILD_CUBE=OFF",
                 "-DBUILD_VULKAN_INFO=OFF",
                 "-DBUILD_TESTS=OFF",
@@ -212,6 +215,9 @@
             "install_dir": "VulkanSC-Tools/build/install",
             "commit": "vksc1.0.19",
             "cmake_options": [
+                "-DBUILD_WSI_XCB_SUPPORT=OFF",
+                "-DBUILD_WSI_XLIB_SUPPORT=OFF",
+                "-DBUILD_WSI_WAYLAND_SUPPORT=OFF",
                 "-DBUILD_CUBE=OFF",
                 "-DBUILD_VULKAN_INFO=OFF",
                 "-DBUILD_TESTS=OFF",

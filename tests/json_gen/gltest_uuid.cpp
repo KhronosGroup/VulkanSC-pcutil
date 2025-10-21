@@ -222,3 +222,207 @@ TEST_F(UUID, ComputeDifferent) {
 
     EXPECT_NE(uuid1, uuid2);
 }
+
+TEST_F(UUID, GraphicsSimple) {
+    TEST_DESCRIPTION("Tests whether generated UUID for a graphics pipeline is as expected");
+
+    auto instance_ci = std::make_unique<VkInstanceCreateInfo>(vku::InitStructHelper());
+    VkInstance instance;
+    vkCreateInstance(instance_ci.get(), nullptr, &instance);
+
+    uint32_t phys_dev_count = 1;
+    std::vector<VkPhysicalDevice> phys_devs(phys_dev_count);
+    vkEnumeratePhysicalDevices(instance, &phys_dev_count, phys_devs.data());
+
+    const char* pipeline_props_name = "VK_EXT_pipeline_properties";
+    auto device_ci = std::make_unique<VkDeviceCreateInfo>(vku::InitStructHelper());
+    auto pipeline_props_feature = std::make_unique<VkPhysicalDevicePipelinePropertiesFeaturesEXT>(vku::InitStructHelper());
+    device_ci->enabledExtensionCount = 1;
+    device_ci->ppEnabledExtensionNames = &pipeline_props_name;
+    VkDevice device;
+    vkCreateDevice(phys_devs[0], device_ci.get(), nullptr, &device);
+
+    auto shader_module_ci = std::make_unique<VkShaderModuleCreateInfo>(vku::InitStructHelper());
+    std::vector<uint32_t> ref_spirv{1, 2, 3, 4};
+    shader_module_ci->codeSize = ref_spirv.size() * sizeof(uint32_t);
+    shader_module_ci->pCode = ref_spirv.data();
+    VkShaderModule shader_module;
+    vkCreateShaderModule(device, shader_module_ci.get(), nullptr, &shader_module);
+
+    auto ds_layout_ci = std::make_unique<VkDescriptorSetLayoutCreateInfo>(vku::InitStructHelper());
+    VkDescriptorSetLayout ds_layout;
+    vkCreateDescriptorSetLayout(device, ds_layout_ci.get(), NULL, &ds_layout);
+
+    auto pipeline_layout_ci = std::make_unique<VkPipelineLayoutCreateInfo>(vku::InitStructHelper());
+    VkPipelineLayout pipeline_layout;
+    vkCreatePipelineLayout(device, pipeline_layout_ci.get(), NULL, &pipeline_layout);
+
+    auto renderpass_ci = std::make_unique<VkRenderPassCreateInfo>(vku::InitStructHelper());
+    VkRenderPass render_pass;
+    vkCreateRenderPass(device, renderpass_ci.get(), nullptr, &render_pass);
+
+    auto graphics_pipeline_ci = std::make_unique<VkGraphicsPipelineCreateInfo>(vku::InitStructHelper());
+    auto pipeline_stage_ci = std::make_unique<VkPipelineShaderStageCreateInfo>(vku::InitStructHelper());
+    pipeline_stage_ci->module = shader_module;
+    pipeline_stage_ci->stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    pipeline_stage_ci->pName = "main";
+    graphics_pipeline_ci->layout = pipeline_layout;
+    graphics_pipeline_ci->stageCount = 1;
+    graphics_pipeline_ci->pStages = pipeline_stage_ci.get();
+    graphics_pipeline_ci->renderPass = render_pass;
+    VkPipeline pipeline;
+    vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, graphics_pipeline_ci.get(), NULL, &pipeline);
+
+    auto uuid = get_uuid(device, pipeline);
+
+    vkDestroyPipeline(device, pipeline, nullptr);
+    vkDestroyRenderPass(device, render_pass, nullptr);
+    vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
+    vkDestroyDescriptorSetLayout(device, ds_layout, nullptr);
+    vkDestroyShaderModule(device, shader_module, nullptr);
+    vkDestroyDevice(device, nullptr);
+    vkDestroyInstance(instance, nullptr);
+
+    std::array<uint8_t, VK_UUID_SIZE> ref{{172, 140, 31, 159, 143, 235, 178, 73, 188, 141, 213, 160, 169, 41, 214, 207}};
+    EXPECT_EQ(uuid, ref);
+}
+
+TEST_F(UUID, GraphicsReproducible) {
+    TEST_DESCRIPTION("Tests whether generated UUIDs for identical graphics pipelines match");
+
+    auto simple_graphics = [this](VkDevice device) {
+        auto shader_module_ci = std::make_unique<VkShaderModuleCreateInfo>(vku::InitStructHelper());
+        std::vector<uint32_t> ref_spirv{1, 2, 3, 4};
+        shader_module_ci->codeSize = ref_spirv.size() * sizeof(uint32_t);
+        shader_module_ci->pCode = ref_spirv.data();
+        VkShaderModule shader_module;
+        vkCreateShaderModule(device, shader_module_ci.get(), nullptr, &shader_module);
+
+        auto ds_layout_ci = std::make_unique<VkDescriptorSetLayoutCreateInfo>(vku::InitStructHelper());
+        VkDescriptorSetLayout ds_layout;
+        vkCreateDescriptorSetLayout(device, ds_layout_ci.get(), NULL, &ds_layout);
+
+        auto pipeline_layout_ci = std::make_unique<VkPipelineLayoutCreateInfo>(vku::InitStructHelper());
+        VkPipelineLayout pipeline_layout;
+        vkCreatePipelineLayout(device, pipeline_layout_ci.get(), NULL, &pipeline_layout);
+
+        auto renderpass_ci = std::make_unique<VkRenderPassCreateInfo>(vku::InitStructHelper());
+        VkRenderPass render_pass;
+        vkCreateRenderPass(device, renderpass_ci.get(), nullptr, &render_pass);
+
+        auto graphics_pipeline_ci = std::make_unique<VkGraphicsPipelineCreateInfo>(vku::InitStructHelper());
+        auto pipeline_stage_ci = std::make_unique<VkPipelineShaderStageCreateInfo>(vku::InitStructHelper());
+        pipeline_stage_ci->module = shader_module;
+        pipeline_stage_ci->stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+        pipeline_stage_ci->pName = "main";
+        graphics_pipeline_ci->layout = pipeline_layout;
+        graphics_pipeline_ci->stageCount = 1;
+        graphics_pipeline_ci->pStages = pipeline_stage_ci.get();
+        graphics_pipeline_ci->renderPass = render_pass;
+        VkPipeline pipeline;
+        vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, graphics_pipeline_ci.get(), NULL, &pipeline);
+
+        auto uuid = get_uuid(device, pipeline);
+
+        vkDestroyPipeline(device, pipeline, nullptr);
+        vkDestroyRenderPass(device, render_pass, nullptr);
+        vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
+        vkDestroyDescriptorSetLayout(device, ds_layout, nullptr);
+        vkDestroyShaderModule(device, shader_module, nullptr);
+
+        return uuid;
+    };
+
+    auto instance_ci = std::make_unique<VkInstanceCreateInfo>(vku::InitStructHelper());
+    VkInstance instance;
+    vkCreateInstance(instance_ci.get(), nullptr, &instance);
+
+    uint32_t phys_dev_count = 1;
+    std::vector<VkPhysicalDevice> phys_devs(phys_dev_count);
+    vkEnumeratePhysicalDevices(instance, &phys_dev_count, phys_devs.data());
+
+    const char* pipeline_props_name = "VK_EXT_pipeline_properties";
+    auto device_ci = std::make_unique<VkDeviceCreateInfo>(vku::InitStructHelper());
+    auto pipeline_props_feature = std::make_unique<VkPhysicalDevicePipelinePropertiesFeaturesEXT>(vku::InitStructHelper());
+    device_ci->enabledExtensionCount = 1;
+    device_ci->ppEnabledExtensionNames = &pipeline_props_name;
+    VkDevice device1, device2;
+    vkCreateDevice(phys_devs[0], device_ci.get(), nullptr, &device1);
+    vkCreateDevice(phys_devs[0], device_ci.get(), nullptr, &device2);
+
+    auto uuid1 = simple_graphics(device1);
+    auto uuid2 = simple_graphics(device2);
+    auto uuid3 = simple_graphics(device2);
+
+    EXPECT_EQ(uuid1, uuid2);
+    EXPECT_EQ(uuid1, uuid3);
+}
+
+TEST_F(UUID, GraphicsDifferent) {
+    TEST_DESCRIPTION("Tests whether generated UUIDs for different graphics pipelines differ");
+
+    auto simple_graphics = [this](VkDevice device, const char* name) {
+        auto shader_module_ci = std::make_unique<VkShaderModuleCreateInfo>(vku::InitStructHelper());
+        std::vector<uint32_t> ref_spirv{1, 2, 3, 4};
+        shader_module_ci->codeSize = ref_spirv.size() * sizeof(uint32_t);
+        shader_module_ci->pCode = ref_spirv.data();
+        VkShaderModule shader_module;
+        vkCreateShaderModule(device, shader_module_ci.get(), nullptr, &shader_module);
+
+        auto ds_layout_ci = std::make_unique<VkDescriptorSetLayoutCreateInfo>(vku::InitStructHelper());
+        VkDescriptorSetLayout ds_layout;
+        vkCreateDescriptorSetLayout(device, ds_layout_ci.get(), NULL, &ds_layout);
+
+        auto pipeline_layout_ci = std::make_unique<VkPipelineLayoutCreateInfo>(vku::InitStructHelper());
+        VkPipelineLayout pipeline_layout;
+        vkCreatePipelineLayout(device, pipeline_layout_ci.get(), NULL, &pipeline_layout);
+
+        auto renderpass_ci = std::make_unique<VkRenderPassCreateInfo>(vku::InitStructHelper());
+        VkRenderPass render_pass;
+        vkCreateRenderPass(device, renderpass_ci.get(), nullptr, &render_pass);
+
+        auto graphics_pipeline_ci = std::make_unique<VkGraphicsPipelineCreateInfo>(vku::InitStructHelper());
+        auto pipeline_stage_ci = std::make_unique<VkPipelineShaderStageCreateInfo>(vku::InitStructHelper());
+        pipeline_stage_ci->module = shader_module;
+        pipeline_stage_ci->stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+        pipeline_stage_ci->pName = name;
+        graphics_pipeline_ci->layout = pipeline_layout;
+        graphics_pipeline_ci->stageCount = 1;
+        graphics_pipeline_ci->pStages = pipeline_stage_ci.get();
+        graphics_pipeline_ci->renderPass = render_pass;
+        VkPipeline pipeline;
+        vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, graphics_pipeline_ci.get(), NULL, &pipeline);
+
+        auto uuid = get_uuid(device, pipeline);
+
+        vkDestroyPipeline(device, pipeline, nullptr);
+        vkDestroyRenderPass(device, render_pass, nullptr);
+        vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
+        vkDestroyDescriptorSetLayout(device, ds_layout, nullptr);
+        vkDestroyShaderModule(device, shader_module, nullptr);
+
+        return uuid;
+    };
+
+    auto instance_ci = std::make_unique<VkInstanceCreateInfo>(vku::InitStructHelper());
+    VkInstance instance;
+    vkCreateInstance(instance_ci.get(), nullptr, &instance);
+
+    uint32_t phys_dev_count = 1;
+    std::vector<VkPhysicalDevice> phys_devs(phys_dev_count);
+    vkEnumeratePhysicalDevices(instance, &phys_dev_count, phys_devs.data());
+
+    const char* pipeline_props_name = "VK_EXT_pipeline_properties";
+    auto device_ci = std::make_unique<VkDeviceCreateInfo>(vku::InitStructHelper());
+    auto pipeline_props_feature = std::make_unique<VkPhysicalDevicePipelinePropertiesFeaturesEXT>(vku::InitStructHelper());
+    device_ci->enabledExtensionCount = 1;
+    device_ci->ppEnabledExtensionNames = &pipeline_props_name;
+    VkDevice device1, device2;
+    vkCreateDevice(phys_devs[0], device_ci.get(), nullptr, &device1);
+    vkCreateDevice(phys_devs[0], device_ci.get(), nullptr, &device2);
+
+    auto uuid1 = simple_graphics(device1, "main1");
+    auto uuid2 = simple_graphics(device2, "main2");
+
+    EXPECT_NE(uuid1, uuid2);
+}

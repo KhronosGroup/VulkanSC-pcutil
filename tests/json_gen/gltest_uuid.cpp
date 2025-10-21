@@ -30,10 +30,13 @@ class UUID : public testing::Test {
         PFN_vkGetPipelinePropertiesEXT vkGetPipelinePropertiesEXT =
             (PFN_vkGetPipelinePropertiesEXT)vkGetDeviceProcAddr(device, "vkGetPipelinePropertiesEXT");
 
-        VkPipelineInfoEXT pipeline_info_ext{.sType = VK_STRUCTURE_TYPE_PIPELINE_INFO_EXT, .pNext = nullptr, .pipeline = pipeline};
-        VkPipelinePropertiesIdentifierEXT pipeline_props{.sType = VK_STRUCTURE_TYPE_PIPELINE_PROPERTIES_IDENTIFIER_EXT,
-                                                         .pNext = nullptr,
-                                                         .pipelineIdentifier = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
+        VkPipelineInfoEXT pipeline_info_ext;
+        pipeline_info_ext.sType = VK_STRUCTURE_TYPE_PIPELINE_INFO_EXT;
+        pipeline_info_ext.pNext = nullptr;
+        pipeline_info_ext.pipeline = pipeline;
+        VkPipelinePropertiesIdentifierEXT pipeline_props{};
+        pipeline_props.sType = VK_STRUCTURE_TYPE_PIPELINE_PROPERTIES_IDENTIFIER_EXT;
+        pipeline_props.pNext = nullptr;
         vkGetPipelinePropertiesEXT(device, &pipeline_info_ext, reinterpret_cast<VkBaseOutStructure*>(&pipeline_props));
 
         std::array<uint8_t, VK_UUID_SIZE> result;

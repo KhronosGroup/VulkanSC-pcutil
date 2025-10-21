@@ -104,7 +104,6 @@ macro(pcu_add_test)
         Vulkan::PCJson
         Vulkan::Headers
         Vulkan::UtilityHeaders
-        Vulkan::SafeStruct
         Vk::Loader
         GTest::gtest
         GTest::gtest_main
@@ -132,6 +131,30 @@ macro(pcu_add_test)
             TEST_LIST ${_TEST_LIST}
             DISCOVERY_TIMEOUT 100
         )
+    endif()
+
+    if(WIN32)
+        if(NOT TARGET Vulkan-Loader-copy)
+            get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+            if(GENERATOR_IS_MULTI_CONFIG)
+                add_custom_target(Vulkan-Loader-copy ALL
+                    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/vulkan-1.dll")
+                add_custom_command(
+                    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/vulkan-1.dll"
+                    DEPENDS "$<TARGET_PROPERTY:Vk::Loader,IMPORTED_LOCATION>"
+                    COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_PROPERTY:Vk::Loader,IMPORTED_LOCATION>" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/vulkan-1.dll"
+                    COMMENT "Copying Vulkan-Loader to ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
+            else()
+                add_custom_target(Vulkan-Loader-copy ALL
+                    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/vulkan-1.dll")
+                add_custom_command(
+                    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/vulkan-1.dll"
+                    DEPENDS "$<TARGET_PROPERTY:Vk::Loader,IMPORTED_LOCATION>"
+                    COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_PROPERTY:Vk::Loader,IMPORTED_LOCATION>" "${CMAKE_CURRENT_BINARY_DIR}/vulkan-1.dll"
+                    COMMENT "Copying Vulkan-Loader to ${CMAKE_CURRENT_BINARY_DIR}")
+            endif()
+        endif()
+        add_dependencies(${_TEST_NAME} Vulkan-Loader-copy)
     endif()
 endmacro()
 

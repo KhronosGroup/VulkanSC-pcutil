@@ -2203,275 +2203,275 @@ TEST_F(Parse, GraphicsPipelineJSON) {
 		],
 		"GraphicsPipeline" : 
 		{
-            "sType" : "VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO",
-            "pNext": {
-                "sType": "VK_STRUCTURE_TYPE_PIPELINE_DISCARD_RECTANGLE_STATE_CREATE_INFO_EXT",
-                "pNext" : "NULL",
-                "flags": "0",
-                "discardRectangleMode": "VK_DISCARD_RECTANGLE_MODE_EXCLUSIVE_EXT",
-                "discardRectangleCount": 1,
-                "pDiscardRectangles": [
-                    {
-                        "offset":
-                        {
-                            "x" : 0,
-                            "y" : 0
-                        },
-                        "extent":
-                        {
-                            "width" : 51,
-                            "height" : 51
-                        }
-                    }
-                ]
-            },
-            "flags" : "0",
-            "stageCount" : 5,
-            "pStages": 
-            [
-            {
-                "sType" : "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
-                "pNext": {
-                    "pNext" : "NULL",
-                    "requiredSubgroupSize" : 64,
-                    "sType" : "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO"
-                },
-                "flags" : "0",
-                "stage" : "VK_SHADER_STAGE_VERTEX_BIT",
-                "module" : 35,
-                "pName" : "main",
-                "pSpecializationInfo": 
-                "NULL"
-            },
-            {
-                "sType" : "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
-                "pNext":"NULL",
-                "flags" : "0",
-                "stage" : "VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT",
-                "module" : 36,
-                "pName" : "main",
-                "pSpecializationInfo": 
-                "NULL"
-            },
-            {
-                "sType" : "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
-                "pNext":"NULL",
-                "flags" : "0",
-                "stage" : "VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT",
-                "module" : 37,
-                "pName" : "main",
-                "pSpecializationInfo": 
-                "NULL"
-            },
-            {
-                "sType" : "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
-                "pNext":"NULL",
-                "flags" : "0",
-                "stage" : "VK_SHADER_STAGE_GEOMETRY_BIT",
-                "module" : 38,
-                "pName" : "main",
-                "pSpecializationInfo": 
-                "NULL"
-            },
-            {
-                "sType" : "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
-                "pNext":"NULL",
-                "flags" : "0",
-                "stage" : "VK_SHADER_STAGE_FRAGMENT_BIT",
-                "module" : 39,
-                "pName" : "main",
-                "pSpecializationInfo": 
-                "NULL"
-            }
-            ],
-            "pVertexInputState": 
-            {
-                "sType" : "VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO",
-                "pNext":"NULL",
-                "flags" : 0,
-                "vertexBindingDescriptionCount" : 1,
-                "pVertexBindingDescriptions": 
-                [
-                {
-                    "binding" : 0,
-                    "stride" : 32,
-                    "inputRate" : "VK_VERTEX_INPUT_RATE_VERTEX"
-                }
-                ],
-                "vertexAttributeDescriptionCount" : 2,
-                "pVertexAttributeDescriptions": 
-                [
-                {
-                    "location" : 0,
-                    "binding" : 0,
-                    "format" : "VK_FORMAT_R32G32B32A32_SFLOAT",
-                    "offset" : 0
-                },
-                {
-                    "location" : 1,
-                    "binding" : 0,
-                    "format" : "VK_FORMAT_R32G32B32A32_SFLOAT",
-                    "offset" : 16
-                }
-                ]
-            },
-            "pInputAssemblyState": 
-            {
-                "sType" : "VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO",
-                "pNext":"NULL",
-                "flags" : 0,
-                "topology" : "VK_PRIMITIVE_TOPOLOGY_PATCH_LIST",
-                "primitiveRestartEnable" : "VK_FALSE"
-            },
-            "pTessellationState": 
-            {
-                "sType" : "VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO",
-                "pNext":"NULL",
-                "flags" : 0,
-                "patchControlPoints" : 4
-            },
-            "pViewportState": 
-            {
-                "sType" : "VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO",
-                "pNext":"NULL",
-                "flags" : 0,
-                "viewportCount" : 1,
-                "pViewports": 
-                [
-                {
-                    "x" : 0,
-                    "y" : 0,
-                    "width" : 51,
-                    "height" : 51,
-                    "minDepth" : 0,
-                    "maxDepth" : 1
-                }
-                ],
-                "scissorCount" : 1,
-                "pScissors": 
-                [
-                {
-                    "offset": 
-                    {
-                        "x" : 0,
-                        "y" : 0
-                    },
-                    "extent": 
-                    {
-                        "width" : 51,
-                        "height" : 51
-                    }
-                }
-                ]
-            },
-            "pRasterizationState": 
-            {
-                "sType" : "VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO",
-                "pNext":"NULL",
-                "flags" : 0,
-                "depthClampEnable" : "VK_FALSE",
-                "rasterizerDiscardEnable" : "VK_FALSE",
-                "polygonMode" : "VK_POLYGON_MODE_FILL",
-                "cullMode" : "0",
-                "frontFace" : "VK_FRONT_FACE_COUNTER_CLOCKWISE",
-                "depthBiasEnable" : "VK_FALSE",
-                "depthBiasConstantFactor" : 0,
-                "depthBiasClamp" : 0,
-                "depthBiasSlopeFactor" : 0,
-                "lineWidth" : 1
-            },
-            "pMultisampleState": 
-            {
-                "sType" : "VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO",
-                "pNext":"NULL",
-                "flags" : 0,
-                "rasterizationSamples" : "VK_SAMPLE_COUNT_1_BIT",
-                "sampleShadingEnable" : "VK_FALSE",
-                "minSampleShading" : 1,
-                "pSampleMask":
-                "NULL",
-                "alphaToCoverageEnable" : "VK_FALSE",
-                "alphaToOneEnable" : "VK_FALSE"
-            },
-            "pDepthStencilState": 
-            {
-                "sType" : "VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO",
-                "pNext":"NULL",
-                "flags" : 0,
-                "depthTestEnable" : "VK_TRUE",
-                "depthWriteEnable" : "VK_TRUE",
-                "depthCompareOp" : "VK_COMPARE_OP_LESS_OR_EQUAL",
-                "depthBoundsTestEnable" : "VK_FALSE",
-                "stencilTestEnable" : "VK_FALSE",
-                "front": 
-                {
-                    "failOp" : "VK_STENCIL_OP_KEEP",
-                    "passOp" : "VK_STENCIL_OP_KEEP",
-                    "depthFailOp" : "VK_STENCIL_OP_KEEP",
-                    "compareOp" : "VK_COMPARE_OP_NEVER",
-                    "compareMask" : 0,
-                    "writeMask" : 0,
-                    "reference" : 0
-                },
-                "back": 
-                {
-                    "failOp" : "VK_STENCIL_OP_KEEP",
-                    "passOp" : "VK_STENCIL_OP_KEEP",
-                    "depthFailOp" : "VK_STENCIL_OP_KEEP",
-                    "compareOp" : "VK_COMPARE_OP_NEVER",
-                    "compareMask" : 0,
-                    "writeMask" : 0,
-                    "reference" : 0
-                },
-                "minDepthBounds" : 0,
-                "maxDepthBounds" : 1
-            },
-            "pColorBlendState": 
-            {
-                "sType" : "VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO",
-                "pNext":"NULL",
-                "flags" : 0,
-                "logicOpEnable" : "VK_FALSE",
-                "logicOp" : "VK_LOGIC_OP_CLEAR",
-                "attachmentCount" : 1,
-                "pAttachments": 
-                [
-                {
-                    "blendEnable" : "VK_FALSE",
-                    "srcColorBlendFactor" : "VK_BLEND_FACTOR_ZERO",
-                    "dstColorBlendFactor" : "VK_BLEND_FACTOR_ZERO",
-                    "colorBlendOp" : "VK_BLEND_OP_ADD",
-                    "srcAlphaBlendFactor" : "VK_BLEND_FACTOR_ZERO",
-                    "dstAlphaBlendFactor" : "VK_BLEND_FACTOR_ZERO",
-                    "alphaBlendOp" : "VK_BLEND_OP_ADD",
-                    "colorWriteMask" : "VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT"
-                }
-                ],
-                "blendConstants":
-                [
-                0,
-                0,
-                0,
-                0
-                ]
-            },
-            "pDynamicState": {
-                "sType": "VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO",
-                "pNext": "NULL",
-                "flags": 0,
-                "dynamicStateCount": 3,
-                "pDynamicStates": [
-                    "VK_DYNAMIC_STATE_VIEWPORT",
-                    "VK_DYNAMIC_STATE_SCISSOR",
-                    "VK_DYNAMIC_STATE_DISCARD_RECTANGLE_EXT"
-                ]
-            },
-            "layout" : 8,
-            "renderPass" : 6,
-            "subpass" : 0,
-            "basePipelineHandle" : "",
-            "basePipelineIndex" : 0
-        },
+			"sType" : "VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO",
+			"pNext": {
+				"sType": "VK_STRUCTURE_TYPE_PIPELINE_DISCARD_RECTANGLE_STATE_CREATE_INFO_EXT",
+				"pNext" : "NULL",
+				"flags": "0",
+				"discardRectangleMode": "VK_DISCARD_RECTANGLE_MODE_EXCLUSIVE_EXT",
+				"discardRectangleCount": 1,
+				"pDiscardRectangles": [
+					{
+						"offset":
+						{
+							"x" : 0,
+							"y" : 0
+						},
+						"extent":
+						{
+							"width" : 51,
+							"height" : 51
+						}
+					}
+				]
+			},
+			"flags" : "0",
+			"stageCount" : 5,
+			"pStages": 
+			[
+			{
+				"sType" : "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
+				"pNext": {
+					"pNext" : "NULL",
+					"requiredSubgroupSize" : 64,
+					"sType" : "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO"
+				},
+				"flags" : "0",
+				"stage" : "VK_SHADER_STAGE_VERTEX_BIT",
+				"module" : 35,
+				"pName" : "main",
+				"pSpecializationInfo": 
+				"NULL"
+			},
+			{
+				"sType" : "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
+				"pNext":"NULL",
+				"flags" : "0",
+				"stage" : "VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT",
+				"module" : 36,
+				"pName" : "main",
+				"pSpecializationInfo": 
+				"NULL"
+			},
+			{
+				"sType" : "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
+				"pNext":"NULL",
+				"flags" : "0",
+				"stage" : "VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT",
+				"module" : 37,
+				"pName" : "main",
+				"pSpecializationInfo": 
+				"NULL"
+			},
+			{
+				"sType" : "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
+				"pNext":"NULL",
+				"flags" : "0",
+				"stage" : "VK_SHADER_STAGE_GEOMETRY_BIT",
+				"module" : 38,
+				"pName" : "main",
+				"pSpecializationInfo": 
+				"NULL"
+			},
+			{
+				"sType" : "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
+				"pNext":"NULL",
+				"flags" : "0",
+				"stage" : "VK_SHADER_STAGE_FRAGMENT_BIT",
+				"module" : 39,
+				"pName" : "main",
+				"pSpecializationInfo": 
+				"NULL"
+			}
+			],
+			"pVertexInputState": 
+			{
+				"sType" : "VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO",
+				"pNext":"NULL",
+				"flags" : 0,
+				"vertexBindingDescriptionCount" : 1,
+				"pVertexBindingDescriptions": 
+				[
+				{
+					"binding" : 0,
+					"stride" : 32,
+					"inputRate" : "VK_VERTEX_INPUT_RATE_VERTEX"
+				}
+				],
+				"vertexAttributeDescriptionCount" : 2,
+				"pVertexAttributeDescriptions": 
+				[
+				{
+					"location" : 0,
+					"binding" : 0,
+					"format" : "VK_FORMAT_R32G32B32A32_SFLOAT",
+					"offset" : 0
+				},
+				{
+					"location" : 1,
+					"binding" : 0,
+					"format" : "VK_FORMAT_R32G32B32A32_SFLOAT",
+					"offset" : 16
+				}
+				]
+			},
+			"pInputAssemblyState": 
+			{
+				"sType" : "VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO",
+				"pNext":"NULL",
+				"flags" : 0,
+				"topology" : "VK_PRIMITIVE_TOPOLOGY_PATCH_LIST",
+				"primitiveRestartEnable" : "VK_FALSE"
+			},
+			"pTessellationState": 
+			{
+				"sType" : "VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO",
+				"pNext":"NULL",
+				"flags" : 0,
+				"patchControlPoints" : 4
+			},
+			"pViewportState": 
+			{
+				"sType" : "VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO",
+				"pNext":"NULL",
+				"flags" : 0,
+				"viewportCount" : 1,
+				"pViewports": 
+				[
+				{
+					"x" : 0,
+					"y" : 0,
+					"width" : 51,
+					"height" : 51,
+					"minDepth" : 0,
+					"maxDepth" : 1
+				}
+				],
+				"scissorCount" : 1,
+				"pScissors": 
+				[
+				{
+					"offset": 
+					{
+						"x" : 0,
+						"y" : 0
+					},
+					"extent": 
+					{
+						"width" : 51,
+						"height" : 51
+					}
+				}
+				]
+			},
+			"pRasterizationState": 
+			{
+				"sType" : "VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO",
+				"pNext":"NULL",
+				"flags" : 0,
+				"depthClampEnable" : "VK_FALSE",
+				"rasterizerDiscardEnable" : "VK_FALSE",
+				"polygonMode" : "VK_POLYGON_MODE_FILL",
+				"cullMode" : "0",
+				"frontFace" : "VK_FRONT_FACE_COUNTER_CLOCKWISE",
+				"depthBiasEnable" : "VK_FALSE",
+				"depthBiasConstantFactor" : 0,
+				"depthBiasClamp" : 0,
+				"depthBiasSlopeFactor" : 0,
+				"lineWidth" : 1
+			},
+			"pMultisampleState": 
+			{
+				"sType" : "VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO",
+				"pNext":"NULL",
+				"flags" : 0,
+				"rasterizationSamples" : "VK_SAMPLE_COUNT_1_BIT",
+				"sampleShadingEnable" : "VK_FALSE",
+				"minSampleShading" : 1,
+				"pSampleMask":
+				"NULL",
+				"alphaToCoverageEnable" : "VK_FALSE",
+				"alphaToOneEnable" : "VK_FALSE"
+			},
+			"pDepthStencilState": 
+			{
+				"sType" : "VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO",
+				"pNext":"NULL",
+				"flags" : 0,
+				"depthTestEnable" : "VK_TRUE",
+				"depthWriteEnable" : "VK_TRUE",
+				"depthCompareOp" : "VK_COMPARE_OP_LESS_OR_EQUAL",
+				"depthBoundsTestEnable" : "VK_FALSE",
+				"stencilTestEnable" : "VK_FALSE",
+				"front": 
+				{
+					"failOp" : "VK_STENCIL_OP_KEEP",
+					"passOp" : "VK_STENCIL_OP_KEEP",
+					"depthFailOp" : "VK_STENCIL_OP_KEEP",
+					"compareOp" : "VK_COMPARE_OP_NEVER",
+					"compareMask" : 0,
+					"writeMask" : 0,
+					"reference" : 0
+				},
+				"back": 
+				{
+					"failOp" : "VK_STENCIL_OP_KEEP",
+					"passOp" : "VK_STENCIL_OP_KEEP",
+					"depthFailOp" : "VK_STENCIL_OP_KEEP",
+					"compareOp" : "VK_COMPARE_OP_NEVER",
+					"compareMask" : 0,
+					"writeMask" : 0,
+					"reference" : 0
+				},
+				"minDepthBounds" : 0,
+				"maxDepthBounds" : 1
+			},
+			"pColorBlendState": 
+			{
+				"sType" : "VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO",
+				"pNext":"NULL",
+				"flags" : 0,
+				"logicOpEnable" : "VK_FALSE",
+				"logicOp" : "VK_LOGIC_OP_CLEAR",
+				"attachmentCount" : 1,
+				"pAttachments": 
+				[
+				{
+					"blendEnable" : "VK_FALSE",
+					"srcColorBlendFactor" : "VK_BLEND_FACTOR_ZERO",
+					"dstColorBlendFactor" : "VK_BLEND_FACTOR_ZERO",
+					"colorBlendOp" : "VK_BLEND_OP_ADD",
+					"srcAlphaBlendFactor" : "VK_BLEND_FACTOR_ZERO",
+					"dstAlphaBlendFactor" : "VK_BLEND_FACTOR_ZERO",
+					"alphaBlendOp" : "VK_BLEND_OP_ADD",
+					"colorWriteMask" : "VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT"
+				}
+				],
+				"blendConstants":
+				[
+				0,
+				0,
+				0,
+				0
+				]
+			},
+			"pDynamicState": {
+				"sType": "VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO",
+				"pNext": "NULL",
+				"flags": 0,
+				"dynamicStateCount": 3,
+				"pDynamicStates": [
+					"VK_DYNAMIC_STATE_VIEWPORT",
+					"VK_DYNAMIC_STATE_SCISSOR",
+					"VK_DYNAMIC_STATE_DISCARD_RECTANGLE_EXT"
+				]
+			},
+			"layout" : 8,
+			"renderPass" : 6,
+			"subpass" : 0,
+			"basePipelineHandle" : "",
+			"basePipelineIndex" : 0
+		},
 		"ImmutableSamplers" : 
 		[
 			{
@@ -2715,22 +2715,23 @@ TEST_F(Parse, GraphicsPipelineJSON) {
 			{
 				"YcbcrConversion1" : 
 				{
-                    "sType" : "VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_CREATE_INFO",
-                    "pNext": "NULL",
-                    "format": "VK_FORMAT_G12X4B12X4G12X4R12X4_422_UNORM_4PACK16",
-                    "ycbcrModel": "VK_SAMPLER_YCBCR_MODEL_CONVERSION_YCBCR_2020",
-                    "ycbcrRange": "VK_SAMPLER_YCBCR_RANGE_ITU_NARROW",
-                    "components": {
-                        "r": "VK_COMPONENT_SWIZZLE_A",
-                        "g": "VK_COMPONENT_SWIZZLE_B",
-                        "b": "VK_COMPONENT_SWIZZLE_G",
-                        "a": "VK_COMPONENT_SWIZZLE_R"
-                    },
-                    "xChromaOffset": "VK_CHROMA_LOCATION_COSITED_EVEN",
-                    "yChromaOffset": "VK_CHROMA_LOCATION_MIDPOINT",
-                    "chromaFilter": "VK_FILTER_CUBIC_EXT",
-                    "forceExplicitReconstruction": "VK_TRUE"
-                }
+					"sType" : "VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_CREATE_INFO",
+					"pNext": )" +
+                           ycbcr_ci_pnext + R"(,
+					"format": "VK_FORMAT_G12X4B12X4G12X4R12X4_422_UNORM_4PACK16",
+					"ycbcrModel": "VK_SAMPLER_YCBCR_MODEL_CONVERSION_YCBCR_2020",
+					"ycbcrRange": "VK_SAMPLER_YCBCR_RANGE_ITU_NARROW",
+					"components": {
+						"r": "VK_COMPONENT_SWIZZLE_A",
+						"g": "VK_COMPONENT_SWIZZLE_B",
+						"b": "VK_COMPONENT_SWIZZLE_G",
+						"a": "VK_COMPONENT_SWIZZLE_R"
+					},
+					"xChromaOffset": "VK_CHROMA_LOCATION_COSITED_EVEN",
+					"yChromaOffset": "VK_CHROMA_LOCATION_MIDPOINT",
+					"chromaFilter": "VK_FILTER_CUBIC_EXT",
+					"forceExplicitReconstruction": "VK_TRUE"
+				}
 			}
 		]
 	},

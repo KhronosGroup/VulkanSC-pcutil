@@ -878,11 +878,6 @@ TEST_F(JSON, ComputeReproducible) {
     auto spirv2 = get_spirv(device2_id, pipeline2_id, "compute");
     auto spirv3 = get_spirv(device3_id, pipeline3_id, "compute");
 
-    std::ofstream result_stream{"result.json"};
-    result_stream << json2;
-    std::ofstream ref_stream{"ref.json"};
-    ref_stream << json1;
-
     EXPECT_EQ(json1, json2);
     EXPECT_EQ(json2, json3);
     EXPECT_EQ(spirv1, spirv2);
@@ -1802,11 +1797,6 @@ TEST_F(JSON, GraphicsMultiPipeline) {
     ref_json2.replace(ref_json2.find("main1"), strlen("main1"), "main2");
     write_ids(ref_json1, device_counter, pipeline_id1);
     write_ids(ref_json2, device_counter, pipeline_id2);
-
-    std::ofstream result_stream1{"result.json"};
-    result_stream1 << result_json1;
-    std::ofstream ref_stream1{"ref.json"};
-    ref_stream1 << ref_json1;
 
     auto spirv_words_match1 = std::equal(result_spirv1.begin(), result_spirv1.end(), ref_spirv.begin(), ref_spirv.end());
     auto spirv_words_match2 = std::equal(result_spirv2.begin(), result_spirv2.end(), ref_spirv.begin(), ref_spirv.end());

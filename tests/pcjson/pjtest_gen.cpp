@@ -4305,3 +4305,420 @@ TEST_F(Gen, ObjectNameRemapping) {
     EXPECT_TRUE(ValidatePipelineJson(std::string(result_json)));
     EXPECT_TRUE(reformatJson(ref_json) == result_json);
 }
+
+TEST_F(Gen, ZeroShaderFilenamesCompute) {
+    TEST_DESCRIPTION("Tests whether generation fails for compute pipelines when no shader filenames are provided");
+
+    VpjData data{};
+
+    VkSamplerYcbcrConversionCreateInfo ycbcr_ci;
+    const char* ycbcr_names[1] = {"YcbcrConversion1"};
+    ycbcr_ci.sType = VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_CREATE_INFO;
+#ifdef VK_USE_PLATFORM_SCREEN_QNX
+    VkExternalFormatQNX ef_qnx{};
+    ef_qnx.sType = VK_STRUCTURE_TYPE_EXTERNAL_FORMAT_QNX;
+    ef_qnx.pNext = nullptr;
+    ef_qnx.externalFormat = 10;
+    ycbcr_ci.pNext = &ef_qnx;
+#else
+    ycbcr_ci.pNext = nullptr;
+#endif  // VK_USE_PLATFORM_SCREEN_QNX
+    ycbcr_ci.format = VK_FORMAT_G12X4B12X4G12X4R12X4_422_UNORM_4PACK16;
+    ycbcr_ci.ycbcrModel = VK_SAMPLER_YCBCR_MODEL_CONVERSION_YCBCR_2020;
+    ycbcr_ci.ycbcrRange = VK_SAMPLER_YCBCR_RANGE_ITU_NARROW;
+    ycbcr_ci.components.r = VK_COMPONENT_SWIZZLE_A;
+    ycbcr_ci.components.g = VK_COMPONENT_SWIZZLE_B;
+    ycbcr_ci.components.b = VK_COMPONENT_SWIZZLE_G;
+    ycbcr_ci.components.a = VK_COMPONENT_SWIZZLE_R;
+    ycbcr_ci.xChromaOffset = VK_CHROMA_LOCATION_COSITED_EVEN;
+    ycbcr_ci.yChromaOffset = VK_CHROMA_LOCATION_MIDPOINT;
+    ycbcr_ci.chromaFilter = VK_FILTER_CUBIC_EXT;
+    ycbcr_ci.forceExplicitReconstruction = VK_TRUE;
+
+    VkSamplerCreateInfo sampler_ci[2] = {};
+    const char* sampler_names[2] = {"ImmutableSampler1", "YcbcrSampler1"};
+
+    VkSamplerYcbcrConversionInfo ycbcrConversionInfo[1] = {};
+
+    ycbcrConversionInfo[0].sType = VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_INFO;
+    ycbcrConversionInfo[0].conversion = VkSamplerYcbcrConversion(0);
+
+    VkSampler immutableSamplers[2] = {VkSampler(0), VkSampler(1)};
+
+    sampler_ci[0].sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    VkSamplerReductionModeCreateInfo srm_ci{};
+    srm_ci.sType = VK_STRUCTURE_TYPE_SAMPLER_REDUCTION_MODE_CREATE_INFO;
+    srm_ci.pNext = nullptr;
+    srm_ci.reductionMode = VK_SAMPLER_REDUCTION_MODE_MAX;
+    sampler_ci[0].pNext = &srm_ci;
+    sampler_ci[0].flags = 0;
+    sampler_ci[0].magFilter = VK_FILTER_CUBIC_EXT;
+    sampler_ci[0].minFilter = VK_FILTER_NEAREST;
+    sampler_ci[0].mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    sampler_ci[0].addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    sampler_ci[0].addressModeV = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+    sampler_ci[0].addressModeW = VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
+    sampler_ci[0].mipLodBias = 0.5f;
+    sampler_ci[0].anisotropyEnable = VK_FALSE;
+    sampler_ci[0].maxAnisotropy = 2.0f;
+    sampler_ci[0].compareEnable = VK_FALSE;
+    sampler_ci[0].compareOp = VK_COMPARE_OP_NEVER;
+    sampler_ci[0].minLod = 0.5f;
+    sampler_ci[0].maxLod = VK_LOD_CLAMP_NONE;
+    sampler_ci[0].borderColor = VK_BORDER_COLOR_FLOAT_CUSTOM_EXT;
+    sampler_ci[0].unnormalizedCoordinates = VK_TRUE;
+
+    sampler_ci[1].sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    sampler_ci[1].pNext = &ycbcrConversionInfo;
+
+    VkComputePipelineCreateInfo cp_ci{};
+    cp_ci.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+    cp_ci.pNext = nullptr;
+    cp_ci.flags = 0;
+    cp_ci.stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+
+    VkPipelineLayoutCreateInfo pl_ci{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
+
+    VkDescriptorSetLayout setLayouts[3] = {VkDescriptorSetLayout(0)};
+    pl_ci.setLayoutCount = 1;
+    pl_ci.pSetLayouts = setLayouts;
+    VkPushConstantRange pushConstantRanges[1] = {};
+    pl_ci.pushConstantRangeCount = 1;
+    pushConstantRanges[0].size = 4;
+    pushConstantRanges[0].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+    pl_ci.pPushConstantRanges = pushConstantRanges;
+
+    VkPipelineShaderStageRequiredSubgroupSizeCreateInfo pssrss_ci{};
+    pssrss_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO;
+    pssrss_ci.pNext = nullptr;
+    pssrss_ci.requiredSubgroupSize = 64;
+    cp_ci.stage.pNext = &pssrss_ci;
+
+    cp_ci.stage.flags = VK_PIPELINE_SHADER_STAGE_CREATE_REQUIRE_FULL_SUBGROUPS_BIT;
+    cp_ci.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+    cp_ci.stage.pName = "main";
+
+    VkDescriptorSetLayoutCreateInfo dsl_ci{};
+    const char* dsl_names[1] = {"DescriptorSetLayout1"};
+
+    dsl_ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    VkDescriptorSetLayoutBindingFlagsCreateInfo dslbf_ci{};
+    dslbf_ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
+    dslbf_ci.pNext = nullptr;
+    dslbf_ci.bindingCount = 1;
+    VkDescriptorBindingFlags bindingFlags[1] = {};
+    bindingFlags[0] = VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT | VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT;
+    dslbf_ci.pBindingFlags = bindingFlags;
+    dsl_ci.pNext = &dslbf_ci;
+    dsl_ci.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT;
+
+    dsl_ci.bindingCount = 3;
+    VkDescriptorSetLayoutBinding bindings[3] = {};
+
+    bindings[0].binding = 0;
+    bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    bindings[0].descriptorCount = 1;
+    bindings[0].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+    bindings[0].pImmutableSamplers = nullptr;
+
+    bindings[1].binding = 1;
+    bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    bindings[1].descriptorCount = 1;
+    bindings[1].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+    bindings[1].pImmutableSamplers = &immutableSamplers[0];
+
+    bindings[2].binding = 2;
+    bindings[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    bindings[2].descriptorCount = 1;
+    bindings[2].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+    bindings[2].pImmutableSamplers = &immutableSamplers[1];
+
+    dsl_ci.pBindings = bindings;
+
+    VkPhysicalDeviceFeatures2 pdf{};
+    pdf.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    pdf.features.robustBufferAccess = VK_TRUE;
+    VkPhysicalDeviceSynchronization2Features pdf_sync2{};
+    pdf_sync2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
+    pdf_sync2.synchronization2 = VK_TRUE;
+    pdf.pNext = &pdf_sync2;
+
+    const char* enabled_extensions[1] = {"VK_EXT_robustness2"};
+
+    data.enabledExtensionCount = 1;
+    data.ppEnabledExtensions = enabled_extensions;
+    data.computePipelineState.pComputePipeline = &cp_ci;
+    data.computePipelineState.pDescriptorSetLayouts = &dsl_ci;
+    data.computePipelineState.pPipelineLayout = &pl_ci;
+    data.computePipelineState.immutableSamplerCount = 2;
+    data.computePipelineState.ppImmutableSamplerNames = sampler_names;
+    data.computePipelineState.pImmutableSamplers = sampler_ci;
+    data.computePipelineState.ycbcrSamplerCount = 1;
+    data.computePipelineState.ppYcbcrSamplerNames = ycbcr_names;
+    data.computePipelineState.pYcbcrSamplers = &ycbcr_ci;
+    data.computePipelineState.descriptorSetLayoutCount = 1;
+    data.computePipelineState.pDescriptorSetLayouts = &dsl_ci;
+    data.computePipelineState.ppDescriptorSetLayoutNames = dsl_names;
+    data.computePipelineState.pPhysicalDeviceFeatures = &pdf;
+    data.computePipelineState.shaderFileNameCount = 0;
+    data.computePipelineState.pShaderFileNames = nullptr;
+
+    data.pipelineUUID[0] = 85;
+    data.pipelineUUID[1] = 43;
+    data.pipelineUUID[2] = 255;
+    data.pipelineUUID[3] = 24;
+    data.pipelineUUID[4] = 155;
+    data.pipelineUUID[5] = 64;
+    data.pipelineUUID[6] = 62;
+    data.pipelineUUID[7] = 24;
+
+    const char* result_json = nullptr;
+
+    EXPECT_FALSE(vpjGeneratePipelineJson(generator_, &data, &result_json, &msg_));
+}
+
+TEST_F(Gen, ZeroShaderFilenamesGraphics) {
+    TEST_DESCRIPTION("Tests whether generation fails for graphics pipelines when no shader filenames are provided");
+
+    VpjData data{};
+
+    VkRenderPassCreateInfo renderPass = {};
+    data.graphicsPipelineState.pRenderPass = &renderPass;
+    renderPass.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    renderPass.pNext = nullptr;
+    renderPass.flags = 0;
+    renderPass.attachmentCount = 2;
+    VkAttachmentDescription attachments[2] = {{}, {}};
+    renderPass.pAttachments = attachments;
+    attachments[0].flags = 0;
+    attachments[0].format = VK_FORMAT_R8G8B8A8_UNORM;
+    attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
+    attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    attachments[1].flags = 0;
+    attachments[1].format = VK_FORMAT_D16_UNORM;
+    attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
+    attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    renderPass.subpassCount = 1;
+    VkSubpassDescription subpasses[1] = {{}};
+    renderPass.pSubpasses = subpasses;
+    subpasses[0].flags = 0;
+    subpasses[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpasses[0].inputAttachmentCount = 0;
+    subpasses[0].pInputAttachments = nullptr;
+    subpasses[0].colorAttachmentCount = 1;
+    VkAttachmentReference colorAttachments[1] = {{}};
+    colorAttachments[0].attachment = 0;
+    colorAttachments[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    subpasses[0].pColorAttachments = colorAttachments;
+    subpasses[0].pResolveAttachments = nullptr;
+    VkAttachmentReference depthStencilAttachment[1] = {{}};
+    depthStencilAttachment[0].attachment = 1;
+    depthStencilAttachment[0].layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    subpasses[0].pDepthStencilAttachment = depthStencilAttachment;
+    subpasses[0].preserveAttachmentCount = 0;
+    subpasses[0].pPreserveAttachments = nullptr;
+    renderPass.dependencyCount = 2;
+    VkSubpassDependency dependencies[2] = {{}, {}};
+    dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependencies[0].dstSubpass = 0;
+    dependencies[0].srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+    dependencies[0].dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+    dependencies[0].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    dependencies[0].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    dependencies[0].dependencyFlags = 0;
+    dependencies[1].srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependencies[1].dstSubpass = 0;
+    dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependencies[1].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependencies[1].srcAccessMask = 0;
+    dependencies[1].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+    dependencies[1].dependencyFlags = 0;
+    renderPass.pDependencies = dependencies;
+
+    VkSamplerYcbcrConversionCreateInfo ycbcr_ci;
+    const char* ycbcr_names[1] = {"YcbcrConversion1"};
+    ycbcr_ci.sType = VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_CREATE_INFO;
+#ifdef VK_USE_PLATFORM_SCREEN_QNX
+    VkExternalFormatQNX ef_qnx{};
+    ef_qnx.sType = VK_STRUCTURE_TYPE_EXTERNAL_FORMAT_QNX;
+    ef_qnx.pNext = nullptr;
+    ef_qnx.externalFormat = 10;
+    ycbcr_ci.pNext = &ef_qnx;
+#else
+    ycbcr_ci.pNext = nullptr;
+#endif  // VK_USE_PLATFORM_SCREEN_QNX
+    ycbcr_ci.format = VK_FORMAT_G12X4B12X4G12X4R12X4_422_UNORM_4PACK16;
+    ycbcr_ci.ycbcrModel = VK_SAMPLER_YCBCR_MODEL_CONVERSION_YCBCR_2020;
+    ycbcr_ci.ycbcrRange = VK_SAMPLER_YCBCR_RANGE_ITU_NARROW;
+    ycbcr_ci.components.r = VK_COMPONENT_SWIZZLE_A;
+    ycbcr_ci.components.g = VK_COMPONENT_SWIZZLE_B;
+    ycbcr_ci.components.b = VK_COMPONENT_SWIZZLE_G;
+    ycbcr_ci.components.a = VK_COMPONENT_SWIZZLE_R;
+    ycbcr_ci.xChromaOffset = VK_CHROMA_LOCATION_COSITED_EVEN;
+    ycbcr_ci.yChromaOffset = VK_CHROMA_LOCATION_MIDPOINT;
+    ycbcr_ci.chromaFilter = VK_FILTER_CUBIC_EXT;
+    ycbcr_ci.forceExplicitReconstruction = VK_TRUE;
+
+    VkSamplerCreateInfo sampler_ci[2] = {};
+    const char* sampler_names[2] = {"ImmutableSampler1", "YcbcrSampler1"};
+
+    VkSamplerYcbcrConversionInfo ycbcrConversionInfo[1] = {};
+
+    ycbcrConversionInfo[0].sType = VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_INFO;
+    ycbcrConversionInfo[0].conversion = VkSamplerYcbcrConversion(0);
+
+    VkSampler immutableSamplers[2] = {VkSampler(0), VkSampler(1)};
+
+    sampler_ci[0].sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    VkSamplerReductionModeCreateInfo srm_ci{};
+    srm_ci.sType = VK_STRUCTURE_TYPE_SAMPLER_REDUCTION_MODE_CREATE_INFO;
+    srm_ci.pNext = nullptr;
+    srm_ci.reductionMode = VK_SAMPLER_REDUCTION_MODE_MAX;
+    sampler_ci[0].pNext = &srm_ci;
+    sampler_ci[0].flags = 0;
+    sampler_ci[0].magFilter = VK_FILTER_CUBIC_EXT;
+    sampler_ci[0].minFilter = VK_FILTER_NEAREST;
+    sampler_ci[0].mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    sampler_ci[0].addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    sampler_ci[0].addressModeV = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+    sampler_ci[0].addressModeW = VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
+    sampler_ci[0].mipLodBias = 0.5f;
+    sampler_ci[0].anisotropyEnable = VK_FALSE;
+    sampler_ci[0].maxAnisotropy = 2.0f;
+    sampler_ci[0].compareEnable = VK_FALSE;
+    sampler_ci[0].compareOp = VK_COMPARE_OP_NEVER;
+    sampler_ci[0].minLod = 0.5f;
+    sampler_ci[0].maxLod = VK_LOD_CLAMP_NONE;
+    sampler_ci[0].borderColor = VK_BORDER_COLOR_FLOAT_CUSTOM_EXT;
+    sampler_ci[0].unnormalizedCoordinates = VK_TRUE;
+
+    sampler_ci[1].sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    sampler_ci[1].pNext = &ycbcrConversionInfo;
+
+    VkGraphicsPipelineCreateInfo gp_ci = {};
+    data.graphicsPipelineState.pGraphicsPipeline = &gp_ci;
+    gp_ci.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    gp_ci.pNext = nullptr;
+    gp_ci.flags = 0;
+    gp_ci.stageCount = 2;
+    VkPipelineShaderStageCreateInfo stages[2] = {{}, {}};
+    gp_ci.pStages = stages;
+    stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    stages[0].pNext = nullptr;
+    stages[0].flags = 0;
+    stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+    stages[0].module = reinterpret_cast<VkShaderModule>(38);
+    stages[0].pName = "main";
+    stages[0].pSpecializationInfo = nullptr;
+    stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    VkPipelineShaderStageRequiredSubgroupSizeCreateInfo pssrss_ci{};
+    pssrss_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO;
+    pssrss_ci.pNext = nullptr;
+    pssrss_ci.requiredSubgroupSize = 64;
+    stages[1].pNext = &pssrss_ci;
+    stages[1].flags = 0;
+    stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    stages[1].module = reinterpret_cast<VkShaderModule>(39);
+    stages[1].pName = "main";
+    stages[1].pSpecializationInfo = nullptr;
+
+    VkPipelineLayoutCreateInfo pl_ci{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
+
+    VkDescriptorSetLayout setLayouts[3] = {VkDescriptorSetLayout(0)};
+    pl_ci.setLayoutCount = 1;
+    pl_ci.pSetLayouts = setLayouts;
+    VkPushConstantRange pushConstantRanges[1] = {};
+    pl_ci.pushConstantRangeCount = 1;
+    pushConstantRanges[0].size = 4;
+    pushConstantRanges[0].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+    pl_ci.pPushConstantRanges = pushConstantRanges;
+
+    VkDescriptorSetLayoutCreateInfo dsl_ci{};
+    const char* dsl_names[1] = {"DescriptorSetLayout1"};
+
+    dsl_ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    VkDescriptorSetLayoutBindingFlagsCreateInfo dslbf_ci{};
+    dslbf_ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
+    dslbf_ci.pNext = nullptr;
+    dslbf_ci.bindingCount = 1;
+    VkDescriptorBindingFlags bindingFlags[1] = {};
+    bindingFlags[0] = VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT | VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT;
+    dslbf_ci.pBindingFlags = bindingFlags;
+    dsl_ci.pNext = &dslbf_ci;
+    dsl_ci.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT;
+
+    dsl_ci.bindingCount = 3;
+    VkDescriptorSetLayoutBinding bindings[3] = {};
+
+    bindings[0].binding = 0;
+    bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    bindings[0].descriptorCount = 1;
+    bindings[0].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+    bindings[0].pImmutableSamplers = nullptr;
+
+    bindings[1].binding = 1;
+    bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    bindings[1].descriptorCount = 1;
+    bindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    bindings[1].pImmutableSamplers = &immutableSamplers[0];
+
+    bindings[2].binding = 2;
+    bindings[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    bindings[2].descriptorCount = 1;
+    bindings[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    bindings[2].pImmutableSamplers = &immutableSamplers[1];
+
+    dsl_ci.pBindings = bindings;
+
+    VkPhysicalDeviceFeatures2 pdf{};
+    pdf.features.robustBufferAccess = VK_TRUE;
+    pdf.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    VkPhysicalDeviceSynchronization2Features pdf_sync2{};
+    pdf_sync2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
+    pdf_sync2.synchronization2 = VK_TRUE;
+    pdf.pNext = &pdf_sync2;
+
+    const char* enabled_extensions[1] = {"VK_EXT_robustness2"};
+
+    data.enabledExtensionCount = 1;
+    data.ppEnabledExtensions = enabled_extensions;
+    data.graphicsPipelineState.pGraphicsPipeline = &gp_ci;
+    data.graphicsPipelineState.pRenderPass = &renderPass;
+    data.graphicsPipelineState.pDescriptorSetLayouts = &dsl_ci;
+    data.graphicsPipelineState.pPipelineLayout = &pl_ci;
+    data.graphicsPipelineState.immutableSamplerCount = 2;
+    data.graphicsPipelineState.ppImmutableSamplerNames = sampler_names;
+    data.graphicsPipelineState.pImmutableSamplers = sampler_ci;
+    data.graphicsPipelineState.ycbcrSamplerCount = 1;
+    data.graphicsPipelineState.ppYcbcrSamplerNames = ycbcr_names;
+    data.graphicsPipelineState.pYcbcrSamplers = &ycbcr_ci;
+    data.graphicsPipelineState.descriptorSetLayoutCount = 1;
+    data.graphicsPipelineState.pDescriptorSetLayouts = &dsl_ci;
+    data.graphicsPipelineState.ppDescriptorSetLayoutNames = dsl_names;
+    data.graphicsPipelineState.pPhysicalDeviceFeatures = &pdf;
+    data.graphicsPipelineState.shaderFileNameCount = 0;
+    data.graphicsPipelineState.pShaderFileNames = nullptr;
+
+    data.pipelineUUID[0] = 85;
+    data.pipelineUUID[1] = 43;
+    data.pipelineUUID[2] = 255;
+    data.pipelineUUID[3] = 24;
+    data.pipelineUUID[4] = 155;
+    data.pipelineUUID[5] = 64;
+    data.pipelineUUID[6] = 62;
+    data.pipelineUUID[7] = 24;
+
+    const char* result_json = nullptr;
+
+    EXPECT_FALSE(vpjGeneratePipelineJson(generator_, &data, &result_json, &msg_));
+}

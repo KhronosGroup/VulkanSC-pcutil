@@ -511,6 +511,8 @@ class Generator : private GeneratorBase {
             } else {
                 Error() << "shaderFileNameCount is not zero but pShaderFileNames is NULL";
             }
+        } else {
+            Error() << "shaderFileNameCount is zero";
         }
 
         auto features = reinterpret_cast<const VkPhysicalDeviceFeatures2*>(state.pPhysicalDeviceFeatures);

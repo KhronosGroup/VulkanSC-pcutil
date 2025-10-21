@@ -83,6 +83,9 @@
             "install_dir": "Vulkan-Loader/build/install",
             "commit": "v1.4.319",
             "cmake_options": [
+                "-DBUILD_WSI_XCB_SUPPORT=OFF",
+                "-DBUILD_WSI_XLIB_SUPPORT=OFF",
+                "-DBUILD_WSI_WAYLAND_SUPPORT=OFF",
                 "-DLOADER_USE_UNSAFE_FILE_SEARCH=ON"
             ],
             "optional": [
@@ -103,6 +106,9 @@
             "install_dir": "VulkanSC-Loader/build/install",
             "commit": "vksc1.0.19",
             "cmake_options": [
+                "-DBUILD_WSI_XCB_SUPPORT=OFF",
+                "-DBUILD_WSI_XLIB_SUPPORT=OFF",
+                "-DBUILD_WSI_WAYLAND_SUPPORT=OFF",
                 "-DLOADER_USE_UNSAFE_FILE_SEARCH=ON"
             ],
             "optional": [

@@ -92,7 +92,7 @@ jobs:
       - name: Build
         run: cmake --build build/
       - name: Test
-        run: ctest --test-dir build/ --output-on-failure --parallel `nproc`
+        run: ctest --test-dir build/ --output-on-failure
       - name: Install
         run: cmake --install build --prefix build/install
 
@@ -136,6 +136,6 @@ jobs:
       - name: Build
         run: cmake --build build/ --config ${{matrix.config}}
       - name: Test
-        run: ctest --test-dir build/ --build-config ${{matrix.config}} --output-on-failure --parallel ${env:NUMBER_OF_PROCESSORS}
+        run: ctest --test-dir build/ --build-config ${{matrix.config}} --output-on-failure
       - name: Install
         run: cmake --install build --prefix build/install --config ${{matrix.config}}

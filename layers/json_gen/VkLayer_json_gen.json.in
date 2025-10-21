@@ -4,7 +4,7 @@
         "name": "@JSON_LAYER_NAME@",
         "type": "GLOBAL",
         "library_path": "@JSON_LIBRARY_PATH@",
-        "api_version": "1.2",
+        "api_version": "1.2.319",
         "implementation_version": "2",
         "description": "Khronos JSON generator layer",
         "device_extensions": [

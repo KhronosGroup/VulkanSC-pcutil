@@ -45,21 +45,16 @@ find_package(VulkanUtilityLibraries REQUIRED CONFIG QUIET)
 find_package(jsoncpp REQUIRED CONFIG QUIET)
 if (BUILD_TESTS) # Layer testing needs the loader
     find_package(VulkanLoader REQUIRED CONFIG QUIET)
-    add_library(Vk::Headers ALIAS Vulkan::Headers)
     find_vk_package(VulkanLoader ${VULKAN_LOADER_INSTALL_DIR})
 endif()
 
 include(GNUInstallDirs)
 
 if (PCU_WERROR)
-    if (${CMAKE_CXX_COMPILER_ID} MATCHES "(GNU|Clang)" AND NOT CMAKE_CXX_COMPILER_FRONTEND_VARIANT MATCHES "MSVC")
-        add_compile_options(-Werror)
-    elseif(MSVC OR CMAKE_CXX_COMPILER_FRONTEND_VARIANT MATCHES "MSVC")
-        add_compile_options(/WX)
-    endif()
+    add_compile_options("$<IF:$<CXX_COMPILER_ID:MSVC>,/WX,-Werror>")
 endif()
 
-if (${CMAKE_CXX_COMPILER_ID} MATCHES "(GNU|Clang)" AND NOT CMAKE_CXX_COMPILER_FRONTEND_VARIANT MATCHES "MSVC")
+if (${CMAKE_CXX_COMPILER_ID} MATCHES "(GNU|Clang)")
     add_compile_options(
         -Wall
         -Wextra
@@ -85,7 +80,7 @@ if (${CMAKE_CXX_COMPILER_ID} MATCHES "(GNU|Clang)" AND NOT CMAKE_CXX_COMPILER_FR
             -Wno-enum-enum-conversion
         )
     endif()
-elseif(MSVC OR CMAKE_CXX_COMPILER_FRONTEND_VARIANT MATCHES "MSVC")
+elseif(MSVC)
     add_compile_options("/W3")
     # Warn about nested declarations
     add_compile_options("/w34456")

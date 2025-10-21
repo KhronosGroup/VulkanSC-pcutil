@@ -39,8 +39,6 @@ target_link_libraries(VulkanJSONGenLayer
         Vulkan::SafeStruct
 )
 
-target_compile_features(VulkanJSONGenLayer PRIVATE cxx_std_17)
-
 set_target_properties(VulkanJSONGenLayer PROPERTIES OUTPUT_NAME ${LAYER_NAME})
 
 # There are 2 primary deliverables for the validation layers.

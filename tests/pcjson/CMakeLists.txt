@@ -29,25 +29,16 @@ macro(pcu_add_test)
         json_validator
     )
 
-    # gtest_discover_tests requires running the output binaries which will not
-    # work with cross-compiling, thus we fall back to using gtest_add_tests
-    if (CMAKE_CROSSCOMPILING)
-        gtest_add_tests(
-            TARGET ${_TEST_NAME}
-            TEST_PREFIX "${_TEST_PREFIX}"
-            TEST_LIST ${_TEST_NAME}_LIST
+    gtest_add_tests(
+        TARGET ${_TEST_NAME}
+        TEST_PREFIX "${_TEST_PREFIX}"
+        TEST_LIST ${_TEST_NAME}_LIST
+    )
+    foreach(TEST_I IN LISTS ${_TEST_LIST}_LIST)
+        set_tests_properties("${TEST_I}" PROPERTIES
+            LABELS "${_LABELS}"
         )
-        foreach(TEST_I IN LISTS ${_TEST_LIST}_LIST)
-            set_tests_properties("${TEST_I}" PROPERTIES
-                LABELS "${_LABELS}"
-            )
-        endforeach()
-    else()
-        gtest_discover_tests(${_TEST_NAME}
-            TEST_PREFIX "${_TEST_PREFIX}"
-            DISCOVERY_TIMEOUT 100
-        )
-    endif()
+    endforeach()
 endmacro()
 
 pcu_add_test(

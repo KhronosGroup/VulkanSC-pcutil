@@ -689,9 +689,7 @@ VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroySemaphore(VkDevice device, VkSemaph
                                                        const VkAllocationCallbacks* pAllocator) {
     auto device_data = GetDeviceData(device);
     device_data->vtable.DestroySemaphore(device, fence, pAllocator);
-    if (fence != VK_NULL_HANDLE) {
-        device_data->obj_res_info.semaphoreRequestCount--;
-    }
+    device_data->obj_res_info.semaphoreRequestCount--;
 }
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateShaderModule(VkDevice device, const VkShaderModuleCreateInfo* pCreateInfo,
                                                              const VkAllocationCallbacks* pAllocator,
@@ -705,7 +703,7 @@ VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroyShaderModule(VkDevice device, VkSha
                                                           const VkAllocationCallbacks* pAllocator) {
     auto device_data = GetDeviceData(device);
     device_data->vtable.DestroyShaderModule(device, shaderModule, pAllocator);
-    if (shaderModule != VK_NULL_HANDLE) device_data->shader_module_map.erase(shaderModule);
+    device_data->shader_module_map.erase(shaderModule);
 }
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateGraphicsPipelines(VkDevice device, VkPipelineCache pipelineCache,
                                                                   uint32_t createInfoCount,
@@ -793,13 +791,11 @@ VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroyDescriptorSetLayout(VkDevice device
                                                                  const VkAllocationCallbacks* pAllocator) {
     auto device_data = GetDeviceData(device);
     device_data->vtable.DestroyDescriptorSetLayout(device, descriptorSetLayout, pAllocator);
-    if (descriptorSetLayout != VK_NULL_HANDLE) {
-        device_data->obj_res_info.descriptorSetLayoutRequestCount--;
-        if (auto result = device_data->descriptor_set_layout_map.find(descriptorSetLayout); result->first) {
-            device_data->obj_res_info.descriptorSetLayoutBindingRequestCount -= result->second->create_info.bindingCount;
-        }
-        device_data->descriptor_set_layout_map.erase(descriptorSetLayout);
+    device_data->obj_res_info.descriptorSetLayoutRequestCount--;
+    if (auto result = device_data->descriptor_set_layout_map.find(descriptorSetLayout); result->first) {
+        device_data->obj_res_info.descriptorSetLayoutBindingRequestCount -= result->second->create_info.bindingCount;
     }
+    device_data->descriptor_set_layout_map.erase(descriptorSetLayout);
 }
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreatePipelineLayout(VkDevice device, const VkPipelineLayoutCreateInfo* pCreateInfo,
                                                                const VkAllocationCallbacks* pAllocator,
@@ -816,10 +812,8 @@ VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroyPipelineLayout(VkDevice device, VkP
                                                             const VkAllocationCallbacks* pAllocator) {
     auto device_data = GetDeviceData(device);
     device_data->vtable.DestroyPipelineLayout(device, pipelineLayout, pAllocator);
-    if (pipelineLayout != VK_NULL_HANDLE) {
-        device_data->obj_res_info.pipelineLayoutRequestCount--;
-        device_data->pipeline_layout_map.erase(pipelineLayout);
-    }
+    device_data->obj_res_info.pipelineLayoutRequestCount--;
+    device_data->pipeline_layout_map.erase(pipelineLayout);
 }
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateRenderPass(VkDevice device, const VkRenderPassCreateInfo* pCreateInfo,
                                                            const VkAllocationCallbacks* pAllocator, VkRenderPass* pRenderPass) {
@@ -853,19 +847,17 @@ VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroyRenderPass(VkDevice device, VkRende
                                                         const VkAllocationCallbacks* pAllocator) {
     auto device_data = GetDeviceData(device);
     device_data->vtable.DestroyRenderPass(device, renderPass, pAllocator);
-    if (renderPass != VK_NULL_HANDLE) {
-        device_data->obj_res_info.renderPassRequestCount--;
-        if (auto result = device_data->renderpass_map.find(renderPass); result->first) {
-            device_data->obj_res_info.subpassDescriptionRequestCount -= result->second->create_info.subpassCount;
-            device_data->obj_res_info.attachmentDescriptionRequestCount -= result->second->create_info.attachmentCount;
-            device_data->renderpass_map.erase(renderPass);
-        } else if (auto result2 = device_data->renderpass2_map.find(renderPass); result2->first) {
-            device_data->obj_res_info.subpassDescriptionRequestCount -= result2->second->create_info.subpassCount;
-            device_data->obj_res_info.attachmentDescriptionRequestCount -= result2->second->create_info.attachmentCount;
-            device_data->renderpass2_map.erase(renderPass);
-        } else {
-            LOG("[%s] ERROR: Failed to find renderpass in accelerating structure.", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
-        }
+    device_data->obj_res_info.renderPassRequestCount--;
+    if (auto result = device_data->renderpass_map.find(renderPass); result->first) {
+        device_data->obj_res_info.subpassDescriptionRequestCount -= result->second->create_info.subpassCount;
+        device_data->obj_res_info.attachmentDescriptionRequestCount -= result->second->create_info.attachmentCount;
+        device_data->renderpass_map.erase(renderPass);
+    } else if (auto result2 = device_data->renderpass2_map.find(renderPass); result2->first) {
+        device_data->obj_res_info.subpassDescriptionRequestCount -= result2->second->create_info.subpassCount;
+        device_data->obj_res_info.attachmentDescriptionRequestCount -= result2->second->create_info.attachmentCount;
+        device_data->renderpass2_map.erase(renderPass);
+    } else {
+        LOG("[%s] ERROR: Failed to find renderpass in accelerating structure.", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
     }
 }
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateSampler(VkDevice device, const VkSamplerCreateInfo* pCreateInfo,
@@ -881,10 +873,8 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateSampler(VkDevice device, const V
 VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroySampler(VkDevice device, VkSampler sampler, const VkAllocationCallbacks* pAllocator) {
     auto device_data = GetDeviceData(device);
     device_data->vtable.DestroySampler(device, sampler, pAllocator);
-    if (sampler != VK_NULL_HANDLE) {
-        device_data->obj_res_info.samplerRequestCount--;
-        device_data->sampler_map.erase(sampler);
-    }
+    device_data->obj_res_info.samplerRequestCount--;
+    device_data->sampler_map.erase(sampler);
 }
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateSamplerYcbcrConversion(VkDevice device,
                                                                        const VkSamplerYcbcrConversionCreateInfo* pCreateInfo,
@@ -903,10 +893,8 @@ VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroySamplerYcbcrConversion(VkDevice dev
                                                                     const VkAllocationCallbacks* pAllocator) {
     auto device_data = GetDeviceData(device);
     device_data->vtable.DestroySamplerYcbcrConversion(device, ycbcrConversion, pAllocator);
-    if (ycbcrConversion != VK_NULL_HANDLE) {
-        device_data->obj_res_info.samplerYcbcrConversionRequestCount--;
-        device_data->ycbcr_map.erase(ycbcrConversion);
-    }
+    device_data->obj_res_info.samplerYcbcrConversionRequestCount--;
+    device_data->ycbcr_map.erase(ycbcrConversion);
 }
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateSwapchainKHR(VkDevice device, const VkSwapchainCreateInfoKHR* pCreateInfo,
                                                              const VkAllocationCallbacks* pAllocator, VkSwapchainKHR* pSwapchain) {
@@ -921,9 +909,7 @@ VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroySwapchainKHR(VkDevice device, VkSwa
                                                           const VkAllocationCallbacks* pAllocator) {
     auto device_data = GetDeviceData(device);
     device_data->vtable.DestroySwapchainKHR(device, swapchain, pAllocator);
-    if (swapchain != VK_NULL_HANDLE) {
-        device_data->obj_res_info.swapchainRequestCount--;
-    }
+    device_data->obj_res_info.swapchainRequestCount--;
 }
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateImage(VkDevice device, const VkImageCreateInfo* pCreateInfo,
                                                       const VkAllocationCallbacks* pAllocator, VkImage* pImage) {
@@ -937,9 +923,7 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateImage(VkDevice device, const VkI
 VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroyImage(VkDevice device, VkImage image, const VkAllocationCallbacks* pAllocator) {
     auto device_data = GetDeviceData(device);
     device_data->vtable.DestroyImage(device, image, pAllocator);
-    if (image != VK_NULL_HANDLE) {  /// TODO: Check all DestroyXyz predicates
-        device_data->obj_res_info.imageRequestCount--;
-    }
+    device_data->obj_res_info.imageRequestCount--;
 }
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateImageView(VkDevice device, const VkImageViewCreateInfo* pCreateInfo,
                                                           const VkAllocationCallbacks* pAllocator, VkImageView* pView) {
@@ -962,15 +946,13 @@ VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroyImageView(VkDevice device, VkImageV
                                                        const VkAllocationCallbacks* pAllocator) {
     auto device_data = GetDeviceData(device);
     device_data->vtable.DestroyImageView(device, imageView, pAllocator);
-    if (imageView != VK_NULL_HANDLE) {
-        device_data->obj_res_info.imageViewRequestCount--;
-        if (auto result = device_data->image_view_map.find(imageView); result->first) {
-            if (result->second->create_info.subresourceRange.layerCount > 1) {
-                device_data->obj_res_info.layeredImageViewRequestCount--;
-            }
+    device_data->obj_res_info.imageViewRequestCount--;
+    if (auto result = device_data->image_view_map.find(imageView); result->first) {
+        if (result->second->create_info.subresourceRange.layerCount > 1) {
+            device_data->obj_res_info.layeredImageViewRequestCount--;
         }
-        device_data->image_view_map.erase(imageView);
     }
+    device_data->image_view_map.erase(imageView);
 }
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL AllocateCommandBuffers(VkDevice device, const VkCommandBufferAllocateInfo* pAllocateInfo,
                                                                  VkCommandBuffer* pCommandBuffers) {
@@ -994,9 +976,7 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateFence(VkDevice device, const VkF
 VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroyFence(VkDevice device, VkFence fence, const VkAllocationCallbacks* pAllocator) {
     auto device_data = GetDeviceData(device);
     device_data->vtable.DestroyFence(device, fence, pAllocator);
-    if (fence != VK_NULL_HANDLE) {
-        device_data->obj_res_info.fenceRequestCount--;
-    }
+    device_data->obj_res_info.fenceRequestCount--;
 }
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL AllocateMemory(VkDevice device, const VkMemoryAllocateInfo* pAllocateInfo,
                                                          const VkAllocationCallbacks* pAllocator, VkDeviceMemory* pMemory) {
@@ -1021,9 +1001,7 @@ VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroyPipelineCache(VkDevice device, VkPi
                                                            const VkAllocationCallbacks* pAllocator) {
     auto device_data = GetDeviceData(device);
     device_data->vtable.DestroyPipelineCache(device, pipelineCache, pAllocator);
-    if (pipelineCache != VK_NULL_HANDLE) {
-        device_data->obj_res_info.pipelineCacheRequestCount--;
-    }
+    device_data->obj_res_info.pipelineCacheRequestCount--;
 }
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateBuffer(VkDevice device, const VkBufferCreateInfo* pCreateInfo,
                                                        const VkAllocationCallbacks* pAllocator, VkBuffer* pBuffer) {
@@ -1037,9 +1015,7 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateBuffer(VkDevice device, const Vk
 VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroyBuffer(VkDevice device, VkBuffer buffer, const VkAllocationCallbacks* pAllocator) {
     auto device_data = GetDeviceData(device);
     device_data->vtable.DestroyBuffer(device, buffer, pAllocator);
-    if (buffer != VK_NULL_HANDLE) {
-        device_data->obj_res_info.bufferRequestCount--;
-    }
+    device_data->obj_res_info.bufferRequestCount--;
 }
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateBufferView(VkDevice device, const VkBufferViewCreateInfo* pCreateInfo,
                                                            const VkAllocationCallbacks* pAllocator, VkBufferView* pView) {
@@ -1054,9 +1030,7 @@ VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroyBufferView(VkDevice device, VkBuffe
                                                         const VkAllocationCallbacks* pAllocator) {
     auto device_data = GetDeviceData(device);
     device_data->vtable.DestroyBufferView(device, bufferView, pAllocator);
-    if (bufferView != VK_NULL_HANDLE) {
-        device_data->obj_res_info.bufferViewRequestCount--;
-    }
+    device_data->obj_res_info.bufferViewRequestCount--;
 }
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateEvent(VkDevice device, const VkEventCreateInfo* pCreateInfo,
                                                       const VkAllocationCallbacks* pAllocator, VkEvent* pEvent) {
@@ -1070,9 +1044,7 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateEvent(VkDevice device, const VkE
 VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroyEvent(VkDevice device, VkEvent event, const VkAllocationCallbacks* pAllocator) {
     auto device_data = GetDeviceData(device);
     device_data->vtable.DestroyEvent(device, event, pAllocator);
-    if (event != VK_NULL_HANDLE) {
-        device_data->obj_res_info.eventRequestCount--;
-    }
+    device_data->obj_res_info.eventRequestCount--;
 }
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateQueryPool(VkDevice device, const VkQueryPoolCreateInfo* pCreateInfo,
                                                           const VkAllocationCallbacks* pAllocator, VkQueryPool* pQueryPool) {
@@ -1138,9 +1110,7 @@ VKAPI_ATTR void VKAPI_ATTR VKAPI_CALL DestroyFramebuffer(VkDevice device, VkFram
                                                          const VkAllocationCallbacks* pAllocator) {
     auto device_data = GetDeviceData(device);
     device_data->vtable.DestroyFramebuffer(device, framebuffer, pAllocator);
-    if (framebuffer != VK_NULL_HANDLE) {
-        device_data->obj_res_info.framebufferRequestCount--;
-    }
+    device_data->obj_res_info.framebufferRequestCount--;
 }
 VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateCommandPool(VkDevice device, const VkCommandPoolCreateInfo* pCreateInfo,
                                                             const VkAllocationCallbacks* pAllocator, VkCommandPool* pCommandPool) {

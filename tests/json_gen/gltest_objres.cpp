@@ -34,7 +34,7 @@ class ObjectReservation : public testing::Test {
     }
 
     void write_id(std::string& ref, int32_t id) {
-        for(auto pos = ref.find('@', 0); pos != std::string::npos; pos = ref.find('@', pos) ) {
+        for (auto pos = ref.find('@', 0); pos != std::string::npos; pos = ref.find('@', pos)) {
             ref.replace(pos, 1, std::to_string(id));
         }
     }

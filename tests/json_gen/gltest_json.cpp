@@ -30,10 +30,10 @@ class JSON : public testing::Test {
     void TEST_DESCRIPTION(const char* desc) { RecordProperty("description", desc); }
 
     void write_ids(std::string& ref, size_t device_id, size_t pipeline_id) {
-        for(auto pos = ref.find('@', 0); pos != std::string::npos; pos = ref.find('@', pos) ) {
+        for (auto pos = ref.find('@', 0); pos != std::string::npos; pos = ref.find('@', pos)) {
             ref.replace(pos, 1, std::to_string(device_id));
         }
-        for(auto pos = ref.find('#', 0); pos != std::string::npos; pos = ref.find('#', pos) ) {
+        for (auto pos = ref.find('#', 0); pos != std::string::npos; pos = ref.find('#', pos)) {
             ref.replace(pos, 1, std::to_string(pipeline_id));
         }
     }
@@ -50,13 +50,13 @@ class JSON : public testing::Test {
         std::ifstream json_stream{json_path};
         return std::string(std::istreambuf_iterator<char>{json_stream}, std::istreambuf_iterator<char>{});
     }
-    std::vector<uint32_t> get_spirv(size_t device_id, size_t pipeline_id, const char *stage) {
+    std::vector<uint32_t> get_spirv(size_t device_id, size_t pipeline_id, const char* stage) {
         std::filesystem::path spirv_path = std::string("./gltest_json_device_") + std::to_string(device_id) + "_pipeline_" +
                                            std::to_string(pipeline_id) + "." + stage + ".spv";
         auto spirv_size = std::filesystem::file_size(spirv_path);
         std::vector<uint32_t> spirv_vec(spirv_size / 4, '\0');
         std::ifstream spirv_stream{spirv_path};
-        spirv_stream.read(reinterpret_cast<char *>(spirv_vec.data()), spirv_size);
+        spirv_stream.read(reinterpret_cast<char*>(spirv_vec.data()), spirv_size);
         return spirv_vec;
     }
 

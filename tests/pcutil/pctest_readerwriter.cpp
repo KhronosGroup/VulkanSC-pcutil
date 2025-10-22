@@ -81,7 +81,7 @@ bool ReadAndValidate(VKSCPipelineCacheHeaderReader &pcr, std::vector<uint8_t> &c
     return true;
 }
 
-TEST(PCReaderWriterTest, Empty) {
+TEST(ReaderWriter, Empty) {
     std::vector<uint8_t> cache(PCWriterTestData::default_cache_size_);
 
     PCWriterTestData test_data(__LINE__);
@@ -99,7 +99,7 @@ TEST(PCReaderWriterTest, Empty) {
     }
 }
 
-TEST(PCReaderWriterTest, GlobalVendorDataOnly) {
+TEST(ReaderWriter, GlobalVendorDataOnly) {
     std::vector<uint8_t> cache(PCWriterTestData::default_cache_size_);
 
     PCWriterTestData test_data(__LINE__);
@@ -118,7 +118,7 @@ TEST(PCReaderWriterTest, GlobalVendorDataOnly) {
     }
 }
 
-TEST(PCReaderWriterTest, OnePipeline) {
+TEST(ReaderWriter, OnePipeline) {
     std::vector<uint8_t> cache(PCWriterTestData::default_cache_size_);
 
     PCWriterTestData test_data(__LINE__);
@@ -138,7 +138,7 @@ TEST(PCReaderWriterTest, OnePipeline) {
     }
 }
 
-TEST(PCReaderWriterTest, OnePipelineWithJson) {
+TEST(ReaderWriter, OnePipelineWithJson) {
     std::vector<uint8_t> cache(PCWriterTestData::default_cache_size_);
 
     PCWriterTestData test_data(__LINE__);
@@ -159,7 +159,7 @@ TEST(PCReaderWriterTest, OnePipelineWithJson) {
     }
 }
 
-TEST(PCReaderWriterTest, OnePipelineAndPipelineVendorData) {
+TEST(ReaderWriter, OnePipelineAndPipelineVendorData) {
     std::vector<uint8_t> cache(PCWriterTestData::default_cache_size_);
 
     PCWriterTestData test_data(__LINE__);
@@ -180,7 +180,7 @@ TEST(PCReaderWriterTest, OnePipelineAndPipelineVendorData) {
     }
 }
 
-TEST(PCReaderWriterTest, OnePipelineAndStageVendorData) {
+TEST(ReaderWriter, OnePipelineAndStageVendorData) {
     std::vector<uint8_t> cache(PCWriterTestData::default_cache_size_);
 
     PCWriterTestData test_data(__LINE__);
@@ -201,7 +201,7 @@ TEST(PCReaderWriterTest, OnePipelineAndStageVendorData) {
     }
 }
 
-TEST(PCReaderWriterTest, MultiplePipelineVariousAmountOfShaderStage) {
+TEST(ReaderWriter, MultiplePipelineVariousAmountOfShaderStage) {
     std::vector<uint8_t> cache(PCWriterTestData::default_cache_size_);
 
     PCWriterTestData test_data(__LINE__);
@@ -228,7 +228,7 @@ TEST(PCReaderWriterTest, MultiplePipelineVariousAmountOfShaderStage) {
     }
 }
 
-TEST(PCReaderWriterTest, MultiplePipelines) {
+TEST(ReaderWriter, MultiplePipelines) {
     std::vector<uint8_t> cache(PCWriterTestData::default_cache_size_);
 
     PCWriterTestData test_data(__LINE__);
@@ -247,7 +247,7 @@ TEST(PCReaderWriterTest, MultiplePipelines) {
     }
 }
 
-TEST(PCReaderWriterTest, MultiplePipelinesAllData) {
+TEST(ReaderWriter, MultiplePipelinesAllData) {
     std::vector<uint8_t> cache(PCWriterTestData::default_cache_size_);
 
     PCWriterTestData test_data(__LINE__);
@@ -270,7 +270,7 @@ TEST(PCReaderWriterTest, MultiplePipelinesAllData) {
     }
 }
 
-TEST(PCReaderWriterTest, CustomShaderData) {
+TEST(ReaderWriter, CustomShaderData) {
     std::vector<uint8_t> cache(PCWriterTestData::default_cache_size_);
 
     PCWriterTestData test_data(__LINE__);
@@ -293,7 +293,7 @@ TEST(PCReaderWriterTest, CustomShaderData) {
     }
 }
 
-TEST(PCReaderWriterTest, CustomJson) {
+TEST(ReaderWriter, CustomJson) {
     std::vector<uint8_t> cache(PCWriterTestData::default_cache_size_);
 
     PCWriterTestData test_data(__LINE__);

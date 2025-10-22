@@ -38,11 +38,9 @@ else()
     set(LD_LIBRARY_PATH_VALUE
         "${VULKAN_TOOLS_INSTALL_DIR}/lib/"
         "${VULKAN_LOADER_INSTALL_DIR}/lib/"
-        "${VULKAN_VALIDATION_LAYERS_INSTALL_DIR}/lib/"
-        "/home/mate/Develop/Vulkan/.install/lib")
+        "${VULKAN_VALIDATION_LAYERS_INSTALL_DIR}/lib/")
 
     cmake_path(CONVERT "${LD_LIBRARY_PATH_VALUE}" TO_NATIVE_PATH_LIST LD_LIBRARY_PATH_VALUE)
-    cmake_path(CONVERT "${DRIVER_FILES_VALUE}" TO_NATIVE_PATH_LIST DRIVER_FILES_VALUE)
 
     set(COMMON_TEST_ENVIRONMENT
         "VK_LAYER_PATH=${LAYER_PATH_VALUE}"
@@ -58,7 +56,7 @@ list(JOIN COMMON_TEST_ENVIRONMENT "$<SEMICOLON>" COMMON_TEST_ENVIRONMENT)
 macro(pcu_add_test)
     cmake_parse_arguments(""
         ""
-        "TEST_NAME;TEST_PREFIX;TEST_LIST"
+        "TEST_NAME;TEST_PREFIX"
         "LABELS"
         ${ARGN}
     )
@@ -78,9 +76,9 @@ macro(pcu_add_test)
     gtest_add_tests(
         TARGET ${_TEST_NAME}
         TEST_PREFIX "${_TEST_PREFIX}"
-        TEST_LIST ${_TEST_LIST}
+        TEST_LIST ${_TEST_NAME}_LIST
     )
-    foreach(TEST_I IN LISTS ${_TEST_LIST})
+    foreach(TEST_I IN LISTS ${_TEST_NAME}_LIST)
         set_tests_properties("${TEST_I}" PROPERTIES
             LABELS "${_LABELS}"
             ENVIRONMENT "${COMMON_TEST_ENVIRONMENT}"
@@ -115,20 +113,17 @@ endmacro()
 pcu_add_test(
     TEST_NAME gltest_uuid
     TEST_PREFIX "Layer."
-    TEST_LIST UUID_TESTS
     LABLELS Layer UUID
 )
 
 pcu_add_test(
     TEST_NAME gltest_objres
     TEST_PREFIX "Layer."
-    TEST_LIST OBJRES_TESTS
     LABLELS Layer ObjectReservation
 )
 
 pcu_add_test(
     TEST_NAME gltest_json
     TEST_PREFIX "Layer."
-    TEST_LIST JSONGEN_TESTS
     LABLELS Layer JSONGen
 )

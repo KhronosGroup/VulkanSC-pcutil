@@ -543,7 +543,7 @@ static const std::array<uint8_t, VK_UUID_SIZE> EmulationPipelineCacheUUID = {0x2
 
 #define VK_DEVICE_ID_PORTABLE 0xD19CDA7A
 
-TEST(PCWriterDeviceTest, EmptyPipeline) {
+TEST(WriterDevice, EmptyPipeline) {
     TestEnviroment test_env;
 
     test_env.error_monitor.Reset();
@@ -567,7 +567,7 @@ TEST(PCWriterDeviceTest, EmptyPipeline) {
     test_teardown_vk(test_env);
 }
 
-TEST(PCWriterDeviceTest, ComputePipeline) {
+TEST(WriterDevice, ComputePipeline) {
     TestEnviroment test_env;
 
     test_env.error_monitor.Reset();
@@ -593,7 +593,7 @@ TEST(PCWriterDeviceTest, ComputePipeline) {
     test_teardown_vk(test_env);
 }
 
-TEST(PCWriterDeviceTest, GraphicsPipeline) {
+TEST(WriterDevice, GraphicsPipeline) {
     TestEnviroment test_env;
 
     test_env.error_monitor.Reset();
@@ -623,7 +623,7 @@ TEST(PCWriterDeviceTest, GraphicsPipeline) {
     test_teardown_vk(test_env);
 }
 
-TEST(PCWriterDeviceTest, ComputePipelineMissingSPIRV) {
+TEST(WriterDevice, ComputePipelineMissingSPIRV) {
     TestEnviroment test_env;
 
     test_env.error_monitor.Reset();
@@ -649,7 +649,7 @@ TEST(PCWriterDeviceTest, ComputePipelineMissingSPIRV) {
     test_teardown_vk(test_env);
 }
 
-TEST(PCWriterDeviceTest, ComputePipelineInvalidSPIRVSize) {
+TEST(WriterDevice, ComputePipelineInvalidSPIRVSize) {
     TestEnviroment test_env;
 
     test_env.error_monitor.Reset();

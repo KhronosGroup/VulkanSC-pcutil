@@ -7,6 +7,7 @@
  */
 
 #include <vulkan/pcjson/vksc_pipeline_json.h>
+#include <vulkan/utility/vk_struct_helper.hpp>
 #include <vulkan/vulkan_sc.h>
 
 #include <gtest/gtest.h>
@@ -49,56 +50,53 @@ class Gen : public testing::Test {
     const char* msg_;
 };
 
-bool ValidatePipelineJson(const std::string& json_str) {
-    JsonValidator json_validator;
-
-    const std::string schema_path = std::string(SCHEMA_PATH) + "vksc_pipeline_schema.json";
-
-    auto success = json_validator.LoadAndValidateSchema(schema_path);
-
-    if (!success) {
-        std::cout << json_validator.GetMessage() << std::endl;
-        return success;
-    }
-
-    Json::String err;
-    Json::Value json;
-    Json::CharReaderBuilder builder;
-    const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
-    if (!reader->parse(json_str.c_str(), json_str.c_str() + json_str.size() + 1, &json, &err)) {
-        std::cout << "error: " << err << std::endl;
-        return EXIT_FAILURE;
-    }
-    success = json_validator.ValidateJson(json);
-
-    if (!success) {
-        std::cout << json_validator.GetMessage() << std::endl;
-        return success;
-    }
-
-    return true;
-}
-
-std::string reformatJson(const std::string& json_str) {
+static bool VerifyJson(const char* actual, const std::string& reference) {
     Json::Value json{};
 
     Json::CharReaderBuilder charReaderBuilder{};
     std::unique_ptr<Json::CharReader> reader(charReaderBuilder.newCharReader());
     Json::String json_errors{};
-    if (!reader->parse(json_str.c_str(), json_str.c_str() + json_str.size(), &json, &json_errors)) {
-        return "";
+    if (!reader->parse(reference.c_str(), reference.c_str() + reference.size(), &json, &json_errors)) {
+        std::cout << "Failed to parse reference JSON:\n" << reference << "\n  Parse error:\n" << json_errors;
+        return false;
     }
 
     Json::StreamWriterBuilder streamWriterBuilder{};
-    return Json::writeString(streamWriterBuilder, json);
+    auto formatted_ref = Json::writeString(streamWriterBuilder, json);
+
+    if (formatted_ref != actual) {
+        std::cout << "Generated JSON mismatch:\n  Reference:\n" << formatted_ref << "\n  Actual:\n" << actual;
+        return false;
+    }
+
+    return true;
 }
 
 TEST_F(Gen, VkPhysicalDeviceFeatures2) {
     TEST_DESCRIPTION("Tests generating of a reasonably complex physical device features 2 JSON");
 
-    std::string ref_json_str = {R"({
-        "sType" : "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2",
-        "pNext": "NULL",
+    std::string ref_json = {R"({
+        "sType": "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2",
+        "pNext": {
+            "sType": "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES",
+            "pNext": {
+                "sType": "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES",
+                "pNext": "NULL",
+                "scalarBlockLayout": "VK_TRUE"
+            },
+            "storageBuffer16BitAccess": "VK_FALSE",
+            "uniformAndStorageBuffer16BitAccess": "VK_FALSE",
+            "storagePushConstant16": "VK_FALSE",
+            "storageInputOutput16": "VK_FALSE",
+            "multiview": "VK_FALSE",
+            "multiviewGeometryShader": "VK_FALSE",
+            "multiviewTessellationShader": "VK_FALSE",
+            "variablePointersStorageBuffer": "VK_FALSE",
+            "variablePointers": "VK_FALSE",
+            "protectedMemory": "VK_FALSE",
+            "samplerYcbcrConversion": "VK_TRUE",
+            "shaderDrawParameters": "VK_FALSE"
+        },
         "features": {
             "robustBufferAccess": "VK_FALSE",
             "fullDrawIndexUint32" : "VK_TRUE",
@@ -158,76 +156,51 @@ TEST_F(Gen, VkPhysicalDeviceFeatures2) {
         }
     })"};
 
-    VkPhysicalDeviceFeatures2 pdf{};
-    pdf.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-    pdf.pNext = nullptr;
-    pdf.features.robustBufferAccess = VK_FALSE;
+    auto sblf = vku::InitStruct<VkPhysicalDeviceScalarBlockLayoutFeatures>();
+    sblf.scalarBlockLayout = VK_TRUE;
+
+    auto vk11f = vku::InitStruct<VkPhysicalDeviceVulkan11Features>(&sblf);
+    vk11f.samplerYcbcrConversion = VK_TRUE;
+
+    auto pdf = vku::InitStruct<VkPhysicalDeviceFeatures2>(&vk11f);
     pdf.features.fullDrawIndexUint32 = VK_TRUE;
-    pdf.features.imageCubeArray = VK_FALSE;
     pdf.features.independentBlend = VK_TRUE;
-    pdf.features.geometryShader = VK_FALSE;
     pdf.features.tessellationShader = VK_TRUE;
-    pdf.features.sampleRateShading = VK_FALSE;
     pdf.features.dualSrcBlend = VK_TRUE;
-    pdf.features.logicOp = VK_FALSE;
     pdf.features.multiDrawIndirect = VK_TRUE;
-    pdf.features.drawIndirectFirstInstance = VK_FALSE;
-    pdf.features.depthClamp = VK_FALSE;
     pdf.features.depthBiasClamp = VK_TRUE;
-    pdf.features.fillModeNonSolid = VK_FALSE;
     pdf.features.depthBounds = VK_TRUE;
-    pdf.features.wideLines = VK_FALSE;
     pdf.features.largePoints = VK_TRUE;
-    pdf.features.alphaToOne = VK_FALSE;
     pdf.features.multiViewport = VK_TRUE;
-    pdf.features.samplerAnisotropy = VK_FALSE;
     pdf.features.textureCompressionETC2 = VK_TRUE;
-    pdf.features.textureCompressionASTC_LDR = VK_FALSE;
     pdf.features.textureCompressionBC = VK_TRUE;
-    pdf.features.occlusionQueryPrecise = VK_FALSE;
     pdf.features.pipelineStatisticsQuery = VK_TRUE;
-    pdf.features.vertexPipelineStoresAndAtomics = VK_FALSE;
-    pdf.features.fragmentStoresAndAtomics = VK_FALSE;
     pdf.features.shaderTessellationAndGeometryPointSize = VK_TRUE;
-    pdf.features.shaderImageGatherExtended = VK_FALSE;
     pdf.features.shaderStorageImageExtendedFormats = VK_TRUE;
-    pdf.features.shaderStorageImageMultisample = VK_FALSE;
     pdf.features.shaderStorageImageReadWithoutFormat = VK_TRUE;
-    pdf.features.shaderStorageImageWriteWithoutFormat = VK_FALSE;
     pdf.features.shaderUniformBufferArrayDynamicIndexing = VK_TRUE;
-    pdf.features.shaderSampledImageArrayDynamicIndexing = VK_FALSE;
     pdf.features.shaderStorageBufferArrayDynamicIndexing = VK_TRUE;
-    pdf.features.shaderStorageImageArrayDynamicIndexing = VK_FALSE;
     pdf.features.shaderClipDistance = VK_TRUE;
-    pdf.features.shaderCullDistance = VK_FALSE;
     pdf.features.shaderFloat64 = VK_TRUE;
-    pdf.features.shaderInt64 = VK_FALSE;
     pdf.features.shaderInt16 = VK_TRUE;
-    pdf.features.shaderResourceResidency = VK_FALSE;
     pdf.features.shaderResourceMinLod = VK_TRUE;
-    pdf.features.sparseBinding = VK_FALSE;
     pdf.features.sparseResidencyBuffer = VK_TRUE;
-    pdf.features.sparseResidencyImage2D = VK_FALSE;
     pdf.features.sparseResidencyImage3D = VK_TRUE;
-    pdf.features.sparseResidency2Samples = VK_FALSE;
     pdf.features.sparseResidency4Samples = VK_TRUE;
-    pdf.features.sparseResidency8Samples = VK_FALSE;
     pdf.features.sparseResidency16Samples = VK_TRUE;
-    pdf.features.sparseResidencyAliased = VK_FALSE;
     pdf.features.variableMultisampleRate = VK_TRUE;
-    pdf.features.inheritedQueries = VK_FALSE;
 
     const char* result_json = nullptr;
 
     EXPECT_TRUE(vpjGenerateSingleStructJson(generator_, &pdf, &result_json, &msg_));
     CHECK_GEN();
-    EXPECT_TRUE(reformatJson(ref_json_str) == result_json);
+    EXPECT_TRUE(VerifyJson(result_json, ref_json));
 }
 
 TEST_F(Gen, VkGraphicsPipelineCreateInfo) {
     TEST_DESCRIPTION("Tests generating of a reasonably complex graphics pipeline create info JSON");
 
-    const char* ref_json_str = {R"({
+    const char* ref_json = {R"({
         "sType" : "VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO",
         "pNext": {
             "sType": "VK_STRUCTURE_TYPE_PIPELINE_DISCARD_RECTANGLE_STATE_CREATE_INFO_EXT",
@@ -566,24 +539,24 @@ TEST_F(Gen, VkGraphicsPipelineCreateInfo) {
     pvis_ci.pNext = nullptr;
     pvis_ci.flags = 0;
 
-    VkVertexInputBindingDescription vertexBindingDescriptions[1] = {};
+    VkVertexInputBindingDescription vertex_binding_desc[1] = {};
     pvis_ci.vertexBindingDescriptionCount = 1;
-    pvis_ci.pVertexBindingDescriptions = vertexBindingDescriptions;
-    vertexBindingDescriptions[0].stride = 32;
-    vertexBindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-    vertexBindingDescriptions[0].binding = 0;
+    pvis_ci.pVertexBindingDescriptions = vertex_binding_desc;
+    vertex_binding_desc[0].stride = 32;
+    vertex_binding_desc[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+    vertex_binding_desc[0].binding = 0;
 
-    VkVertexInputAttributeDescription vertexAttributeDescriptions[2] = {};
+    VkVertexInputAttributeDescription vertex_attrib_desc[2] = {};
     pvis_ci.vertexAttributeDescriptionCount = 2;
-    pvis_ci.pVertexAttributeDescriptions = vertexAttributeDescriptions;
-    vertexAttributeDescriptions[0].location = 0;
-    vertexAttributeDescriptions[0].binding = 0;
-    vertexAttributeDescriptions[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-    vertexAttributeDescriptions[0].offset = 0;
-    vertexAttributeDescriptions[1].location = 1;
-    vertexAttributeDescriptions[1].binding = 0;
-    vertexAttributeDescriptions[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-    vertexAttributeDescriptions[1].offset = 16;
+    pvis_ci.pVertexAttributeDescriptions = vertex_attrib_desc;
+    vertex_attrib_desc[0].location = 0;
+    vertex_attrib_desc[0].binding = 0;
+    vertex_attrib_desc[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+    vertex_attrib_desc[0].offset = 0;
+    vertex_attrib_desc[1].location = 1;
+    vertex_attrib_desc[1].binding = 0;
+    vertex_attrib_desc[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+    vertex_attrib_desc[1].offset = 16;
 
     pias_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     pias_ci.pNext = nullptr;
@@ -696,7 +669,7 @@ TEST_F(Gen, VkGraphicsPipelineCreateInfo) {
 
     EXPECT_TRUE(vpjGenerateSingleStructJson(generator_, &gp_ci, &result_json, &msg_));
     CHECK_GEN();
-    EXPECT_TRUE(reformatJson(ref_json_str) == result_json);
+    EXPECT_TRUE(VerifyJson(result_json, ref_json));
 }
 
 TEST_F(Gen, VkComputePipelineCreateInfo) {
@@ -777,7 +750,7 @@ TEST_F(Gen, VkComputePipelineCreateInfo) {
 
     EXPECT_TRUE(vpjGenerateSingleStructJson(generator_, &cp_ci, &result_json, &msg_));
     CHECK_GEN();
-    EXPECT_TRUE(reformatJson(ref_json) == result_json);
+    EXPECT_TRUE(VerifyJson(result_json, ref_json));
 }
 
 TEST_F(Gen, VkSamplerYcbcrConversionCreateInfo) {
@@ -839,7 +812,7 @@ TEST_F(Gen, VkSamplerYcbcrConversionCreateInfo) {
 
     EXPECT_TRUE(vpjGenerateSingleStructJson(generator_, &ycbcr_ci, &result_json, &msg_));
     CHECK_GEN();
-    EXPECT_TRUE(reformatJson(ref_json) == result_json);
+    EXPECT_TRUE(VerifyJson(result_json, ref_json));
 }
 
 TEST_F(Gen, VkSamplerCreateInfo) {
@@ -901,7 +874,7 @@ TEST_F(Gen, VkSamplerCreateInfo) {
 
     EXPECT_TRUE(vpjGenerateSingleStructJson(generator_, &sampler_ci, &result_json, &msg_));
     CHECK_GEN(true);
-    EXPECT_TRUE(reformatJson(ref_json) == result_json);
+    EXPECT_TRUE(VerifyJson(result_json, ref_json));
 }
 
 TEST_F(Gen, VkDescriptorSetLayoutCreateInfo) {
@@ -959,7 +932,7 @@ TEST_F(Gen, VkDescriptorSetLayoutCreateInfo) {
 
     EXPECT_TRUE(vpjGenerateSingleStructJson(generator_, &dsl_ci, &result_json, &msg_));
     CHECK_GEN();
-    EXPECT_TRUE(reformatJson(ref_json) == result_json);
+    EXPECT_TRUE(VerifyJson(result_json, ref_json));
 }
 
 TEST_F(Gen, VkPipelineLayoutCreateInfo) {
@@ -1004,7 +977,7 @@ TEST_F(Gen, VkPipelineLayoutCreateInfo) {
 
     EXPECT_TRUE(vpjGenerateSingleStructJson(generator_, &pl_ci, &result_json, &msg_));
     CHECK_GEN();
-    EXPECT_TRUE(reformatJson(ref_json) == result_json);
+    EXPECT_TRUE(VerifyJson(result_json, ref_json));
 }
 
 TEST_F(Gen, VkRenderPassCreateInfo) {
@@ -1218,7 +1191,7 @@ TEST_F(Gen, VkRenderPassCreateInfo) {
 
     EXPECT_TRUE(vpjGenerateSingleStructJson(generator_, &rp_ci, &result_json, &msg_));
     CHECK_GEN();
-    EXPECT_TRUE(reformatJson(ref_json) == result_json);
+    EXPECT_TRUE(VerifyJson(result_json, ref_json));
 }
 
 TEST_F(Gen, VkRenderPassCreateInfo2) {
@@ -1525,7 +1498,7 @@ TEST_F(Gen, VkRenderPassCreateInfo2) {
 
     EXPECT_TRUE(vpjGenerateSingleStructJson(generator_, &rp2_ci, &result_json, &msg_));
     CHECK_GEN();
-    EXPECT_TRUE(reformatJson(ref_json) == result_json);
+    EXPECT_TRUE(VerifyJson(result_json, ref_json));
 }
 
 TEST_F(Gen, VkShaderModuleCreateInfo) {
@@ -1552,7 +1525,7 @@ TEST_F(Gen, VkShaderModuleCreateInfo) {
 
     EXPECT_TRUE(vpjGenerateSingleStructJson(generator_, &sm_ci, &result_json, &msg_));
     CHECK_GEN();
-    EXPECT_TRUE(reformatJson(ref_json) == result_json);
+    EXPECT_TRUE(VerifyJson(result_json, ref_json));
 }
 
 TEST_F(Gen, VkDeviceObjectReservationCreateInfo) {
@@ -1687,7 +1660,7 @@ TEST_F(Gen, VkDeviceObjectReservationCreateInfo) {
 
     EXPECT_TRUE(vpjGenerateSingleStructJson(generator_, &dor_ci, &result_json, &msg_));
     CHECK_GEN();
-    EXPECT_TRUE(reformatJson(ref_json) == result_json);
+    EXPECT_TRUE(VerifyJson(result_json, ref_json));
 }
 
 TEST_F(Gen, VkPipelineOfflineCreateInfo) {
@@ -1745,7 +1718,7 @@ TEST_F(Gen, VkPipelineOfflineCreateInfo) {
 
     EXPECT_TRUE(vpjGenerateSingleStructJson(generator_, &po_ci, &result_json, &msg_));
     CHECK_GEN();
-    EXPECT_TRUE(reformatJson(ref_json) == result_json);
+    EXPECT_TRUE(VerifyJson(result_json, ref_json));
 }
 
 TEST_F(Gen, ComputePipelineJSON) {
@@ -2205,7 +2178,7 @@ TEST_F(Gen, ComputePipelineJSON) {
     EXPECT_TRUE(vpjGeneratePipelineJson(generator_, &data, &result_json, &msg_));
     CHECK_GEN();
     EXPECT_TRUE(ValidatePipelineJson(std::string(result_json)));
-    EXPECT_TRUE(reformatJson(ref_json) == result_json);
+    EXPECT_TRUE(VerifyJson(result_json, ref_json));
 }
 
 TEST_F(Gen, GraphicsPipelineJSON) {
@@ -2849,7 +2822,7 @@ TEST_F(Gen, GraphicsPipelineJSON) {
     EXPECT_TRUE(vpjGeneratePipelineJson(generator_, &data, &result_json, &msg_));
     CHECK_GEN();
     EXPECT_TRUE(ValidatePipelineJson(std::string(result_json)));
-    EXPECT_TRUE(reformatJson(ref_json) == result_json);
+    EXPECT_TRUE(VerifyJson(result_json, ref_json));
 }
 
 TEST_F(Gen, ComputePipelineJSONWithMD5) {
@@ -3300,7 +3273,7 @@ TEST_F(Gen, ComputePipelineJSONWithMD5) {
     EXPECT_TRUE(vpjGeneratePipelineJson(generator_, &data, &result_json, &msg_));
     CHECK_GEN();
     EXPECT_TRUE(ValidatePipelineJson(std::string(result_json)));
-    EXPECT_TRUE(reformatJson(ref_json) == result_json);
+    EXPECT_TRUE(VerifyJson(result_json, ref_json));
 }
 
 TEST_F(Gen, GraphicsPipelineJSONWithMD5) {
@@ -3936,7 +3909,7 @@ TEST_F(Gen, GraphicsPipelineJSONWithMD5) {
     EXPECT_TRUE(vpjGeneratePipelineJson(generator_, &data, &result_json, &msg_));
     CHECK_GEN();
     EXPECT_TRUE(ValidatePipelineJson(std::string(result_json)));
-    EXPECT_TRUE(reformatJson(ref_json) == result_json);
+    EXPECT_TRUE(VerifyJson(result_json, ref_json));
 }
 
 TEST_F(Gen, ObjectNameRemapping) {
@@ -4303,7 +4276,7 @@ TEST_F(Gen, ObjectNameRemapping) {
     EXPECT_TRUE(vpjGeneratePipelineJson(generator_, &data, &result_json, &msg_));
     CHECK_GEN();
     EXPECT_TRUE(ValidatePipelineJson(std::string(result_json)));
-    EXPECT_TRUE(reformatJson(ref_json) == result_json);
+    EXPECT_TRUE(VerifyJson(result_json, ref_json));
 }
 
 TEST_F(Gen, ZeroShaderFilenamesCompute) {

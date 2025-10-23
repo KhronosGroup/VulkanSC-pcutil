@@ -100,3 +100,52 @@ bool JsonValidator::ValidateJsonFromFile(const std::string &json_file) {
 
     return ValidateJson(json_document);
 }
+
+bool ValidatePipelineJson(const std::string &json_str) {
+    JsonValidator json_validator;
+
+    const std::string schema_path = std::string(SCHEMA_PATH) + "vksc_pipeline_schema.json";
+
+    if (!json_validator.LoadAndValidateSchema(schema_path)) {
+        std::cout << "Failed to validate schema:\n" << json_validator.GetMessage() << std::endl;
+        return false;
+    }
+
+    Json::String err;
+    Json::Value json;
+    Json::CharReaderBuilder builder;
+    const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
+    if (!reader->parse(json_str.c_str(), json_str.c_str() + json_str.size() + 1, &json, &err)) {
+        std::cout << "Failed to parse JSON:\n " << json_str << "\n  Parse errors:\n" << err << std::endl;
+        return false;
+    }
+
+    if (!json_validator.ValidateJson(json)) {
+        std::cout << "Failed to validate JSON:\n"
+                  << json_str << "\n  Validation errors:\n"
+                  << json_validator.GetMessage() << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
+bool ValidatePipelineJsonFile(const char *pipeline_jsonfile) {
+    JsonValidator json_validator;
+
+    const std::string schema_path = std::string(SCHEMA_PATH) + "vksc_pipeline_schema.json";
+
+    if (!json_validator.LoadAndValidateSchema(schema_path)) {
+        std::cout << "Failed to validate schema:\n" << json_validator.GetMessage() << std::endl;
+        return false;
+    }
+
+    if (!json_validator.ValidateJsonFromFile(pipeline_jsonfile)) {
+        std::cout << "Failed to validate JSON:\n"
+                  << pipeline_jsonfile << "\n  Validation errors:\n"
+                  << json_validator.GetMessage() << std::endl;
+        return false;
+    }
+
+    return true;
+}

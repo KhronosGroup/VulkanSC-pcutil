@@ -46,36 +46,6 @@ class Parse : public testing::Test {
     const char* msg_;
 };
 
-bool ValidatePipelineJson(const std::string& json_str) {
-    JsonValidator json_validator;
-
-    const std::string schema_path = std::string(SCHEMA_PATH) + "vksc_pipeline_schema.json";
-
-    auto success = json_validator.LoadAndValidateSchema(schema_path);
-
-    if (!success) {
-        std::cout << json_validator.GetMessage() << std::endl;
-        return success;
-    }
-
-    Json::String err;
-    Json::Value json;
-    Json::CharReaderBuilder builder;
-    const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
-    if (!reader->parse(json_str.c_str(), json_str.c_str() + json_str.size() + 1, &json, &err)) {
-        std::cout << "error: " << err << std::endl;
-        return EXIT_FAILURE;
-    }
-    success = json_validator.ValidateJson(json);
-
-    if (!success) {
-        std::cout << json_validator.GetMessage() << std::endl;
-        return success;
-    }
-
-    return true;
-}
-
 TEST_F(Parse, BasicTypesVkBool32) {
     TEST_DESCRIPTION("Tests value equivalence of written and parsed VkBool32 values");
 

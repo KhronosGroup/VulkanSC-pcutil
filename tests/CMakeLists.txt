@@ -16,7 +16,7 @@ add_library(json_validator
 
 target_include_directories(json_validator PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(json_validator PUBLIC jsoncpp_static valijson)
-target_compile_definitions(json_validator INTERFACE SCHEMA_PATH="${SCHEMA_PATH}")
+target_compile_definitions(json_validator PRIVATE SCHEMA_PATH="${SCHEMA_PATH}")
 
 add_subdirectory(json)
 add_subdirectory(json_gen)

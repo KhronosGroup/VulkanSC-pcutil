@@ -8,6 +8,7 @@
  */
 
 #pragma once
+
 #include <json/json.h>
 #include <valijson/schema.hpp>
 #include <memory>
@@ -32,3 +33,6 @@ class JsonValidator {
     std::stringstream msg_stream;
     std::unique_ptr<valijson::Schema> schema;
 };
+
+bool ValidatePipelineJson(const std::string &json_str);
+bool ValidatePipelineJsonFile(const char *pipeline_jsonfile);

@@ -22,14 +22,14 @@
 
 class JSON : public testing::Test {
   public:
-    JSON() { clean_data_files(); }
+    JSON() { CleanDataFiles(); }
     JSON(const JSON&) = delete;
     JSON(JSON&&) = delete;
-    ~JSON() { clean_data_files(); }
+    ~JSON() { CleanDataFiles(); }
 
     void TEST_DESCRIPTION(const char* desc) { RecordProperty("description", desc); }
 
-    void write_ids(std::string& ref, size_t device_id, size_t pipeline_id) {
+    void WriteIds(std::string& ref, size_t device_id, size_t pipeline_id) {
         for (auto pos = ref.find('@', 0); pos != std::string::npos; pos = ref.find('@', pos)) {
             ref.replace(pos, 1, std::to_string(device_id));
         }
@@ -37,20 +37,24 @@ class JSON : public testing::Test {
             ref.replace(pos, 1, std::to_string(pipeline_id));
         }
     }
-    std::string remove_filenames(std::string str) {
+
+    std::string RemoveFilenames(std::string str) {
         return std::regex_replace(str, std::regex{R"=("filename" : "([^"]*)")="}, R"=("filename" : "")=");
     }
-    std::string zero_out_uuid(std::string str) {
+
+    std::string ZeroOutUUID(std::string str) {
         return std::regex_replace(str, std::regex{R"=("PipelineUUID"[^:]*:[^[]*\[[^\]]*\])="},
                                   R"=("PipelineUUID" : [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])=");
     }
-    std::string get_json(size_t device_id, size_t pipeline_id) {
+
+    std::string GetJson(size_t device_id, size_t pipeline_id) {
         std::filesystem::path json_path =
             std::string("./gltest_json_device_") + std::to_string(device_id) + "_pipeline_" + std::to_string(pipeline_id) + ".json";
         std::ifstream json_stream{json_path};
         return std::string(std::istreambuf_iterator<char>{json_stream}, std::istreambuf_iterator<char>{});
     }
-    std::vector<uint32_t> get_spirv(size_t device_id, size_t pipeline_id, const char* stage) {
+
+    std::vector<uint32_t> GetSpirv(size_t device_id, size_t pipeline_id, const char* stage) {
         std::filesystem::path spirv_path = std::string("./gltest_json_device_") + std::to_string(device_id) + "_pipeline_" +
                                            std::to_string(pipeline_id) + "." + stage + ".spv";
         auto spirv_size = std::filesystem::file_size(spirv_path);
@@ -61,7 +65,7 @@ class JSON : public testing::Test {
     }
 
   private:
-    void clean_data_files() {
+    void CleanDataFiles() {
         std::for_each(std::filesystem::directory_iterator{"."}, std::filesystem::directory_iterator{},
                       [](const std::filesystem::directory_entry& entry) {
                           if (std::regex_search(entry.path().generic_string(), std::regex{R"(gltest_json_)"})) {
@@ -71,37 +75,7 @@ class JSON : public testing::Test {
     }
 };
 
-bool ValidatePipelineJson(const std::string& json_str) {
-    JsonValidator json_validator;
-
-    const std::string schema_path = std::string(SCHEMA_PATH) + "vksc_pipeline_schema.json";
-
-    auto success = json_validator.LoadAndValidateSchema(schema_path);
-
-    if (!success) {
-        std::cout << json_validator.GetMessage() << std::endl;
-        return success;
-    }
-
-    Json::String err;
-    Json::Value json;
-    Json::CharReaderBuilder builder;
-    const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
-    if (!reader->parse(json_str.c_str(), json_str.c_str() + json_str.size() + 1, &json, &err)) {
-        std::cout << "error: " << err << std::endl;
-        return EXIT_FAILURE;
-    }
-    success = json_validator.ValidateJson(json);
-
-    if (!success) {
-        std::cout << json_validator.GetMessage() << std::endl;
-        return success;
-    }
-
-    return true;
-}
-
-inline size_t device_counter = 0;
+static size_t device_counter = 0;
 
 TEST_F(JSON, ComputeSimple) {
     TEST_DESCRIPTION("Tests whether generated pipeline JSON for a minimal compute pipeline is as expected");
@@ -152,8 +126,8 @@ TEST_F(JSON, ComputeSimple) {
 
     size_t pipeline_id = 3;
 
-    auto result_json = get_json(device_counter, pipeline_id);
-    auto result_spirv = get_spirv(device_counter, pipeline_id, "compute");
+    auto result_json = GetJson(device_counter, pipeline_id);
+    auto result_spirv = GetSpirv(device_counter, pipeline_id, "compute");
     EXPECT_TRUE(ValidatePipelineJson(std::string(result_json)));
 
     std::string ref_json = {R"({
@@ -280,7 +254,7 @@ TEST_F(JSON, ComputeSimple) {
 		73
 	]
 })"};
-    write_ids(ref_json, device_counter, pipeline_id);
+    WriteIds(ref_json, device_counter, pipeline_id);
 
     auto spirv_words_match = std::equal(result_spirv.begin(), result_spirv.end(), ref_spirv.begin(), ref_spirv.end());
     EXPECT_TRUE(spirv_words_match);
@@ -344,10 +318,10 @@ TEST_F(JSON, ComputeMultiPipeline) {
     size_t pipeline_id1 = 3;
     size_t pipeline_id2 = 4;
 
-    auto result_json1 = zero_out_uuid(get_json(device_counter, pipeline_id1));
-    auto result_json2 = zero_out_uuid(get_json(device_counter, pipeline_id2));
-    auto result_spirv1 = get_spirv(device_counter, pipeline_id1, "compute");
-    auto result_spirv2 = get_spirv(device_counter, pipeline_id2, "compute");
+    auto result_json1 = ZeroOutUUID(GetJson(device_counter, pipeline_id1));
+    auto result_json2 = ZeroOutUUID(GetJson(device_counter, pipeline_id2));
+    auto result_spirv1 = GetSpirv(device_counter, pipeline_id1, "compute");
+    auto result_spirv2 = GetSpirv(device_counter, pipeline_id2, "compute");
     EXPECT_TRUE(ValidatePipelineJson(std::string(result_json1)));
     EXPECT_TRUE(ValidatePipelineJson(std::string(result_json2)));
 
@@ -459,8 +433,8 @@ TEST_F(JSON, ComputeMultiPipeline) {
 })"};
     std::string ref_json2 = ref_json1;
     ref_json2.replace(ref_json2.find("main1"), strlen("main1"), "main2");
-    write_ids(ref_json1, device_counter, pipeline_id1);
-    write_ids(ref_json2, device_counter, pipeline_id2);
+    WriteIds(ref_json1, device_counter, pipeline_id1);
+    WriteIds(ref_json2, device_counter, pipeline_id2);
 
     auto spirv_words_match1 = std::equal(result_spirv1.begin(), result_spirv1.end(), ref_spirv.begin(), ref_spirv.end());
     auto spirv_words_match2 = std::equal(result_spirv2.begin(), result_spirv2.end(), ref_spirv.begin(), ref_spirv.end());
@@ -558,8 +532,8 @@ TEST_F(JSON, ComputeLifetime) {
 
     size_t pipeline1_id = 5;
 
-    auto result_json = get_json(device_counter, pipeline1_id);
-    auto result_spirv = get_spirv(device_counter, pipeline1_id, "compute");
+    auto result_json = GetJson(device_counter, pipeline1_id);
+    auto result_spirv = GetSpirv(device_counter, pipeline1_id, "compute");
     EXPECT_TRUE(ValidatePipelineJson(std::string(result_json)));
 
     std::string ref_json = {R"({
@@ -769,7 +743,7 @@ TEST_F(JSON, ComputeLifetime) {
 		57
 	]
 })"};
-    write_ids(ref_json, device_counter, pipeline1_id);
+    WriteIds(ref_json, device_counter, pipeline1_id);
 
     auto spirv_words_match = std::equal(result_spirv.begin(), result_spirv.end(), ref_spirv.begin(), ref_spirv.end());
     EXPECT_TRUE(spirv_words_match);
@@ -865,12 +839,12 @@ TEST_F(JSON, ComputeReproducible) {
     size_t pipeline2_id = 5;
     size_t pipeline3_id = 10;
 
-    auto json1 = remove_filenames(get_json(device1_id, pipeline1_id));
-    auto json2 = remove_filenames(get_json(device2_id, pipeline2_id));
-    auto json3 = remove_filenames(get_json(device3_id, pipeline3_id));
-    auto spirv1 = get_spirv(device1_id, pipeline1_id, "compute");
-    auto spirv2 = get_spirv(device2_id, pipeline2_id, "compute");
-    auto spirv3 = get_spirv(device3_id, pipeline3_id, "compute");
+    auto json1 = RemoveFilenames(GetJson(device1_id, pipeline1_id));
+    auto json2 = RemoveFilenames(GetJson(device2_id, pipeline2_id));
+    auto json3 = RemoveFilenames(GetJson(device3_id, pipeline3_id));
+    auto spirv1 = GetSpirv(device1_id, pipeline1_id, "compute");
+    auto spirv2 = GetSpirv(device2_id, pipeline2_id, "compute");
+    auto spirv3 = GetSpirv(device3_id, pipeline3_id, "compute");
 
     EXPECT_EQ(json1, json2);
     EXPECT_EQ(json2, json3);
@@ -1030,8 +1004,8 @@ TEST_F(JSON, ComputeComplex) {
 
     size_t pipeline_id = 9;
 
-    auto result_json = get_json(device_counter, pipeline_id);
-    auto result_spirv = get_spirv(device_counter, pipeline_id, "compute");
+    auto result_json = GetJson(device_counter, pipeline_id);
+    auto result_spirv = GetSpirv(device_counter, pipeline_id, "compute");
     EXPECT_TRUE(ValidatePipelineJson(std::string(result_json)));
 
     std::string ref_json = {R"({
@@ -1357,7 +1331,7 @@ TEST_F(JSON, ComputeComplex) {
 		144
 	]
 })"};
-    write_ids(ref_json, device_counter, pipeline_id);
+    WriteIds(ref_json, device_counter, pipeline_id);
 
     auto spirv_words_match = std::equal(result_spirv.begin(), result_spirv.end(), ref_spirv.begin(), ref_spirv.end());
     EXPECT_TRUE(spirv_words_match);
@@ -1420,8 +1394,8 @@ TEST_F(JSON, GraphicsSimple) {
 
     size_t pipeline_id = 3;
 
-    auto result_json = get_json(device_counter, pipeline_id);
-    auto result_spirv = get_spirv(device_counter, pipeline_id, "frag");
+    auto result_json = GetJson(device_counter, pipeline_id);
+    auto result_spirv = GetSpirv(device_counter, pipeline_id, "frag");
     EXPECT_TRUE(ValidatePipelineJson(std::string(result_json)));
 
     std::string ref_json = {R"({
@@ -1574,7 +1548,7 @@ TEST_F(JSON, GraphicsSimple) {
 		207
 	]
 })"};
-    write_ids(ref_json, device_counter, pipeline_id);
+    WriteIds(ref_json, device_counter, pipeline_id);
 
     auto spirv_words_match = std::equal(result_spirv.begin(), result_spirv.end(), ref_spirv.begin(), ref_spirv.end());
     EXPECT_TRUE(spirv_words_match);
@@ -1648,10 +1622,10 @@ TEST_F(JSON, GraphicsMultiPipeline) {
     size_t pipeline_id1 = 3;
     size_t pipeline_id2 = 4;
 
-    auto result_json1 = zero_out_uuid(get_json(device_counter, pipeline_id1));
-    auto result_json2 = zero_out_uuid(get_json(device_counter, pipeline_id2));
-    auto result_spirv1 = get_spirv(device_counter, pipeline_id1, "frag");
-    auto result_spirv2 = get_spirv(device_counter, pipeline_id2, "frag");
+    auto result_json1 = ZeroOutUUID(GetJson(device_counter, pipeline_id1));
+    auto result_json2 = ZeroOutUUID(GetJson(device_counter, pipeline_id2));
+    auto result_spirv1 = GetSpirv(device_counter, pipeline_id1, "frag");
+    auto result_spirv2 = GetSpirv(device_counter, pipeline_id2, "frag");
     EXPECT_TRUE(ValidatePipelineJson(std::string(result_json1)));
     EXPECT_TRUE(ValidatePipelineJson(std::string(result_json2)));
 
@@ -1789,8 +1763,8 @@ TEST_F(JSON, GraphicsMultiPipeline) {
 })"};
     std::string ref_json2 = ref_json1;
     ref_json2.replace(ref_json2.find("main1"), strlen("main1"), "main2");
-    write_ids(ref_json1, device_counter, pipeline_id1);
-    write_ids(ref_json2, device_counter, pipeline_id2);
+    WriteIds(ref_json1, device_counter, pipeline_id1);
+    WriteIds(ref_json2, device_counter, pipeline_id2);
 
     auto spirv_words_match1 = std::equal(result_spirv1.begin(), result_spirv1.end(), ref_spirv.begin(), ref_spirv.end());
     auto spirv_words_match2 = std::equal(result_spirv2.begin(), result_spirv2.end(), ref_spirv.begin(), ref_spirv.end());
@@ -1900,8 +1874,8 @@ TEST_F(JSON, GraphicsLifetime) {
 
     size_t pipeline_id = 5;
 
-    auto result_json = get_json(device_counter, pipeline_id);
-    auto result_spirv = get_spirv(device_counter, pipeline_id, "frag");
+    auto result_json = GetJson(device_counter, pipeline_id);
+    auto result_spirv = GetSpirv(device_counter, pipeline_id, "frag");
     EXPECT_TRUE(ValidatePipelineJson(std::string(result_json)));
 
     std::string ref_json = {R"({
@@ -2137,7 +2111,7 @@ TEST_F(JSON, GraphicsLifetime) {
 		88
 	]
 })"};
-    write_ids(ref_json, device_counter, pipeline_id);
+    WriteIds(ref_json, device_counter, pipeline_id);
 
     auto spirv_words_match = std::equal(result_spirv.begin(), result_spirv.end(), ref_spirv.begin(), ref_spirv.end());
     EXPECT_TRUE(spirv_words_match);
@@ -2392,9 +2366,9 @@ TEST_F(JSON, GraphicsComplex) {
 
     size_t pipeline_id = 9;
 
-    auto result_json = get_json(device_counter, pipeline_id);
-    auto result_vert_spirv = get_spirv(device_counter, pipeline_id, "vert");
-    auto result_frag_spirv = get_spirv(device_counter, pipeline_id, "frag");
+    auto result_json = GetJson(device_counter, pipeline_id);
+    auto result_vert_spirv = GetSpirv(device_counter, pipeline_id, "vert");
+    auto result_frag_spirv = GetSpirv(device_counter, pipeline_id, "frag");
     EXPECT_TRUE(ValidatePipelineJson(std::string(result_json)));
 
     std::string ref_json = {R"({
@@ -2880,7 +2854,7 @@ TEST_F(JSON, GraphicsComplex) {
 		188
 	]
 })"};
-    write_ids(ref_json, device_counter, pipeline_id);
+    WriteIds(ref_json, device_counter, pipeline_id);
 
     auto vert_spirv_words_match =
         std::equal(result_vert_spirv.begin(), result_vert_spirv.end(), ref_spirv.begin(), ref_spirv.end());

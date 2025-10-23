@@ -773,9 +773,7 @@ TEST_F(JSON, ComputeReproducible) {
     vkEnumeratePhysicalDevices(instance, &phys_dev_count, phys_devs.data());
 
     auto device_ci = std::make_unique<VkDeviceCreateInfo>(vku::InitStructHelper());
-    VkDevice device1, device2;
-    vkCreateDevice(phys_devs[0], device_ci.get(), nullptr, &device1);
-    vkCreateDevice(phys_devs[0], device_ci.get(), nullptr, &device2);
+    VkDevice device;
 
     auto create_pipeline = [](VkDevice device) {
         auto shader_module_ci = std::make_unique<VkShaderModuleCreateInfo>(vku::InitStructHelper());
@@ -835,22 +833,32 @@ TEST_F(JSON, ComputeReproducible) {
         return pipeline;
     };
 
-    auto pipeline1 = create_pipeline(device1);
-    auto pipeline2 = create_pipeline(device2);
-    auto pipeline3 = create_pipeline(device2);
+    vkCreateDevice(phys_devs[0], device_ci.get(), nullptr, &device);
 
-    vkDestroyPipeline(device1, pipeline1, nullptr);
-    vkDestroyPipeline(device2, pipeline2, nullptr);
-    vkDestroyPipeline(device2, pipeline3, nullptr);
+    auto pipeline1 = create_pipeline(device);
 
     size_t pipeline1_id = 5;
+
+    vkDestroyPipeline(device, pipeline1, nullptr);
+    vkDestroyDevice(device, nullptr);
+
+    auto json1 = RemoveFilenames(GetJson(pipeline1_id));
+    auto spirv1 = GetSpirv(pipeline1_id, "compute");
+
+    vkCreateDevice(phys_devs[0], device_ci.get(), nullptr, &device);
+
+    auto pipeline2 = create_pipeline(device);
+    auto pipeline3 = create_pipeline(device);
+
     size_t pipeline2_id = 5;
     size_t pipeline3_id = 10;
 
-    auto json1 = RemoveFilenames(GetJson(pipeline1_id));
+    vkDestroyPipeline(device, pipeline2, nullptr);
+    vkDestroyPipeline(device, pipeline3, nullptr);
+    vkDestroyDevice(device, nullptr);
+
     auto json2 = RemoveFilenames(GetJson(pipeline2_id));
     auto json3 = RemoveFilenames(GetJson(pipeline3_id));
-    auto spirv1 = GetSpirv(pipeline1_id, "compute");
     auto spirv2 = GetSpirv(pipeline2_id, "compute");
     auto spirv3 = GetSpirv(pipeline3_id, "compute");
 

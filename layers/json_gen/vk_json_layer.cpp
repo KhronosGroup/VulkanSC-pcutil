@@ -313,7 +313,7 @@ VKAPI_ATTR VkResult VKAPI_CALL EnumerateDeviceExtensionProperties(VkPhysicalDevi
 
 #define INIT_HOOK(_vt, _inst, fn) _vt.fn = reinterpret_cast<PFN_vk##fn>(vtable.GetInstanceProcAddr(_inst, "vk" #fn))
 InstanceData::InstanceData(VkInstance inst, PFN_vkGetInstanceProcAddr gpa, const VkAllocationCallbacks* alloc)
-    : instance{inst}, allocator{alloc}, physical_device_map{}, unique_obj_id_counter{0} {
+    : instance(inst), allocator(alloc) {
     vtable.GetInstanceProcAddr = gpa;
     INIT_HOOK(vtable, instance, CreateInstance);
     INIT_HOOK(vtable, instance, DestroyInstance);
@@ -354,22 +354,17 @@ DeviceData::DeviceData(VkDevice device, const VkDeviceCreateInfo* ci, PFN_vkGetD
                        const VkAllocationCallbacks* alloc, InstanceData& instance_data)
     : device(device),
       create_info(ci),
-      vtable{gpa},
+      vtable(),
       allocator(alloc),
-      ycbcr_map{},
-      sampler_map{},
-      descriptor_set_layout_map{},
-      pipeline_layout_map{},
-      shader_module_map{},
-      graphics_pipeline_map{},
-      compute_pipeline_map{},
-      renderpass_map{},
-      renderpass2_map{},
-      obj_res_info{},
-      unique_obj_id_counter{0},
-      unique_obj_id{instance_data.unique_obj_id_counter++},
-      base_dir_path{getBaseDirectoryPath()},
-      process_name{getProcessName()} {
+      unique_obj_id(instance_data.unique_obj_id_counter++),
+      base_dir_path(getBaseDirectoryPath()),
+      file_prefix(getProcessName()) {
+    if (unique_obj_id != 0) {
+        LOG("[%s] WARNING: Second logical device is created, outputs for previous logical device may be overwritten.",
+            VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
+    }
+
+    vtable.GetDeviceProcAddr = gpa;
     INIT_HOOK(vtable, device, DestroyDevice);
     INIT_HOOK(vtable, device, CreateSemaphore);
     INIT_HOOK(vtable, device, DestroySemaphore);
@@ -425,11 +420,11 @@ DeviceData::~DeviceData() { writeDeviceObjResHeader(); }
 
 void DeviceData::writeDeviceObjResHeader() {
     std::stringstream result;
-    auto header_path = base_dir_path + process_name + "_objectResInfo.hpp";
+    auto header_path = base_dir_path + file_prefix + "_objectResInfo.hpp";
     // clang-format off
     result <<
-        "#ifndef " << process_name << "_objectResInfo_HPP\n" <<
-        "#define " << process_name << "_objectResInfo_HPP\n\n" <<
+        "#ifndef " << file_prefix << "_objectResInfo_HPP\n" <<
+        "#define " << file_prefix << "_objectResInfo_HPP\n\n" <<
         "#include <vulkan/vulkan_sc_core.h>\n\n" <<
         "static VkDeviceObjectReservationCreateInfo g_objectResCreateInfo{};\n" <<
         "static void SetObjectResCreateInfo()\n" <<
@@ -508,10 +503,10 @@ DeviceFeatures::DeviceFeatures(const VkDeviceCreateInfo* create_info) : DeviceFe
 }
 
 YcbcrData::YcbcrData(const VkSamplerYcbcrConversionCreateInfo* ci, DeviceData& device_data)
-    : create_info{ci}, unique_obj_id{++device_data.unique_obj_id_counter} {}
+    : create_info(ci), unique_obj_id(++device_data.unique_obj_id_counter) {}
 
 SamplerData::SamplerData(const VkSamplerCreateInfo* ci, DeviceData& device_data)
-    : create_info{ci}, ycbcr_data{}, unique_obj_id{++device_data.unique_obj_id_counter} {
+    : create_info(ci), unique_obj_id(++device_data.unique_obj_id_counter) {
     auto ycbcr = vku::FindStructInPNextChain<VkSamplerYcbcrConversionInfo>(create_info.ptr());
     if (ycbcr) {
         if (auto result = device_data.ycbcr_map.find(ycbcr->conversion); result->first) {
@@ -527,7 +522,7 @@ SamplerData::SamplerData(const VkSamplerCreateInfo* ci, DeviceData& device_data)
 }
 
 DescriptorSetLayoutData::DescriptorSetLayoutData(const VkDescriptorSetLayoutCreateInfo* ci, DeviceData& device_data)
-    : create_info{ci}, immutable_sampler_data{}, unique_obj_id{++device_data.unique_obj_id_counter} {
+    : create_info(ci), unique_obj_id(++device_data.unique_obj_id_counter) {
     for (uint32_t i = 0; i < create_info.bindingCount; ++i) {
         if ((create_info.pBindings[i].descriptorType == VK_DESCRIPTOR_TYPE_SAMPLER ||
              create_info.pBindings[i].descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) &&
@@ -549,7 +544,7 @@ DescriptorSetLayoutData::DescriptorSetLayoutData(const VkDescriptorSetLayoutCrea
 }
 
 PipelineLayoutData::PipelineLayoutData(const VkPipelineLayoutCreateInfo* ci, DeviceData& device_data)
-    : create_info{ci}, descriptor_set_layout_data{}, unique_obj_id{++device_data.unique_obj_id_counter} {
+    : create_info(ci), unique_obj_id(++device_data.unique_obj_id_counter) {
     descriptor_set_layout_data.reserve(create_info.setLayoutCount);
     for (uint32_t i = 0; i < create_info.setLayoutCount; ++i) {
         if (auto result = device_data.descriptor_set_layout_map.find(create_info.pSetLayouts[i]); result->first) {
@@ -573,11 +568,7 @@ RenderPass2Data::RenderPass2Data(const VkRenderPassCreateInfo2* ci) : create_inf
 ImageViewData::ImageViewData(const VkImageViewCreateInfo* ci) : create_info(ci) {}
 
 GraphicsPipelineData::GraphicsPipelineData(const VkGraphicsPipelineCreateInfo* ci, DeviceData& device_data)
-    : create_info{ci, true, true},
-      pipeline_layout_data{},
-      renderpass_data{},
-      shader_module_data{},
-      unique_obj_id{++device_data.unique_obj_id_counter} {
+    : create_info(ci, true, true), unique_obj_id(++device_data.unique_obj_id_counter) {
     if (auto result = device_data.pipeline_layout_map.find(create_info.layout); result->first) {
         // Save pipeline layout
         pipeline_layout_data = *result->second;
@@ -610,7 +601,7 @@ GraphicsPipelineData::GraphicsPipelineData(const VkGraphicsPipelineCreateInfo* c
 }
 
 ComputePipelineData::ComputePipelineData(const VkComputePipelineCreateInfo* ci, DeviceData& device_data)
-    : create_info{ci}, pipeline_layout_data{}, shader_module_data{}, unique_obj_id{++device_data.unique_obj_id_counter} {
+    : create_info(ci), unique_obj_id(++device_data.unique_obj_id_counter) {
     if (auto result = device_data.pipeline_layout_map.find(create_info.layout); result->first) {
         // Save pipeline layout
         pipeline_layout_data = *result->second;
@@ -1254,7 +1245,7 @@ void GraphicsPipelineData::GenJsonUuidAndWriteToDisk(DeviceData& device_data) {
     PipelineLayoutAndChildObjectInfo object_info(data.graphicsPipelineState, pipeline_layout_data);
 
     // Shaders
-    auto shader_filenames = GetShaderFiles(*create_info.ptr(), device_data.process_name, unique_obj_id);
+    auto shader_filenames = GetShaderFiles(*create_info.ptr(), device_data.file_prefix, unique_obj_id);
     for (size_t i = 0; i < shader_module_data.size(); ++i) {
         auto& shader_ci = shader_module_data[i].create_info;
         auto shader_path = device_data.base_dir_path + shader_filenames.filenames[i].pFilename;
@@ -1285,7 +1276,7 @@ void GraphicsPipelineData::GenJsonUuidAndWriteToDisk(DeviceData& device_data) {
     }
 
     auto pipeline_path =
-        device_data.base_dir_path + device_data.process_name + "_pipeline_" + std::to_string(unique_obj_id) + ".json";
+        device_data.base_dir_path + device_data.file_prefix + "_pipeline_" + std::to_string(unique_obj_id) + ".json";
     std::ofstream pipeline_file(pipeline_path);
     if (pipeline_file) {
         pipeline_file << result_json;
@@ -1307,7 +1298,7 @@ void ComputePipelineData::GenJsonUuidAndWriteToDisk(DeviceData& device_data) {
     PipelineLayoutAndChildObjectInfo object_info(data.computePipelineState, pipeline_layout_data);
 
     // Shaders
-    auto shader_filename = GetShaderFiles(*create_info.ptr(), device_data.process_name, unique_obj_id);
+    auto shader_filename = GetShaderFiles(*create_info.ptr(), device_data.file_prefix, unique_obj_id);
     auto shader_ci = shader_module_data.create_info;
     auto shader_path = device_data.base_dir_path + shader_filename.filenames[0].pFilename;
     std::ofstream spv_file(shader_path, std::ios::binary);
@@ -1336,7 +1327,7 @@ void ComputePipelineData::GenJsonUuidAndWriteToDisk(DeviceData& device_data) {
     }
 
     auto pipeline_path =
-        device_data.base_dir_path + device_data.process_name + "_pipeline_" + std::to_string(unique_obj_id) + ".json";
+        device_data.base_dir_path + device_data.file_prefix + "_pipeline_" + std::to_string(unique_obj_id) + ".json";
     std::ofstream pipeline_file(pipeline_path);
     if (pipeline_file) {
         pipeline_file << result_json;

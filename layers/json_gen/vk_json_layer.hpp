@@ -55,7 +55,7 @@ struct SamplerData {
     SamplerData() = default;
 
     vku::safe_VkSamplerCreateInfo create_info;
-    std::optional<YcbcrData> ycbcr_data;
+    std::optional<YcbcrData> ycbcr_data{};
     std::uintptr_t unique_obj_id;
 };
 
@@ -64,7 +64,7 @@ struct DescriptorSetLayoutData {
     DescriptorSetLayoutData() = default;
 
     vku::safe_VkDescriptorSetLayoutCreateInfo create_info;
-    std::vector<SamplerData> immutable_sampler_data;
+    std::vector<SamplerData> immutable_sampler_data{};
     std::uintptr_t unique_obj_id;
 };
 
@@ -73,7 +73,7 @@ struct PipelineLayoutData {
     PipelineLayoutData() = default;
 
     vku::safe_VkPipelineLayoutCreateInfo create_info;
-    std::vector<DescriptorSetLayoutData> descriptor_set_layout_data;
+    std::vector<DescriptorSetLayoutData> descriptor_set_layout_data{};
     std::uintptr_t unique_obj_id;
 };
 
@@ -110,10 +110,10 @@ struct GraphicsPipelineData {
     GraphicsPipelineData() = default;
 
     vku::safe_VkGraphicsPipelineCreateInfo create_info;
-    PipelineLayoutData pipeline_layout_data;
-    std::variant<RenderPassData, RenderPass2Data> renderpass_data;
-    std::vector<ShaderModuleData> shader_module_data;
-    std::array<uint8_t, VK_UUID_SIZE> uuid;
+    PipelineLayoutData pipeline_layout_data{};
+    std::variant<RenderPassData, RenderPass2Data> renderpass_data{};
+    std::vector<ShaderModuleData> shader_module_data{};
+    std::array<uint8_t, VK_UUID_SIZE> uuid{};
     std::uintptr_t unique_obj_id;
 
     void GenJsonUuidAndWriteToDisk(DeviceData& device_data);
@@ -124,9 +124,9 @@ struct ComputePipelineData {
     ComputePipelineData() = default;
 
     vku::safe_VkComputePipelineCreateInfo create_info;
-    PipelineLayoutData pipeline_layout_data;
-    ShaderModuleData shader_module_data;
-    std::array<uint8_t, VK_UUID_SIZE> uuid;
+    PipelineLayoutData pipeline_layout_data{};
+    ShaderModuleData shader_module_data{};
+    std::array<uint8_t, VK_UUID_SIZE> uuid{};
     std::uintptr_t unique_obj_id;
 
     void GenJsonUuidAndWriteToDisk(DeviceData& device_data);
@@ -206,9 +206,9 @@ struct InstanceData {
         DECLARE_HOOK(GetPhysicalDeviceProperties);
     } vtable;
 
-    vku::concurrent::unordered_map<VkPhysicalDevice, std::shared_ptr<PhysicalDeviceData>> physical_device_map;
+    vku::concurrent::unordered_map<VkPhysicalDevice, std::shared_ptr<PhysicalDeviceData>> physical_device_map{};
 
-    std::atomic<std::uintptr_t> unique_obj_id_counter;
+    std::atomic<std::uintptr_t> unique_obj_id_counter{0};
 };
 
 struct DeviceData {
@@ -277,23 +277,23 @@ struct DeviceData {
     } vtable;
     const VkAllocationCallbacks* allocator;
 
-    vku::concurrent::unordered_map<VkSamplerYcbcrConversion, std::shared_ptr<YcbcrData>> ycbcr_map;
-    vku::concurrent::unordered_map<VkSampler, std::shared_ptr<SamplerData>> sampler_map;
-    vku::concurrent::unordered_map<VkDescriptorSetLayout, std::shared_ptr<DescriptorSetLayoutData>> descriptor_set_layout_map;
-    vku::concurrent::unordered_map<VkPipelineLayout, std::shared_ptr<PipelineLayoutData>> pipeline_layout_map;
-    vku::concurrent::unordered_map<VkShaderModule, std::shared_ptr<ShaderModuleData>> shader_module_map;
-    vku::concurrent::unordered_map<VkPipeline, std::shared_ptr<GraphicsPipelineData>> graphics_pipeline_map;
-    vku::concurrent::unordered_map<VkPipeline, std::shared_ptr<ComputePipelineData>> compute_pipeline_map;
-    vku::concurrent::unordered_map<VkRenderPass, std::shared_ptr<RenderPassData>> renderpass_map;
-    vku::concurrent::unordered_map<VkRenderPass, std::shared_ptr<RenderPass2Data>> renderpass2_map;
-    vku::concurrent::unordered_map<VkImageView, std::shared_ptr<ImageViewData>> image_view_map;
-    ObjectResCreateInfo obj_res_info;
+    vku::concurrent::unordered_map<VkSamplerYcbcrConversion, std::shared_ptr<YcbcrData>> ycbcr_map{};
+    vku::concurrent::unordered_map<VkSampler, std::shared_ptr<SamplerData>> sampler_map{};
+    vku::concurrent::unordered_map<VkDescriptorSetLayout, std::shared_ptr<DescriptorSetLayoutData>> descriptor_set_layout_map{};
+    vku::concurrent::unordered_map<VkPipelineLayout, std::shared_ptr<PipelineLayoutData>> pipeline_layout_map{};
+    vku::concurrent::unordered_map<VkShaderModule, std::shared_ptr<ShaderModuleData>> shader_module_map{};
+    vku::concurrent::unordered_map<VkPipeline, std::shared_ptr<GraphicsPipelineData>> graphics_pipeline_map{};
+    vku::concurrent::unordered_map<VkPipeline, std::shared_ptr<ComputePipelineData>> compute_pipeline_map{};
+    vku::concurrent::unordered_map<VkRenderPass, std::shared_ptr<RenderPassData>> renderpass_map{};
+    vku::concurrent::unordered_map<VkRenderPass, std::shared_ptr<RenderPass2Data>> renderpass2_map{};
+    vku::concurrent::unordered_map<VkImageView, std::shared_ptr<ImageViewData>> image_view_map{};
+    ObjectResCreateInfo obj_res_info{};
 
-    std::atomic<std::uintptr_t> unique_obj_id_counter;
+    std::atomic<std::uintptr_t> unique_obj_id_counter{0};
     uintptr_t unique_obj_id;
 
     std::string base_dir_path;
-    std::string process_name;
+    std::string file_prefix;
 
     void writeDeviceObjResHeader();
 };

@@ -149,3 +149,25 @@ bool ValidatePipelineJsonFile(const char *pipeline_jsonfile) {
 
     return true;
 }
+
+bool CompareJson(const std::string &actual, const std::string &reference) {
+    Json::Value json{};
+
+    Json::CharReaderBuilder charReaderBuilder{};
+    std::unique_ptr<Json::CharReader> reader(charReaderBuilder.newCharReader());
+    Json::String json_errors{};
+    if (!reader->parse(reference.c_str(), reference.c_str() + reference.size(), &json, &json_errors)) {
+        std::cout << "Failed to parse reference JSON:\n" << reference << "\n  Parse error:\n" << json_errors;
+        return false;
+    }
+
+    Json::StreamWriterBuilder streamWriterBuilder{};
+    auto formatted_ref = Json::writeString(streamWriterBuilder, json);
+
+    if (formatted_ref != actual) {
+        std::cout << "Generated JSON mismatch:\n  Reference:\n" << formatted_ref << "\n  Actual:\n" << actual;
+        return false;
+    }
+
+    return true;
+}

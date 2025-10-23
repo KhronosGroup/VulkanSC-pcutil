@@ -15,25 +15,25 @@
 #include "vk_common.h"
 
 #include <vulkan/vk_layer.h>
+#include <vulkan/layer/vk_layer_settings.hpp>
 
 #include <vulkan/utility/vk_concurrent_unordered_map.hpp>
 #include <vulkan/utility/vk_struct_helper.hpp>
 #include <vulkan/utility/vk_safe_struct.hpp>
 
-#include <new>            // std::bad_alloc
-#include <memory>         // std::shared_ptr
-#include <vector>         // std::vector
-#include <string>         // std::string, std::size
-#include <cstring>        // std::strncmp, std::memcpy
-#include <unordered_map>  // std::unordered_map
-#include <iostream>       // std::cout
-#include <numeric>        // std::accumulate
-#include <fstream>        // std::ofstream
-#include <sstream>        // std::stringstream
+#include <memory>
+#include <vector>
+#include <string>
+#include <string.h>
+#include <unordered_map>
+#include <iostream>
+#include <numeric>
+#include <fstream>
+#include <sstream>
 
 namespace vk_json {
 
-const char* stage_bit_to_string(const VkShaderStageFlagBits stage, VkGraphicsPipelineCreateInfo) {
+static const char* StageBitToString(const VkShaderStageFlagBits stage, VkGraphicsPipelineCreateInfo) {
     switch (stage) {
         case VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT:
             return "vert";
@@ -56,7 +56,7 @@ const char* stage_bit_to_string(const VkShaderStageFlagBits stage, VkGraphicsPip
     }
 };
 
-const char* stage_bit_to_string(const VkShaderStageFlagBits stage, VkComputePipelineCreateInfo) {
+static const char* StageBitToString(const VkShaderStageFlagBits stage, VkComputePipelineCreateInfo) {
     switch (stage) {
         case VkShaderStageFlagBits::VK_SHADER_STAGE_COMPUTE_BIT:
             return "compute";
@@ -72,11 +72,10 @@ struct OwningVpjShaderFilenames {
     std::vector<VpjShaderFileName> filenames;
 };
 
-OwningVpjShaderFilenames get_shader_filenames(const VkGraphicsPipelineCreateInfo& ci, const std::string& prefix,
-                                              const uint32_t device_index, const uint32_t pipeline_index) {
+static OwningVpjShaderFilenames GetShaderFiles(const VkGraphicsPipelineCreateInfo& ci, const std::string& prefix,
+                                               const uintptr_t pipeline_index) {
     const auto shader_filename = [&](const VkPipelineShaderStageCreateInfo& pss_ci) -> std::string {
-        return prefix + "_device_" + std::to_string(device_index) + "_pipeline_" + std::to_string(pipeline_index) + '.' +
-               stage_bit_to_string(pss_ci.stage, ci) + ".spv";
+        return prefix + "_pipeline_" + std::to_string(pipeline_index) + '.' + StageBitToString(pss_ci.stage, ci) + ".spv";
     };
     const auto filename_accumulator = [&](OwningVpjShaderFilenames& acc,
                                           const VkPipelineShaderStageCreateInfo& pss_ci) -> OwningVpjShaderFilenames& {
@@ -87,16 +86,125 @@ OwningVpjShaderFilenames get_shader_filenames(const VkGraphicsPipelineCreateInfo
     return std::accumulate(ci.pStages, ci.pStages + ci.stageCount, OwningVpjShaderFilenames{}, filename_accumulator);
 };
 
-OwningVpjShaderFilenames get_shader_filenames(const VkComputePipelineCreateInfo& ci, const std::string& prefix,
-                                              const uint32_t device_index, const uint32_t pipeline_index) {
+static OwningVpjShaderFilenames GetShaderFiles(const VkComputePipelineCreateInfo& ci, const std::string& prefix,
+                                               const uintptr_t pipeline_index) {
     const auto shader_filename = [&](const VkPipelineShaderStageCreateInfo& pss_ci) -> std::string {
-        return prefix + "_device_" + std::to_string(device_index) + "_pipeline_" + std::to_string(pipeline_index) + '.' +
-               stage_bit_to_string(pss_ci.stage, ci) + ".spv";
+        return prefix + "_pipeline_" + std::to_string(pipeline_index) + '.' + StageBitToString(pss_ci.stage, ci) + ".spv";
     };
     OwningVpjShaderFilenames res;
     res.storage.emplace_back(shader_filename(ci.stage));
     res.filenames.push_back(VpjShaderFileName{static_cast<int32_t>(ci.stage.stage), res.storage.back().c_str()});
     return res;
+};
+
+// Helper class to remap and store object names
+template <typename T>
+struct PipelineLayoutAndChildObjectInfo {
+    // Descriptor set layouts, immutable samplers, ycbcr samplers
+    std::vector<vku::safe_VkDescriptorSetLayoutCreateInfo> descriptor_set_layouts{};
+    std::vector<vku::safe_VkSamplerCreateInfo> immutable_samplers{};
+    std::vector<vku::safe_VkSamplerYcbcrConversionCreateInfo> ycbcr_samplers{};
+    std::vector<std::string> names_storage{};
+    std::vector<const char*> descriptor_set_layout_names{};
+    std::vector<uintptr_t> descriptor_set_layout_ids{};
+    std::vector<const char*> immutable_sampler_names{};
+    std::vector<uintptr_t> immutable_sampler_ids{};
+    std::vector<const char*> ycbcr_sampler_names{};
+    std::vector<uintptr_t> ycbcr_sampler_ids{};
+
+    PipelineLayoutAndChildObjectInfo(T& state, const PipelineLayoutData& pipeline_layout_data) {
+        // Serialize unique object create infos and generate names
+        //
+        // NOTE: names_storage persists object names until serialization. The xyz_names variables hold pointers to the
+        //       persisted data. However, names_storage is built incrementally, and without pre-reserving storage, the
+        //       xyz_names variables will hold pointers to possibly (and really) small-string-optimized storage, so
+        //       they'll be referring to non-stable heap pointers, but to the inside reallocated std::vector heap. We
+        //       allocate slightly pessimistically, assuming all objects are unique.
+        uint32_t names_required = 0;
+        for (size_t i = 0; i < pipeline_layout_data.descriptor_set_layout_data.size(); ++i) {
+            ++names_required;
+            for (size_t j = 0; j < pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data.size(); ++j) {
+                ++names_required;
+                if (pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.has_value()) {
+                    ++names_required;
+                }
+            }
+        }
+        names_storage.reserve(names_required);
+        auto not_contains = [](const auto& container, const uintptr_t unique_obj_id) {
+            return std::find(std::cbegin(container), std::cend(container), unique_obj_id) == std::cend(container);
+        };
+        for (size_t i = 0; i < pipeline_layout_data.descriptor_set_layout_data.size(); ++i) {
+            const auto& descriptor_set_layout_data = pipeline_layout_data.descriptor_set_layout_data[i];
+            if (not_contains(descriptor_set_layout_ids, descriptor_set_layout_data.unique_obj_id)) {
+                names_storage.push_back(std::string("DescriptorSetLayout") + std::to_string(descriptor_set_layout_ids.size() + 1));
+                descriptor_set_layout_ids.push_back(descriptor_set_layout_data.unique_obj_id);
+                descriptor_set_layout_names.push_back(names_storage.back().c_str());
+                descriptor_set_layouts.push_back(descriptor_set_layout_data.create_info);
+            }
+            for (size_t j = 0; j < pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data.size(); ++j) {
+                const auto& immutable_sampler_data = pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j];
+                if (not_contains(immutable_sampler_ids, immutable_sampler_data.unique_obj_id)) {
+                    names_storage.push_back(std::string("ImmutableSampler") + std::to_string(immutable_sampler_names.size() + 1));
+                    immutable_sampler_ids.push_back(immutable_sampler_data.unique_obj_id);
+                    immutable_sampler_names.push_back(names_storage.back().c_str());
+                    immutable_samplers.push_back(immutable_sampler_data.create_info);
+                }
+                if (pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.has_value()) {
+                    const auto& ycbcr_sampler_data =
+                        pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.value();
+                    if (not_contains(ycbcr_sampler_ids, ycbcr_sampler_data.unique_obj_id)) {
+                        names_storage.push_back(std::string("YcbcrSampler") + std::to_string(ycbcr_sampler_names.size() + 1));
+                        ycbcr_sampler_ids.push_back(ycbcr_sampler_data.unique_obj_id);
+                        ycbcr_sampler_names.push_back(names_storage.back().c_str());
+                        ycbcr_samplers.push_back(ycbcr_sampler_data.create_info);
+                    }
+                }
+            }
+        }
+        // Rewrite autoinc ids to indices
+        auto find_id = [](const auto& container, const uintptr_t unique_obj_id) {
+            return std::find(std::cbegin(container), std::cend(container), unique_obj_id);
+        };
+        for (size_t i = 0; i < pipeline_layout_data.create_info.setLayoutCount; ++i) {
+            pipeline_layout_data.create_info.pSetLayouts[i] = reinterpret_cast<VkDescriptorSetLayout>(
+                std::distance(std::cbegin(descriptor_set_layout_ids),
+                              find_id(descriptor_set_layout_ids, (uintptr_t)pipeline_layout_data.create_info.pSetLayouts[i])));
+        }
+        for (auto& descriptor_set_layout : descriptor_set_layouts) {
+            for (size_t i = 0; i < descriptor_set_layout.bindingCount; ++i) {
+                if (descriptor_set_layout.pBindings[i].pImmutableSamplers) {
+                    for (size_t j = 0; j < descriptor_set_layout.pBindings[i].descriptorCount; ++j) {
+                        descriptor_set_layout.pBindings[i].pImmutableSamplers[j] = reinterpret_cast<VkSampler>(std::distance(
+                            std::cbegin(immutable_sampler_ids),
+                            find_id(immutable_sampler_ids, (uintptr_t)descriptor_set_layout.pBindings[i].pImmutableSamplers[j])));
+                    }
+                }
+            }
+        }
+        for (auto& immutable_sampler : immutable_samplers) {
+            auto ycbcr = vku::FindStructInPNextChain<VkSamplerYcbcrConversionInfo>(const_cast<void*>(immutable_sampler.pNext));
+            if (ycbcr) {
+                ycbcr->conversion = reinterpret_cast<VkSamplerYcbcrConversion>(
+                    std::distance(std::cbegin(ycbcr_sampler_ids), find_id(ycbcr_sampler_ids, (uintptr_t)ycbcr->conversion)));
+            }
+        }
+
+        // Write to state
+        state.pPipelineLayout = pipeline_layout_data.create_info.ptr();
+
+        state.descriptorSetLayoutCount = static_cast<uint32_t>(descriptor_set_layouts.size());
+        state.pDescriptorSetLayouts = descriptor_set_layouts.size() ? descriptor_set_layouts.data() : nullptr;
+        state.ppDescriptorSetLayoutNames = descriptor_set_layout_names.size() ? descriptor_set_layout_names.data() : nullptr;
+
+        state.immutableSamplerCount = static_cast<uint32_t>(immutable_samplers.size());
+        state.pImmutableSamplers = immutable_samplers.size() ? immutable_samplers.data() : 0;
+        state.ppImmutableSamplerNames = immutable_sampler_names.size() ? immutable_sampler_names.data() : nullptr;
+
+        state.ycbcrSamplerCount = static_cast<uint32_t>(ycbcr_samplers.size());
+        state.pYcbcrSamplers = ycbcr_samplers.size() ? ycbcr_samplers.data() : nullptr;
+        state.ppYcbcrSamplerNames = ycbcr_sampler_names.size() ? ycbcr_sampler_names.data() : nullptr;
+    }
 };
 
 static constexpr VkLayerProperties kGlobalLayer = {"VK_LAYER_KHRONOS_json_gen",
@@ -106,7 +214,7 @@ static constexpr VkLayerProperties kGlobalLayer = {"VK_LAYER_KHRONOS_json_gen",
 
 // Instance extensions that this layer provides:
 const VkExtensionProperties kInstanceExtensionProperties[] = {
-    VkExtensionProperties{VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME, VK_EXT_PIPELINE_PROPERTIES_SPEC_VERSION}};
+    VkExtensionProperties{VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, VK_EXT_LAYER_SETTINGS_SPEC_VERSION}};
 const uint32_t kInstanceExtensionPropertiesCount = static_cast<uint32_t>(std::size(kInstanceExtensionProperties));
 
 static const VkExtensionProperties kDeviceExtension = {VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME,
@@ -142,7 +250,7 @@ static std::shared_ptr<DeviceData> GetDeviceData(const void* object) {
 
 VKAPI_ATTR VkResult VKAPI_CALL EnumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice, const char* pLayerName,
                                                                   uint32_t* pPropertyCount, VkExtensionProperties* pProperties) {
-    if (pLayerName && std::strncmp(pLayerName, kGlobalLayer.layerName, VK_MAX_EXTENSION_NAME_SIZE)) {
+    if (pLayerName && strncmp(pLayerName, kGlobalLayer.layerName, VK_MAX_EXTENSION_NAME_SIZE)) {
         auto instance_data = GetInstanceData(physicalDevice);
         return instance_data->vtable.EnumerateDeviceExtensionProperties(physicalDevice, pLayerName, pPropertyCount, pProperties);
     }
@@ -158,8 +266,7 @@ VKAPI_ATTR VkResult VKAPI_CALL EnumerateDeviceExtensionProperties(VkPhysicalDevi
 
         bool has_native_pipeline_props = false;
         for (uint32_t i = 0; i < count; ++i) {
-            if (std::strncmp(properties[i].extensionName, VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME, VK_MAX_EXTENSION_NAME_SIZE) ==
-                0) {
+            if (strncmp(properties[i].extensionName, VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME, VK_MAX_EXTENSION_NAME_SIZE) == 0) {
                 has_native_pipeline_props = true;
                 break;
             }
@@ -175,11 +282,11 @@ VKAPI_ATTR VkResult VKAPI_CALL EnumerateDeviceExtensionProperties(VkPhysicalDevi
         if (*pPropertyCount < total_count) {
             // Spec for `vkEnumerateDeviceLayerProperties` says at most `pPropertyCount` structures will be written in this case,
             // which is the convention we follow for `vkEnumerate*` functions.
-            std::memcpy(pProperties, properties.data(), *pPropertyCount * sizeof(VkExtensionProperties));
+            memcpy(pProperties, properties.data(), *pPropertyCount * sizeof(VkExtensionProperties));
             return VK_INCOMPLETE;
         }
 
-        std::memcpy(pProperties, properties.data(), count * sizeof(VkExtensionProperties));
+        memcpy(pProperties, properties.data(), count * sizeof(VkExtensionProperties));
 
         if (!has_native_pipeline_props) {
             pProperties[count] = kDeviceExtension;
@@ -318,52 +425,52 @@ DeviceData::~DeviceData() { writeDeviceObjResHeader(); }
 
 void DeviceData::writeDeviceObjResHeader() {
     std::stringstream result;
-    auto header_path = base_dir_path + process_name + "_objectResInfo_" + std::to_string(unique_obj_id) + ".hpp";
+    auto header_path = base_dir_path + process_name + "_objectResInfo.hpp";
     // clang-format off
     result <<
-        "#ifndef " << process_name << "_objectResInfo_" << unique_obj_id << "_HPP\n" <<
-        "#define " << process_name << "_objectResInfo_" << unique_obj_id << "_HPP\n\n" <<
+        "#ifndef " << process_name << "_objectResInfo_HPP\n" <<
+        "#define " << process_name << "_objectResInfo_HPP\n\n" <<
         "#include <vulkan/vulkan_sc_core.h>\n\n" <<
-        "static VkDeviceObjectReservationCreateInfo g_objectResCreateInfo_" << unique_obj_id << " {};\n" <<
+        "static VkDeviceObjectReservationCreateInfo g_objectResCreateInfo{};\n" <<
         "static void SetObjectResCreateInfo()\n" <<
         "{\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".sType                                      = VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO;\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".pNext                                      = nullptr;\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".semaphoreRequestCount                      = " << obj_res_info.semaphoreHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".commandBufferRequestCount                  = " << obj_res_info.commandBufferHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".fenceRequestCount                          = " << obj_res_info.fenceHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".deviceMemoryRequestCount                   = " << obj_res_info.deviceMemoryHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".bufferRequestCount                         = " << obj_res_info.bufferHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".imageRequestCount                          = " << obj_res_info.imageHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".eventRequestCount                          = " << obj_res_info.eventHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".queryPoolRequestCount                      = " << obj_res_info.queryPoolHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".bufferViewRequestCount                     = " << obj_res_info.bufferViewHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".imageViewRequestCount                      = " << obj_res_info.imageViewHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".layeredImageViewRequestCount               = " << obj_res_info.layeredImageViewHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".pipelineCacheRequestCount                  = " << obj_res_info.pipelineCacheHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".pipelineLayoutRequestCount                 = " << obj_res_info.pipelineLayoutHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".renderPassRequestCount                     = " << obj_res_info.renderPassHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".graphicsPipelineRequestCount               = " << obj_res_info.graphicsPipelineHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".computePipelineRequestCount                = " << obj_res_info.computePipelineHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".descriptorSetLayoutRequestCount            = " << obj_res_info.descriptorSetLayoutHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".samplerRequestCount                        = " << obj_res_info.samplerHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".descriptorPoolRequestCount                 = " << obj_res_info.descriptorPoolHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".descriptorSetRequestCount                  = " << obj_res_info.descriptorSetHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".framebufferRequestCount                    = " << obj_res_info.framebufferHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".commandPoolRequestCount                    = " << obj_res_info.commandPoolHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".samplerYcbcrConversionRequestCount         = " << obj_res_info.samplerYcbcrConversionHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".swapchainRequestCount                      = " << obj_res_info.swapchainHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".subpassDescriptionRequestCount             = " << obj_res_info.subpassDescriptionHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".attachmentDescriptionRequestCount          = " << obj_res_info.attachmentDescriptionHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".descriptorSetLayoutBindingRequestCount     = " << obj_res_info.descriptorSetLayoutBindingHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".descriptorSetLayoutBindingLimit            = " << obj_res_info.descriptorSetLayoutBindingLimit << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".maxImageViewMipLevels                      = " << obj_res_info.maxImageViewMipLevels << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".maxImageViewArrayLayers                    = " << obj_res_info.maxImageViewArrayLayers << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".maxLayeredImageViewMipLevels               = " << obj_res_info.maxLayeredImageViewMipLevels << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".maxOcclusionQueriesPerPool                 = " << obj_res_info.maxOcclusionQueriesPerPool << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".maxPipelineStatisticsQueriesPerPool        = " << obj_res_info.maxPipelineStatisticsQueriesPerPool << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".maxTimestampQueriesPerPool                 = " << obj_res_info.maxTimestampQueriesPerPool << ";\n" <<
-        "\tg_objectResCreateInfo_" << unique_obj_id << ".maxImmutableSamplersPerDescriptorSetLayout = " << obj_res_info.maxImmutableSamplersPerDescriptorSetLayout << ";\n" <<
+        "\tg_objectResCreateInfo.sType                                      = VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO;\n" <<
+        "\tg_objectResCreateInfo.pNext                                      = nullptr;\n" <<
+        "\tg_objectResCreateInfo.semaphoreRequestCount                      = " << obj_res_info.semaphoreHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.commandBufferRequestCount                  = " << obj_res_info.commandBufferHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.fenceRequestCount                          = " << obj_res_info.fenceHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.deviceMemoryRequestCount                   = " << obj_res_info.deviceMemoryHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.bufferRequestCount                         = " << obj_res_info.bufferHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.imageRequestCount                          = " << obj_res_info.imageHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.eventRequestCount                          = " << obj_res_info.eventHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.queryPoolRequestCount                      = " << obj_res_info.queryPoolHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.bufferViewRequestCount                     = " << obj_res_info.bufferViewHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.imageViewRequestCount                      = " << obj_res_info.imageViewHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.layeredImageViewRequestCount               = " << obj_res_info.layeredImageViewHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.pipelineCacheRequestCount                  = " << obj_res_info.pipelineCacheHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.pipelineLayoutRequestCount                 = " << obj_res_info.pipelineLayoutHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.renderPassRequestCount                     = " << obj_res_info.renderPassHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.graphicsPipelineRequestCount               = " << obj_res_info.graphicsPipelineHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.computePipelineRequestCount                = " << obj_res_info.computePipelineHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.descriptorSetLayoutRequestCount            = " << obj_res_info.descriptorSetLayoutHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.samplerRequestCount                        = " << obj_res_info.samplerHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.descriptorPoolRequestCount                 = " << obj_res_info.descriptorPoolHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.descriptorSetRequestCount                  = " << obj_res_info.descriptorSetHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.framebufferRequestCount                    = " << obj_res_info.framebufferHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.commandPoolRequestCount                    = " << obj_res_info.commandPoolHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.samplerYcbcrConversionRequestCount         = " << obj_res_info.samplerYcbcrConversionHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.swapchainRequestCount                      = " << obj_res_info.swapchainHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.subpassDescriptionRequestCount             = " << obj_res_info.subpassDescriptionHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.attachmentDescriptionRequestCount          = " << obj_res_info.attachmentDescriptionHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.descriptorSetLayoutBindingRequestCount     = " << obj_res_info.descriptorSetLayoutBindingHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo.descriptorSetLayoutBindingLimit            = " << obj_res_info.descriptorSetLayoutBindingLimit << ";\n" <<
+        "\tg_objectResCreateInfo.maxImageViewMipLevels                      = " << obj_res_info.maxImageViewMipLevels << ";\n" <<
+        "\tg_objectResCreateInfo.maxImageViewArrayLayers                    = " << obj_res_info.maxImageViewArrayLayers << ";\n" <<
+        "\tg_objectResCreateInfo.maxLayeredImageViewMipLevels               = " << obj_res_info.maxLayeredImageViewMipLevels << ";\n" <<
+        "\tg_objectResCreateInfo.maxOcclusionQueriesPerPool                 = " << obj_res_info.maxOcclusionQueriesPerPool << ";\n" <<
+        "\tg_objectResCreateInfo.maxPipelineStatisticsQueriesPerPool        = " << obj_res_info.maxPipelineStatisticsQueriesPerPool << ";\n" <<
+        "\tg_objectResCreateInfo.maxTimestampQueriesPerPool                 = " << obj_res_info.maxTimestampQueriesPerPool << ";\n" <<
+        "\tg_objectResCreateInfo.maxImmutableSamplersPerDescriptorSetLayout = " << obj_res_info.maxImmutableSamplersPerDescriptorSetLayout << ";\n" <<
         "}\n\n" <<
         "#endif\n";
     // clang-format on
@@ -447,8 +554,7 @@ PipelineLayoutData::PipelineLayoutData(const VkPipelineLayoutCreateInfo* ci, Dev
     for (uint32_t i = 0; i < create_info.setLayoutCount; ++i) {
         if (auto result = device_data.descriptor_set_layout_map.find(create_info.pSetLayouts[i]); result->first) {
             // Rewrite handle(s) in create info to unique_obj_id(s)
-            create_info.pSetLayouts[i] =
-                reinterpret_cast<VkDescriptorSetLayout>(static_cast<std::uintptr_t>(result->second->unique_obj_id));
+            create_info.pSetLayouts[i] = reinterpret_cast<VkDescriptorSetLayout>(result->second->unique_obj_id);
             // Store local copy of dependent create info
             descriptor_set_layout_data.emplace_back(*result->second);
         } else {
@@ -554,8 +660,6 @@ VKAPI_ATTR VkResult VKAPI_CALL CreateInstance(const VkInstanceCreateInfo* pCreat
         instance_data_map.insert(DispatchKey(*pInstance), instance_data);
 
         instance_data->api_version = pCreateInfo->pApplicationInfo ? pCreateInfo->pApplicationInfo->apiVersion : 0;
-
-        // InitLayerSettings(pCreateInfo, pAllocator, &instance_data->layer_settings);
     } catch (const std::bad_alloc&) {
         auto destroy_instance = reinterpret_cast<PFN_vkDestroyInstance>(gpa(NULL, "vkDestroyInstance"));
         destroy_instance(*pInstance, pAllocator);
@@ -1147,111 +1251,10 @@ void GraphicsPipelineData::GenJsonUuidAndWriteToDisk(DeviceData& device_data) {
         data.graphicsPipelineState.pRenderPass = std::get<RenderPass2Data>(renderpass_data).create_info.ptr();
     }
 
-    // Descriptor set layouts, immutable samplers, ycbcr samplers
-    std::vector<vku::safe_VkDescriptorSetLayoutCreateInfo> descriptor_set_layouts;
-    std::vector<vku::safe_VkSamplerCreateInfo> immutable_samplers;
-    std::vector<vku::safe_VkSamplerYcbcrConversionCreateInfo> ycbcr_samplers;
-    std::vector<std::string> names_storage;
-    std::vector<const char*> descriptor_set_layout_names;
-    std::vector<uintptr_t> descriptor_set_layout_ids;
-    std::vector<const char*> immutable_sampler_names;
-    std::vector<uintptr_t> immutable_sampler_ids;
-    std::vector<const char*> ycbcr_sampler_names;
-    std::vector<uintptr_t> ycbcr_sampler_ids;
-    // Serialize unique object create infos and generate names
-    //
-    // NOTE: names_storage persists object names until serialization. The xyz_names variables hold pointers to the
-    //       persisted data. However, names_storage is built incrementally, and without pre-reserving storage, the
-    //       xyz_names variables will hold pointers to possibly (and really) small-string-optimized storage, so
-    //       they'll be referring to non-stable heap pointers, but to the inside reallocated std::vector heap. We
-    //       allocate slightly pessimistically, assuming all objects are unique.
-    uint32_t names_required = 0;
-    for (size_t i = 0; i < pipeline_layout_data.descriptor_set_layout_data.size(); ++i) {
-        ++names_required;
-        for (size_t j = 0; j < pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data.size(); ++j) {
-            ++names_required;
-            if (pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.has_value()) {
-                ++names_required;
-            }
-        }
-    }
-    names_storage.reserve(names_required);
-    auto not_contains = [](const auto& container, const uintptr_t unique_obj_id) {
-        return std::find(std::cbegin(container), std::cend(container), unique_obj_id) == std::cend(container);
-    };
-    using namespace std::string_literals;
-    for (size_t i = 0; i < pipeline_layout_data.descriptor_set_layout_data.size(); ++i) {
-        const auto& descriptor_set_layout_data = pipeline_layout_data.descriptor_set_layout_data[i];
-        if (not_contains(descriptor_set_layout_ids, descriptor_set_layout_data.unique_obj_id)) {
-            names_storage.push_back("DescriptorSetLayout"s + std::to_string(descriptor_set_layout_ids.size() + 1));
-            descriptor_set_layout_ids.push_back(descriptor_set_layout_data.unique_obj_id);
-            descriptor_set_layout_names.push_back(names_storage.back().c_str());
-            descriptor_set_layouts.push_back(descriptor_set_layout_data.create_info);
-        }
-        for (size_t j = 0; j < pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data.size(); ++j) {
-            const auto& immutable_sampler_data = pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j];
-            if (not_contains(immutable_sampler_ids, immutable_sampler_data.unique_obj_id)) {
-                names_storage.push_back("ImmutableSampler"s + std::to_string(immutable_sampler_names.size() + 1));
-                immutable_sampler_ids.push_back(immutable_sampler_data.unique_obj_id);
-                immutable_sampler_names.push_back(names_storage.back().c_str());
-                immutable_samplers.push_back(immutable_sampler_data.create_info);
-            }
-            if (pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.has_value()) {
-                const auto& ycbcr_sampler_data =
-                    pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.value();
-                if (not_contains(ycbcr_sampler_ids, ycbcr_sampler_data.unique_obj_id)) {
-                    names_storage.push_back("YcbcrSampler"s + std::to_string(ycbcr_sampler_names.size() + 1));
-                    ycbcr_sampler_ids.push_back(ycbcr_sampler_data.unique_obj_id);
-                    ycbcr_sampler_names.push_back(names_storage.back().c_str());
-                    ycbcr_samplers.push_back(ycbcr_sampler_data.create_info);
-                }
-            }
-        }
-    }
-    // Rewrite autoinc ids to indices
-    auto find_id = [](const auto& container, const uintptr_t unique_obj_id) {
-        return std::find(std::cbegin(container), std::cend(container), unique_obj_id);
-    };
-    for (size_t i = 0; i < pipeline_layout_data.create_info.setLayoutCount; ++i) {
-        pipeline_layout_data.create_info.pSetLayouts[i] = reinterpret_cast<VkDescriptorSetLayout>(
-            std::distance(std::cbegin(descriptor_set_layout_ids),
-                          find_id(descriptor_set_layout_ids, (uintptr_t)pipeline_layout_data.create_info.pSetLayouts[i])));
-    }
-    for (auto& descriptor_set_layout : descriptor_set_layouts) {
-        for (size_t i = 0; i < descriptor_set_layout.bindingCount; ++i) {
-            if (descriptor_set_layout.pBindings[i].pImmutableSamplers) {
-                for (size_t j = 0; j < descriptor_set_layout.pBindings[i].descriptorCount; ++j) {
-                    descriptor_set_layout.pBindings[i].pImmutableSamplers[j] = reinterpret_cast<VkSampler>(std::distance(
-                        std::cbegin(immutable_sampler_ids),
-                        find_id(immutable_sampler_ids, (uintptr_t)descriptor_set_layout.pBindings[i].pImmutableSamplers[j])));
-                }
-            }
-        }
-    }
-    for (auto& immutable_sampler : immutable_samplers) {
-        auto ycbcr = vku::FindStructInPNextChain<VkSamplerYcbcrConversionInfo>(const_cast<void*>(immutable_sampler.pNext));
-        if (ycbcr) {
-            ycbcr->conversion = reinterpret_cast<VkSamplerYcbcrConversion>(
-                std::distance(std::cbegin(ycbcr_sampler_ids), find_id(ycbcr_sampler_ids, (uintptr_t)ycbcr->conversion)));
-        }
-    }
-    // Commit
-    data.graphicsPipelineState.pPipelineLayout = pipeline_layout_data.create_info.ptr();
-    data.graphicsPipelineState.descriptorSetLayoutCount = static_cast<uint32_t>(descriptor_set_layouts.size());
-    data.graphicsPipelineState.pDescriptorSetLayouts = descriptor_set_layouts.size() ? descriptor_set_layouts.data() : nullptr;
-    data.graphicsPipelineState.ppDescriptorSetLayoutNames =
-        descriptor_set_layouts.size() ? descriptor_set_layout_names.data() : nullptr;
-    data.graphicsPipelineState.immutableSamplerCount = static_cast<uint32_t>(immutable_samplers.size());
-    data.graphicsPipelineState.pImmutableSamplers = immutable_samplers.size() ? immutable_samplers.data() : 0;
-    data.graphicsPipelineState.ppImmutableSamplerNames = immutable_samplers.size() ? immutable_sampler_names.data() : nullptr;
-    data.graphicsPipelineState.ycbcrSamplerCount = static_cast<uint32_t>(ycbcr_samplers.size());
-    data.graphicsPipelineState.pYcbcrSamplers = ycbcr_samplers.size() ? ycbcr_samplers.data() : nullptr;
-    data.graphicsPipelineState.ppYcbcrSamplerNames = ycbcr_samplers.size() ? ycbcr_sampler_names.data() : nullptr;
+    PipelineLayoutAndChildObjectInfo object_info(data.graphicsPipelineState, pipeline_layout_data);
 
     // Shaders
-    auto shader_filenames =
-        get_shader_filenames(*create_info.ptr(), device_data.process_name, static_cast<uint32_t>(device_data.unique_obj_id),
-                             static_cast<uint32_t>(unique_obj_id));
+    auto shader_filenames = GetShaderFiles(*create_info.ptr(), device_data.process_name, unique_obj_id);
     for (size_t i = 0; i < shader_module_data.size(); ++i) {
         auto& shader_ci = shader_module_data[i].create_info;
         auto shader_path = device_data.base_dir_path + shader_filenames.filenames[i].pFilename;
@@ -1281,8 +1284,8 @@ void GraphicsPipelineData::GenJsonUuidAndWriteToDisk(DeviceData& device_data) {
         LOG("[%s] ERROR: Unable to obtain generated pipeline UUID: %s", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME, msg_);
     }
 
-    auto pipeline_path = device_data.base_dir_path + device_data.process_name + "_device_" +
-                         std::to_string(device_data.unique_obj_id) + "_pipeline_" + std::to_string(unique_obj_id) + ".json";
+    auto pipeline_path =
+        device_data.base_dir_path + device_data.process_name + "_pipeline_" + std::to_string(unique_obj_id) + ".json";
     std::ofstream pipeline_file(pipeline_path);
     if (pipeline_file) {
         pipeline_file << result_json;
@@ -1301,111 +1304,10 @@ void ComputePipelineData::GenJsonUuidAndWriteToDisk(DeviceData& device_data) {
     // Compute pipeline
     data.computePipelineState.pComputePipeline = create_info.ptr();
 
-    // Descriptor set layouts, immutable samplers, ycbcr samplers
-    std::vector<vku::safe_VkDescriptorSetLayoutCreateInfo> descriptor_set_layouts;
-    std::vector<vku::safe_VkSamplerCreateInfo> immutable_samplers;
-    std::vector<vku::safe_VkSamplerYcbcrConversionCreateInfo> ycbcr_samplers;
-    std::vector<std::string> names_storage;
-    std::vector<const char*> descriptor_set_layout_names;
-    std::vector<uintptr_t> descriptor_set_layout_ids;
-    std::vector<const char*> immutable_sampler_names;
-    std::vector<uintptr_t> immutable_sampler_ids;
-    std::vector<const char*> ycbcr_sampler_names;
-    std::vector<uintptr_t> ycbcr_sampler_ids;
-    // Serialize unique object create infos and generate names
-    //
-    // NOTE: names_storage persists object names until serialization. The xyz_names variables hold pointers to the
-    //       persisted data. However, names_storage is built incrementally, and without pre-reserving storage, the
-    //       xyz_names variables will hold pointers to possibly (and really) small-string-optimized storage, so
-    //       they'll be referring to non-stable heap pointers, but to the inside reallocated std::vector heap. We
-    //       allocate slightly pessimistically, assuming all objects are unique.
-    uint32_t names_required = 0;
-    for (size_t i = 0; i < pipeline_layout_data.descriptor_set_layout_data.size(); ++i) {
-        ++names_required;
-        for (size_t j = 0; j < pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data.size(); ++j) {
-            ++names_required;
-            if (pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.has_value()) {
-                ++names_required;
-            }
-        }
-    }
-    names_storage.reserve(names_required);
-    auto not_contains = [](const auto& container, const uintptr_t unique_obj_id) {
-        return std::find(std::cbegin(container), std::cend(container), unique_obj_id) == std::cend(container);
-    };
-    using namespace std::string_literals;
-    for (size_t i = 0; i < pipeline_layout_data.descriptor_set_layout_data.size(); ++i) {
-        const auto& descriptor_set_layout_data = pipeline_layout_data.descriptor_set_layout_data[i];
-        if (not_contains(descriptor_set_layout_ids, descriptor_set_layout_data.unique_obj_id)) {
-            names_storage.push_back("DescriptorSetLayout"s + std::to_string(descriptor_set_layout_ids.size() + 1));
-            descriptor_set_layout_ids.push_back(descriptor_set_layout_data.unique_obj_id);
-            descriptor_set_layout_names.push_back(names_storage.back().c_str());
-            descriptor_set_layouts.push_back(descriptor_set_layout_data.create_info);
-        }
-        for (size_t j = 0; j < pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data.size(); ++j) {
-            const auto& immutable_sampler_data = pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j];
-            if (not_contains(immutable_sampler_ids, immutable_sampler_data.unique_obj_id)) {
-                names_storage.push_back("ImmutableSampler"s + std::to_string(immutable_sampler_names.size() + 1));
-                immutable_sampler_ids.push_back(immutable_sampler_data.unique_obj_id);
-                immutable_sampler_names.push_back(names_storage.back().c_str());
-                immutable_samplers.push_back(immutable_sampler_data.create_info);
-            }
-            if (pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.has_value()) {
-                const auto& ycbcr_sampler_data =
-                    pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.value();
-                if (not_contains(ycbcr_sampler_ids, ycbcr_sampler_data.unique_obj_id)) {
-                    names_storage.push_back("YcbcrSampler"s + std::to_string(ycbcr_sampler_names.size() + 1));
-                    ycbcr_sampler_ids.push_back(ycbcr_sampler_data.unique_obj_id);
-                    ycbcr_sampler_names.push_back(names_storage.back().c_str());
-                    ycbcr_samplers.push_back(ycbcr_sampler_data.create_info);
-                }
-            }
-        }
-    }
-    // Rewrite autoinc ids to indices
-    auto find_id = [](const auto& container, const uintptr_t unique_obj_id) {
-        return std::find(std::cbegin(container), std::cend(container), unique_obj_id);
-    };
-    for (size_t i = 0; i < pipeline_layout_data.create_info.setLayoutCount; ++i) {
-        pipeline_layout_data.create_info.pSetLayouts[i] = reinterpret_cast<VkDescriptorSetLayout>(
-            std::distance(std::cbegin(descriptor_set_layout_ids),
-                          find_id(descriptor_set_layout_ids, (uintptr_t)pipeline_layout_data.create_info.pSetLayouts[i])));
-    }
-    for (auto& descriptor_set_layout : descriptor_set_layouts) {
-        for (size_t i = 0; i < descriptor_set_layout.bindingCount; ++i) {
-            if (descriptor_set_layout.pBindings[i].pImmutableSamplers) {
-                for (size_t j = 0; j < descriptor_set_layout.pBindings[i].descriptorCount; ++j) {
-                    descriptor_set_layout.pBindings[i].pImmutableSamplers[j] = reinterpret_cast<VkSampler>(std::distance(
-                        std::cbegin(immutable_sampler_ids),
-                        find_id(immutable_sampler_ids, (uintptr_t)descriptor_set_layout.pBindings[i].pImmutableSamplers[j])));
-                }
-            }
-        }
-    }
-    for (auto& immutable_sampler : immutable_samplers) {
-        auto ycbcr = vku::FindStructInPNextChain<VkSamplerYcbcrConversionInfo>(const_cast<void*>(immutable_sampler.pNext));
-        if (ycbcr) {
-            ycbcr->conversion = reinterpret_cast<VkSamplerYcbcrConversion>(
-                std::distance(std::cbegin(ycbcr_sampler_ids), find_id(ycbcr_sampler_ids, (uintptr_t)ycbcr->conversion)));
-        }
-    }
-    // Commit
-    data.computePipelineState.pPipelineLayout = pipeline_layout_data.create_info.ptr();
-    data.computePipelineState.descriptorSetLayoutCount = static_cast<uint32_t>(descriptor_set_layouts.size());
-    data.computePipelineState.pDescriptorSetLayouts = descriptor_set_layouts.size() ? descriptor_set_layouts.data() : nullptr;
-    data.computePipelineState.ppDescriptorSetLayoutNames =
-        descriptor_set_layout_names.size() ? descriptor_set_layout_names.data() : nullptr;
-    data.computePipelineState.immutableSamplerCount = static_cast<uint32_t>(immutable_samplers.size());
-    data.computePipelineState.pImmutableSamplers = immutable_samplers.size() ? immutable_samplers.data() : 0;
-    data.computePipelineState.ppImmutableSamplerNames = immutable_sampler_names.size() ? immutable_sampler_names.data() : nullptr;
-    data.computePipelineState.ycbcrSamplerCount = static_cast<uint32_t>(ycbcr_samplers.size());
-    data.computePipelineState.pYcbcrSamplers = ycbcr_samplers.size() ? ycbcr_samplers.data() : nullptr;
-    data.computePipelineState.ppYcbcrSamplerNames = ycbcr_sampler_names.size() ? ycbcr_sampler_names.data() : nullptr;
+    PipelineLayoutAndChildObjectInfo object_info(data.computePipelineState, pipeline_layout_data);
 
     // Shaders
-    auto shader_filename =
-        get_shader_filenames(*create_info.ptr(), device_data.process_name, static_cast<uint32_t>(device_data.unique_obj_id),
-                             static_cast<uint32_t>(unique_obj_id));
+    auto shader_filename = GetShaderFiles(*create_info.ptr(), device_data.process_name, unique_obj_id);
     auto shader_ci = shader_module_data.create_info;
     auto shader_path = device_data.base_dir_path + shader_filename.filenames[0].pFilename;
     std::ofstream spv_file(shader_path, std::ios::binary);
@@ -1433,8 +1335,8 @@ void ComputePipelineData::GenJsonUuidAndWriteToDisk(DeviceData& device_data) {
         LOG("[%s] ERROR: Unable to obtain generated pipeline UUID: %s", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME, msg_);
     }
 
-    auto pipeline_path = device_data.base_dir_path + device_data.process_name + "_device_" +
-                         std::to_string(device_data.unique_obj_id) + "_pipeline_" + std::to_string(unique_obj_id) + ".json";
+    auto pipeline_path =
+        device_data.base_dir_path + device_data.process_name + "_pipeline_" + std::to_string(unique_obj_id) + ".json";
     std::ofstream pipeline_file(pipeline_path);
     if (pipeline_file) {
         pipeline_file << result_json;
@@ -1600,7 +1502,7 @@ vkNegotiateLoaderLayerInterfaceVersion(VkNegotiateLayerInterface* pVersionStruct
 extern "C" VEL_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkEnumerateInstanceExtensionProperties(const char* pLayerName,
                                                                                             uint32_t* pPropertyCount,
                                                                                             VkExtensionProperties* pProperties) {
-    if (pLayerName && std::strncmp(pLayerName, vk_json::kGlobalLayer.layerName, VK_MAX_EXTENSION_NAME_SIZE) == 0) {
+    if (pLayerName && strncmp(pLayerName, vk_json::kGlobalLayer.layerName, VK_MAX_EXTENSION_NAME_SIZE) == 0) {
         return EnumerateProperties(vk_json::kInstanceExtensionPropertiesCount, vk_json::kInstanceExtensionProperties,
                                    pPropertyCount, pProperties);
     }

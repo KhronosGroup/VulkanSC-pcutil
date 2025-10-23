@@ -188,9 +188,9 @@ class JsonGenGenerator(BaseGenerator):
                 while (src_idx < size) {
                     size_t num_read = std::min(size_t(3), size - src_idx);
 
-                    uint8_t	s0 = data[src_idx];
-                    uint8_t	s1 = (num_read >= 2) ? data[src_idx + 1] : 0;
-                    uint8_t	s2 = (num_read >= 3) ? data[src_idx + 2] : 0;
+                    uint8_t s0 = data[src_idx];
+                    uint8_t s1 = (num_read >= 2) ? data[src_idx + 1] : 0;
+                    uint8_t s2 = (num_read >= 3) ? data[src_idx + 2] : 0;
 
                     src_idx += num_read;
 

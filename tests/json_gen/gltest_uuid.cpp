@@ -18,14 +18,14 @@
 
 class UUID : public testing::Test {
   public:
-    UUID() { clean_data_files(); }
+    UUID() { CleanDataFiles(); }
     UUID(const UUID&) = delete;
     UUID(UUID&&) = delete;
-    ~UUID() { clean_data_files(); }
+    ~UUID() { CleanDataFiles(); }
 
     void TEST_DESCRIPTION(const char* desc) { RecordProperty("description", desc); }
 
-    std::array<uint8_t, VK_UUID_SIZE> get_uuid(VkDevice device, VkPipeline pipeline) {
+    std::array<uint8_t, VK_UUID_SIZE> GetUUID(VkDevice device, VkPipeline pipeline) {
         PFN_vkGetPipelinePropertiesEXT vkGetPipelinePropertiesEXT =
             (PFN_vkGetPipelinePropertiesEXT)vkGetDeviceProcAddr(device, "vkGetPipelinePropertiesEXT");
 
@@ -44,7 +44,7 @@ class UUID : public testing::Test {
     }
 
   private:
-    void clean_data_files() {
+    void CleanDataFiles() {
         std::for_each(std::filesystem::directory_iterator{"."}, std::filesystem::directory_iterator{},
                       [](const std::filesystem::directory_entry& entry) {
                           if (std::regex_search(entry.path().generic_string(), std::regex{R"(gltest_uuid_)"})) {
@@ -98,7 +98,7 @@ TEST_F(UUID, ComputeSimple) {
     VkPipeline pipeline;
     vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, compute_pipeline_ci.get(), NULL, &pipeline);
 
-    auto uuid = get_uuid(device, pipeline);
+    auto uuid = GetUUID(device, pipeline);
 
     vkDestroyPipeline(device, pipeline, nullptr);
     vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
@@ -140,7 +140,7 @@ TEST_F(UUID, ComputeReproducible) {
         VkPipeline pipeline;
         vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, compute_pipeline_ci.get(), NULL, &pipeline);
 
-        auto uuid = get_uuid(device, pipeline);
+        auto uuid = GetUUID(device, pipeline);
 
         vkDestroyPipeline(device, pipeline, nullptr);
         vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
@@ -204,7 +204,7 @@ TEST_F(UUID, ComputeDifferent) {
         VkPipeline pipeline;
         vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, compute_pipeline_ci.get(), NULL, &pipeline);
 
-        auto uuid = get_uuid(device, pipeline);
+        auto uuid = GetUUID(device, pipeline);
 
         vkDestroyPipeline(device, pipeline, nullptr);
         vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
@@ -287,7 +287,7 @@ TEST_F(UUID, GraphicsSimple) {
     VkPipeline pipeline;
     vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, graphics_pipeline_ci.get(), NULL, &pipeline);
 
-    auto uuid = get_uuid(device, pipeline);
+    auto uuid = GetUUID(device, pipeline);
 
     vkDestroyPipeline(device, pipeline, nullptr);
     vkDestroyRenderPass(device, render_pass, nullptr);
@@ -336,7 +336,7 @@ TEST_F(UUID, GraphicsReproducible) {
         VkPipeline pipeline;
         vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, graphics_pipeline_ci.get(), NULL, &pipeline);
 
-        auto uuid = get_uuid(device, pipeline);
+        auto uuid = GetUUID(device, pipeline);
 
         vkDestroyPipeline(device, pipeline, nullptr);
         vkDestroyRenderPass(device, render_pass, nullptr);
@@ -407,7 +407,7 @@ TEST_F(UUID, GraphicsDifferent) {
         VkPipeline pipeline;
         vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, graphics_pipeline_ci.get(), NULL, &pipeline);
 
-        auto uuid = get_uuid(device, pipeline);
+        auto uuid = GetUUID(device, pipeline);
 
         vkDestroyPipeline(device, pipeline, nullptr);
         vkDestroyRenderPass(device, render_pass, nullptr);

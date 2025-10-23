@@ -29,8 +29,6 @@ namespace vk_json {
 
 struct DeviceData;
 
-struct LayerSettings {};
-
 struct PhysicalDeviceData {
     VkPhysicalDevice physical_device = VK_NULL_HANDLE;
     bool lower_has_pipeline_props = false;
@@ -194,7 +192,6 @@ struct InstanceData {
 
     VkInstance instance;
     uint32_t api_version;
-    LayerSettings layer_settings;
     const VkAllocationCallbacks* allocator;
     struct InstanceDispatchTable {
         DECLARE_HOOK(GetInstanceProcAddr);
@@ -305,9 +302,4 @@ struct DeviceData {
 std::string getProcessName();
 std::string getBaseDirectoryPath();
 
-struct OwningVpjShaderFilenames;
-OwningVpjShaderFilenames get_shader_filenames(const VkGraphicsPipelineCreateInfo& ci, const std::string& prefix,
-                                              const uint32_t index);
-OwningVpjShaderFilenames get_shader_filenames(const VkComputePipelineCreateInfo& ci, const std::string& prefix,
-                                              const uint32_t index);
 }  // namespace vk_json

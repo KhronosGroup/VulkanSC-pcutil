@@ -36,3 +36,4 @@ class JsonValidator {
 
 bool ValidatePipelineJson(const std::string &json_str);
 bool ValidatePipelineJsonFile(const char *pipeline_jsonfile);
+bool CompareJson(const std::string &actual, const std::string &reference);

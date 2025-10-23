@@ -15,14 +15,14 @@
 #include <windows.h>
 #endif
 #ifdef __linux__
-#include <unistd.h>  // readlink
+#include <unistd.h>
 #endif
 
-#include <cstdlib>    // std::exit, std::getenv
-#include <utility>    // std::ignore
-#include <string>     // std::string
-#include <cstring>    // std::strncmp, strnlen
-#include <algorithm>  // std::reverse
+#include <stdlib.h>
+#include <string.h>
+#include <utility>
+#include <string>
+#include <algorithm>
 
 namespace vk_json {
 
@@ -33,7 +33,7 @@ std::string getProcessName() {
 #ifdef _WIN32
         if (GetModuleFileName(0, m_exeName, MAX_NAME_SIZE) == 0) {
             LOG("[%s] ERROR: Failed to obtaining process name.", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
-            std::exit(-1);
+            exit(-1);
         }
 
         // Some raw C code to get the .exe name on Windows.
@@ -51,7 +51,7 @@ std::string getProcessName() {
         int ret = readlink("/proc/self/exe", exeName, sizeof(exeName) - 1);
         if (ret == -1) {
             LOG("[%s] ERROR: Failed to obtaining process name.", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
-            std::exit(-1);
+            exit(-1);
         }
         exeName[ret] = 0;
 
@@ -62,7 +62,7 @@ std::string getProcessName() {
         m_exeName[writePos] = 0;
         std::string tmp(m_exeName);
         std::reverse(tmp.begin(), tmp.end());
-        std::strncpy(m_exeName, tmp.c_str(), sizeof(m_exeName) - 1);
+        strncpy(m_exeName, tmp.c_str(), sizeof(m_exeName) - 1);
 #endif
         return true;
     }();
@@ -71,7 +71,7 @@ std::string getProcessName() {
 }
 
 std::string getBaseDirectoryPath() {
-    std::string m_baseDir = std::getenv("VK_JSON_FILE_PATH") ? std::getenv("VK_JSON_FILE_PATH") : "";
+    std::string m_baseDir = getenv("VK_JSON_FILE_PATH") ? getenv("VK_JSON_FILE_PATH") : "";
     if (!m_baseDir.empty()) {
 #ifdef _WIN32
         m_baseDir += "\\";
@@ -81,7 +81,7 @@ std::string getBaseDirectoryPath() {
     } else {
         LOG("[%s] ERROR: Failed to query VK_JSON_FILE_PATH. Please set the environment variable.",
             VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
-        std::exit(-1);
+        exit(-1);
     }
     return m_baseDir;
 }

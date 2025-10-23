@@ -19,30 +19,20 @@
 
 class ObjectReservation : public testing::Test {
   public:
-    ObjectReservation() { clean_data_files(); }
+    ObjectReservation() { CleanDataFiles(); }
     ObjectReservation(const ObjectReservation&) = delete;
     ObjectReservation(ObjectReservation&&) = delete;
-    ~ObjectReservation() { clean_data_files(); }
+    ~ObjectReservation() { CleanDataFiles(); }
 
     void TEST_DESCRIPTION(const char* desc) { RecordProperty("description", desc); }
 
-    std::string get_header(size_t i) {
-        std::filesystem::path header_path = std::string("./gltest_objres_objectResInfo_") + std::to_string(i) + ".hpp";
-        std::ifstream header_stream{header_path};
+    std::string ReadHeader() {
+        std::ifstream header_stream{"./gltest_objres_objectResInfo.hpp"};
         return std::string(std::istreambuf_iterator<char>{header_stream}, std::istreambuf_iterator<char>{});
     }
 
-    void write_id(std::string& ref, int32_t id) {
-        for (auto pos = ref.find('@', 0); pos != std::string::npos; pos = ref.find('@', pos)) {
-            ref.replace(pos, 1, std::to_string(id));
-        }
-    }
-
-  protected:
-    static inline int32_t device_counter = 0;
-
   private:
-    void clean_data_files() {
+    void CleanDataFiles() {
         std::for_each(std::filesystem::directory_iterator{"."}, std::filesystem::directory_iterator{},
                       [](const std::filesystem::directory_entry& entry) {
                           if (std::regex_search(entry.path().generic_string(), std::regex{R"(gltest_json_)"})) {
@@ -244,59 +234,57 @@ TEST_F(ObjectReservation, Simple) {
     vkDestroyDevice(device, nullptr);
     vkDestroyInstance(instance, nullptr);
 
-    int32_t actual_counter = device_counter++;
-    auto header = get_header(actual_counter);
+    auto header = ReadHeader();
 
-    std::string ref = {R"(#ifndef gltest_objres_objectResInfo_@_HPP
-#define gltest_objres_objectResInfo_@_HPP
+    std::string ref = {R"(#ifndef gltest_objres_objectResInfo_HPP
+#define gltest_objres_objectResInfo_HPP
 
 #include <vulkan/vulkan_sc_core.h>
 
-static VkDeviceObjectReservationCreateInfo g_objectResCreateInfo_@ {};
+static VkDeviceObjectReservationCreateInfo g_objectResCreateInfo{};
 static void SetObjectResCreateInfo()
 {
-	g_objectResCreateInfo_@.sType                                      = VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO;
-	g_objectResCreateInfo_@.pNext                                      = nullptr;
-	g_objectResCreateInfo_@.semaphoreRequestCount                      = 1;
-	g_objectResCreateInfo_@.commandBufferRequestCount                  = 1;
-	g_objectResCreateInfo_@.fenceRequestCount                          = 1;
-	g_objectResCreateInfo_@.deviceMemoryRequestCount                   = 1;
-	g_objectResCreateInfo_@.bufferRequestCount                         = 1;
-	g_objectResCreateInfo_@.imageRequestCount                          = 1;
-	g_objectResCreateInfo_@.eventRequestCount                          = 1;
-	g_objectResCreateInfo_@.queryPoolRequestCount                      = 3;
-	g_objectResCreateInfo_@.bufferViewRequestCount                     = 1;
-	g_objectResCreateInfo_@.imageViewRequestCount                      = 1;
-	g_objectResCreateInfo_@.layeredImageViewRequestCount               = 1;
-	g_objectResCreateInfo_@.pipelineCacheRequestCount                  = 1;
-	g_objectResCreateInfo_@.pipelineLayoutRequestCount                 = 1;
-	g_objectResCreateInfo_@.renderPassRequestCount                     = 1;
-	g_objectResCreateInfo_@.graphicsPipelineRequestCount               = 1;
-	g_objectResCreateInfo_@.computePipelineRequestCount                = 1;
-	g_objectResCreateInfo_@.descriptorSetLayoutRequestCount            = 1;
-	g_objectResCreateInfo_@.samplerRequestCount                        = 1;
-	g_objectResCreateInfo_@.descriptorPoolRequestCount                 = 1;
-	g_objectResCreateInfo_@.descriptorSetRequestCount                  = 1;
-	g_objectResCreateInfo_@.framebufferRequestCount                    = 1;
-	g_objectResCreateInfo_@.commandPoolRequestCount                    = 1;
-	g_objectResCreateInfo_@.samplerYcbcrConversionRequestCount         = 1;
-	g_objectResCreateInfo_@.swapchainRequestCount                      = 1;
-	g_objectResCreateInfo_@.subpassDescriptionRequestCount             = 1;
-	g_objectResCreateInfo_@.attachmentDescriptionRequestCount          = 1;
-	g_objectResCreateInfo_@.descriptorSetLayoutBindingRequestCount     = 1;
-	g_objectResCreateInfo_@.descriptorSetLayoutBindingLimit            = 1;
-	g_objectResCreateInfo_@.maxImageViewMipLevels                      = 1;
-	g_objectResCreateInfo_@.maxImageViewArrayLayers                    = 2;
-	g_objectResCreateInfo_@.maxLayeredImageViewMipLevels               = 1;
-	g_objectResCreateInfo_@.maxOcclusionQueriesPerPool                 = 1;
-	g_objectResCreateInfo_@.maxPipelineStatisticsQueriesPerPool        = 1;
-	g_objectResCreateInfo_@.maxTimestampQueriesPerPool                 = 1;
-	g_objectResCreateInfo_@.maxImmutableSamplersPerDescriptorSetLayout = 1;
+	g_objectResCreateInfo.sType                                      = VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO;
+	g_objectResCreateInfo.pNext                                      = nullptr;
+	g_objectResCreateInfo.semaphoreRequestCount                      = 1;
+	g_objectResCreateInfo.commandBufferRequestCount                  = 1;
+	g_objectResCreateInfo.fenceRequestCount                          = 1;
+	g_objectResCreateInfo.deviceMemoryRequestCount                   = 1;
+	g_objectResCreateInfo.bufferRequestCount                         = 1;
+	g_objectResCreateInfo.imageRequestCount                          = 1;
+	g_objectResCreateInfo.eventRequestCount                          = 1;
+	g_objectResCreateInfo.queryPoolRequestCount                      = 3;
+	g_objectResCreateInfo.bufferViewRequestCount                     = 1;
+	g_objectResCreateInfo.imageViewRequestCount                      = 1;
+	g_objectResCreateInfo.layeredImageViewRequestCount               = 1;
+	g_objectResCreateInfo.pipelineCacheRequestCount                  = 1;
+	g_objectResCreateInfo.pipelineLayoutRequestCount                 = 1;
+	g_objectResCreateInfo.renderPassRequestCount                     = 1;
+	g_objectResCreateInfo.graphicsPipelineRequestCount               = 1;
+	g_objectResCreateInfo.computePipelineRequestCount                = 1;
+	g_objectResCreateInfo.descriptorSetLayoutRequestCount            = 1;
+	g_objectResCreateInfo.samplerRequestCount                        = 1;
+	g_objectResCreateInfo.descriptorPoolRequestCount                 = 1;
+	g_objectResCreateInfo.descriptorSetRequestCount                  = 1;
+	g_objectResCreateInfo.framebufferRequestCount                    = 1;
+	g_objectResCreateInfo.commandPoolRequestCount                    = 1;
+	g_objectResCreateInfo.samplerYcbcrConversionRequestCount         = 1;
+	g_objectResCreateInfo.swapchainRequestCount                      = 1;
+	g_objectResCreateInfo.subpassDescriptionRequestCount             = 1;
+	g_objectResCreateInfo.attachmentDescriptionRequestCount          = 1;
+	g_objectResCreateInfo.descriptorSetLayoutBindingRequestCount     = 1;
+	g_objectResCreateInfo.descriptorSetLayoutBindingLimit            = 1;
+	g_objectResCreateInfo.maxImageViewMipLevels                      = 1;
+	g_objectResCreateInfo.maxImageViewArrayLayers                    = 2;
+	g_objectResCreateInfo.maxLayeredImageViewMipLevels               = 1;
+	g_objectResCreateInfo.maxOcclusionQueriesPerPool                 = 1;
+	g_objectResCreateInfo.maxPipelineStatisticsQueriesPerPool        = 1;
+	g_objectResCreateInfo.maxTimestampQueriesPerPool                 = 1;
+	g_objectResCreateInfo.maxImmutableSamplersPerDescriptorSetLayout = 1;
 }
 
 #endif
 )"};
-    write_id(ref, actual_counter);
     EXPECT_EQ(header, ref);
 }
 
@@ -542,59 +530,57 @@ TEST_F(ObjectReservation, HighWatermark) {
     vkDestroyDevice(device, nullptr);
     vkDestroyInstance(instance, nullptr);
 
-    int32_t actual_counter = device_counter++;
-    auto header = get_header(actual_counter);
+    auto header = ReadHeader();
 
-    std::string ref = {R"(#ifndef gltest_objres_objectResInfo_@_HPP
-#define gltest_objres_objectResInfo_@_HPP
+    std::string ref = {R"(#ifndef gltest_objres_objectResInfo_HPP
+#define gltest_objres_objectResInfo_HPP
 
 #include <vulkan/vulkan_sc_core.h>
 
-static VkDeviceObjectReservationCreateInfo g_objectResCreateInfo_@ {};
+static VkDeviceObjectReservationCreateInfo g_objectResCreateInfo{};
 static void SetObjectResCreateInfo()
 {
-	g_objectResCreateInfo_@.sType                                      = VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO;
-	g_objectResCreateInfo_@.pNext                                      = nullptr;
-	g_objectResCreateInfo_@.semaphoreRequestCount                      = 1;
-	g_objectResCreateInfo_@.commandBufferRequestCount                  = 2;
-	g_objectResCreateInfo_@.fenceRequestCount                          = 1;
-	g_objectResCreateInfo_@.deviceMemoryRequestCount                   = 2;
-	g_objectResCreateInfo_@.bufferRequestCount                         = 1;
-	g_objectResCreateInfo_@.imageRequestCount                          = 1;
-	g_objectResCreateInfo_@.eventRequestCount                          = 1;
-	g_objectResCreateInfo_@.queryPoolRequestCount                      = 6;
-	g_objectResCreateInfo_@.bufferViewRequestCount                     = 1;
-	g_objectResCreateInfo_@.imageViewRequestCount                      = 1;
-	g_objectResCreateInfo_@.layeredImageViewRequestCount               = 1;
-	g_objectResCreateInfo_@.pipelineCacheRequestCount                  = 1;
-	g_objectResCreateInfo_@.pipelineLayoutRequestCount                 = 1;
-	g_objectResCreateInfo_@.renderPassRequestCount                     = 1;
-	g_objectResCreateInfo_@.graphicsPipelineRequestCount               = 1;
-	g_objectResCreateInfo_@.computePipelineRequestCount                = 1;
-	g_objectResCreateInfo_@.descriptorSetLayoutRequestCount            = 1;
-	g_objectResCreateInfo_@.samplerRequestCount                        = 1;
-	g_objectResCreateInfo_@.descriptorPoolRequestCount                 = 2;
-	g_objectResCreateInfo_@.descriptorSetRequestCount                  = 1;
-	g_objectResCreateInfo_@.framebufferRequestCount                    = 1;
-	g_objectResCreateInfo_@.commandPoolRequestCount                    = 2;
-	g_objectResCreateInfo_@.samplerYcbcrConversionRequestCount         = 1;
-	g_objectResCreateInfo_@.swapchainRequestCount                      = 1;
-	g_objectResCreateInfo_@.subpassDescriptionRequestCount             = 1;
-	g_objectResCreateInfo_@.attachmentDescriptionRequestCount          = 1;
-	g_objectResCreateInfo_@.descriptorSetLayoutBindingRequestCount     = 1;
-	g_objectResCreateInfo_@.descriptorSetLayoutBindingLimit            = 1;
-	g_objectResCreateInfo_@.maxImageViewMipLevels                      = 1;
-	g_objectResCreateInfo_@.maxImageViewArrayLayers                    = 2;
-	g_objectResCreateInfo_@.maxLayeredImageViewMipLevels               = 1;
-	g_objectResCreateInfo_@.maxOcclusionQueriesPerPool                 = 1;
-	g_objectResCreateInfo_@.maxPipelineStatisticsQueriesPerPool        = 1;
-	g_objectResCreateInfo_@.maxTimestampQueriesPerPool                 = 1;
-	g_objectResCreateInfo_@.maxImmutableSamplersPerDescriptorSetLayout = 1;
+	g_objectResCreateInfo.sType                                      = VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO;
+	g_objectResCreateInfo.pNext                                      = nullptr;
+	g_objectResCreateInfo.semaphoreRequestCount                      = 1;
+	g_objectResCreateInfo.commandBufferRequestCount                  = 2;
+	g_objectResCreateInfo.fenceRequestCount                          = 1;
+	g_objectResCreateInfo.deviceMemoryRequestCount                   = 2;
+	g_objectResCreateInfo.bufferRequestCount                         = 1;
+	g_objectResCreateInfo.imageRequestCount                          = 1;
+	g_objectResCreateInfo.eventRequestCount                          = 1;
+	g_objectResCreateInfo.queryPoolRequestCount                      = 6;
+	g_objectResCreateInfo.bufferViewRequestCount                     = 1;
+	g_objectResCreateInfo.imageViewRequestCount                      = 1;
+	g_objectResCreateInfo.layeredImageViewRequestCount               = 1;
+	g_objectResCreateInfo.pipelineCacheRequestCount                  = 1;
+	g_objectResCreateInfo.pipelineLayoutRequestCount                 = 1;
+	g_objectResCreateInfo.renderPassRequestCount                     = 1;
+	g_objectResCreateInfo.graphicsPipelineRequestCount               = 1;
+	g_objectResCreateInfo.computePipelineRequestCount                = 1;
+	g_objectResCreateInfo.descriptorSetLayoutRequestCount            = 1;
+	g_objectResCreateInfo.samplerRequestCount                        = 1;
+	g_objectResCreateInfo.descriptorPoolRequestCount                 = 2;
+	g_objectResCreateInfo.descriptorSetRequestCount                  = 1;
+	g_objectResCreateInfo.framebufferRequestCount                    = 1;
+	g_objectResCreateInfo.commandPoolRequestCount                    = 2;
+	g_objectResCreateInfo.samplerYcbcrConversionRequestCount         = 1;
+	g_objectResCreateInfo.swapchainRequestCount                      = 1;
+	g_objectResCreateInfo.subpassDescriptionRequestCount             = 1;
+	g_objectResCreateInfo.attachmentDescriptionRequestCount          = 1;
+	g_objectResCreateInfo.descriptorSetLayoutBindingRequestCount     = 1;
+	g_objectResCreateInfo.descriptorSetLayoutBindingLimit            = 1;
+	g_objectResCreateInfo.maxImageViewMipLevels                      = 1;
+	g_objectResCreateInfo.maxImageViewArrayLayers                    = 2;
+	g_objectResCreateInfo.maxLayeredImageViewMipLevels               = 1;
+	g_objectResCreateInfo.maxOcclusionQueriesPerPool                 = 1;
+	g_objectResCreateInfo.maxPipelineStatisticsQueriesPerPool        = 1;
+	g_objectResCreateInfo.maxTimestampQueriesPerPool                 = 1;
+	g_objectResCreateInfo.maxImmutableSamplersPerDescriptorSetLayout = 1;
 }
 
 #endif
 )"};
-    write_id(ref, actual_counter);
     EXPECT_EQ(header, ref);
 }
 
@@ -653,58 +639,56 @@ TEST_F(ObjectReservation, NonTrivial) {
     vkDestroyDevice(device, nullptr);
     vkDestroyInstance(instance, nullptr);
 
-    int32_t actual_counter = device_counter++;
-    auto header = get_header(actual_counter);
+    auto header = ReadHeader();
 
-    std::string ref = {R"(#ifndef gltest_objres_objectResInfo_@_HPP
-#define gltest_objres_objectResInfo_@_HPP
+    std::string ref = {R"(#ifndef gltest_objres_objectResInfo_HPP
+#define gltest_objres_objectResInfo_HPP
 
 #include <vulkan/vulkan_sc_core.h>
 
-static VkDeviceObjectReservationCreateInfo g_objectResCreateInfo_@ {};
+static VkDeviceObjectReservationCreateInfo g_objectResCreateInfo{};
 static void SetObjectResCreateInfo()
 {
-	g_objectResCreateInfo_@.sType                                      = VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO;
-	g_objectResCreateInfo_@.pNext                                      = nullptr;
-	g_objectResCreateInfo_@.semaphoreRequestCount                      = 0;
-	g_objectResCreateInfo_@.commandBufferRequestCount                  = 0;
-	g_objectResCreateInfo_@.fenceRequestCount                          = 0;
-	g_objectResCreateInfo_@.deviceMemoryRequestCount                   = 0;
-	g_objectResCreateInfo_@.bufferRequestCount                         = 0;
-	g_objectResCreateInfo_@.imageRequestCount                          = 0;
-	g_objectResCreateInfo_@.eventRequestCount                          = 0;
-	g_objectResCreateInfo_@.queryPoolRequestCount                      = 0;
-	g_objectResCreateInfo_@.bufferViewRequestCount                     = 0;
-	g_objectResCreateInfo_@.imageViewRequestCount                      = 0;
-	g_objectResCreateInfo_@.layeredImageViewRequestCount               = 0;
-	g_objectResCreateInfo_@.pipelineCacheRequestCount                  = 0;
-	g_objectResCreateInfo_@.pipelineLayoutRequestCount                 = 0;
-	g_objectResCreateInfo_@.renderPassRequestCount                     = 0;
-	g_objectResCreateInfo_@.graphicsPipelineRequestCount               = 0;
-	g_objectResCreateInfo_@.computePipelineRequestCount                = 0;
-	g_objectResCreateInfo_@.descriptorSetLayoutRequestCount            = 1;
-	g_objectResCreateInfo_@.samplerRequestCount                        = 4;
-	g_objectResCreateInfo_@.descriptorPoolRequestCount                 = 0;
-	g_objectResCreateInfo_@.descriptorSetRequestCount                  = 0;
-	g_objectResCreateInfo_@.framebufferRequestCount                    = 0;
-	g_objectResCreateInfo_@.commandPoolRequestCount                    = 0;
-	g_objectResCreateInfo_@.samplerYcbcrConversionRequestCount         = 0;
-	g_objectResCreateInfo_@.swapchainRequestCount                      = 0;
-	g_objectResCreateInfo_@.subpassDescriptionRequestCount             = 0;
-	g_objectResCreateInfo_@.attachmentDescriptionRequestCount          = 0;
-	g_objectResCreateInfo_@.descriptorSetLayoutBindingRequestCount     = 3;
-	g_objectResCreateInfo_@.descriptorSetLayoutBindingLimit            = 7;
-	g_objectResCreateInfo_@.maxImageViewMipLevels                      = 0;
-	g_objectResCreateInfo_@.maxImageViewArrayLayers                    = 0;
-	g_objectResCreateInfo_@.maxLayeredImageViewMipLevels               = 0;
-	g_objectResCreateInfo_@.maxOcclusionQueriesPerPool                 = 0;
-	g_objectResCreateInfo_@.maxPipelineStatisticsQueriesPerPool        = 0;
-	g_objectResCreateInfo_@.maxTimestampQueriesPerPool                 = 0;
-	g_objectResCreateInfo_@.maxImmutableSamplersPerDescriptorSetLayout = 4;
+	g_objectResCreateInfo.sType                                      = VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO;
+	g_objectResCreateInfo.pNext                                      = nullptr;
+	g_objectResCreateInfo.semaphoreRequestCount                      = 0;
+	g_objectResCreateInfo.commandBufferRequestCount                  = 0;
+	g_objectResCreateInfo.fenceRequestCount                          = 0;
+	g_objectResCreateInfo.deviceMemoryRequestCount                   = 0;
+	g_objectResCreateInfo.bufferRequestCount                         = 0;
+	g_objectResCreateInfo.imageRequestCount                          = 0;
+	g_objectResCreateInfo.eventRequestCount                          = 0;
+	g_objectResCreateInfo.queryPoolRequestCount                      = 0;
+	g_objectResCreateInfo.bufferViewRequestCount                     = 0;
+	g_objectResCreateInfo.imageViewRequestCount                      = 0;
+	g_objectResCreateInfo.layeredImageViewRequestCount               = 0;
+	g_objectResCreateInfo.pipelineCacheRequestCount                  = 0;
+	g_objectResCreateInfo.pipelineLayoutRequestCount                 = 0;
+	g_objectResCreateInfo.renderPassRequestCount                     = 0;
+	g_objectResCreateInfo.graphicsPipelineRequestCount               = 0;
+	g_objectResCreateInfo.computePipelineRequestCount                = 0;
+	g_objectResCreateInfo.descriptorSetLayoutRequestCount            = 1;
+	g_objectResCreateInfo.samplerRequestCount                        = 4;
+	g_objectResCreateInfo.descriptorPoolRequestCount                 = 0;
+	g_objectResCreateInfo.descriptorSetRequestCount                  = 0;
+	g_objectResCreateInfo.framebufferRequestCount                    = 0;
+	g_objectResCreateInfo.commandPoolRequestCount                    = 0;
+	g_objectResCreateInfo.samplerYcbcrConversionRequestCount         = 0;
+	g_objectResCreateInfo.swapchainRequestCount                      = 0;
+	g_objectResCreateInfo.subpassDescriptionRequestCount             = 0;
+	g_objectResCreateInfo.attachmentDescriptionRequestCount          = 0;
+	g_objectResCreateInfo.descriptorSetLayoutBindingRequestCount     = 3;
+	g_objectResCreateInfo.descriptorSetLayoutBindingLimit            = 7;
+	g_objectResCreateInfo.maxImageViewMipLevels                      = 0;
+	g_objectResCreateInfo.maxImageViewArrayLayers                    = 0;
+	g_objectResCreateInfo.maxLayeredImageViewMipLevels               = 0;
+	g_objectResCreateInfo.maxOcclusionQueriesPerPool                 = 0;
+	g_objectResCreateInfo.maxPipelineStatisticsQueriesPerPool        = 0;
+	g_objectResCreateInfo.maxTimestampQueriesPerPool                 = 0;
+	g_objectResCreateInfo.maxImmutableSamplersPerDescriptorSetLayout = 4;
 }
 
 #endif
 )"};
-    write_id(ref, actual_counter);
     EXPECT_EQ(header, ref);
 }

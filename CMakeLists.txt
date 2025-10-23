@@ -9,9 +9,9 @@ cmake_minimum_required(VERSION 3.22.1)
 project(VulkanSC-Pipeline-Cache-Utils)
 
 option(BUILD_TESTS "Build pipeline cache utils unit tests of built" ${PROJECT_IS_TOP_LEVEL})
-option(PCU_BUILD_PCINFO "Build pcinfo" ON)
-option(PCU_BUILD_JSON_GEN_LAYER "Build JSON gen layer" ON)
-option(PCU_WERROR "Treat pipeline cache utils compiler warnings as errors" ${PROJECT_IS_TOP_LEVEL})
+option(BUILD_VKSCPCINFO "Build vkscpcinfo" ON)
+option(BUILD_JSON_GEN_LAYER "Build JSON gen layer" ON)
+option(BUILD_WERROR "Treat pipeline cache utils compiler warnings as errors" ${PROJECT_IS_TOP_LEVEL})
 option(ENABLE_ADDRESS_SANITIZER "Use address sanitization")
 
 set(API_TYPE "vulkansc")
@@ -50,7 +50,7 @@ endif()
 
 include(GNUInstallDirs)
 
-if (PCU_WERROR)
+if (BUILD_WERROR)
     add_compile_options("$<IF:$<CXX_COMPILER_ID:MSVC>,/WX,-Werror>")
 endif()
 
@@ -131,11 +131,11 @@ endif()
 add_subdirectory(library/pcutil)
 add_subdirectory(library/pcjson)
 
-if(PCU_BUILD_JSON_GEN_LAYER)
+if(BUILD_JSON_GEN_LAYER)
     add_subdirectory(layers/json_gen)
 endif()
 
-if(PCU_BUILD_PCINFO)
+if(BUILD_VKSCPCINFO)
     add_subdirectory(vkscpcinfo)
 endif()
 

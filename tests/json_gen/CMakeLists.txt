@@ -37,8 +37,7 @@ else()
     set(DRIVER_FILES_VALUE "${VULKAN_TOOLS_INSTALL_DIR}/share/vulkan/icd.d/VkICD_mock_icd.json")
     set(LD_LIBRARY_PATH_VALUE
         "${VULKAN_TOOLS_INSTALL_DIR}/lib/"
-        "${VULKAN_LOADER_INSTALL_DIR}/lib/"
-        "${VULKAN_VALIDATION_LAYERS_INSTALL_DIR}/lib/")
+        "${VULKAN_LOADER_INSTALL_DIR}/lib/")
 
     cmake_path(CONVERT "${LD_LIBRARY_PATH_VALUE}" TO_NATIVE_PATH_LIST LD_LIBRARY_PATH_VALUE)
 

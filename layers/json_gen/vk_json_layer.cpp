@@ -316,8 +316,10 @@ DeviceData::~DeviceData() { writeDeviceObjResHeader(); }
 
 void DeviceData::writeDeviceObjResHeader() {
     std::stringstream result;
+    auto base_dir = std::string(getBaseDirectoryPath());
+    auto proc_name = std::string(getProcessName());
     auto header_path =
-        std::string(getBaseDirectoryPath()) + std::string(getProcessName()) + "_objectResInfo_" + std::to_string(id) + ".hpp";
+        base_dir + proc_name + "_objectResInfo_" + std::to_string(id) + ".hpp";
     // clang-format off
     result <<
         "#ifndef " << getProcessName() << "_objectResInfo_" << id << "_HPP\n" <<

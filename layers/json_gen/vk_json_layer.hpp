@@ -296,7 +296,7 @@ struct DeviceData {
 
 std::string_view getProcessName();
 
-std::string_view getBaseDirectoryPath();
+std::string getBaseDirectoryPath();
 
 struct OwningVpjShaderFilenames;
 OwningVpjShaderFilenames get_shader_filenames(const VkGraphicsPipelineCreateInfo& ci, const std::string& prefix,

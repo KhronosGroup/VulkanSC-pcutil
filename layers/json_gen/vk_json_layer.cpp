@@ -2,6 +2,8 @@
  * Copyright (c) 2020-2025 The Khronos Group Inc.
  * Copyright (c) 2020-2025 LunarG, Inc.
  * Copyright (c) 2020-2025 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2025 RasterGrid Kft.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -204,7 +206,7 @@ VKAPI_ATTR VkResult VKAPI_CALL EnumerateDeviceExtensionProperties(VkPhysicalDevi
 
 #define INIT_HOOK(_vt, _inst, fn) _vt.fn = reinterpret_cast<PFN_vk##fn>(vtable.GetInstanceProcAddr(_inst, "vk" #fn))
 InstanceData::InstanceData(VkInstance inst, PFN_vkGetInstanceProcAddr gpa, const VkAllocationCallbacks* alloc)
-    : instance{inst}, allocator{alloc}, physical_device_map{} {
+    : instance{inst}, allocator{alloc}, physical_device_map{}, unique_obj_id_counter{0} {
     vtable.GetInstanceProcAddr = gpa;
     INIT_HOOK(vtable, instance, CreateInstance);
     INIT_HOOK(vtable, instance, DestroyInstance);
@@ -237,14 +239,12 @@ static VkLayerInstanceCreateInfo* GetChainInfo(const VkInstanceCreateInfo* pCrea
     return chain_info;
 }
 
-static std::atomic<uint32_t> device_counter = 0;
-
 #define INIT_HOOK(_vt, _dev, fn) _vt.fn = reinterpret_cast<PFN_vk##fn>(vtable.GetDeviceProcAddr(_dev, "vk" #fn))
 #define INIT_HOOK_ALIAS(_vt, _dev, fn, fn_alias) \
     _vt.fn_alias = (_vt.fn_alias != nullptr) ? _vt.fn_alias : reinterpret_cast<PFN_vk##fn>(vtable.GetDeviceProcAddr(_dev, "vk" #fn))
 
 DeviceData::DeviceData(VkDevice device, const VkDeviceCreateInfo* ci, PFN_vkGetDeviceProcAddr gpa, bool enable_ext,
-                       const VkAllocationCallbacks* alloc)
+                       const VkAllocationCallbacks* alloc, InstanceData& instance_data)
     : device(device),
       create_info(ci),
       vtable{gpa},
@@ -259,8 +259,10 @@ DeviceData::DeviceData(VkDevice device, const VkDeviceCreateInfo* ci, PFN_vkGetD
       renderpass_map{},
       renderpass2_map{},
       obj_res_info{},
-      obj_counter{0},
-      id{device_counter++} {
+      unique_obj_id_counter{0},
+      unique_obj_id{instance_data.unique_obj_id_counter++},
+      base_dir_path{getBaseDirectoryPath()},
+      process_name{getProcessName()} {
     INIT_HOOK(vtable, device, DestroyDevice);
     INIT_HOOK(vtable, device, CreateSemaphore);
     INIT_HOOK(vtable, device, DestroySemaphore);
@@ -316,53 +318,52 @@ DeviceData::~DeviceData() { writeDeviceObjResHeader(); }
 
 void DeviceData::writeDeviceObjResHeader() {
     std::stringstream result;
-    auto header_path =
-        std::string(getBaseDirectoryPath()) + std::string(getProcessName()) + "_objectResInfo_" + std::to_string(id) + ".hpp";
+    auto header_path = base_dir_path + process_name + "_objectResInfo_" + std::to_string(unique_obj_id) + ".hpp";
     // clang-format off
     result <<
-        "#ifndef " << getProcessName() << "_objectResInfo_" << id << "_HPP\n" <<
-        "#define " << getProcessName() << "_objectResInfo_" << id << "_HPP\n\n" <<
+        "#ifndef " << process_name << "_objectResInfo_" << unique_obj_id << "_HPP\n" <<
+        "#define " << process_name << "_objectResInfo_" << unique_obj_id << "_HPP\n\n" <<
         "#include <vulkan/vulkan_sc_core.h>\n\n" <<
-        "static VkDeviceObjectReservationCreateInfo g_objectResCreateInfo_" << id << " {};\n" <<
+        "static VkDeviceObjectReservationCreateInfo g_objectResCreateInfo_" << unique_obj_id << " {};\n" <<
         "static void SetObjectResCreateInfo()\n" <<
         "{\n" <<
-        "\tg_objectResCreateInfo_" << id << ".sType                                      = VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO;\n" <<
-        "\tg_objectResCreateInfo_" << id << ".pNext                                      = nullptr;\n" <<
-        "\tg_objectResCreateInfo_" << id << ".semaphoreRequestCount                      = " << obj_res_info.semaphoreHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".commandBufferRequestCount                  = " << obj_res_info.commandBufferHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".fenceRequestCount                          = " << obj_res_info.fenceHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".deviceMemoryRequestCount                   = " << obj_res_info.deviceMemoryHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".bufferRequestCount                         = " << obj_res_info.bufferHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".imageRequestCount                          = " << obj_res_info.imageHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".eventRequestCount                          = " << obj_res_info.eventHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".queryPoolRequestCount                      = " << obj_res_info.queryPoolHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".bufferViewRequestCount                     = " << obj_res_info.bufferViewHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".imageViewRequestCount                      = " << obj_res_info.imageViewHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".layeredImageViewRequestCount               = " << obj_res_info.layeredImageViewHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".pipelineCacheRequestCount                  = " << obj_res_info.pipelineCacheHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".pipelineLayoutRequestCount                 = " << obj_res_info.pipelineLayoutHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".renderPassRequestCount                     = " << obj_res_info.renderPassHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".graphicsPipelineRequestCount               = " << obj_res_info.graphicsPipelineHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".computePipelineRequestCount                = " << obj_res_info.computePipelineHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".descriptorSetLayoutRequestCount            = " << obj_res_info.descriptorSetLayoutHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".samplerRequestCount                        = " << obj_res_info.samplerHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".descriptorPoolRequestCount                 = " << obj_res_info.descriptorPoolHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".descriptorSetRequestCount                  = " << obj_res_info.descriptorSetHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".framebufferRequestCount                    = " << obj_res_info.framebufferHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".commandPoolRequestCount                    = " << obj_res_info.commandPoolHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".samplerYcbcrConversionRequestCount         = " << obj_res_info.samplerYcbcrConversionHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".swapchainRequestCount                      = " << obj_res_info.swapchainHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".subpassDescriptionRequestCount             = " << obj_res_info.subpassDescriptionHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".attachmentDescriptionRequestCount          = " << obj_res_info.attachmentDescriptionHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".descriptorSetLayoutBindingRequestCount     = " << obj_res_info.descriptorSetLayoutBindingHighWatermark << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".descriptorSetLayoutBindingLimit            = " << obj_res_info.descriptorSetLayoutBindingLimit << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".maxImageViewMipLevels                      = " << obj_res_info.maxImageViewMipLevels << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".maxImageViewArrayLayers                    = " << obj_res_info.maxImageViewArrayLayers << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".maxLayeredImageViewMipLevels               = " << obj_res_info.maxLayeredImageViewMipLevels << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".maxOcclusionQueriesPerPool                 = " << obj_res_info.maxOcclusionQueriesPerPool << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".maxPipelineStatisticsQueriesPerPool        = " << obj_res_info.maxPipelineStatisticsQueriesPerPool << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".maxTimestampQueriesPerPool                 = " << obj_res_info.maxTimestampQueriesPerPool << ";\n" <<
-        "\tg_objectResCreateInfo_" << id << ".maxImmutableSamplersPerDescriptorSetLayout = " << obj_res_info.maxImmutableSamplersPerDescriptorSetLayout << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".sType                                      = VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO;\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".pNext                                      = nullptr;\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".semaphoreRequestCount                      = " << obj_res_info.semaphoreHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".commandBufferRequestCount                  = " << obj_res_info.commandBufferHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".fenceRequestCount                          = " << obj_res_info.fenceHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".deviceMemoryRequestCount                   = " << obj_res_info.deviceMemoryHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".bufferRequestCount                         = " << obj_res_info.bufferHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".imageRequestCount                          = " << obj_res_info.imageHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".eventRequestCount                          = " << obj_res_info.eventHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".queryPoolRequestCount                      = " << obj_res_info.queryPoolHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".bufferViewRequestCount                     = " << obj_res_info.bufferViewHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".imageViewRequestCount                      = " << obj_res_info.imageViewHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".layeredImageViewRequestCount               = " << obj_res_info.layeredImageViewHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".pipelineCacheRequestCount                  = " << obj_res_info.pipelineCacheHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".pipelineLayoutRequestCount                 = " << obj_res_info.pipelineLayoutHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".renderPassRequestCount                     = " << obj_res_info.renderPassHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".graphicsPipelineRequestCount               = " << obj_res_info.graphicsPipelineHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".computePipelineRequestCount                = " << obj_res_info.computePipelineHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".descriptorSetLayoutRequestCount            = " << obj_res_info.descriptorSetLayoutHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".samplerRequestCount                        = " << obj_res_info.samplerHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".descriptorPoolRequestCount                 = " << obj_res_info.descriptorPoolHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".descriptorSetRequestCount                  = " << obj_res_info.descriptorSetHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".framebufferRequestCount                    = " << obj_res_info.framebufferHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".commandPoolRequestCount                    = " << obj_res_info.commandPoolHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".samplerYcbcrConversionRequestCount         = " << obj_res_info.samplerYcbcrConversionHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".swapchainRequestCount                      = " << obj_res_info.swapchainHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".subpassDescriptionRequestCount             = " << obj_res_info.subpassDescriptionHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".attachmentDescriptionRequestCount          = " << obj_res_info.attachmentDescriptionHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".descriptorSetLayoutBindingRequestCount     = " << obj_res_info.descriptorSetLayoutBindingHighWatermark << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".descriptorSetLayoutBindingLimit            = " << obj_res_info.descriptorSetLayoutBindingLimit << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".maxImageViewMipLevels                      = " << obj_res_info.maxImageViewMipLevels << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".maxImageViewArrayLayers                    = " << obj_res_info.maxImageViewArrayLayers << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".maxLayeredImageViewMipLevels               = " << obj_res_info.maxLayeredImageViewMipLevels << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".maxOcclusionQueriesPerPool                 = " << obj_res_info.maxOcclusionQueriesPerPool << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".maxPipelineStatisticsQueriesPerPool        = " << obj_res_info.maxPipelineStatisticsQueriesPerPool << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".maxTimestampQueriesPerPool                 = " << obj_res_info.maxTimestampQueriesPerPool << ";\n" <<
+        "\tg_objectResCreateInfo_" << unique_obj_id << ".maxImmutableSamplersPerDescriptorSetLayout = " << obj_res_info.maxImmutableSamplersPerDescriptorSetLayout << ";\n" <<
         "}\n\n" <<
         "#endif\n";
     // clang-format on
@@ -400,15 +401,15 @@ DeviceFeatures::DeviceFeatures(const VkDeviceCreateInfo* create_info) : DeviceFe
 }
 
 YcbcrData::YcbcrData(const VkSamplerYcbcrConversionCreateInfo* ci, DeviceData& device_data)
-    : create_info{ci}, id{++device_data.obj_counter} {}
+    : create_info{ci}, unique_obj_id{++device_data.unique_obj_id_counter} {}
 
 SamplerData::SamplerData(const VkSamplerCreateInfo* ci, DeviceData& device_data)
-    : create_info{ci}, ycbcr_data{}, id{++device_data.obj_counter} {
+    : create_info{ci}, ycbcr_data{}, unique_obj_id{++device_data.unique_obj_id_counter} {
     auto ycbcr = vku::FindStructInPNextChain<VkSamplerYcbcrConversionInfo>(create_info.ptr());
     if (ycbcr) {
         if (auto result = device_data.ycbcr_map.find(ycbcr->conversion); result->first) {
-            // Rewrite handle(s) in create info to id(s)
-            ycbcr->conversion = reinterpret_cast<VkSamplerYcbcrConversion>(result->second->id);
+            // Rewrite handle(s) in create info to unique_obj_id(s)
+            ycbcr->conversion = reinterpret_cast<VkSamplerYcbcrConversion>(result->second->unique_obj_id);
             // Store local copy of dependent create info
             ycbcr_data = *result->second;
         } else {
@@ -419,7 +420,7 @@ SamplerData::SamplerData(const VkSamplerCreateInfo* ci, DeviceData& device_data)
 }
 
 DescriptorSetLayoutData::DescriptorSetLayoutData(const VkDescriptorSetLayoutCreateInfo* ci, DeviceData& device_data)
-    : create_info{ci}, immutable_sampler_data{}, id{++device_data.obj_counter} {
+    : create_info{ci}, immutable_sampler_data{}, unique_obj_id{++device_data.unique_obj_id_counter} {
     for (uint32_t i = 0; i < create_info.bindingCount; ++i) {
         if ((create_info.pBindings[i].descriptorType == VK_DESCRIPTOR_TYPE_SAMPLER ||
              create_info.pBindings[i].descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) &&
@@ -427,8 +428,8 @@ DescriptorSetLayoutData::DescriptorSetLayoutData(const VkDescriptorSetLayoutCrea
             immutable_sampler_data.reserve(create_info.pBindings[i].descriptorCount);
             for (uint32_t j = 0; j < create_info.pBindings[i].descriptorCount; ++j) {
                 if (auto result = device_data.sampler_map.find(create_info.pBindings[i].pImmutableSamplers[j]); result->first) {
-                    // Rewrite handle(s) in create info to id(s)
-                    create_info.pBindings[i].pImmutableSamplers[j] = reinterpret_cast<VkSampler>(result->second->id);
+                    // Rewrite handle(s) in create info to unique_obj_id(s)
+                    create_info.pBindings[i].pImmutableSamplers[j] = reinterpret_cast<VkSampler>(result->second->unique_obj_id);
                     // Store local copy of dependent create info
                     immutable_sampler_data.emplace_back(*result->second);
                 } else {
@@ -441,12 +442,13 @@ DescriptorSetLayoutData::DescriptorSetLayoutData(const VkDescriptorSetLayoutCrea
 }
 
 PipelineLayoutData::PipelineLayoutData(const VkPipelineLayoutCreateInfo* ci, DeviceData& device_data)
-    : create_info{ci}, descriptor_set_layout_data{}, id{++device_data.obj_counter} {
+    : create_info{ci}, descriptor_set_layout_data{}, unique_obj_id{++device_data.unique_obj_id_counter} {
     descriptor_set_layout_data.reserve(create_info.setLayoutCount);
     for (uint32_t i = 0; i < create_info.setLayoutCount; ++i) {
         if (auto result = device_data.descriptor_set_layout_map.find(create_info.pSetLayouts[i]); result->first) {
-            // Rewrite handle(s) in create info to id(s)
-            create_info.pSetLayouts[i] = reinterpret_cast<VkDescriptorSetLayout>(static_cast<std::uintptr_t>(result->second->id));
+            // Rewrite handle(s) in create info to unique_obj_id(s)
+            create_info.pSetLayouts[i] =
+                reinterpret_cast<VkDescriptorSetLayout>(static_cast<std::uintptr_t>(result->second->unique_obj_id));
             // Store local copy of dependent create info
             descriptor_set_layout_data.emplace_back(*result->second);
         } else {
@@ -465,12 +467,16 @@ RenderPass2Data::RenderPass2Data(const VkRenderPassCreateInfo2* ci) : create_inf
 ImageViewData::ImageViewData(const VkImageViewCreateInfo* ci) : create_info(ci) {}
 
 GraphicsPipelineData::GraphicsPipelineData(const VkGraphicsPipelineCreateInfo* ci, DeviceData& device_data)
-    : create_info{ci, true, true}, pipeline_layout_data{}, renderpass_data{}, shader_module_data{}, id{++device_data.obj_counter} {
+    : create_info{ci, true, true},
+      pipeline_layout_data{},
+      renderpass_data{},
+      shader_module_data{},
+      unique_obj_id{++device_data.unique_obj_id_counter} {
     if (auto result = device_data.pipeline_layout_map.find(create_info.layout); result->first) {
         // Save pipeline layout
         pipeline_layout_data = *result->second;
-        // Rewrite handle of pipeline layout in graphics pipeline with autoinc id
-        create_info.layout = reinterpret_cast<VkPipelineLayout>(result->second->id);
+        // Rewrite handle of pipeline layout in graphics pipeline with autoinc unique_obj_id
+        create_info.layout = reinterpret_cast<VkPipelineLayout>(result->second->unique_obj_id);
     } else {
         LOG("[%s] ERROR: Failed to find pipeline layout in accelerating structure referenced by graphics pipeline.",
             VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
@@ -494,16 +500,16 @@ GraphicsPipelineData::GraphicsPipelineData(const VkGraphicsPipelineCreateInfo* c
         }
     }
 
-    GenJsonUuidAndWriteToDisk(device_data.create_info, device_data.id);
+    GenJsonUuidAndWriteToDisk(device_data);
 }
 
 ComputePipelineData::ComputePipelineData(const VkComputePipelineCreateInfo* ci, DeviceData& device_data)
-    : create_info{ci}, pipeline_layout_data{}, shader_module_data{}, id{++device_data.obj_counter} {
+    : create_info{ci}, pipeline_layout_data{}, shader_module_data{}, unique_obj_id{++device_data.unique_obj_id_counter} {
     if (auto result = device_data.pipeline_layout_map.find(create_info.layout); result->first) {
         // Save pipeline layout
         pipeline_layout_data = *result->second;
-        // Rewrite handle of pipeline layout in graphics pipeline with autoinc id
-        create_info.layout = reinterpret_cast<VkPipelineLayout>(result->second->id);
+        // Rewrite handle of pipeline layout in graphics pipeline with autoinc unique_obj_id
+        create_info.layout = reinterpret_cast<VkPipelineLayout>(result->second->unique_obj_id);
     } else {
         LOG("[%s] ERROR: Failed to find pipeline layout in accelerating structure referenced by compute pipeline.",
             VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
@@ -516,7 +522,7 @@ ComputePipelineData::ComputePipelineData(const VkComputePipelineCreateInfo* ci, 
             VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
     }
 
-    GenJsonUuidAndWriteToDisk(device_data.create_info, device_data.id);
+    GenJsonUuidAndWriteToDisk(device_data);
 }
 
 // Begin layer logic
@@ -632,7 +638,7 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateDevice(VkPhysicalDevice physical
             return result;
         }
         auto alloccb = pAllocator ? pAllocator : instance_data->allocator;
-        auto device_data = std::make_shared<DeviceData>(*pDevice, pCreateInfo, gdpa, enable_layer_ext, alloccb);
+        auto device_data = std::make_shared<DeviceData>(*pDevice, pCreateInfo, gdpa, enable_layer_ext, alloccb, *instance_data);
 
         device_data_map.insert(DispatchKey(*pDevice), device_data);
     } catch (const std::bad_alloc&) {
@@ -1124,7 +1130,7 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateCommandPool(VkDevice device, con
 
 // Gen logic
 
-void GraphicsPipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInfo& device_create_info, std::uintptr_t device_id) {
+void GraphicsPipelineData::GenJsonUuidAndWriteToDisk(DeviceData& device_data) {
     VpjGenerator generator = vpjCreateGenerator();
     vpjSetMD5PipelineUUIDGeneration(generator, true);
     VpjData data{};
@@ -1170,32 +1176,32 @@ void GraphicsPipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInf
         }
     }
     names_storage.reserve(names_required);
-    auto not_contains = [](const auto& container, const uintptr_t id) {
-        return std::find(std::cbegin(container), std::cend(container), id) == std::cend(container);
+    auto not_contains = [](const auto& container, const uintptr_t unique_obj_id) {
+        return std::find(std::cbegin(container), std::cend(container), unique_obj_id) == std::cend(container);
     };
     using namespace std::string_literals;
     for (size_t i = 0; i < pipeline_layout_data.descriptor_set_layout_data.size(); ++i) {
         const auto& descriptor_set_layout_data = pipeline_layout_data.descriptor_set_layout_data[i];
-        if (not_contains(descriptor_set_layout_ids, descriptor_set_layout_data.id)) {
+        if (not_contains(descriptor_set_layout_ids, descriptor_set_layout_data.unique_obj_id)) {
             names_storage.push_back("DescriptorSetLayout"s + std::to_string(descriptor_set_layout_ids.size() + 1));
-            descriptor_set_layout_ids.push_back(descriptor_set_layout_data.id);
+            descriptor_set_layout_ids.push_back(descriptor_set_layout_data.unique_obj_id);
             descriptor_set_layout_names.push_back(names_storage.back().c_str());
             descriptor_set_layouts.push_back(descriptor_set_layout_data.create_info);
         }
         for (size_t j = 0; j < pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data.size(); ++j) {
             const auto& immutable_sampler_data = pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j];
-            if (not_contains(immutable_sampler_ids, immutable_sampler_data.id)) {
+            if (not_contains(immutable_sampler_ids, immutable_sampler_data.unique_obj_id)) {
                 names_storage.push_back("ImmutableSampler"s + std::to_string(immutable_sampler_names.size() + 1));
-                immutable_sampler_ids.push_back(immutable_sampler_data.id);
+                immutable_sampler_ids.push_back(immutable_sampler_data.unique_obj_id);
                 immutable_sampler_names.push_back(names_storage.back().c_str());
                 immutable_samplers.push_back(immutable_sampler_data.create_info);
             }
             if (pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.has_value()) {
                 const auto& ycbcr_sampler_data =
                     pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.value();
-                if (not_contains(ycbcr_sampler_ids, ycbcr_sampler_data.id)) {
+                if (not_contains(ycbcr_sampler_ids, ycbcr_sampler_data.unique_obj_id)) {
                     names_storage.push_back("YcbcrSampler"s + std::to_string(ycbcr_sampler_names.size() + 1));
-                    ycbcr_sampler_ids.push_back(ycbcr_sampler_data.id);
+                    ycbcr_sampler_ids.push_back(ycbcr_sampler_data.unique_obj_id);
                     ycbcr_sampler_names.push_back(names_storage.back().c_str());
                     ycbcr_samplers.push_back(ycbcr_sampler_data.create_info);
                 }
@@ -1203,8 +1209,8 @@ void GraphicsPipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInf
         }
     }
     // Rewrite autoinc ids to indices
-    auto find_id = [](const auto& container, const uintptr_t id) {
-        return std::find(std::cbegin(container), std::cend(container), id);
+    auto find_id = [](const auto& container, const uintptr_t unique_obj_id) {
+        return std::find(std::cbegin(container), std::cend(container), unique_obj_id);
     };
     for (size_t i = 0; i < pipeline_layout_data.create_info.setLayoutCount; ++i) {
         pipeline_layout_data.create_info.pSetLayouts[i] = reinterpret_cast<VkDescriptorSetLayout>(
@@ -1243,11 +1249,12 @@ void GraphicsPipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInf
     data.graphicsPipelineState.ppYcbcrSamplerNames = ycbcr_samplers.size() ? ycbcr_sampler_names.data() : nullptr;
 
     // Shaders
-    auto shader_filenames = get_shader_filenames(*create_info.ptr(), std::string(getProcessName()),
-                                                 static_cast<uint32_t>(device_id), static_cast<uint32_t>(id));
+    auto shader_filenames =
+        get_shader_filenames(*create_info.ptr(), device_data.process_name, static_cast<uint32_t>(device_data.unique_obj_id),
+                             static_cast<uint32_t>(unique_obj_id));
     for (size_t i = 0; i < shader_module_data.size(); ++i) {
         auto& shader_ci = shader_module_data[i].create_info;
-        auto shader_path = std::string(getBaseDirectoryPath()) + shader_filenames.filenames[i].pFilename;
+        auto shader_path = device_data.base_dir_path + shader_filenames.filenames[i].pFilename;
         std::ofstream spv_file(shader_path, std::ios::binary);
         if (spv_file) {
             spv_file.write(reinterpret_cast<const char*>(shader_ci.pCode), shader_ci.codeSize);
@@ -1264,8 +1271,8 @@ void GraphicsPipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInf
     }
 
     // Enabled extensions
-    data.enabledExtensionCount = device_create_info.enabledExtensionCount;
-    data.ppEnabledExtensions = const_cast<const char**>(device_create_info.ppEnabledExtensionNames);
+    data.enabledExtensionCount = device_data.create_info.enabledExtensionCount;
+    data.ppEnabledExtensions = const_cast<const char**>(device_data.create_info.ppEnabledExtensionNames);
 
     if (!vpjGeneratePipelineJson(generator, &data, &result_json, &msg_)) {
         LOG("[%s] ERROR: Unable to generate pipeline JSON: %s", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME, msg_);
@@ -1274,8 +1281,8 @@ void GraphicsPipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInf
         LOG("[%s] ERROR: Unable to obtain generated pipeline UUID: %s", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME, msg_);
     }
 
-    auto pipeline_path = std::string(getBaseDirectoryPath()) + std::string(getProcessName()) + "_device_" +
-                         std::to_string(device_id) + "_pipeline_" + std::to_string(id) + ".json";
+    auto pipeline_path = device_data.base_dir_path + device_data.process_name + "_device_" +
+                         std::to_string(device_data.unique_obj_id) + "_pipeline_" + std::to_string(unique_obj_id) + ".json";
     std::ofstream pipeline_file(pipeline_path);
     if (pipeline_file) {
         pipeline_file << result_json;
@@ -1284,7 +1291,7 @@ void GraphicsPipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInf
     }
 }
 
-void ComputePipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInfo& device_create_info, std::uintptr_t device_id) {
+void ComputePipelineData::GenJsonUuidAndWriteToDisk(DeviceData& device_data) {
     VpjGenerator generator = vpjCreateGenerator();
     vpjSetMD5PipelineUUIDGeneration(generator, true);
     VpjData data{};
@@ -1323,32 +1330,32 @@ void ComputePipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInfo
         }
     }
     names_storage.reserve(names_required);
-    auto not_contains = [](const auto& container, const uintptr_t id) {
-        return std::find(std::cbegin(container), std::cend(container), id) == std::cend(container);
+    auto not_contains = [](const auto& container, const uintptr_t unique_obj_id) {
+        return std::find(std::cbegin(container), std::cend(container), unique_obj_id) == std::cend(container);
     };
     using namespace std::string_literals;
     for (size_t i = 0; i < pipeline_layout_data.descriptor_set_layout_data.size(); ++i) {
         const auto& descriptor_set_layout_data = pipeline_layout_data.descriptor_set_layout_data[i];
-        if (not_contains(descriptor_set_layout_ids, descriptor_set_layout_data.id)) {
+        if (not_contains(descriptor_set_layout_ids, descriptor_set_layout_data.unique_obj_id)) {
             names_storage.push_back("DescriptorSetLayout"s + std::to_string(descriptor_set_layout_ids.size() + 1));
-            descriptor_set_layout_ids.push_back(descriptor_set_layout_data.id);
+            descriptor_set_layout_ids.push_back(descriptor_set_layout_data.unique_obj_id);
             descriptor_set_layout_names.push_back(names_storage.back().c_str());
             descriptor_set_layouts.push_back(descriptor_set_layout_data.create_info);
         }
         for (size_t j = 0; j < pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data.size(); ++j) {
             const auto& immutable_sampler_data = pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j];
-            if (not_contains(immutable_sampler_ids, immutable_sampler_data.id)) {
+            if (not_contains(immutable_sampler_ids, immutable_sampler_data.unique_obj_id)) {
                 names_storage.push_back("ImmutableSampler"s + std::to_string(immutable_sampler_names.size() + 1));
-                immutable_sampler_ids.push_back(immutable_sampler_data.id);
+                immutable_sampler_ids.push_back(immutable_sampler_data.unique_obj_id);
                 immutable_sampler_names.push_back(names_storage.back().c_str());
                 immutable_samplers.push_back(immutable_sampler_data.create_info);
             }
             if (pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.has_value()) {
                 const auto& ycbcr_sampler_data =
                     pipeline_layout_data.descriptor_set_layout_data[i].immutable_sampler_data[j].ycbcr_data.value();
-                if (not_contains(ycbcr_sampler_ids, ycbcr_sampler_data.id)) {
+                if (not_contains(ycbcr_sampler_ids, ycbcr_sampler_data.unique_obj_id)) {
                     names_storage.push_back("YcbcrSampler"s + std::to_string(ycbcr_sampler_names.size() + 1));
-                    ycbcr_sampler_ids.push_back(ycbcr_sampler_data.id);
+                    ycbcr_sampler_ids.push_back(ycbcr_sampler_data.unique_obj_id);
                     ycbcr_sampler_names.push_back(names_storage.back().c_str());
                     ycbcr_samplers.push_back(ycbcr_sampler_data.create_info);
                 }
@@ -1356,8 +1363,8 @@ void ComputePipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInfo
         }
     }
     // Rewrite autoinc ids to indices
-    auto find_id = [](const auto& container, const uintptr_t id) {
-        return std::find(std::cbegin(container), std::cend(container), id);
+    auto find_id = [](const auto& container, const uintptr_t unique_obj_id) {
+        return std::find(std::cbegin(container), std::cend(container), unique_obj_id);
     };
     for (size_t i = 0; i < pipeline_layout_data.create_info.setLayoutCount; ++i) {
         pipeline_layout_data.create_info.pSetLayouts[i] = reinterpret_cast<VkDescriptorSetLayout>(
@@ -1396,10 +1403,11 @@ void ComputePipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInfo
     data.computePipelineState.ppYcbcrSamplerNames = ycbcr_sampler_names.size() ? ycbcr_sampler_names.data() : nullptr;
 
     // Shaders
-    auto shader_filename = get_shader_filenames(*create_info.ptr(), std::string(getProcessName()), static_cast<uint32_t>(device_id),
-                                                static_cast<uint32_t>(id));
+    auto shader_filename =
+        get_shader_filenames(*create_info.ptr(), device_data.process_name, static_cast<uint32_t>(device_data.unique_obj_id),
+                             static_cast<uint32_t>(unique_obj_id));
     auto shader_ci = shader_module_data.create_info;
-    auto shader_path = std::string(getBaseDirectoryPath()) + shader_filename.filenames[0].pFilename;
+    auto shader_path = device_data.base_dir_path + shader_filename.filenames[0].pFilename;
     std::ofstream spv_file(shader_path, std::ios::binary);
     if (spv_file) {
         spv_file.write(reinterpret_cast<const char*>(shader_ci.pCode), shader_ci.codeSize);
@@ -1415,8 +1423,8 @@ void ComputePipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInfo
         LOG("[%s] ERROR: Unable to filter physical device features: %s", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME, msg_);
     }
 
-    data.enabledExtensionCount = device_create_info.enabledExtensionCount;
-    data.ppEnabledExtensions = const_cast<const char**>(device_create_info.ppEnabledExtensionNames);
+    data.enabledExtensionCount = device_data.create_info.enabledExtensionCount;
+    data.ppEnabledExtensions = const_cast<const char**>(device_data.create_info.ppEnabledExtensionNames);
 
     if (!vpjGeneratePipelineJson(generator, &data, &result_json, &msg_)) {
         LOG("[%s] ERROR: Unable to generate pipeline JSON: %s", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME, msg_);
@@ -1425,8 +1433,8 @@ void ComputePipelineData::GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInfo
         LOG("[%s] ERROR: Unable to obtain generated pipeline UUID: %s", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME, msg_);
     }
 
-    auto pipeline_path = std::string(getBaseDirectoryPath()) + std::string(getProcessName()) + "_device_" +
-                         std::to_string(device_id) + "_pipeline_" + std::to_string(id) + ".json";
+    auto pipeline_path = device_data.base_dir_path + device_data.process_name + "_device_" +
+                         std::to_string(device_data.unique_obj_id) + "_pipeline_" + std::to_string(unique_obj_id) + ".json";
     std::ofstream pipeline_file(pipeline_path);
     if (pipeline_file) {
         pipeline_file << result_json;

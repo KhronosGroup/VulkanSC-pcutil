@@ -2,6 +2,8 @@
  * Copyright (c) 2020-2025 The Khronos Group Inc.
  * Copyright (c) 2020-2025 LunarG, Inc.
  * Copyright (c) 2020-2025 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2025 RasterGrid Kft.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -47,7 +49,7 @@ struct YcbcrData {
     YcbcrData() = default;
 
     vku::safe_VkSamplerYcbcrConversionCreateInfo create_info;
-    std::uintptr_t id;
+    std::uintptr_t unique_obj_id;
 };
 
 struct SamplerData {
@@ -56,7 +58,7 @@ struct SamplerData {
 
     vku::safe_VkSamplerCreateInfo create_info;
     std::optional<YcbcrData> ycbcr_data;
-    std::uintptr_t id;
+    std::uintptr_t unique_obj_id;
 };
 
 struct DescriptorSetLayoutData {
@@ -65,7 +67,7 @@ struct DescriptorSetLayoutData {
 
     vku::safe_VkDescriptorSetLayoutCreateInfo create_info;
     std::vector<SamplerData> immutable_sampler_data;
-    std::uintptr_t id;
+    std::uintptr_t unique_obj_id;
 };
 
 struct PipelineLayoutData {
@@ -74,7 +76,7 @@ struct PipelineLayoutData {
 
     vku::safe_VkPipelineLayoutCreateInfo create_info;
     std::vector<DescriptorSetLayoutData> descriptor_set_layout_data;
-    std::uintptr_t id;
+    std::uintptr_t unique_obj_id;
 };
 
 struct ShaderModuleData {
@@ -114,9 +116,9 @@ struct GraphicsPipelineData {
     std::variant<RenderPassData, RenderPass2Data> renderpass_data;
     std::vector<ShaderModuleData> shader_module_data;
     std::array<uint8_t, VK_UUID_SIZE> uuid;
-    std::uintptr_t id;
+    std::uintptr_t unique_obj_id;
 
-    void GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInfo& device_create_info, std::uintptr_t device_id);
+    void GenJsonUuidAndWriteToDisk(DeviceData& device_data);
 };
 
 struct ComputePipelineData {
@@ -127,9 +129,9 @@ struct ComputePipelineData {
     PipelineLayoutData pipeline_layout_data;
     ShaderModuleData shader_module_data;
     std::array<uint8_t, VK_UUID_SIZE> uuid;
-    std::uintptr_t id;
+    std::uintptr_t unique_obj_id;
 
-    void GenJsonUuidAndWriteToDisk(vku::safe_VkDeviceCreateInfo& device_create_info, std::uintptr_t device_id);
+    void GenJsonUuidAndWriteToDisk(DeviceData& device_data);
 };
 
 struct ObjectResCreateInfo {
@@ -208,11 +210,13 @@ struct InstanceData {
     } vtable;
 
     vku::concurrent::unordered_map<VkPhysicalDevice, std::shared_ptr<PhysicalDeviceData>> physical_device_map;
+
+    std::atomic<std::uintptr_t> unique_obj_id_counter;
 };
 
 struct DeviceData {
     DeviceData(VkDevice device, const VkDeviceCreateInfo* ci, PFN_vkGetDeviceProcAddr gpa, bool enable,
-               const VkAllocationCallbacks* alloc);
+               const VkAllocationCallbacks* alloc, InstanceData& instance_data);
     DeviceData() = delete;
     DeviceData(const DeviceData&) = delete;
     DeviceData& operator=(const DeviceData&) = delete;
@@ -287,16 +291,19 @@ struct DeviceData {
     vku::concurrent::unordered_map<VkRenderPass, std::shared_ptr<RenderPass2Data>> renderpass2_map;
     vku::concurrent::unordered_map<VkImageView, std::shared_ptr<ImageViewData>> image_view_map;
     ObjectResCreateInfo obj_res_info;
-    std::atomic<std::uintptr_t> obj_counter;
-    uint32_t id;  // NOTE: not JSON id
+
+    std::atomic<std::uintptr_t> unique_obj_id_counter;
+    uintptr_t unique_obj_id;
+
+    std::string base_dir_path;
+    std::string process_name;
 
     void writeDeviceObjResHeader();
 };
 #undef DECLARE_HOOK
 
-std::string_view getProcessName();
-
-std::string_view getBaseDirectoryPath();
+std::string getProcessName();
+std::string getBaseDirectoryPath();
 
 struct OwningVpjShaderFilenames;
 OwningVpjShaderFilenames get_shader_filenames(const VkGraphicsPipelineCreateInfo& ci, const std::string& prefix,

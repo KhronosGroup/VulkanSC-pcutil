@@ -2,6 +2,8 @@
  * Copyright (c) 2020-2025 The Khronos Group Inc.
  * Copyright (c) 2020-2025 LunarG, Inc.
  * Copyright (c) 2020-2025 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2025 RasterGrid Kft.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -24,7 +26,7 @@
 
 namespace vk_json {
 
-std::string_view getProcessName() {
+std::string getProcessName() {
     static constexpr int MAX_NAME_SIZE = 255;
     static char m_exeName[MAX_NAME_SIZE] = {0};
     static bool init = [&]() {
@@ -68,23 +70,20 @@ std::string_view getProcessName() {
     return m_exeName;
 }
 
-std::string_view getBaseDirectoryPath() {
-    static std::string baseDir = []() {
-        std::string m_baseDir = std::getenv("VK_JSON_FILE_PATH") ? std::getenv("VK_JSON_FILE_PATH") : "";
-        if (!m_baseDir.empty()) {
+std::string getBaseDirectoryPath() {
+    std::string m_baseDir = std::getenv("VK_JSON_FILE_PATH") ? std::getenv("VK_JSON_FILE_PATH") : "";
+    if (!m_baseDir.empty()) {
 #ifdef _WIN32
-            m_baseDir += "\\";
+        m_baseDir += "\\";
 #else
-            m_baseDir += "/";
+        m_baseDir += "/";
 #endif
-        } else {
-            LOG("[%s] ERROR: Failed to query VK_JSON_FILE_PATH. Please set the environment variable.",
-                VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
-            std::exit(-1);
-        }
-        return m_baseDir;
-    }();
-    return baseDir;
+    } else {
+        LOG("[%s] ERROR: Failed to query VK_JSON_FILE_PATH. Please set the environment variable.",
+            VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
+        std::exit(-1);
+    }
+    return m_baseDir;
 }
 
 }  // namespace vk_json

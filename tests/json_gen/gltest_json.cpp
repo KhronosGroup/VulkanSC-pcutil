@@ -245,24 +245,24 @@ TEST_F(JSON, ComputeSimple) {
         ]
     },
     "EnabledExtensions" : [],
-    "PipelineUUID" : 
+    "PipelineUUID" :
     [
-        202,
-        11,
-        199,
-        59,
-        82,
-        83,
-        249,
-        169,
-        182,
-        68,
+        60,
+        107,
+        242,
         102,
-        20,
-        19,
-        111,
+        76,
+        42,
+        138,
+        202,
+        223,
+        212,
+        110,
         146,
-        73
+        235,
+        193,
+        36,
+        196
     ]
 })"};
     WriteIds(ref_json, pipeline_id);
@@ -746,24 +746,24 @@ TEST_F(JSON, ComputeLifetime) {
         ]
     },
     "EnabledExtensions" : [],
-    "PipelineUUID" : 
+    "PipelineUUID" :
     [
-        17,
-        162,
-        188,
-        10,
-        38,
-        74,
-        65,
         15,
-        175,
-        182,
-        244,
-        158,
-        157,
-        4,
-        113,
-        57
+        110,
+        178,
+        18,
+        197,
+        229,
+        73,
+        172,
+        200,
+        236,
+        237,
+        30,
+        54,
+        3,
+        172,
+        212
     ]
 })"};
     WriteIds(ref_json, pipeline1_id);
@@ -1347,24 +1347,24 @@ TEST_F(JSON, ComputeComplex) {
     [
         "VK_KHR_shader_clock"
     ],
-    "PipelineUUID" : 
+    "PipelineUUID" :
     [
-        75,
-        246,
-        160,
-        119,
-        209,
-        198,
-        49,
-        209,
-        246,
-        110,
-        148,
-        155,
-        197,
-        108,
-        143,
-        144
+        217,
+        85,
+        6,
+        178,
+        116,
+        129,
+        149,
+        4,
+        13,
+        107,
+        152,
+        24,
+        223,
+        89,
+        116,
+        234
     ]
 })"};
     WriteIds(ref_json, pipeline_id);

@@ -8,6 +8,7 @@
 #ifndef VKSC_PIPELINE_JSON_H_
 #define VKSC_PIPELINE_JSON_H_ 1
 
+#include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -18,7 +19,11 @@ extern "C" {
 typedef struct VpjShaderFileName {
     /// VkShaderStageFlagBits identifying the shader stage
     int32_t stage;
+    /// SPIR-V file name
     const char* pFilename;
+    /// SPIR-V data (required for MD5-based UUID generation)
+    size_t codeSize;
+    const void* pCode;
 } VpjShaderFileName;
 
 typedef struct VpjGraphicsPipelineState {

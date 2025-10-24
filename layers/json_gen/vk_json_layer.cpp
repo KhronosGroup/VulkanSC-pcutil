@@ -80,7 +80,7 @@ static OwningVpjShaderFilenames GetShaderFiles(const VkGraphicsPipelineCreateInf
     const auto filename_accumulator = [&](OwningVpjShaderFilenames& acc,
                                           const VkPipelineShaderStageCreateInfo& pss_ci) -> OwningVpjShaderFilenames& {
         acc.storage.emplace_back(shader_filename(pss_ci));
-        acc.filenames.push_back(VpjShaderFileName{static_cast<int32_t>(pss_ci.stage), acc.storage.back().c_str()});
+        acc.filenames.push_back(VpjShaderFileName{static_cast<int32_t>(pss_ci.stage), acc.storage.back().c_str(), 0, nullptr});
         return acc;
     };
     return std::accumulate(ci.pStages, ci.pStages + ci.stageCount, OwningVpjShaderFilenames{}, filename_accumulator);
@@ -93,7 +93,7 @@ static OwningVpjShaderFilenames GetShaderFiles(const VkComputePipelineCreateInfo
     };
     OwningVpjShaderFilenames res;
     res.storage.emplace_back(shader_filename(ci.stage));
-    res.filenames.push_back(VpjShaderFileName{static_cast<int32_t>(ci.stage.stage), res.storage.back().c_str()});
+    res.filenames.push_back(VpjShaderFileName{static_cast<int32_t>(ci.stage.stage), res.storage.back().c_str(), 0, nullptr});
     return res;
 };
 
@@ -1248,10 +1248,14 @@ void GraphicsPipelineData::GenJsonUuidAndWriteToDisk(DeviceData& device_data) {
     auto shader_filenames = GetShaderFiles(*create_info.ptr(), device_data.file_prefix, unique_obj_id);
     for (size_t i = 0; i < shader_module_data.size(); ++i) {
         auto& shader_ci = shader_module_data[i].create_info;
+        shader_filenames.filenames[i].codeSize = shader_ci.codeSize;
+        shader_filenames.filenames[i].pCode = shader_ci.pCode;
+
         auto shader_path = device_data.base_dir_path + shader_filenames.filenames[i].pFilename;
         std::ofstream spv_file(shader_path, std::ios::binary);
         if (spv_file) {
             spv_file.write(reinterpret_cast<const char*>(shader_ci.pCode), shader_ci.codeSize);
+            spv_file.close();
         } else {
             LOG("[%s] ERROR: Unable to open: %s", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME, shader_path.c_str());
         }
@@ -1300,10 +1304,14 @@ void ComputePipelineData::GenJsonUuidAndWriteToDisk(DeviceData& device_data) {
     // Shaders
     auto shader_filename = GetShaderFiles(*create_info.ptr(), device_data.file_prefix, unique_obj_id);
     auto shader_ci = shader_module_data.create_info;
+    shader_filename.filenames[0].codeSize = shader_ci.codeSize;
+    shader_filename.filenames[0].pCode = shader_ci.pCode;
+
     auto shader_path = device_data.base_dir_path + shader_filename.filenames[0].pFilename;
     std::ofstream spv_file(shader_path, std::ios::binary);
     if (spv_file) {
         spv_file.write(reinterpret_cast<const char*>(shader_ci.pCode), shader_ci.codeSize);
+        spv_file.close();
     } else {
         LOG("[%s] ERROR: Unable to open: %s", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME, shader_path.c_str());
     }

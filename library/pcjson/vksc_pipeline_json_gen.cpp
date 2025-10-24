@@ -11,7 +11,6 @@
 #include <memory.h>
 #include <string.h>
 
-#include <fstream>
 #include <vector>
 #include <string>
 #include <unordered_map>
@@ -77,7 +76,7 @@ class Generator : private GeneratorBase {
             // Pipeline UUID is set last to be able to do MD5 generation from the full data if needed
             if (md5_generator_enabled_) {
                 hashlib::md5 md5{};
-                gen_PipelineMD5(md5, json);
+                gen_PipelineMD5(md5, json, *pPipelineData);
                 generated_uuid_ = AllocMem<uint8_t>(VK_UUID_SIZE);
                 memcpy(generated_uuid_, md5.digest().data(), VK_UUID_SIZE);
                 json["PipelineUUID"] = gen_PipelineUUID(generated_uuid_);
@@ -281,14 +280,14 @@ class Generator : private GeneratorBase {
         }
     }
 
-    void gen_ShaderFilesMD5(hashlib::md5& md5, const Json::Value& json_shaders) {
+    void gen_ShaderFilesMD5(hashlib::md5& md5, const Json::Value& json_shaders, const VpjShaderFileName* filenames) {
         for (Json::Value::ArrayIndex i = 0; i < json_shaders.size(); ++i) {
             gen_JsonMD5(md5, json_shaders[i]["stage"]);
-
-            std::ifstream shader_file(json_shaders[i]["filename"].asString(), std::ios::binary);
-            std::vector<char> buffer(std::istreambuf_iterator<char>(shader_file), {});
-
-            gen_MD5(md5, buffer.data(), buffer.size());
+            if (filenames[i].pCode != nullptr) {
+                gen_MD5(md5, filenames[i].pCode, filenames[i].codeSize);
+            } else {
+                Error() << "Missing SPIR-V code from shader file names data";
+            }
         }
     }
 
@@ -384,7 +383,7 @@ class Generator : private GeneratorBase {
         return out_pipeline_layout;
     }
 
-    void gen_PipelineMD5(hashlib::md5& md5, const Json::Value& json) {
+    void gen_PipelineMD5(hashlib::md5& md5, const Json::Value& json, const VpjData& data) {
         // Because of handle names, the whole concept of determinism is compromised
         // therefore we have to create a version of the generated data from which
         // we can reliably generate a deterministic MD5 hash which can be done by
@@ -404,7 +403,7 @@ class Generator : private GeneratorBase {
 
             gen_JsonMD5(md5, hashable_data);
 
-            gen_ShaderFilesMD5(md5, state["ShaderFileNames"]);
+            gen_ShaderFilesMD5(md5, state["ShaderFileNames"], data.graphicsPipelineState.pShaderFileNames);
         }
 
         if (json.isMember("ComputePipelineState")) {
@@ -415,7 +414,7 @@ class Generator : private GeneratorBase {
 
             gen_JsonMD5(md5, hashable_data);
 
-            gen_ShaderFilesMD5(md5, state["ShaderFileNames"]);
+            gen_ShaderFilesMD5(md5, state["ShaderFileNames"], data.computePipelineState.pShaderFileNames);
         }
     }
 

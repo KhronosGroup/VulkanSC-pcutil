@@ -12,9 +12,10 @@
 #include <valijson/schema_parser.hpp>
 #include <valijson/validator.hpp>
 
+#include <string>
 #include <fstream>
-#include <cstdarg>
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdexcept>
 
 bool JsonValidator::LoadAndValidateSchema(const std::string &schema_file, const RemoteSchemaRemap &remote_schema_remap) {
@@ -164,6 +165,16 @@ bool CompareJson(const std::string &actual, const std::string &reference) {
 
     if (formatted_ref != actual) {
         std::cout << "Generated JSON mismatch:\n  Reference:\n" << formatted_ref << "\n  Actual:\n" << actual;
+        if (getenv("TEST_OUTPUT_JSON_ON_MISMATCH") != nullptr) {
+            static uint32_t output_index = 0;
+            ++output_index;
+            std::ofstream ref(std::string("reference_") + std::to_string(output_index) + ".json");
+            ref << formatted_ref;
+            ref.close();
+            std::ofstream act(std::string("actual_") + std::to_string(output_index) + ".json");
+            act << actual;
+            act.close();
+        }
         return false;
     }
 

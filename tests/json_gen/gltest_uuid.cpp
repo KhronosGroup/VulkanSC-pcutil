@@ -107,7 +107,7 @@ TEST_F(UUID, ComputeSimple) {
     vkDestroyDevice(device, nullptr);
     vkDestroyInstance(instance, nullptr);
 
-    std::array<uint8_t, VK_UUID_SIZE> ref{{202, 11, 199, 59, 82, 83, 249, 169, 182, 68, 102, 20, 19, 111, 146, 73}};
+    std::array<uint8_t, VK_UUID_SIZE> ref{{60, 107, 242, 102, 76, 42, 138, 202, 223, 212, 110, 146, 235, 193, 36, 196}};
     EXPECT_EQ(uuid, ref);
 }
 

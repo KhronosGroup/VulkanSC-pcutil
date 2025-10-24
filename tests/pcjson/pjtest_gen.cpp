@@ -3102,24 +3102,24 @@ TEST_F(Gen, ComputePipelineJSONWithMD5) {
     [
         "VK_EXT_robustness2"
     ],
-    "PipelineUUID" : 
+    "PipelineUUID" :
     [
-        179,
-        130,
-        205,
-        90,
-        237,
-        26,
-        40,
-        165,
-        2,
-        203,
-        77,
-        246,
-        151,
-        95,
-        235,
-        55
+        173,
+        219,
+        118,
+        247,
+        216,
+        178,
+        101,
+        146,
+        185,
+        23,
+        86,
+        164,
+        204,
+        27,
+        25,
+        250
     ]
 })"};
 
@@ -3259,6 +3259,10 @@ TEST_F(Gen, ComputePipelineJSONWithMD5) {
     VpjShaderFileName shaderFileNames[1] = {};
     shaderFileNames[0].pFilename = "shader.comp.spv";
     shaderFileNames[0].stage = VK_SHADER_STAGE_COMPUTE_BIT;
+
+    std::vector<uint32_t> ref_spirv{1, 2, 3, 4};
+    shaderFileNames[0].codeSize = ref_spirv.size() * sizeof(uint32_t);
+    shaderFileNames[0].pCode = ref_spirv.data();
 
     const char* enabled_extensions[1] = {"VK_EXT_robustness2"};
 
@@ -3672,24 +3676,24 @@ TEST_F(Gen, GraphicsPipelineJSONWithMD5) {
             }
         ]
     },
-    "PipelineUUID" : 
+    "PipelineUUID" :
     [
-        236,
-        39,
-        196,
-        127,
-        10,
+        49,
+        240,
+        91,
+        17,
+        162,
+        98,
+        76,
+        103,
+        145,
+        145,
         146,
-        8,
-        48,
-        78,
-        102,
-        251,
-        67,
-        235,
-        44,
-        235,
-        87
+        247,
+        163,
+        153,
+        172,
+        238
     ]
 })"};
 
@@ -3906,6 +3910,12 @@ TEST_F(Gen, GraphicsPipelineJSONWithMD5) {
     shaderFileNames[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
     shaderFileNames[1].pFilename = "shader.frag.spv";
     shaderFileNames[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    std::vector<uint32_t> ref_spirv{1, 2, 3, 4};
+    shaderFileNames[0].codeSize = ref_spirv.size() * sizeof(uint32_t);
+    shaderFileNames[0].pCode = ref_spirv.data();
+    shaderFileNames[1].codeSize = ref_spirv.size() * sizeof(uint32_t);
+    shaderFileNames[1].pCode = ref_spirv.data();
 
     const char* enabled_extensions[1] = {"VK_EXT_robustness2"};
 

@@ -1,8 +1,6 @@
 /*
  * Copyright (c) 2025 The Khronos Group Inc.
  * Copyright (c) 2025 RasterGrid Kft.
- * Copyright (c) 2022-2025 Valve Corporation
- * Copyright (c) 2022-2025 LunarG, Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  */

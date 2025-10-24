@@ -74,6 +74,8 @@ TEST_F(Gen, VkPhysicalDeviceFeatures2) {
             "samplerYcbcrConversion": "VK_TRUE",
             "shaderDrawParameters": "VK_FALSE"
         },
+)"
+                            R"(
         "features": {
             "robustBufferAccess": "VK_FALSE",
             "fullDrawIndexUint32" : "VK_TRUE",
@@ -255,6 +257,8 @@ TEST_F(Gen, VkGraphicsPipelineCreateInfo) {
             "NULL"
         }
         ],
+)"
+                            R"(
         "pVertexInputState": 
         {
             "sType" : "VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO",
@@ -301,6 +305,8 @@ TEST_F(Gen, VkGraphicsPipelineCreateInfo) {
             "flags" : 0,
             "patchControlPoints" : 4
         },
+)"
+                            R"(
         "pViewportState": 
         {
             "sType" : "VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO",
@@ -364,6 +370,8 @@ TEST_F(Gen, VkGraphicsPipelineCreateInfo) {
             "alphaToCoverageEnable" : "VK_FALSE",
             "alphaToOneEnable" : "VK_FALSE"
         },
+)"
+                            R"(
         "pDepthStencilState": 
         {
             "sType" : "VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO",
@@ -1728,6 +1736,8 @@ TEST_F(Gen, ComputePipelineJSON) {
                 "stage" : "VK_SHADER_STAGE_COMPUTE_BIT"
             }
         },
+)"
+                               R"(
         "DescriptorSetLayouts" : 
         [
             {
@@ -1779,6 +1789,8 @@ TEST_F(Gen, ComputePipelineJSON) {
                 }
             }
         ],
+)"
+                               R"(
         "ImmutableSamplers" : 
         [
             {
@@ -1838,6 +1850,8 @@ TEST_F(Gen, ComputePipelineJSON) {
                 }
             }
         ],
+)"
+                               R"(
         "PhysicalDeviceFeatures" : 
         {
             "features" : 
@@ -1906,6 +1920,8 @@ TEST_F(Gen, ComputePipelineJSON) {
             },
             "sType" : "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2"
         },
+)"
+                               R"(
         "PipelineLayout" : 
         {
             "flags" : 0,
@@ -2219,6 +2235,8 @@ TEST_F(Gen, GraphicsPipelineJSON) {
                 }
             }
         ],
+)"
+                               R"(
         "GraphicsPipeline" : 
         {
             "basePipelineHandle" : "",
@@ -2266,6 +2284,8 @@ TEST_F(Gen, GraphicsPipelineJSON) {
             "stageCount" : 2,
             "subpass" : 0
         },
+)"
+                               R"(
         "ImmutableSamplers" : 
         [
             {
@@ -2325,6 +2345,8 @@ TEST_F(Gen, GraphicsPipelineJSON) {
                 }
             }
         ],
+)"
+                               R"(
         "PhysicalDeviceFeatures" : 
         {
             "features" : 
@@ -2393,6 +2415,8 @@ TEST_F(Gen, GraphicsPipelineJSON) {
             },
             "sType" : "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2"
         },
+)"
+                               R"(
         "PipelineLayout" : 
         {
             "flags" : 0,
@@ -2413,6 +2437,8 @@ TEST_F(Gen, GraphicsPipelineJSON) {
             "sType" : "VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO",
             "setLayoutCount" : 1
         },
+)"
+                               R"(
         "Renderpass" : 
         {
             "attachmentCount" : 2,
@@ -2493,6 +2519,8 @@ TEST_F(Gen, GraphicsPipelineJSON) {
             "sType" : "VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO",
             "subpassCount" : 1
         },
+)"
+                               R"(
         "ShaderFileNames" : 
         [
             {
@@ -2832,6 +2860,8 @@ TEST_F(Gen, ComputePipelineJSONWithMD5) {
                 "stage" : "VK_SHADER_STAGE_COMPUTE_BIT"
             }
         },
+)"
+                               R"(
         "DescriptorSetLayouts" : 
         [
             {
@@ -2883,6 +2913,8 @@ TEST_F(Gen, ComputePipelineJSONWithMD5) {
                 }
             }
         ],
+)"
+                               R"(
         "ImmutableSamplers" : 
         [
             {
@@ -2942,6 +2974,8 @@ TEST_F(Gen, ComputePipelineJSONWithMD5) {
                 }
             }
         ],
+)"
+                               R"(
         "PhysicalDeviceFeatures" : 
         {
             "features" : 
@@ -3010,6 +3044,8 @@ TEST_F(Gen, ComputePipelineJSONWithMD5) {
             },
             "sType" : "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2"
         },
+)"
+                               R"(
         "PipelineLayout" : 
         {
             "flags" : 0,
@@ -3314,6 +3350,8 @@ TEST_F(Gen, GraphicsPipelineJSONWithMD5) {
                 }
             }
         ],
+)"
+                               R"(
         "GraphicsPipeline" : 
         {
             "basePipelineHandle" : "",
@@ -3361,6 +3399,8 @@ TEST_F(Gen, GraphicsPipelineJSONWithMD5) {
             "stageCount" : 2,
             "subpass" : 0
         },
+)"
+                               R"(
         "ImmutableSamplers" : 
         [
             {
@@ -3420,6 +3460,8 @@ TEST_F(Gen, GraphicsPipelineJSONWithMD5) {
                 }
             }
         ],
+)"
+                               R"(
         "PhysicalDeviceFeatures" : 
         {
             "features" : 
@@ -3488,6 +3530,8 @@ TEST_F(Gen, GraphicsPipelineJSONWithMD5) {
             },
             "sType" : "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2"
         },
+)"
+                               R"(
         "PipelineLayout" : 
         {
             "flags" : 0,
@@ -3508,6 +3552,8 @@ TEST_F(Gen, GraphicsPipelineJSONWithMD5) {
             "sType" : "VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO",
             "setLayoutCount" : 1
         },
+)"
+                               R"(
         "Renderpass" : 
         {
             "attachmentCount" : 2,
@@ -3588,6 +3634,8 @@ TEST_F(Gen, GraphicsPipelineJSONWithMD5) {
             "sType" : "VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO",
             "subpassCount" : 1
         },
+)"
+                               R"(
         "ShaderFileNames" : 
         [
             {
@@ -3921,6 +3969,8 @@ TEST_F(Gen, ObjectNameRemapping) {
                     "filename" : "saxpy.comp.spv"
                 }
             ],
+)"
+                               R"(
             "DescriptorSetLayouts" : 
             [
                 {
@@ -3980,6 +4030,8 @@ TEST_F(Gen, ObjectNameRemapping) {
                     }
                 }
             ],
+)"
+                               R"(
             "ImmutableSamplers" : 
             [
                 {
@@ -4062,6 +4114,8 @@ TEST_F(Gen, ObjectNameRemapping) {
                     }
                 }
             ],
+)"
+                               R"(
             "PipelineLayout" : 
             {
                 "flags" : 0,

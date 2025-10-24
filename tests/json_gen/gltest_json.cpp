@@ -358,6 +358,8 @@ TEST_F(JSON, ComputeMultiPipeline) {
                 "stage" : "VK_SHADER_STAGE_COMPUTE_BIT"
             }
         },
+)"
+                             R"(
         "PhysicalDeviceFeatures" : 
         {
             "features" : 
@@ -421,6 +423,8 @@ TEST_F(JSON, ComputeMultiPipeline) {
             "pNext" : "NULL",
             "sType" : "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2"
         },
+)"
+                             R"(
         "PipelineLayout" : 
         {
             "flags" : 0,
@@ -569,6 +573,8 @@ TEST_F(JSON, ComputeLifetime) {
                 "stage" : "VK_SHADER_STAGE_COMPUTE_BIT"
             }
         },
+)"
+                            R"(
         "DescriptorSetLayouts" : 
         [
             {
@@ -594,6 +600,8 @@ TEST_F(JSON, ComputeLifetime) {
                 }
             }
         ],
+)"
+                            R"(
         "ImmutableSamplers" : 
         [
             {
@@ -625,6 +633,8 @@ TEST_F(JSON, ComputeLifetime) {
                 }
             }
         ],
+)"
+                            R"(
         "PhysicalDeviceFeatures" : 
         {
             "features" : 
@@ -688,6 +698,8 @@ TEST_F(JSON, ComputeLifetime) {
             "pNext" : "NULL",
             "sType" : "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2"
         },
+)"
+                            R"(
         "PipelineLayout" : 
         {
             "flags" : 0,
@@ -1046,6 +1058,8 @@ TEST_F(JSON, ComputeComplex) {
                 "stage" : "VK_SHADER_STAGE_COMPUTE_BIT"
             }
         },
+)"
+                            R"(
         "DescriptorSetLayouts" : 
         [
             {
@@ -1124,6 +1138,8 @@ TEST_F(JSON, ComputeComplex) {
                 }
             }
         ],
+)"
+                            R"(
         "ImmutableSamplers" : 
         [
             {
@@ -1206,6 +1222,8 @@ TEST_F(JSON, ComputeComplex) {
                 }
             }
         ],
+)"
+                            R"(
         "PhysicalDeviceFeatures" : 
         {
             "features" : 
@@ -1269,6 +1287,8 @@ TEST_F(JSON, ComputeComplex) {
             "pNext" : "NULL",
             "sType" : "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2"
         },
+)"
+                            R"(
         "PipelineLayout" : 
         {
             "flags" : 0,
@@ -1451,6 +1471,8 @@ TEST_F(JSON, GraphicsSimple) {
             "stageCount" : 1,
             "subpass" : 0
         },
+)"
+                            R"(
         "PhysicalDeviceFeatures" : 
         {
             "features" : 
@@ -1514,6 +1536,8 @@ TEST_F(JSON, GraphicsSimple) {
             "pNext" : "NULL",
             "sType" : "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2"
         },
+)"
+                            R"(
         "PipelineLayout" : 
         {
             "flags" : 0,
@@ -1682,6 +1706,8 @@ TEST_F(JSON, GraphicsMultiPipeline) {
             "stageCount" : 1,
             "subpass" : 0
         },
+)"
+                             R"(
         "PhysicalDeviceFeatures" : 
         {
             "features" : 
@@ -1745,6 +1771,8 @@ TEST_F(JSON, GraphicsMultiPipeline) {
             "pNext" : "NULL",
             "sType" : "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2"
         },
+)"
+                             R"(
         "PipelineLayout" : 
         {
             "flags" : 0,
@@ -1923,6 +1951,8 @@ TEST_F(JSON, GraphicsLifetime) {
                 }
             }
         ],
+)"
+                            R"(
         "GraphicsPipeline" : 
         {
             "basePipelineHandle" : "",
@@ -1956,6 +1986,8 @@ TEST_F(JSON, GraphicsLifetime) {
             "stageCount" : 1,
             "subpass" : 0
         },
+)"
+                            R"(
         "ImmutableSamplers" : 
         [
             {
@@ -1987,6 +2019,8 @@ TEST_F(JSON, GraphicsLifetime) {
                 }
             }
         ],
+)"
+                            R"(
         "PhysicalDeviceFeatures" : 
         {
             "features" : 
@@ -2050,6 +2084,8 @@ TEST_F(JSON, GraphicsLifetime) {
             "pNext" : "NULL",
             "sType" : "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2"
         },
+)"
+                            R"(
         "PipelineLayout" : 
         {
             "flags" : 0,
@@ -2472,6 +2508,8 @@ TEST_F(JSON, GraphicsComplex) {
                 }
             }
         ],
+)"
+                            R"(
         "GraphicsPipeline" : 
         {
             "basePipelineHandle" : "",
@@ -2514,6 +2552,8 @@ TEST_F(JSON, GraphicsComplex) {
             "stageCount" : 2,
             "subpass" : 0
         },
+)"
+                            R"(
         "ImmutableSamplers" : 
         [
             {
@@ -2596,6 +2636,8 @@ TEST_F(JSON, GraphicsComplex) {
                 }
             }
         ],
+)"
+                            R"(
         "PhysicalDeviceFeatures" : 
         {
             "features" : 
@@ -2659,6 +2701,8 @@ TEST_F(JSON, GraphicsComplex) {
             "pNext" : "NULL",
             "sType" : "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2"
         },
+)"
+                            R"(
         "PipelineLayout" : 
         {
             "flags" : 0,
@@ -2681,6 +2725,8 @@ TEST_F(JSON, GraphicsComplex) {
             "sType" : "VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO",
             "setLayoutCount" : 3
         },
+)"
+                            R"(
         "Renderpass" : 
         {
             "attachmentCount" : 1,
@@ -2814,6 +2860,8 @@ TEST_F(JSON, GraphicsComplex) {
             "sType" : "VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO",
             "subpassCount" : 2
         },
+)"
+                            R"(
         "ShaderFileNames" : 
         [
             {

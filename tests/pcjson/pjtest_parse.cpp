@@ -55,7 +55,26 @@ TEST_F(Parse, BasicTypesVkBool32) {
     auto get_json = [](const char* val) {
         std::string result = {R"({
             "sType" : "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2",
-            "pNext": "NULL",
+                "pNext": {
+                    "sType": "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES",
+                    "pNext": {
+                        "sType": "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES",
+                        "pNext": "NULL",
+                        "scalarBlockLayout": "VK_TRUE"
+                    },
+                    "storageBuffer16BitAccess": "VK_FALSE",
+                    "uniformAndStorageBuffer16BitAccess": "VK_FALSE",
+                    "storagePushConstant16": "VK_FALSE",
+                    "storageInputOutput16": "VK_FALSE",
+                    "multiview": "VK_FALSE",
+                    "multiviewGeometryShader": "VK_FALSE",
+                    "multiviewTessellationShader": "VK_FALSE",
+                    "variablePointersStorageBuffer": "VK_FALSE",
+                    "variablePointers": "VK_FALSE",
+                    "protectedMemory": "VK_FALSE",
+                    "samplerYcbcrConversion": "VK_TRUE",
+                    "shaderDrawParameters": "VK_FALSE"
+                },
             "features": 
             {
                 "robustBufferAccess" : )"};
@@ -128,6 +147,17 @@ TEST_F(Parse, BasicTypesVkBool32) {
             std::cerr << msg << std::endl;
         }
         EXPECT_EQ(data.features.robustBufferAccess, expect);
+
+        EXPECT_EQ(data.features.sparseResidencyImage2D, VK_FALSE);
+
+        const auto v11f = reinterpret_cast<const VkPhysicalDeviceVulkan11Features*>(data.pNext);
+        EXPECT_EQ(v11f->sType, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES);
+        EXPECT_EQ(v11f->samplerYcbcrConversion, VK_TRUE);
+        EXPECT_EQ(v11f->shaderDrawParameters, VK_FALSE);
+
+        const auto sblf = reinterpret_cast<const VkPhysicalDeviceScalarBlockLayoutFeatures*>(v11f->pNext);
+        EXPECT_EQ(sblf->sType, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES);
+        EXPECT_EQ(sblf->scalarBlockLayout, VK_TRUE);
     };
 
     test_eq(R"("VK_TRUE")", VK_TRUE);
@@ -356,6 +386,8 @@ TEST_F(Parse, VkGraphicsPipelineCreateInfo) {
                 "NULL"
             }
             ],
+)"
+                        R"(
             "pVertexInputState": 
             {
                 "sType" : "VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO",
@@ -402,6 +434,8 @@ TEST_F(Parse, VkGraphicsPipelineCreateInfo) {
                 "flags" : 0,
                 "patchControlPoints" : 4
             },
+)"
+                        R"(
             "pViewportState": 
             {
                 "sType" : "VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO",
@@ -465,6 +499,8 @@ TEST_F(Parse, VkGraphicsPipelineCreateInfo) {
                 "alphaToCoverageEnable" : "VK_FALSE",
                 "alphaToOneEnable" : "VK_FALSE"
             },
+)"
+                        R"(
             "pDepthStencilState": 
             {
                 "sType" : "VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO",
@@ -527,6 +563,8 @@ TEST_F(Parse, VkGraphicsPipelineCreateInfo) {
                 0
                 ]
             },
+)"
+                        R"(
             "pDynamicState": {
                 "sType": "VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO",
                 "pNext": "NULL",
@@ -1651,6 +1689,8 @@ TEST_F(Parse, ComputePipelineJSON) {
                 "stage" : "VK_SHADER_STAGE_COMPUTE_BIT"
             }
         },
+)"
+                           R"(
         "DescriptorSetLayouts" : 
         [
             {
@@ -1702,6 +1742,8 @@ TEST_F(Parse, ComputePipelineJSON) {
                 }
             }
         ],
+)"
+                           R"(
         "ImmutableSamplers" : 
         [
             {
@@ -1761,6 +1803,8 @@ TEST_F(Parse, ComputePipelineJSON) {
                 }
             }
         ],
+)"
+                           R"(
         "PhysicalDeviceFeatures" : 
         {
             "features" : 
@@ -1829,6 +1873,8 @@ TEST_F(Parse, ComputePipelineJSON) {
             },
             "sType" : "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2"
         },
+)"
+                           R"(
         "PipelineLayout" : 
         {
             "flags" : 0,
@@ -2170,6 +2216,8 @@ TEST_F(Parse, GraphicsPipelineJSON) {
                 }
             }
         ],
+)"
+                           R"(
         "GraphicsPipeline" : 
         {
             "sType" : "VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO",
@@ -2441,6 +2489,8 @@ TEST_F(Parse, GraphicsPipelineJSON) {
             "basePipelineHandle" : "",
             "basePipelineIndex" : 0
         },
+)"
+                           R"(
         "ImmutableSamplers" : 
         [
             {
@@ -2500,6 +2550,8 @@ TEST_F(Parse, GraphicsPipelineJSON) {
                 }
             }
         ],
+)"
+                           R"(
         "PhysicalDeviceFeatures" : 
         {
             "features" : 
@@ -2568,6 +2620,8 @@ TEST_F(Parse, GraphicsPipelineJSON) {
             },
             "sType" : "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2"
         },
+)"
+                           R"(
         "PipelineLayout" : 
         {
             "flags" : 0,
@@ -2588,6 +2642,8 @@ TEST_F(Parse, GraphicsPipelineJSON) {
             "sType" : "VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO",
             "setLayoutCount" : 1
         },
+)"
+                           R"(
         "Renderpass" : 
         {
             "attachmentCount" : 2,
@@ -2668,6 +2724,8 @@ TEST_F(Parse, GraphicsPipelineJSON) {
             "sType" : "VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO",
             "subpassCount" : 1
         },
+)"
+                           R"(
         "ShaderFileNames" : 
         [
             {
@@ -3121,6 +3179,8 @@ TEST_F(Parse, ObjectNameRemapping) {
             "ShaderFileNames" :
             [
             ],
+)"
+                           R"(
             "DescriptorSetLayouts" : 
             [
                 {
@@ -3180,6 +3240,8 @@ TEST_F(Parse, ObjectNameRemapping) {
                     }
                 }
             ],
+)"
+                           R"(
             "ImmutableSamplers" : 
             [
                 {
@@ -3262,6 +3324,8 @@ TEST_F(Parse, ObjectNameRemapping) {
                     }
                 }
             ],
+)"
+                           R"(
             "PipelineLayout" : 
             {
                 "flags" : 0,

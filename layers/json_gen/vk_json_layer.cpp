@@ -74,16 +74,16 @@ struct OwningVpjShaderFilenames {
 
 static OwningVpjShaderFilenames GetShaderFiles(const VkGraphicsPipelineCreateInfo& ci, const std::string& prefix,
                                                const uintptr_t pipeline_index) {
+    OwningVpjShaderFilenames result{};
     const auto shader_filename = [&](const VkPipelineShaderStageCreateInfo& pss_ci) -> std::string {
         return prefix + "_pipeline_" + std::to_string(pipeline_index) + '.' + StageBitToString(pss_ci.stage, ci) + ".spv";
     };
-    const auto filename_accumulator = [&](OwningVpjShaderFilenames& acc,
-                                          const VkPipelineShaderStageCreateInfo& pss_ci) -> OwningVpjShaderFilenames& {
-        acc.storage.emplace_back(shader_filename(pss_ci));
-        acc.filenames.push_back(VpjShaderFileName{static_cast<int32_t>(pss_ci.stage), acc.storage.back().c_str(), 0, nullptr});
-        return acc;
-    };
-    return std::accumulate(ci.pStages, ci.pStages + ci.stageCount, OwningVpjShaderFilenames{}, filename_accumulator);
+    for (uint32_t i = 0; i < ci.stageCount; ++i) {
+        result.storage.emplace_back(shader_filename(ci.pStages[i]));
+        result.filenames.push_back(
+            VpjShaderFileName{static_cast<int32_t>(ci.pStages[i].stage), result.storage.back().c_str(), 0, nullptr});
+    }
+    return result;
 };
 
 static OwningVpjShaderFilenames GetShaderFiles(const VkComputePipelineCreateInfo& ci, const std::string& prefix,
@@ -869,20 +869,22 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL CreateDescriptorSetLayout(VkDevice dev
                    ++device_data->obj_res_info.descriptorSetLayoutRequestCount);
         atomic_max(device_data->obj_res_info.descriptorSetLayoutBindingHighWatermark,
                    device_data->obj_res_info.descriptorSetLayoutBindingRequestCount += pCreateInfo->bindingCount);
-        atomic_max(device_data->obj_res_info.descriptorSetLayoutBindingLimit,
-                   [=](auto first, auto last) {
-                       auto it = std::max_element(
-                           first, last, [](const VkDescriptorSetLayoutBinding& lhs, const VkDescriptorSetLayoutBinding& rhs) {
-                               return lhs.binding < rhs.binding;
-                           });
-                       return it != last ? it->binding : 0;
-                   }(pCreateInfo->pBindings, pCreateInfo->pBindings + pCreateInfo->bindingCount) +
-                       1);
-        atomic_max(device_data->obj_res_info.maxImmutableSamplersPerDescriptorSetLayout,
-                   std::accumulate(pCreateInfo->pBindings, pCreateInfo->pBindings + pCreateInfo->bindingCount, 0u,
-                                   [](const uint32_t& curr_max, const VkDescriptorSetLayoutBinding& dslb) {
-                                       return std::max(curr_max, dslb.pImmutableSamplers != nullptr ? dslb.descriptorCount : 0);
-                                   }));
+        uint32_t highest_binding = 0u;
+        for (uint32_t i = 0; i < pCreateInfo->bindingCount; ++i) {
+            if (pCreateInfo->pBindings[i].binding > highest_binding) {
+                highest_binding = pCreateInfo->pBindings[i].binding;
+            }
+        }
+        atomic_max(device_data->obj_res_info.descriptorSetLayoutBindingLimit, highest_binding + 1);
+        uint32_t most_immutable_sampler_count = 0u;
+        for (uint32_t i = 0; i < pCreateInfo->bindingCount; ++i) {
+            if (pCreateInfo->pBindings[i].pImmutableSamplers) {
+                if (pCreateInfo->pBindings[i].descriptorCount > most_immutable_sampler_count) {
+                    most_immutable_sampler_count = pCreateInfo->pBindings[i].descriptorCount;
+                }
+            }
+        }
+        atomic_max(device_data->obj_res_info.maxImmutableSamplersPerDescriptorSetLayout, most_immutable_sampler_count);
         device_data->descriptor_set_layout_map.insert(*pSetLayout,
                                                       std::make_shared<DescriptorSetLayoutData>(pCreateInfo, *device_data));
     }

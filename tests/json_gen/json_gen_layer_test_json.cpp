@@ -515,7 +515,7 @@ TEST_F(JSON, ComputeLifetime) {
 
     // Destroy create info and sampler
     vkDestroySampler(device, sampler, nullptr);
-    binding.release();
+    binding.reset();
     ds_layout_ci.reset();
 
     // Create pipeline layout
@@ -527,7 +527,7 @@ TEST_F(JSON, ComputeLifetime) {
 
     // Destroy create info and descriptor set layout
     vkDestroyDescriptorSetLayout(device, ds_layout, nullptr);
-    pipeline_layout_ci.release();
+    pipeline_layout_ci.reset();
 
     // Create compute pipeline
     auto pipeline_stage_ci = std::make_unique<VkPipelineShaderStageCreateInfo>(vku::InitStructHelper());
@@ -1874,7 +1874,7 @@ TEST_F(JSON, GraphicsLifetime) {
 
     // Destroy create info and sampler
     vkDestroySampler(device, sampler, nullptr);
-    binding.release();
+    binding.reset();
     ds_layout_ci.reset();
 
     // Create pipeline layout
@@ -1886,7 +1886,7 @@ TEST_F(JSON, GraphicsLifetime) {
 
     // Destroy create info and descriptor set layout
     vkDestroyDescriptorSetLayout(device, ds_layout, nullptr);
-    pipeline_layout_ci.release();
+    pipeline_layout_ci.reset();
 
     // Create renderass
     auto renderpass_ci = std::make_unique<VkRenderPassCreateInfo>(vku::InitStructHelper());
@@ -1894,7 +1894,7 @@ TEST_F(JSON, GraphicsLifetime) {
     vkCreateRenderPass(device, renderpass_ci.get(), nullptr, &render_pass);
 
     // Destroy create info
-    renderpass_ci.release();
+    renderpass_ci.reset();
 
     // Create graphics pipeline
     auto graphics_pipeline_ci = std::make_unique<VkGraphicsPipelineCreateInfo>(vku::InitStructHelper());

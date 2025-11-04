@@ -1289,6 +1289,7 @@ void GraphicsPipelineData::GenJsonUuidAndWriteToDisk(DeviceData& device_data) {
     } else {
         LOG("[%s] ERROR: Unable to open: %s", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME, pipeline_path.c_str());
     }
+    vpjDestroyGenerator(generator);
 }
 
 void ComputePipelineData::GenJsonUuidAndWriteToDisk(DeviceData& device_data) {
@@ -1344,6 +1345,7 @@ void ComputePipelineData::GenJsonUuidAndWriteToDisk(DeviceData& device_data) {
     } else {
         LOG("[%s] ERROR: Unable to open: %s", VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME, pipeline_path.c_str());
     }
+    vpjDestroyGenerator(generator);
 }
 
 // VK_EXT_pipeline_properties

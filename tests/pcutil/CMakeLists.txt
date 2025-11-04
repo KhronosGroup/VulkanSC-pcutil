@@ -7,15 +7,15 @@
 
 enable_testing()
 
-add_executable(pctest pctest.cpp)
+add_executable(pcutil_test pcutil_test.cpp)
 
-target_link_libraries(pctest PRIVATE
+target_link_libraries(pcutil_test PRIVATE
     Vulkan::Headers
     Vulkan::PipelineCacheReader
     Vulkan::PipelineCacheWriter
 )
 
-add_test(NAME Library.PCUtil.GoldenResult COMMAND pctest)
+add_test(NAME Library.PCUtil.GoldenResult COMMAND pcutil_test)
 
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/golden_results.txt" GOLDEN_RESULTS)
 set_directory_properties(PROPERTIES CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/golden_results.txt")
@@ -28,9 +28,9 @@ find_package(GTest REQUIRED CONFIG)
 find_package(SPIRV-Headers REQUIRED CONFIG QUIET)
 find_package(SPIRV-Tools REQUIRED CONFIG QUIET)
 
-add_executable(pctest_readerwriter pctest_readerwriter.cpp pctest_writer_helper.cpp)
+add_executable(pcutil_test_readerwriter pcutil_test_readerwriter.cpp pcutil_test_writer_helper.cpp)
 
-target_link_libraries(pctest_readerwriter PRIVATE
+target_link_libraries(pcutil_test_readerwriter PRIVATE
     Vulkan::Headers
     Vulkan::PipelineCacheReader
     Vulkan::PipelineCacheWriter
@@ -39,7 +39,7 @@ target_link_libraries(pctest_readerwriter PRIVATE
 )
 
 gtest_add_tests(
-    TARGET pctest_readerwriter
+    TARGET pcutil_test_readerwriter
     TEST_PREFIX "Library.PCUtil."
     TEST_LIST READWRITE_TESTS
 )
@@ -48,7 +48,7 @@ foreach(TEST_I IN LISTS READWRITE_TESTS)
 endforeach()
 
 
-add_executable(pctest_writerdevice pctest_writerdevice.cpp pctest_writer_helper.cpp)
+add_executable(pcutil_test_writerdevice pcutil_test_writerdevice.cpp pcutil_test_writer_helper.cpp)
 
 if(WIN32)
     set(_VulkanSC_library_name vulkansc-1)
@@ -60,7 +60,7 @@ find_library(VulkanSC_LIBRARY
     NAMES ${_VulkanSC_library_name}
 )
 
-target_link_libraries(pctest_writerdevice PRIVATE
+target_link_libraries(pcutil_test_writerdevice PRIVATE
     Vulkan::Headers
     Vulkan::PipelineCacheReader
     Vulkan::PipelineCacheWriter
@@ -70,11 +70,11 @@ target_link_libraries(pctest_writerdevice PRIVATE
 )
 
 if (TARGET SPIRV-Tools)
-    target_link_libraries(pctest_writerdevice PRIVATE SPIRV-Tools)
+    target_link_libraries(pcutil_test_writerdevice PRIVATE SPIRV-Tools)
 elseif(TARGET SPIRV-Tools-static)
-    target_link_libraries(pctest_writerdevice PRIVATE SPIRV-Tools-static)
+    target_link_libraries(pcutil_test_writerdevice PRIVATE SPIRV-Tools-static)
 elseif(TARGET SPIRV-Tools-shared)
-    target_link_libraries(pctest_writerdevice PRIVATE SPIRV-Tools-shared)
+    target_link_libraries(pcutil_test_writerdevice PRIVATE SPIRV-Tools-shared)
 else()
     message(FATAL_ERROR "Cannot determine SPIRV-Tools target name")
 endif()
@@ -115,7 +115,7 @@ endif()
 list(JOIN WRITERDEVICE_TEST_ENVIRONMENT "$<SEMICOLON>" WRITERDEVICE_TEST_ENVIRONMENT)
 
 gtest_add_tests(
-    TARGET pctest_writerdevice
+    TARGET pcutil_test_writerdevice
     TEST_PREFIX "Library.PCUtil."
     TEST_LIST WRITERDEVICE_TESTS
 )

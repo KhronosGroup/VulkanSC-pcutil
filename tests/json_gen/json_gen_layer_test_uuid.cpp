@@ -47,7 +47,7 @@ class UUID : public testing::Test {
     void CleanDataFiles() {
         std::for_each(std::filesystem::directory_iterator{"."}, std::filesystem::directory_iterator{},
                       [](const std::filesystem::directory_entry& entry) {
-                          if (std::regex_search(entry.path().generic_string(), std::regex{R"(gltest_uuid_)"})) {
+                          if (std::regex_search(entry.path().generic_string(), std::regex{R"(json_gen_layer_test_uuid_)"})) {
                               std::filesystem::remove(entry);
                           }
                       });

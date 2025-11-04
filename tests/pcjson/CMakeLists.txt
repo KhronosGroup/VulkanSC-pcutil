@@ -43,13 +43,13 @@ macro(pcu_add_test)
 endmacro()
 
 pcu_add_test(
-    TEST_NAME pjtest_parse
+    TEST_NAME pcjson_test_parse
     TEST_PREFIX "Library."
     LABLELS Library Parse
 )
 
 pcu_add_test(
-    TEST_NAME pjtest_gen
+    TEST_NAME pcjson_test_gen
     TEST_PREFIX "Library."
     LABLELS Library Gen
 )

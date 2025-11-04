@@ -27,7 +27,7 @@ class ObjectReservation : public testing::Test {
     void TEST_DESCRIPTION(const char* desc) { RecordProperty("description", desc); }
 
     std::string ReadHeader() {
-        std::ifstream header_stream{"./gltest_objres_objectResInfo.hpp"};
+        std::ifstream header_stream{"./json_gen_layer_test_objres_objectResInfo.hpp"};
         return std::string(std::istreambuf_iterator<char>{header_stream}, std::istreambuf_iterator<char>{});
     }
 
@@ -35,7 +35,7 @@ class ObjectReservation : public testing::Test {
     void CleanDataFiles() {
         std::for_each(std::filesystem::directory_iterator{"."}, std::filesystem::directory_iterator{},
                       [](const std::filesystem::directory_entry& entry) {
-                          if (std::regex_search(entry.path().generic_string(), std::regex{R"(gltest_objres_)"})) {
+                          if (std::regex_search(entry.path().generic_string(), std::regex{R"(json_gen_layer_test_objres_)"})) {
                               std::filesystem::remove(entry);
                           }
                       });
@@ -236,8 +236,8 @@ TEST_F(ObjectReservation, Simple) {
 
     auto header = ReadHeader();
 
-    std::string ref = {R"(#ifndef gltest_objres_objectResInfo_HPP
-#define gltest_objres_objectResInfo_HPP
+    std::string ref = {R"(#ifndef json_gen_layer_test_objres_objectResInfo_HPP
+#define json_gen_layer_test_objres_objectResInfo_HPP
 
 #include <vulkan/vulkan_sc_core.h>
 
@@ -532,8 +532,8 @@ TEST_F(ObjectReservation, HighWatermark) {
 
     auto header = ReadHeader();
 
-    std::string ref = {R"(#ifndef gltest_objres_objectResInfo_HPP
-#define gltest_objres_objectResInfo_HPP
+    std::string ref = {R"(#ifndef json_gen_layer_test_objres_objectResInfo_HPP
+#define json_gen_layer_test_objres_objectResInfo_HPP
 
 #include <vulkan/vulkan_sc_core.h>
 
@@ -641,8 +641,8 @@ TEST_F(ObjectReservation, NonTrivial) {
 
     auto header = ReadHeader();
 
-    std::string ref = {R"(#ifndef gltest_objres_objectResInfo_HPP
-#define gltest_objres_objectResInfo_HPP
+    std::string ref = {R"(#ifndef json_gen_layer_test_objres_objectResInfo_HPP
+#define json_gen_layer_test_objres_objectResInfo_HPP
 
 #include <vulkan/vulkan_sc_core.h>
 

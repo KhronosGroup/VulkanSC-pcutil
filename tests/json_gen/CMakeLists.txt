@@ -88,19 +88,19 @@ macro(pcu_add_test)
 endmacro()
 
 pcu_add_test(
-    TEST_NAME gltest_uuid
+    TEST_NAME json_gen_layer_test_uuid
     TEST_PREFIX "Layer."
     LABLELS Layer UUID
 )
 
 pcu_add_test(
-    TEST_NAME gltest_objres
+    TEST_NAME json_gen_layer_test_objres
     TEST_PREFIX "Layer."
     LABLELS Layer ObjectReservation
 )
 
 pcu_add_test(
-    TEST_NAME gltest_json
+    TEST_NAME json_gen_layer_test_json
     TEST_PREFIX "Layer."
     LABLELS Layer JSONGen
 )

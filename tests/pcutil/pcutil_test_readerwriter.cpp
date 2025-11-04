@@ -9,7 +9,7 @@
 
 #include "pcreader.hpp"
 
-#include "pctest_writer_helper.h"
+#include "pcutil_test_writer_helper.h"
 
 bool ReadAndValidate(VKSCPipelineCacheHeaderReader &pcr, std::vector<uint8_t> &cache, const PCWriterTestData &td) {
     uint32_t pipeline_entry_count_ = uint32_t(td.pipeline_test_datas_.size());

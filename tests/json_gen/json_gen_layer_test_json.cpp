@@ -62,14 +62,15 @@ class JSON : public testing::Test {
     }
 
     std::string GetJson(size_t pipeline_id) {
-        std::filesystem::path json_path = std::string("./gltest_json_pipeline_") + std::to_string(pipeline_id) + ".json";
+        std::filesystem::path json_path =
+            std::string("./json_gen_layer_test_json_pipeline_") + std::to_string(pipeline_id) + ".json";
         std::ifstream json_stream{json_path};
         return std::string(std::istreambuf_iterator<char>{json_stream}, std::istreambuf_iterator<char>{});
     }
 
     std::vector<uint32_t> GetSpirv(size_t pipeline_id, const char* stage) {
         std::filesystem::path spirv_path =
-            std::string("./gltest_json_pipeline_") + std::to_string(pipeline_id) + "." + stage + ".spv";
+            std::string("./json_gen_layer_test_json_pipeline_") + std::to_string(pipeline_id) + "." + stage + ".spv";
         auto spirv_size = std::filesystem::file_size(spirv_path);
         std::vector<uint32_t> spirv_vec(spirv_size / 4, '\0');
         std::ifstream spirv_stream{spirv_path, std::ios::binary};
@@ -81,7 +82,7 @@ class JSON : public testing::Test {
     void CleanDataFiles() {
         std::for_each(std::filesystem::directory_iterator{"."}, std::filesystem::directory_iterator{},
                       [](const std::filesystem::directory_entry& entry) {
-                          if (std::regex_search(entry.path().generic_string(), std::regex{R"(gltest_json_)"})) {
+                          if (std::regex_search(entry.path().generic_string(), std::regex{R"(json_gen_layer_test_json_)"})) {
                               std::filesystem::remove(entry);
                           }
                       });
@@ -239,7 +240,7 @@ TEST_F(JSON, ComputeSimple) {
         "ShaderFileNames" : 
         [
             {
-                "filename" : "gltest_json_pipeline_#.compute.spv",
+                "filename" : "json_gen_layer_test_json_pipeline_#.compute.spv",
                 "stage" : "VK_SHADER_STAGE_COMPUTE_BIT"
             }
         ]
@@ -438,7 +439,7 @@ TEST_F(JSON, ComputeMultiPipeline) {
         "ShaderFileNames" : 
         [
             {
-                "filename" : "gltest_json_pipeline_#.compute.spv",
+                "filename" : "json_gen_layer_test_json_pipeline_#.compute.spv",
                 "stage" : "VK_SHADER_STAGE_COMPUTE_BIT"
             }
         ]
@@ -716,7 +717,7 @@ TEST_F(JSON, ComputeLifetime) {
         "ShaderFileNames" : 
         [
             {
-                "filename" : "gltest_json_pipeline_#.compute.spv",
+                "filename" : "json_gen_layer_test_json_pipeline_#.compute.spv",
                 "stage" : "VK_SHADER_STAGE_COMPUTE_BIT"
             }
         ],
@@ -1314,7 +1315,7 @@ TEST_F(JSON, ComputeComplex) {
         "ShaderFileNames" : 
         [
             {
-                "filename" : "gltest_json_pipeline_#.compute.spv",
+                "filename" : "json_gen_layer_test_json_pipeline_#.compute.spv",
                 "stage" : "VK_SHADER_STAGE_COMPUTE_BIT"
             }
         ],
@@ -1563,7 +1564,7 @@ TEST_F(JSON, GraphicsSimple) {
         "ShaderFileNames" : 
         [
             {
-                "filename" : "gltest_json_pipeline_#.frag.spv",
+                "filename" : "json_gen_layer_test_json_pipeline_#.frag.spv",
                 "stage" : "VK_SHADER_STAGE_FRAGMENT_BIT"
             }
         ]
@@ -1798,7 +1799,7 @@ TEST_F(JSON, GraphicsMultiPipeline) {
         "ShaderFileNames" : 
         [
             {
-                "filename" : "gltest_json_pipeline_#.frag.spv",
+                "filename" : "json_gen_layer_test_json_pipeline_#.frag.spv",
                 "stage" : "VK_SHADER_STAGE_FRAGMENT_BIT"
             }
         ]
@@ -2114,7 +2115,7 @@ TEST_F(JSON, GraphicsLifetime) {
         "ShaderFileNames" : 
         [
             {
-                "filename" : "gltest_json_pipeline_#.frag.spv",
+                "filename" : "json_gen_layer_test_json_pipeline_#.frag.spv",
                 "stage" : "VK_SHADER_STAGE_FRAGMENT_BIT"
             }
         ],
@@ -2865,11 +2866,11 @@ TEST_F(JSON, GraphicsComplex) {
         "ShaderFileNames" : 
         [
             {
-                "filename" : "gltest_json_pipeline_9.vert.spv",
+                "filename" : "json_gen_layer_test_json_pipeline_9.vert.spv",
                 "stage" : "VK_SHADER_STAGE_VERTEX_BIT"
             },
             {
-                "filename" : "gltest_json_pipeline_9.frag.spv",
+                "filename" : "json_gen_layer_test_json_pipeline_9.frag.spv",
                 "stage" : "VK_SHADER_STAGE_FRAGMENT_BIT"
             }
         ],

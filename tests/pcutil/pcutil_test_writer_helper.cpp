@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "pctest_writer_helper.h"
+#include "pcutil_test_writer_helper.h"
 
 #include "pcreader.hpp"
 

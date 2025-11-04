@@ -171,6 +171,10 @@ TEST_F(UUID, ComputeReproducible) {
     auto uuid2 = simple_compute(device2);
     auto uuid3 = simple_compute(device2);
 
+    vkDestroyDevice(device1, nullptr);
+    vkDestroyDevice(device2, nullptr);
+    vkDestroyInstance(instance, nullptr);
+
     EXPECT_EQ(uuid1, uuid2);
     EXPECT_EQ(uuid1, uuid3);
 }
@@ -233,6 +237,10 @@ TEST_F(UUID, ComputeDifferent) {
 
     auto uuid1 = simple_compute(device1, "main1");
     auto uuid2 = simple_compute(device2, "main2");
+
+    vkDestroyDevice(device1, nullptr);
+    vkDestroyDevice(device2, nullptr);
+    vkDestroyInstance(instance, nullptr);
 
     EXPECT_NE(uuid1, uuid2);
 }
@@ -368,6 +376,10 @@ TEST_F(UUID, GraphicsReproducible) {
     auto uuid2 = simple_graphics(device2);
     auto uuid3 = simple_graphics(device2);
 
+    vkDestroyDevice(device1, nullptr);
+    vkDestroyDevice(device2, nullptr);
+    vkDestroyInstance(instance, nullptr);
+
     EXPECT_EQ(uuid1, uuid2);
     EXPECT_EQ(uuid1, uuid3);
 }
@@ -437,6 +449,10 @@ TEST_F(UUID, GraphicsDifferent) {
 
     auto uuid1 = simple_graphics(device1, "main1");
     auto uuid2 = simple_graphics(device2, "main2");
+
+    vkDestroyDevice(device1, nullptr);
+    vkDestroyDevice(device2, nullptr);
+    vkDestroyInstance(instance, nullptr);
 
     EXPECT_NE(uuid1, uuid2);
 }

@@ -35,7 +35,7 @@ class ObjectReservation : public testing::Test {
     void CleanDataFiles() {
         std::for_each(std::filesystem::directory_iterator{"."}, std::filesystem::directory_iterator{},
                       [](const std::filesystem::directory_entry& entry) {
-                          if (std::regex_search(entry.path().generic_string(), std::regex{R"(gltest_json_)"})) {
+                          if (std::regex_search(entry.path().generic_string(), std::regex{R"(gltest_objres_)"})) {
                               std::filesystem::remove(entry);
                           }
                       });

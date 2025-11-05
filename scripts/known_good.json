@@ -57,7 +57,10 @@
             "sub_dir": "hashlib",
             "build_dir": "hashlib/build",
             "install_dir": "hashlib/build/install",
-            "commit": "v1.0.1"
+            "commit": "v1.0.1",
+            "cmake_options": [
+                "-DHASHLIB_TESTS=OFF"
+            ]
         },
         {
             "name": "googletest",

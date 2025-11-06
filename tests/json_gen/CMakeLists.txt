@@ -28,7 +28,6 @@ if (WIN32)
         "VK_DRIVER_FILES=${DRIVER_FILES_VALUE}"
         "VK_LOADER_LAYERS_DISABLE=~implicit~"
         "VK_INSTANCE_LAYERS=VK_LAYER_KHRONOS_json_gen"
-        "VK_JSON_FILE_PATH=${CMAKE_CURRENT_BINARY_DIR}"
     )
     list(TRANSFORM PATH_VALUE PREPEND "PATH=path_list_prepend:" OUTPUT_VARIABLE COMMON_TEST_ENVIRONMENT_MODIFICATION)
 else()
@@ -46,10 +45,8 @@ else()
         "VK_DRIVER_FILES=${DRIVER_FILES_VALUE}"
         "VK_LOADER_LAYERS_DISABLE=~implicit~"
         "VK_INSTANCE_LAYERS=VK_LAYER_KHRONOS_json_gen"
-        "VK_JSON_FILE_PATH=${CMAKE_CURRENT_BINARY_DIR}"
     )
 endif()
-list(JOIN COMMON_TEST_ENVIRONMENT "$<SEMICOLON>" COMMON_TEST_ENVIRONMENT)
 
 macro(pcu_add_test)
     cmake_parse_arguments(""
@@ -79,7 +76,7 @@ macro(pcu_add_test)
     foreach(TEST_I IN LISTS ${_TEST_NAME}_LIST)
         set_tests_properties("${TEST_I}" PROPERTIES
             LABELS "${_LABELS}"
-            ENVIRONMENT "${COMMON_TEST_ENVIRONMENT}"
+            ENVIRONMENT "${COMMON_TEST_ENVIRONMENT};VK_JSON_FILE_PATH=${CMAKE_CURRENT_BINARY_DIR}/${TEST_I}"
         )
         if(WIN32)
             set_tests_properties("${TEST_I}" PROPERTIES ENVIRONMENT_MODIFICATION "${COMMON_TEST_ENVIRONMENT_MODIFICATION}")

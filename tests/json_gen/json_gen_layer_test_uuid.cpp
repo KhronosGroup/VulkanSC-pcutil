@@ -16,9 +16,22 @@
 #include <vector>
 #include <array>
 
+// Shorthand to throw GTest exception, causing the test to fail with user-provided message stream fragment
+#define FAIL_TEST_IF(pred, msg_stream)                                                                         \
+    do {                                                                                                       \
+        if (pred) {                                                                                            \
+            GTEST_MESSAGE_AT_(__FILE__, __LINE__, "", ::testing::TestPartResult::kFatalFailure) << msg_stream; \
+            throw testing::AssertionException(                                                                 \
+                testing::TestPartResult(testing::TestPartResult::kFatalFailure, __FILE__, __LINE__, ""));      \
+        }                                                                                                      \
+    } while (0)
+
 class UUID : public testing::Test {
   public:
-    UUID() { CleanDataFiles(); }
+    UUID() {
+        CleanDataFiles();
+        CreateDataFolder();
+    }
     UUID(const UUID&) = delete;
     UUID(UUID&&) = delete;
     ~UUID() { CleanDataFiles(); }
@@ -45,12 +58,28 @@ class UUID : public testing::Test {
 
   private:
     void CleanDataFiles() {
-        std::for_each(std::filesystem::directory_iterator{"."}, std::filesystem::directory_iterator{},
-                      [](const std::filesystem::directory_entry& entry) {
-                          if (std::regex_search(entry.path().generic_string(), std::regex{R"(json_gen_layer_test_uuid_)"})) {
-                              std::filesystem::remove(entry);
-                          }
-                      });
+        FAIL_TEST_IF(!getenv("VK_JSON_FILE_PATH"), "Environment variable VK_JSON_FILE_PATH not set.");
+        std::filesystem::path VK_JSON_FILE_PATH{getenv("VK_JSON_FILE_PATH")};
+        if (std::filesystem::exists(VK_JSON_FILE_PATH)) {
+            FAIL_TEST_IF(!std::filesystem::is_directory(VK_JSON_FILE_PATH),
+                         "Path set by VK_JSON_FILE_PATH exists but is not a directory.");
+            try {
+                std::filesystem::remove_all(VK_JSON_FILE_PATH);
+            } catch (std::exception& e) {
+                FAIL_TEST_IF(true, "Failed to remove directory pointed to by VK_JSON_FILE_PATH: " << VK_JSON_FILE_PATH << "("
+                                                                                                  << e.what() << ")");
+            }
+        }
+    }
+    void CreateDataFolder() {
+        FAIL_TEST_IF(!getenv("VK_JSON_FILE_PATH"), "Environment variable VK_JSON_FILE_PATH not set.");
+        std::filesystem::path VK_JSON_FILE_PATH{getenv("VK_JSON_FILE_PATH")};
+        try {
+            std::filesystem::create_directories(VK_JSON_FILE_PATH);
+        } catch (std::exception& e) {
+            FAIL_TEST_IF(true, "Failed to create directory pointed to by VK_JSON_FILE_PATH: " << VK_JSON_FILE_PATH << "("
+                                                                                              << e.what() << ")");
+        }
     }
 };
 

@@ -9,5 +9,5 @@ add_executable(vkscpcinfo vkscpcinfo.cpp)
 
 target_link_libraries(vkscpcinfo PRIVATE
     Vulkan::Headers
-    Vulkan::PipelineCacheReader
+    VulkanSC::PCUtil
 )

@@ -11,8 +11,8 @@ add_executable(pcutil_test pcutil_test.cpp)
 
 target_link_libraries(pcutil_test PRIVATE
     Vulkan::Headers
-    Vulkan::PipelineCacheReader
-    Vulkan::PipelineCacheWriter
+    VulkanSC::PCUtil
+    VulkanSC::PCUtil
 )
 
 add_test(NAME Library.PCUtil.GoldenResult COMMAND pcutil_test)
@@ -32,8 +32,8 @@ add_executable(pcutil_test_readerwriter pcutil_test_readerwriter.cpp pcutil_test
 
 target_link_libraries(pcutil_test_readerwriter PRIVATE
     Vulkan::Headers
-    Vulkan::PipelineCacheReader
-    Vulkan::PipelineCacheWriter
+    VulkanSC::PCUtil
+    VulkanSC::PCUtil
     GTest::gtest
     GTest::gtest_main
 )
@@ -62,8 +62,8 @@ find_library(VulkanSC_LIBRARY
 
 target_link_libraries(pcutil_test_writerdevice PRIVATE
     Vulkan::Headers
-    Vulkan::PipelineCacheReader
-    Vulkan::PipelineCacheWriter
+    VulkanSC::PCUtil
+    VulkanSC::PCUtil
     GTest::gtest
     GTest::gtest_main
     "${VulkanSC_LIBRARY}"

@@ -61,7 +61,7 @@ macro(pcu_add_test)
     add_executable(${_TEST_NAME} ${_TEST_NAME}.cpp)
 
     target_link_libraries(${_TEST_NAME} PRIVATE
-        Vulkan::PCJson
+        VulkanSC::PCJson
         Vulkan::Headers
         Vulkan::UtilityHeaders
         Vk::Loader

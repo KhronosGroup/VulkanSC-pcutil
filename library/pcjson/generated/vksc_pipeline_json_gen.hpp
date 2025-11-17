@@ -16,6 +16,7 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include <bitset>
 #include <math.h>
 
 #include "vksc_pipeline_json_base.hpp"
@@ -3059,10 +3060,13 @@ class GeneratorBase : protected Base {
             return 0;
         }
         std::stringstream strm;
-        std::array<VkCullModeFlagBits, 1> multi_bit_flags{{VkCullModeFlagBits::VK_CULL_MODE_FRONT_AND_BACK}};
+        std::array<std::bitset<32>, 1> multi_bitsets{{VkCullModeFlagBits::VK_CULL_MODE_FRONT_AND_BACK}};
+        std::sort(multi_bitsets.begin(), multi_bitsets.end(),
+                  [](const auto& lhs, const auto& rhs) { return lhs.count() > rhs.count(); });
         std::vector<VkCullModeFlagBits> matched_multi_bit_flags;
-        for (auto multi_bit_flag : multi_bit_flags) {
-            if (v == multi_bit_flag) {
+        for (const auto& multi_bitset : multi_bitsets) {
+            VkCullModeFlagBits multi_bit_flag = static_cast<VkCullModeFlagBits>(multi_bitset.to_ulong());
+            if ((v & multi_bit_flag) == multi_bit_flag) {
                 matched_multi_bit_flags.push_back(multi_bit_flag);
                 if (strm.rdbuf()->in_avail() > 0) {
                     strm << " | ";
@@ -3248,11 +3252,14 @@ class GeneratorBase : protected Base {
             return 0;
         }
         std::stringstream strm;
-        std::array<VkShaderStageFlagBits, 2> multi_bit_flags{
+        std::array<std::bitset<32>, 2> multi_bitsets{
             {VkShaderStageFlagBits::VK_SHADER_STAGE_ALL_GRAPHICS, VkShaderStageFlagBits::VK_SHADER_STAGE_ALL}};
+        std::sort(multi_bitsets.begin(), multi_bitsets.end(),
+                  [](const auto& lhs, const auto& rhs) { return lhs.count() > rhs.count(); });
         std::vector<VkShaderStageFlagBits> matched_multi_bit_flags;
-        for (auto multi_bit_flag : multi_bit_flags) {
-            if (v == multi_bit_flag) {
+        for (const auto& multi_bitset : multi_bitsets) {
+            VkShaderStageFlagBits multi_bit_flag = static_cast<VkShaderStageFlagBits>(multi_bitset.to_ulong());
+            if ((v & multi_bit_flag) == multi_bit_flag) {
                 matched_multi_bit_flags.push_back(multi_bit_flag);
                 if (strm.rdbuf()->in_avail() > 0) {
                     strm << " | ";

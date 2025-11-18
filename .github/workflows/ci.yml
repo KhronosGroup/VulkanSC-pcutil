@@ -59,23 +59,17 @@ jobs:
         git diff --exit-code
 
   linux:
-    name: ${{ format('{0}, {1} ({2})', matrix.os, matrix.compiler.cc, matrix.config) }}
     needs: pre_build
     runs-on: ${{matrix.os}}
+    name: "linux (${{matrix.os}}, ${{matrix.config}})"
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-22.04, ubuntu-24.04 ]
-        compiler: [ {cc: gcc, cxx: g++}, {cc: clang, cxx: clang++} ]
         config: [ Debug, Release ]
-    env:
-      CC: ${{matrix.compiler.cc}}
-      CXX: ${{matrix.compiler.cxx}}
+        os: [ ubuntu-22.04, ubuntu-24.04 ]
     steps:
-      - name: ${{ format('Checkout {0}', github.repository) }}
-        uses: actions/checkout@v4
-      - name: Install Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
       - name: Install CMake & Ninja
@@ -89,6 +83,43 @@ jobs:
           -D CMAKE_BUILD_TYPE=${{matrix.config}} \
           -D BUILD_TESTS=ON \
           -D UPDATE_DEPS=ON
+      - name: Build
+        run: cmake --build build/
+      - name: Test
+        run: ctest --test-dir build/ --output-on-failure
+      - name: Install
+        run: cmake --install build --prefix build/install
+
+  linux-sanitize:
+    needs: pre_build
+    runs-on: ${{matrix.os}}
+    name: "linux (${{matrix.sanitize}} sanitizer, ${{matrix.os}}, ${{matrix.config}})"
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitize: [ ADDRESS, THREAD ]
+        config: [ Debug, Release ]
+        os: [ ubuntu-22.04, ubuntu-24.04 ]
+        exclude:
+          - config: Debug
+            sanitize: THREAD
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install CMake & Ninja
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: 3.22.1
+      - name: Configure
+        run: |
+          cmake -S. -B build \
+          -G Ninja \
+          -D CMAKE_BUILD_TYPE=${{matrix.config}} \
+          -D BUILD_TESTS=ON \
+          -D UPDATE_DEPS=ON \
+          -D ENABLE_${{matrix.sanitize}}_SANITIZER=ON
       - name: Build
         run: cmake --build build/
       - name: Test

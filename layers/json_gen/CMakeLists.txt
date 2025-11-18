@@ -15,6 +15,7 @@ if(VULKANSC)
 endif()
 
 add_library(VulkanJSONGenLayer MODULE)
+add_library(Vulkan::JSONGenLayer ALIAS VulkanJSONGenLayer)
 
 target_sources(VulkanJSONGenLayer PRIVATE
     vk_json_layer.hpp
@@ -34,7 +35,7 @@ target_link_libraries(VulkanJSONGenLayer
     PRIVATE
         Vulkan::Headers
         Vulkan::UtilityHeaders
-        Vulkan::PCJson
+        VulkanSC::PCJson
     PUBLIC
         Vulkan::SafeStruct
 )

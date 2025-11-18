@@ -16,7 +16,6 @@ if (WIN32)
     set(PATH_VALUE
         "${VULKAN_TOOLS_INSTALL_DIR}/bin"
         "${VULKAN_LOADER_INSTALL_DIR}/bin"
-        "$ENV{PATH}"
     )
     set(DRIVER_FILES_VALUE "${VULKAN_TOOLS_INSTALL_DIR}/bin/VkICD_mock_icd.json")
     set(LAYER_PATH_VALUE "$<TARGET_FILE_DIR:VulkanJSONGenLayer>")
@@ -26,12 +25,11 @@ if (WIN32)
 
     set(COMMON_TEST_ENVIRONMENT
         "VK_LAYER_PATH=${LAYER_PATH_VALUE}"
-        "PATH=${PATH_VALUE}"
         "VK_DRIVER_FILES=${DRIVER_FILES_VALUE}"
         "VK_LOADER_LAYERS_DISABLE=~implicit~"
         "VK_INSTANCE_LAYERS=VK_LAYER_KHRONOS_json_gen"
-        "VK_JSON_FILE_PATH=${CMAKE_CURRENT_BINARY_DIR}"
     )
+    list(TRANSFORM PATH_VALUE PREPEND "PATH=path_list_prepend:" OUTPUT_VARIABLE COMMON_TEST_ENVIRONMENT_MODIFICATION)
 else()
     set(LAYER_PATH_VALUE "$<TARGET_FILE_DIR:VulkanJSONGenLayer>")
     set(DRIVER_FILES_VALUE "${VULKAN_TOOLS_INSTALL_DIR}/share/vulkan/icd.d/VkICD_mock_icd.json")
@@ -47,10 +45,8 @@ else()
         "VK_DRIVER_FILES=${DRIVER_FILES_VALUE}"
         "VK_LOADER_LAYERS_DISABLE=~implicit~"
         "VK_INSTANCE_LAYERS=VK_LAYER_KHRONOS_json_gen"
-        "VK_JSON_FILE_PATH=${CMAKE_CURRENT_BINARY_DIR}"
     )
 endif()
-list(JOIN COMMON_TEST_ENVIRONMENT "$<SEMICOLON>" COMMON_TEST_ENVIRONMENT)
 
 macro(pcu_add_test)
     cmake_parse_arguments(""
@@ -62,7 +58,7 @@ macro(pcu_add_test)
     add_executable(${_TEST_NAME} ${_TEST_NAME}.cpp)
 
     target_link_libraries(${_TEST_NAME} PRIVATE
-        Vulkan::PCJson
+        VulkanSC::PCJson
         Vulkan::Headers
         Vulkan::UtilityHeaders
         Vk::Loader
@@ -80,49 +76,28 @@ macro(pcu_add_test)
     foreach(TEST_I IN LISTS ${_TEST_NAME}_LIST)
         set_tests_properties("${TEST_I}" PROPERTIES
             LABELS "${_LABELS}"
-            ENVIRONMENT "${COMMON_TEST_ENVIRONMENT}"
+            ENVIRONMENT "${COMMON_TEST_ENVIRONMENT};VK_JSON_FILE_PATH=${CMAKE_CURRENT_BINARY_DIR}/${TEST_I}"
         )
-    endforeach()
-
-    if(WIN32)
-        if(NOT TARGET Vulkan-Loader-copy)
-            get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-            if(GENERATOR_IS_MULTI_CONFIG)
-                add_custom_target(Vulkan-Loader-copy ALL
-                    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/vulkan-1.dll")
-                add_custom_command(
-                    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/vulkan-1.dll"
-                    DEPENDS "$<TARGET_PROPERTY:Vk::Loader,IMPORTED_LOCATION>"
-                    COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_PROPERTY:Vk::Loader,IMPORTED_LOCATION>" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/vulkan-1.dll"
-                    COMMENT "Copying Vulkan-Loader to ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
-            else()
-                add_custom_target(Vulkan-Loader-copy ALL
-                    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/vulkan-1.dll")
-                add_custom_command(
-                    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/vulkan-1.dll"
-                    DEPENDS "$<TARGET_PROPERTY:Vk::Loader,IMPORTED_LOCATION>"
-                    COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_PROPERTY:Vk::Loader,IMPORTED_LOCATION>" "${CMAKE_CURRENT_BINARY_DIR}/vulkan-1.dll"
-                    COMMENT "Copying Vulkan-Loader to ${CMAKE_CURRENT_BINARY_DIR}")
-            endif()
+        if(WIN32)
+            set_tests_properties("${TEST_I}" PROPERTIES ENVIRONMENT_MODIFICATION "${COMMON_TEST_ENVIRONMENT_MODIFICATION}")
         endif()
-        add_dependencies(${_TEST_NAME} Vulkan-Loader-copy)
-    endif()
+    endforeach()
 endmacro()
 
 pcu_add_test(
-    TEST_NAME gltest_uuid
+    TEST_NAME json_gen_layer_test_uuid
     TEST_PREFIX "Layer."
     LABLELS Layer UUID
 )
 
 pcu_add_test(
-    TEST_NAME gltest_objres
+    TEST_NAME json_gen_layer_test_objres
     TEST_PREFIX "Layer."
     LABLELS Layer ObjectReservation
 )
 
 pcu_add_test(
-    TEST_NAME gltest_json
+    TEST_NAME json_gen_layer_test_json
     TEST_PREFIX "Layer."
     LABLELS Layer JSONGen
 )

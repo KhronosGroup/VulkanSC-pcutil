@@ -13,6 +13,7 @@ option(BUILD_VKSCPCINFO "Build vkscpcinfo" ON)
 option(BUILD_JSON_GEN_LAYER "Build JSON gen layer" ON)
 option(BUILD_WERROR "Treat pipeline cache utils compiler warnings as errors" ${PROJECT_IS_TOP_LEVEL})
 option(ENABLE_ADDRESS_SANITIZER "Use address sanitization")
+option(ENABLE_THREAD_SANITIZER "Use thread sanitization")
 
 set(API_TYPE "vulkansc")
 add_definitions(-DVULKANSC)
@@ -35,6 +36,12 @@ if (ENABLE_ADDRESS_SANITIZER)
     add_compile_options(-fsanitize=address)
     if (NOT MSVC)
         add_link_options(-fsanitize=address)
+    endif()
+endif()
+if (ENABLE_THREAD_SANITIZER)
+    add_compile_options(-fsanitize=thread)
+    if (NOT MSVC)
+        add_link_options(-fsanitize=thread)
     endif()
 endif()
 
@@ -69,6 +76,11 @@ if (${CMAKE_CXX_COMPILER_ID} MATCHES "(GNU|Clang)")
             -Wl,--no-undefined
             -Wno-address         # TODO: JOSN lib generator generates non-null address checks for stack arrays
         )
+        if (ENABLE_ADDRESS_SANITIZER)
+            add_compile_options(
+                -Wno-maybe-uninitialized # GCC 13's libstdc++ regex header doesn't parse without tripping maybe-uninitialized
+            )
+        endif()
     endif()
 
     if (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")

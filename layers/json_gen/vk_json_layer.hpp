@@ -39,7 +39,7 @@ struct DeviceFeatures {
     DeviceFeatures(const VkDeviceCreateInfo* ci);
     DeviceFeatures() = default;
 
-    bool pipeline_props;
+    bool pipeline_props{};
 };
 
 struct YcbcrData {

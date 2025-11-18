@@ -17,9 +17,22 @@
 #include <regex>
 #include <array>
 
+// Shorthand to throw GTest exception, causing the test to fail with user-provided message stream fragment
+#define FAIL_TEST_IF(pred, msg_stream)                                                                         \
+    do {                                                                                                       \
+        if (pred) {                                                                                            \
+            GTEST_MESSAGE_AT_(__FILE__, __LINE__, "", ::testing::TestPartResult::kFatalFailure) << msg_stream; \
+            throw testing::AssertionException(                                                                 \
+                testing::TestPartResult(testing::TestPartResult::kFatalFailure, __FILE__, __LINE__, ""));      \
+        }                                                                                                      \
+    } while (0)
+
 class ObjectReservation : public testing::Test {
   public:
-    ObjectReservation() { CleanDataFiles(); }
+    ObjectReservation() {
+        CleanDataFiles();
+        CreateDataFolder();
+    }
     ObjectReservation(const ObjectReservation&) = delete;
     ObjectReservation(ObjectReservation&&) = delete;
     ~ObjectReservation() { CleanDataFiles(); }
@@ -27,18 +40,35 @@ class ObjectReservation : public testing::Test {
     void TEST_DESCRIPTION(const char* desc) { RecordProperty("description", desc); }
 
     std::string ReadHeader() {
-        std::ifstream header_stream{"./gltest_objres_objectResInfo.hpp"};
+        auto header_path = std::filesystem::path(getenv("VK_JSON_FILE_PATH")) / "json_gen_layer_test_objres_objectResInfo.hpp";
+        std::ifstream header_stream{header_path};
         return std::string(std::istreambuf_iterator<char>{header_stream}, std::istreambuf_iterator<char>{});
     }
 
   private:
     void CleanDataFiles() {
-        std::for_each(std::filesystem::directory_iterator{"."}, std::filesystem::directory_iterator{},
-                      [](const std::filesystem::directory_entry& entry) {
-                          if (std::regex_search(entry.path().generic_string(), std::regex{R"(gltest_json_)"})) {
-                              std::filesystem::remove(entry);
-                          }
-                      });
+        FAIL_TEST_IF(!getenv("VK_JSON_FILE_PATH"), "Environment variable VK_JSON_FILE_PATH not set.");
+        std::filesystem::path VK_JSON_FILE_PATH{getenv("VK_JSON_FILE_PATH")};
+        if (std::filesystem::exists(VK_JSON_FILE_PATH)) {
+            FAIL_TEST_IF(!std::filesystem::is_directory(VK_JSON_FILE_PATH),
+                         "Path set by VK_JSON_FILE_PATH exists but is not a directory.");
+            try {
+                std::filesystem::remove_all(VK_JSON_FILE_PATH);
+            } catch (std::exception& e) {
+                FAIL_TEST_IF(true, "Failed to remove directory pointed to by VK_JSON_FILE_PATH: " << VK_JSON_FILE_PATH << "("
+                                                                                                  << e.what() << ")");
+            }
+        }
+    }
+    void CreateDataFolder() {
+        FAIL_TEST_IF(!getenv("VK_JSON_FILE_PATH"), "Environment variable VK_JSON_FILE_PATH not set.");
+        std::filesystem::path VK_JSON_FILE_PATH{getenv("VK_JSON_FILE_PATH")};
+        try {
+            std::filesystem::create_directories(VK_JSON_FILE_PATH);
+        } catch (std::exception& e) {
+            FAIL_TEST_IF(true, "Failed to create directory pointed to by VK_JSON_FILE_PATH: " << VK_JSON_FILE_PATH << "("
+                                                                                              << e.what() << ")");
+        }
     }
 };
 
@@ -236,8 +266,264 @@ TEST_F(ObjectReservation, Simple) {
 
     auto header = ReadHeader();
 
-    std::string ref = {R"(#ifndef gltest_objres_objectResInfo_HPP
-#define gltest_objres_objectResInfo_HPP
+    std::string ref = {R"(#ifndef json_gen_layer_test_objres_objectResInfo_HPP
+#define json_gen_layer_test_objres_objectResInfo_HPP
+
+#include <vulkan/vulkan_sc_core.h>
+
+static VkDeviceObjectReservationCreateInfo g_objectResCreateInfo{};
+static void SetObjectResCreateInfo()
+{
+	g_objectResCreateInfo.sType                                      = VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO;
+	g_objectResCreateInfo.pNext                                      = nullptr;
+	g_objectResCreateInfo.semaphoreRequestCount                      = 1;
+	g_objectResCreateInfo.commandBufferRequestCount                  = 1;
+	g_objectResCreateInfo.fenceRequestCount                          = 1;
+	g_objectResCreateInfo.deviceMemoryRequestCount                   = 1;
+	g_objectResCreateInfo.bufferRequestCount                         = 1;
+	g_objectResCreateInfo.imageRequestCount                          = 1;
+	g_objectResCreateInfo.eventRequestCount                          = 1;
+	g_objectResCreateInfo.queryPoolRequestCount                      = 3;
+	g_objectResCreateInfo.bufferViewRequestCount                     = 1;
+	g_objectResCreateInfo.imageViewRequestCount                      = 1;
+	g_objectResCreateInfo.layeredImageViewRequestCount               = 1;
+	g_objectResCreateInfo.pipelineCacheRequestCount                  = 1;
+	g_objectResCreateInfo.pipelineLayoutRequestCount                 = 1;
+	g_objectResCreateInfo.renderPassRequestCount                     = 1;
+	g_objectResCreateInfo.graphicsPipelineRequestCount               = 1;
+	g_objectResCreateInfo.computePipelineRequestCount                = 1;
+	g_objectResCreateInfo.descriptorSetLayoutRequestCount            = 1;
+	g_objectResCreateInfo.samplerRequestCount                        = 1;
+	g_objectResCreateInfo.descriptorPoolRequestCount                 = 1;
+	g_objectResCreateInfo.descriptorSetRequestCount                  = 1;
+	g_objectResCreateInfo.framebufferRequestCount                    = 1;
+	g_objectResCreateInfo.commandPoolRequestCount                    = 1;
+	g_objectResCreateInfo.samplerYcbcrConversionRequestCount         = 1;
+	g_objectResCreateInfo.swapchainRequestCount                      = 1;
+	g_objectResCreateInfo.subpassDescriptionRequestCount             = 1;
+	g_objectResCreateInfo.attachmentDescriptionRequestCount          = 1;
+	g_objectResCreateInfo.descriptorSetLayoutBindingRequestCount     = 1;
+	g_objectResCreateInfo.descriptorSetLayoutBindingLimit            = 1;
+	g_objectResCreateInfo.maxImageViewMipLevels                      = 1;
+	g_objectResCreateInfo.maxImageViewArrayLayers                    = 2;
+	g_objectResCreateInfo.maxLayeredImageViewMipLevels               = 1;
+	g_objectResCreateInfo.maxOcclusionQueriesPerPool                 = 1;
+	g_objectResCreateInfo.maxPipelineStatisticsQueriesPerPool        = 1;
+	g_objectResCreateInfo.maxTimestampQueriesPerPool                 = 1;
+	g_objectResCreateInfo.maxImmutableSamplersPerDescriptorSetLayout = 1;
+}
+
+#endif
+)"};
+    EXPECT_EQ(header, ref);
+}
+
+TEST_F(ObjectReservation, SimpleCustomRelativePath) {
+    TEST_DESCRIPTION("Tests whether generating to relative location is as expected.");
+
+    // NOTE: the relative path here coincides with that of set by CTest, but it's a relative
+    //       path, not an absolute one. The test infrastructure will clean/create this folder
+    //       via an absolute path. The object reservation header however as well as the layer
+    //       itself and the final cleanup will happen through the relative path set here.
+#ifdef _WIN32
+    _putenv_s("VK_JSON_FILE_PATH", "./Layer.ObjectReservation.SimpleCustomRelativePath");
+#else
+    setenv("VK_JSON_FILE_PATH", "./Layer.ObjectReservation.SimpleCustomRelativePath", 1);
+#endif
+
+    auto instance_ci = std::make_unique<VkInstanceCreateInfo>(vku::InitStructHelper());
+    VkInstance instance;
+    vkCreateInstance(instance_ci.get(), nullptr, &instance);
+
+    uint32_t phys_dev_count = 1;
+    std::vector<VkPhysicalDevice> phys_devs(phys_dev_count);
+    vkEnumeratePhysicalDevices(instance, &phys_dev_count, phys_devs.data());
+
+    auto device_ci = std::make_unique<VkDeviceCreateInfo>(vku::InitStructHelper());
+    std::vector<const char*> enabled_device_extensions{"VK_KHR_swapchain"};
+    device_ci->enabledExtensionCount = (uint32_t)enabled_device_extensions.size();
+    device_ci->ppEnabledExtensionNames = enabled_device_extensions.data();
+    VkDevice device;
+    vkCreateDevice(phys_devs[0], device_ci.get(), nullptr, &device);
+
+    auto shader_module_ci = std::make_unique<VkShaderModuleCreateInfo>(vku::InitStructHelper());
+    std::vector<uint32_t> ref_spirv{1, 2, 3, 4};
+    shader_module_ci->codeSize = ref_spirv.size() * sizeof(uint32_t);
+    shader_module_ci->pCode = ref_spirv.data();
+    VkShaderModule shader_module;
+    vkCreateShaderModule(device, shader_module_ci.get(), nullptr, &shader_module);
+
+    auto buf_ci = std::make_unique<VkBufferCreateInfo>(vku::InitStructHelper());
+    VkBuffer buf;
+    vkCreateBuffer(device, buf_ci.get(), NULL, &buf);
+
+    auto buf_view_ci = std::make_unique<VkBufferViewCreateInfo>(vku::InitStructHelper());
+    VkBufferView buf_view;
+    vkCreateBufferView(device, buf_view_ci.get(), nullptr, &buf_view);
+
+    auto fb_ci = std::make_unique<VkFramebufferCreateInfo>(vku::InitStructHelper());
+    VkFramebuffer fb;
+    vkCreateFramebuffer(device, fb_ci.get(), nullptr, &fb);
+
+    auto swap_chain_ci = std::make_unique<VkSwapchainCreateInfoKHR>(vku::InitStructHelper());
+    VkSwapchainKHR swap_chain;
+    vkCreateSwapchainKHR(device, swap_chain_ci.get(), nullptr, &swap_chain);
+
+    auto img_ci = std::make_unique<VkImageCreateInfo>(vku::InitStructHelper());
+    VkImage img;
+    vkCreateImage(device, img_ci.get(), nullptr, &img);
+
+    auto img_view_ci = std::make_unique<VkImageViewCreateInfo>(vku::InitStructHelper());
+    img_view_ci->subresourceRange.layerCount = 2;
+    img_view_ci->subresourceRange.levelCount = 1;
+    VkImageView img_view;
+    vkCreateImageView(device, img_view_ci.get(), nullptr, &img_view);
+
+    auto alloc_mem_info = std::make_unique<VkMemoryAllocateInfo>(vku::InitStructHelper());
+    VkDeviceMemory mem;
+    vkAllocateMemory(device, alloc_mem_info.get(), NULL, &mem);
+
+    // Create Ycbcr sampler conversion
+    auto ycbcr_ci = std::make_unique<VkSamplerYcbcrConversionCreateInfo>(vku::InitStructHelper());
+    VkSamplerYcbcrConversion ycbcr;
+    vkCreateSamplerYcbcrConversion(device, ycbcr_ci.get(), nullptr, &ycbcr);
+
+    // Create Ycbcr sampler
+    auto sampler_ci = std::make_unique<VkSamplerCreateInfo>(vku::InitStructHelper());
+    VkSampler sampler;
+    vkCreateSampler(device, sampler_ci.get(), nullptr, &sampler);
+
+    // Create descriptor set layout
+    auto ds_layout_ci = std::make_unique<VkDescriptorSetLayoutCreateInfo>(vku::InitStructHelper());
+    auto binding = std::make_unique<VkDescriptorSetLayoutBinding>();
+    ds_layout_ci->bindingCount = 1;
+    ds_layout_ci->pBindings = binding.get();
+    binding->descriptorCount = 1;
+    binding->descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    binding->pImmutableSamplers = &sampler;
+    VkDescriptorSetLayout ds_layout;
+    vkCreateDescriptorSetLayout(device, ds_layout_ci.get(), nullptr, &ds_layout);
+
+    // Create pipeline layout
+    auto pipeline_layout_ci = std::make_unique<VkPipelineLayoutCreateInfo>(vku::InitStructHelper());
+    pipeline_layout_ci->setLayoutCount = 1;
+    pipeline_layout_ci->pSetLayouts = &ds_layout;
+    VkPipelineLayout pipeline_layout;
+    vkCreatePipelineLayout(device, pipeline_layout_ci.get(), nullptr, &pipeline_layout);
+
+    auto pipeline_cache_ci = std::make_unique<VkPipelineCacheCreateInfo>(vku::InitStructHelper());
+    VkPipelineCache pipeline_cache;
+    vkCreatePipelineCache(device, pipeline_cache_ci.get(), NULL, &pipeline_cache);
+
+    // Create compute pipeline
+    auto pipeline_stage_ci = std::make_unique<VkPipelineShaderStageCreateInfo>(vku::InitStructHelper());
+    pipeline_stage_ci->module = shader_module;
+    pipeline_stage_ci->stage = VK_SHADER_STAGE_COMPUTE_BIT;
+    pipeline_stage_ci->pName = "main";
+    auto compute_pipeline_ci = std::make_unique<VkComputePipelineCreateInfo>(vku::InitStructHelper());
+    compute_pipeline_ci->layout = pipeline_layout;
+    compute_pipeline_ci->stage = *pipeline_stage_ci;
+    VkPipeline compute_pipeline;
+    vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, compute_pipeline_ci.get(), NULL, &compute_pipeline);
+
+    auto renderpass_ci = std::make_unique<VkRenderPassCreateInfo>(vku::InitStructHelper());
+    VkAttachmentDescription attachment_desc{};
+    VkSubpassDescription subpass_desc{};
+    attachment_desc.samples = VK_SAMPLE_COUNT_1_BIT;
+    renderpass_ci->subpassCount = 1;
+    renderpass_ci->pSubpasses = &subpass_desc;
+    renderpass_ci->attachmentCount = 1;
+    renderpass_ci->pAttachments = &attachment_desc;
+    VkRenderPass render_pass;
+    vkCreateRenderPass(device, renderpass_ci.get(), nullptr, &render_pass);
+
+    auto graphics_pipeline_ci = std::make_unique<VkGraphicsPipelineCreateInfo>(vku::InitStructHelper());
+    pipeline_stage_ci->stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    graphics_pipeline_ci->layout = pipeline_layout;
+    graphics_pipeline_ci->stageCount = 1;
+    graphics_pipeline_ci->pStages = pipeline_stage_ci.get();
+    graphics_pipeline_ci->renderPass = render_pass;
+    VkPipeline graphics_pipeline;
+    vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, graphics_pipeline_ci.get(), NULL, &graphics_pipeline);
+
+    auto desc_pool_ci = std::make_unique<VkDescriptorPoolCreateInfo>(vku::InitStructHelper());
+    VkDescriptorPool desc_pool;
+    vkCreateDescriptorPool(device, desc_pool_ci.get(), nullptr, &desc_pool);
+
+    auto ds_alloc_info = std::make_unique<VkDescriptorSetAllocateInfo>(vku::InitStructHelper());
+    ds_alloc_info->descriptorPool = desc_pool;
+    ds_alloc_info->descriptorSetCount = 1;
+    ds_alloc_info->pSetLayouts = &ds_layout;
+    VkDescriptorSet desc_set;
+    vkAllocateDescriptorSets(device, ds_alloc_info.get(), &desc_set);
+
+    auto cmd_pool_ci = std::make_unique<VkCommandPoolCreateInfo>(vku::InitStructHelper());
+    VkCommandPool cmd_pool;
+    vkCreateCommandPool(device, cmd_pool_ci.get(), NULL, &cmd_pool);
+
+    auto cmd_buf_ci = std::make_unique<VkCommandBufferAllocateInfo>(vku::InitStructHelper());
+    cmd_buf_ci->commandBufferCount = 1;
+    VkCommandBuffer cmd_buf;
+    vkAllocateCommandBuffers(device, cmd_buf_ci.get(), &cmd_buf);
+
+    auto fence_ci = std::make_unique<VkFenceCreateInfo>(vku::InitStructHelper());
+    VkFence fence;
+    vkCreateFence(device, fence_ci.get(), NULL, &fence);
+
+    auto semaphore_ci = std::make_unique<VkSemaphoreCreateInfo>(vku::InitStructHelper());
+    VkSemaphore semaphore;
+    vkCreateSemaphore(device, semaphore_ci.get(), nullptr, &semaphore);
+
+    auto event_ci = std::make_unique<VkEventCreateInfo>(vku::InitStructHelper());
+    VkEvent event;
+    vkCreateEvent(device, event_ci.get(), nullptr, &event);
+
+    std::array<VkQueryPoolCreateInfo, 3> query_pool_cis{
+        {vku::InitStructHelper(), vku::InitStructHelper(), vku::InitStructHelper()}};
+    query_pool_cis[0].queryType = VK_QUERY_TYPE_OCCLUSION;
+    query_pool_cis[0].queryCount = 1;
+    query_pool_cis[1].queryType = VK_QUERY_TYPE_PIPELINE_STATISTICS;
+    query_pool_cis[1].queryCount = 1;
+    query_pool_cis[2].queryType = VK_QUERY_TYPE_TIMESTAMP;
+    query_pool_cis[2].queryCount = 1;
+    std::array<VkQueryPool, 3> query_pools;
+    vkCreateQueryPool(device, &query_pool_cis[0], nullptr, &query_pools[0]);
+    vkCreateQueryPool(device, &query_pool_cis[1], nullptr, &query_pools[1]);
+    vkCreateQueryPool(device, &query_pool_cis[2], nullptr, &query_pools[2]);
+
+    vkDestroyQueryPool(device, query_pools[2], nullptr);
+    vkDestroyQueryPool(device, query_pools[1], nullptr);
+    vkDestroyQueryPool(device, query_pools[0], nullptr);
+    vkDestroyEvent(device, event, nullptr);
+    vkDestroySemaphore(device, semaphore, nullptr);
+    vkDestroyFence(device, fence, nullptr);
+    vkFreeCommandBuffers(device, cmd_pool, 1, &cmd_buf);
+    vkDestroyCommandPool(device, cmd_pool, nullptr);
+    vkFreeDescriptorSets(device, desc_pool, 1, &desc_set);
+    vkDestroyDescriptorPool(device, desc_pool, nullptr);
+    vkDestroyPipeline(device, graphics_pipeline, nullptr);
+    vkDestroyRenderPass(device, render_pass, nullptr);
+    vkDestroyPipeline(device, compute_pipeline, nullptr);
+    vkDestroyPipelineCache(device, pipeline_cache, nullptr);
+    vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
+    vkDestroyDescriptorSetLayout(device, ds_layout, nullptr);
+    vkDestroySampler(device, sampler, nullptr);
+    vkDestroySamplerYcbcrConversion(device, ycbcr, nullptr);
+    vkFreeMemory(device, mem, nullptr);
+    vkDestroyImageView(device, img_view, nullptr);
+    vkDestroyImage(device, img, nullptr);
+    vkDestroySwapchainKHR(device, swap_chain, nullptr);
+    vkDestroyFramebuffer(device, fb, nullptr);
+    vkDestroyBufferView(device, buf_view, nullptr);
+    vkDestroyBuffer(device, buf, nullptr);
+    vkDestroyShaderModule(device, shader_module, nullptr);
+    vkDestroyDevice(device, nullptr);
+    vkDestroyInstance(instance, nullptr);
+
+    auto header = ReadHeader();
+
+    std::string ref = {R"(#ifndef json_gen_layer_test_objres_objectResInfo_HPP
+#define json_gen_layer_test_objres_objectResInfo_HPP
 
 #include <vulkan/vulkan_sc_core.h>
 
@@ -532,8 +818,8 @@ TEST_F(ObjectReservation, HighWatermark) {
 
     auto header = ReadHeader();
 
-    std::string ref = {R"(#ifndef gltest_objres_objectResInfo_HPP
-#define gltest_objres_objectResInfo_HPP
+    std::string ref = {R"(#ifndef json_gen_layer_test_objres_objectResInfo_HPP
+#define json_gen_layer_test_objres_objectResInfo_HPP
 
 #include <vulkan/vulkan_sc_core.h>
 
@@ -641,8 +927,8 @@ TEST_F(ObjectReservation, NonTrivial) {
 
     auto header = ReadHeader();
 
-    std::string ref = {R"(#ifndef gltest_objres_objectResInfo_HPP
-#define gltest_objres_objectResInfo_HPP
+    std::string ref = {R"(#ifndef json_gen_layer_test_objres_objectResInfo_HPP
+#define json_gen_layer_test_objres_objectResInfo_HPP
 
 #include <vulkan/vulkan_sc_core.h>
 

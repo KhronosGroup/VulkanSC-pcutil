@@ -11,7 +11,7 @@
 #include <gtest/gtest.h>
 #include "object_type_string_helper.h"
 #include "sample_pipeline.h"
-#include "pctest_writer_helper.h"
+#include "pcutil_test_writer_helper.h"
 
 #include <ctype.h>
 #include <stdio.h>

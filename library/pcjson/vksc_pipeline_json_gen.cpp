@@ -630,7 +630,9 @@ class Generator : private GeneratorBase {
                     Error() << "Ouf of range " << object_set_name << " id (" << name_id << ") during resolving names";
                 }
             }
-            json_array.copy(new_array);
+            if (new_array.size() > 0) {
+                json_array.copy(new_array);
+            }
         };
 
         if (state.ppDescriptorSetLayoutNames != nullptr) {

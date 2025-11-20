@@ -24,6 +24,7 @@ macro(pcu_add_test)
     target_link_libraries(${_TEST_NAME} PRIVATE
         Vulkan::Headers
         Vulkan::UtilityHeaders
+        Vulkan::SafeStruct
         VulkanSC::PCJson
         GTest::gtest
         GTest::gtest_main

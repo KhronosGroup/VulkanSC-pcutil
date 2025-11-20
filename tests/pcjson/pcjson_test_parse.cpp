@@ -165,129 +165,123 @@ TEST_F(Parse, BasicTypesVkBool32) {
 TEST_F(Parse, VkPhysicalDeviceFeatures2) {
     TEST_DESCRIPTION("Tests parsing of a reasonably complex physical device features 2 JSON");
 
-    VkPhysicalDeviceFeatures2 pdf{};
-    auto [ref_pdf, json] = getVkPhysicalDeviceFeatures2(
-        0, std::make_tuple(getVkPhysicalDeviceVulkan11Features(), getVkPhysicalDeviceScalarBlockLayoutFeatures()));
+    for (auto seed : {0, 1, 2}) {
+        auto [ref_pdf, json_in] = getVkPhysicalDeviceFeatures2(seed);
 
-    CHECK_PARSE(vpjParseSingleStructJson(this->parser_, json.c_str(), &pdf, &msg_));
-    CompareStruct(ref_pdf, pdf);
+        VkPhysicalDeviceFeatures2 res_pdf{};
+        CHECK_PARSE(vpjParseSingleStructJson(this->parser_, json_in.c_str(), &res_pdf, &msg_));
+        CompareStruct(ref_pdf, res_pdf);
+    }
 }
 
 TEST_F(Parse, VkGraphicsPipelineCreateInfo) {
     TEST_DESCRIPTION("Tests parsing of a reasonably complex compute pipeline create info JSON");
 
-    VkGraphicsPipelineCreateInfo ci{};
-    auto [ref_ci, json] = getVkGraphicsPipelineCreateInfo(
-        0,
-        {getVkPipelineShaderStageCreateInfo(0, VK_SHADER_STAGE_VERTEX_BIT),
-         getVkPipelineShaderStageCreateInfo(0, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT),
-         getVkPipelineShaderStageCreateInfo(0, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
-                                            std::make_tuple(getVkPipelineShaderStageRequiredSubgroupSizeCreateInfo())),
-         getVkPipelineShaderStageCreateInfo(0, VK_SHADER_STAGE_GEOMETRY_BIT),
-         getVkPipelineShaderStageCreateInfo(0, VK_SHADER_STAGE_FRAGMENT_BIT)},
-        std::make_tuple(getVkPipelineDiscardRectangleStateCreateInfoEXT()));
+    for (auto seed : {0}) {
+        auto [ref_ci, json_in] = getVkGraphicsPipelineCreateInfo(seed);
 
-    CHECK_PARSE(vpjParseSingleStructJson(this->parser_, json.c_str(), &ci, &msg_));
-    CompareStruct(ref_ci, ci);
+        VkGraphicsPipelineCreateInfo res_ci{};
+        CHECK_PARSE(vpjParseSingleStructJson(this->parser_, json_in.c_str(), &res_ci, &msg_));
+        CompareStruct(ref_ci, res_ci);
+    }
 }
 
 TEST_F(Parse, VkComputePipelineCreateInfo) {
     TEST_DESCRIPTION("Tests parsing of a reasonably complex compute pipeline create info JSON");
 
-    VkComputePipelineCreateInfo ci{};
-    auto [ref_ci, json] = getVkComputePipelineCreateInfo(getVkPipelineShaderStageCreateInfo(
-        0, VK_SHADER_STAGE_COMPUTE_BIT, std::make_tuple(getVkPipelineShaderStageRequiredSubgroupSizeCreateInfo())));
+    for (auto seed : {0, 1}) {
+        auto [ref_ci, json_in] = getVkComputePipelineCreateInfo(seed);
 
-    CHECK_PARSE(vpjParseSingleStructJson(this->parser_, json.c_str(), &ci, &msg_));
-    CompareStruct(ref_ci, ci);
+        VkComputePipelineCreateInfo res_ci{};
+        CHECK_PARSE(vpjParseSingleStructJson(this->parser_, json_in.c_str(), &res_ci, &msg_));
+        CompareStruct(ref_ci, res_ci);
+    }
 }
 
 TEST_F(Parse, VkSamplerYcbcrConversionCreateInfo) {
     TEST_DESCRIPTION("Tests parsing of a reasonably complex ycbcr conversion create info JSON");
 
-    VkSamplerYcbcrConversionCreateInfo ci{};
-    auto [ref_ci, json] = getVkSamplerYcbcrConversionCreateInfo();
+    for (auto seed : {0, 1, 2}) {
+        auto [ref_ci, json_in] = getVkSamplerYcbcrConversionCreateInfo(seed);
 
-    CHECK_PARSE(vpjParseSingleStructJson(this->parser_, json.c_str(), &ci, &msg_));
-    CompareStruct(ref_ci, ci);
+        VkSamplerYcbcrConversionCreateInfo res_ci{};
+        CHECK_PARSE(vpjParseSingleStructJson(this->parser_, json_in.c_str(), &res_ci, &msg_));
+        CompareStruct(ref_ci, res_ci);
+    }
 }
 
 TEST_F(Parse, VkSamplerCreateInfo) {
     TEST_DESCRIPTION("Tests parsing of a reasonably complex sampler create info JSON");
 
-    VkSamplerCreateInfo ci{};
-    auto [ref_ci, json] = getVkSamplerCreateInfo(
-        1,
-        std::make_tuple(getVkSamplerYcbcrConversionInfo(VkSamplerYcbcrConversion(12345)), getVkSamplerReductionModeCreateInfo(1)));
+    for (auto seed : {0, 1, 2}) {
+        for (auto param : std::vector<SamplerParams>{{}, {VkSamplerYcbcrConversion(12345)}}) {
+            auto [ref_ci, json_in] = getVkSamplerCreateInfo(seed, param);
 
-    CHECK_PARSE(vpjParseSingleStructJson(this->parser_, json.c_str(), &ci, &msg_));
-    CompareStruct(ref_ci, ci);
+            VkSamplerCreateInfo res_ci{};
+            CHECK_PARSE(vpjParseSingleStructJson(this->parser_, json_in.c_str(), &res_ci, &msg_));
+            CompareStruct(ref_ci, res_ci);
+        }
+    }
 }
 
 TEST_F(Parse, VkDescriptorSetLayoutCreateInfo) {
     TEST_DESCRIPTION("Tests parsing of a reasonably complex descriptor set layout create info JSON");
 
-    VkDescriptorSetLayoutCreateInfo ci{};
-    auto [ref_ci, json] = getVkDescriptorSetLayoutCreateInfo(0,
-                                                             {{1, VK_SHADER_STAGE_VERTEX_BIT},
-                                                              {1, VK_SHADER_STAGE_FRAGMENT_BIT, VkSampler(1)},
-                                                              {1, VK_SHADER_STAGE_FRAGMENT_BIT, VkSampler(2)}},
-                                                             std::make_tuple(getVkDescriptorSetLayoutBindingFlagsCreateInfo(0, 3)));
+    for (auto seed : {0, 1, 2, 3}) {
+        auto [ref_ci, json_in] = getVkDescriptorSetLayoutCreateInfo(seed);
 
-    CHECK_PARSE(vpjParseSingleStructJson(this->parser_, json.c_str(), &ci, &msg_));
-    CompareStruct(ref_ci, ci);
+        VkDescriptorSetLayoutCreateInfo res_ci{};
+        CHECK_PARSE(vpjParseSingleStructJson(this->parser_, json_in.c_str(), &res_ci, &msg_));
+        CompareStruct(ref_ci, res_ci);
+    }
 }
 
 TEST_F(Parse, VkPipelineLayoutCreateInfo) {
     TEST_DESCRIPTION("Tests parsing of a reasonably complex pipeline layout create info JSON");
 
-    VkPipelineLayoutCreateInfo ci;
-    auto [ref_ci, json] = getVkPipelineLayoutCreateInfo(0, {{VkDescriptorSetLayout(12345)}});
+    for (auto seed : {0, 1, 2, 3}) {
+        auto [ref_ci, json_in] = getVkPipelineLayoutCreateInfo(seed);
 
-    CHECK_PARSE(vpjParseSingleStructJson(this->parser_, json.c_str(), &ci, &msg_));
-    CompareStruct(ref_ci, ci);
+        VkPipelineLayoutCreateInfo res_ci{};
+        CHECK_PARSE(vpjParseSingleStructJson(this->parser_, json_in.c_str(), &res_ci, &msg_));
+        CompareStruct(ref_ci, res_ci);
+    }
 }
 
 TEST_F(Parse, VkRenderPassCreateInfo) {
     TEST_DESCRIPTION("Tests parsing of a reasonably complex render pass create info JSON");
 
-    VkRenderPassCreateInfo ci;
-    auto [ref_ci, json] = getVkRenderPassCreateInfo(
-        0, std::make_tuple(getVkRenderPassInputAttachmentAspectCreateInfo(), getVkRenderPassMultiviewCreateInfo()));
+    for (auto seed : {0, 1, 2, 3}) {
+        auto [ref_ci, json_in] = getVkRenderPassCreateInfo(seed);
 
-    CHECK_PARSE(vpjParseSingleStructJson(this->parser_, json.c_str(), &ci, &msg_));
-    CompareStruct(ref_ci, ci);
+        VkRenderPassCreateInfo res_ci{};
+        CHECK_PARSE(vpjParseSingleStructJson(this->parser_, json_in.c_str(), &res_ci, &msg_));
+        CompareStruct(ref_ci, res_ci);
+    }
 }
 
 TEST_F(Parse, VkRenderPassCreateInfo2) {
     TEST_DESCRIPTION("Tests parsing of a reasonably complex render pass 2 layout create info JSON");
 
-    VkRenderPassCreateInfo2 ci;
-    auto [ref_ci, json] = getVkRenderPassCreateInfo2(0);
+    for (auto seed : {0, 1}) {
+        auto [ref_ci, json_in] = getVkRenderPassCreateInfo2(seed);
 
-    CHECK_PARSE(vpjParseSingleStructJson(this->parser_, json.c_str(), &ci, &msg_));
-    CompareStruct(ref_ci, ci);
+        VkRenderPassCreateInfo2 res_ci{};
+        CHECK_PARSE(vpjParseSingleStructJson(this->parser_, json_in.c_str(), &res_ci, &msg_));
+        CompareStruct(ref_ci, res_ci);
+    }
 }
 
 TEST_F(Parse, VkShaderModuleCreateInfo) {
     TEST_DESCRIPTION("Tests parsing of a reasonably complex shader module create info JSON");
 
-    VkShaderModuleCreateInfo sm_ci;
-    std::string json = {R"({
-        "sType" : "VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO",
-        "pNext": "NULL",
-        "flags": 0,
-        "codeSize": 4,
-        "pCode": [25, 123, 42, 8]
-    })"};
+    for (auto seed : {0, 1}) {
+        auto [ref_ci, json_in] = getVkShaderModuleCreateInfo(seed);
 
-    CHECK_PARSE(vpjParseSingleStructJson(this->parser_, json.c_str(), &sm_ci, &msg_));
-
-    EXPECT_EQ(sm_ci.sType, VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO);
-    EXPECT_EQ(sm_ci.pNext, nullptr);
-    EXPECT_EQ(sm_ci.flags, 0);
-    EXPECT_EQ(sm_ci.codeSize, 4);
-    EXPECT_EQ(sm_ci.pCode[0], (25 << 0) + (123 << 8) + (42 << 16) + (8 << 24));
+        VkShaderModuleCreateInfo res_ci{};
+        CHECK_PARSE(vpjParseSingleStructJson(this->parser_, json_in.c_str(), &res_ci, &msg_));
+        CompareStruct(ref_ci, res_ci);
+    }
 }
 
 TEST_F(Parse, VkDeviceObjectReservationCreateInfo) {
@@ -415,54 +409,13 @@ TEST_F(Parse, VkDeviceObjectReservationCreateInfo) {
 TEST_F(Parse, VkPipelineOfflineCreateInfo) {
     TEST_DESCRIPTION("Tests parsing of a reasonably complex pipeline offline create info JSON");
 
-    VkPipelineOfflineCreateInfo po_ci;
-    std::string json = {R"({
-        "sType" : "VK_STRUCTURE_TYPE_PIPELINE_OFFLINE_CREATE_INFO",
-        "pNext": "NULL",
-        "pipelineIdentifier": [
-        85,
-        43,
-        255,
-        24,
-        155,
-        64,
-        62,
-        24,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-    ],
-        "matchControl": "VK_PIPELINE_MATCH_CONTROL_APPLICATION_UUID_EXACT_MATCH",
-        "poolEntrySize": 1048576
-    })"};
+    for (auto seed : {0}) {
+        auto [ref_ci, json_in] = getVkPipelineOfflineCreateInfo(seed);
 
-    CHECK_PARSE(vpjParseSingleStructJson(this->parser_, json.c_str(), &po_ci, &msg_));
-
-    EXPECT_EQ(po_ci.sType, VK_STRUCTURE_TYPE_PIPELINE_OFFLINE_CREATE_INFO);
-    EXPECT_EQ(po_ci.pNext, nullptr);
-    EXPECT_EQ(po_ci.pipelineIdentifier[0], 85);
-    EXPECT_EQ(po_ci.pipelineIdentifier[1], 43);
-    EXPECT_EQ(po_ci.pipelineIdentifier[2], 255);
-    EXPECT_EQ(po_ci.pipelineIdentifier[3], 24);
-    EXPECT_EQ(po_ci.pipelineIdentifier[4], 155);
-    EXPECT_EQ(po_ci.pipelineIdentifier[5], 64);
-    EXPECT_EQ(po_ci.pipelineIdentifier[6], 62);
-    EXPECT_EQ(po_ci.pipelineIdentifier[7], 24);
-    EXPECT_EQ(po_ci.pipelineIdentifier[8], 0);
-    EXPECT_EQ(po_ci.pipelineIdentifier[9], 0);
-    EXPECT_EQ(po_ci.pipelineIdentifier[10], 0);
-    EXPECT_EQ(po_ci.pipelineIdentifier[11], 0);
-    EXPECT_EQ(po_ci.pipelineIdentifier[12], 0);
-    EXPECT_EQ(po_ci.pipelineIdentifier[13], 0);
-    EXPECT_EQ(po_ci.pipelineIdentifier[14], 0);
-    EXPECT_EQ(po_ci.pipelineIdentifier[15], 0);
-    EXPECT_EQ(po_ci.matchControl, VK_PIPELINE_MATCH_CONTROL_APPLICATION_UUID_EXACT_MATCH);
-    EXPECT_EQ(po_ci.poolEntrySize, 1048576);
+        VkPipelineOfflineCreateInfo res_ci{};
+        CHECK_PARSE(vpjParseSingleStructJson(this->parser_, json_in.c_str(), &res_ci, &msg_));
+        CompareStruct(ref_ci, res_ci);
+    }
 }
 
 TEST_F(Parse, ComputePipelineJSON) {
@@ -471,31 +424,22 @@ TEST_F(Parse, ComputePipelineJSON) {
     VpjData data{};
 
     const char* ycbcr_names[1] = {"YcbcrConversion1"};
-    auto [ycbcr_ci, ycbcr_json] = getVkSamplerYcbcrConversionCreateInfo(VK_SAMPLER_YCBCR_RANGE_ITU_NARROW);
-    auto ycbcr_conversion = VkSamplerYcbcrConversion(100);
+    auto [ycbcr_ci, ycbcr_json] = getVkSamplerYcbcrConversionCreateInfo(0);
 
     const char* sampler_names[2] = {"ImmutableSampler1", "YcbcrSampler1"};
-    auto [immut_sampler_ci, immut_sampler_json] =
-        getVkSamplerCreateInfo(0, std::make_tuple(getVkSamplerReductionModeCreateInfo(VK_SAMPLER_REDUCTION_MODE_MAX)));
-    auto [ycbcr_sampler_ci, ycbcr_sampler_json] =
-        getVkSamplerCreateInfo(0, std::make_tuple(getVkSamplerYcbcrConversionInfo(ycbcr_conversion, ycbcr_names[0])));
+    auto [immut_sampler_ci, immut_sampler_json] = getVkSamplerCreateInfo(0);
+    auto [ycbcr_sampler_ci, ycbcr_sampler_json] = getVkSamplerCreateInfo(0, {VkSamplerYcbcrConversion(0), ycbcr_names[0]});
     VkSamplerCreateInfo sampler_ci[2] = {*immut_sampler_ci.ptr(), *ycbcr_sampler_ci.ptr()};
-    VkSampler immutableSamplers[2] = {VkSampler(100), VkSampler(101)};
 
     const char* dsl_names[1] = {"DescriptorSetLayout1"};
     auto [dsl_ci, dsl_json] =
-        getVkDescriptorSetLayoutCreateInfo(0,
-                                           {{1, VK_SHADER_STAGE_COMPUTE_BIT},
-                                            {1, VK_SHADER_STAGE_COMPUTE_BIT, immutableSamplers[0], sampler_names[0]},
-                                            {1, VK_SHADER_STAGE_COMPUTE_BIT, immutableSamplers[1], sampler_names[1]}},
-                                           std::make_tuple(getVkDescriptorSetLayoutBindingFlagsCreateInfo(0, 3)));
+        getVkDescriptorSetLayoutCreateInfo(0, {{VkSampler(0), sampler_names[0]}, {VkSampler(1), sampler_names[1]}});
 
-    auto [pl_ci, pl_json] = getVkPipelineLayoutCreateInfo(0, {{VkDescriptorSetLayout(100), dsl_names[0]}});
+    auto [pl_ci, pl_json] = getVkPipelineLayoutCreateInfo(0, {{VkDescriptorSetLayout(0), dsl_names[0]}});
 
-    auto [cp_ci, cp_json] = getVkComputePipelineCreateInfo(getVkPipelineShaderStageCreateInfo(
-        0, VK_SHADER_STAGE_COMPUTE_BIT, std::make_tuple(getVkPipelineShaderStageRequiredSubgroupSizeCreateInfo())));
+    auto [cp_ci, cp_json] = getVkComputePipelineCreateInfo(0);
 
-    auto [pdf, pdf_json] = getVkPhysicalDeviceFeatures2(0, std::make_tuple(getVkPhysicalDeviceSynchronization2Features()));
+    auto [pdf, pdf_json] = getVkPhysicalDeviceFeatures2(0);
 
     auto [shaderFileNames, shaderFileNames_json] = getShaderFileNames({{VK_SHADER_STAGE_COMPUTE_BIT, "shader.comp.spv"}});
 
@@ -587,38 +531,29 @@ TEST_F(Parse, GraphicsPipelineJSON) {
     VpjData data{};
 
     const char* ycbcr_names[1] = {"YcbcrConversion1"};
-    auto [ycbcr_ci, ycbcr_json] = getVkSamplerYcbcrConversionCreateInfo(VK_SAMPLER_YCBCR_RANGE_ITU_NARROW);
-    auto ycbcr_conversion = VkSamplerYcbcrConversion(0);
+    auto [ycbcr_ci, ycbcr_json] = getVkSamplerYcbcrConversionCreateInfo(1);
 
     const char* sampler_names[2] = {"ImmutableSampler1", "YcbcrSampler1"};
-    auto [immut_sampler_ci, immut_sampler_json] =
-        getVkSamplerCreateInfo(0, std::make_tuple(getVkSamplerReductionModeCreateInfo(VK_SAMPLER_REDUCTION_MODE_MAX)));
-    auto [ycbcr_sampler_ci, ycbcr_sampler_json] =
-        getVkSamplerCreateInfo(0, std::make_tuple(getVkSamplerYcbcrConversionInfo(ycbcr_conversion, ycbcr_names[0])));
+    auto [immut_sampler_ci, immut_sampler_json] = getVkSamplerCreateInfo(1);
+    auto [ycbcr_sampler_ci, ycbcr_sampler_json] = getVkSamplerCreateInfo(1, {VkSamplerYcbcrConversion(0), ycbcr_names[0]});
     VkSamplerCreateInfo sampler_ci[2] = {*immut_sampler_ci.ptr(), *ycbcr_sampler_ci.ptr()};
-    VkSampler immutableSamplers[2] = {VkSampler(0), VkSampler(1)};
 
     const char* dsl_names[1] = {"DescriptorSetLayout1"};
     auto [dsl_ci, dsl_json] =
-        getVkDescriptorSetLayoutCreateInfo(0,
-                                           {{1, VK_SHADER_STAGE_VERTEX_BIT},
-                                            {1, VK_SHADER_STAGE_FRAGMENT_BIT, immutableSamplers[0], sampler_names[0]},
-                                            {1, VK_SHADER_STAGE_FRAGMENT_BIT, immutableSamplers[1], sampler_names[1]}},
-                                           std::make_tuple(getVkDescriptorSetLayoutBindingFlagsCreateInfo(0, 3)));
+        getVkDescriptorSetLayoutCreateInfo(1, {{VkSampler(0), sampler_names[0]}, {VkSampler(1), sampler_names[1]}});
 
-    auto [pl_ci, pl_json] = getVkPipelineLayoutCreateInfo(0, {{VkDescriptorSetLayout(0), dsl_names[0]}});
+    auto [pl_ci, pl_json] = getVkPipelineLayoutCreateInfo(1, {{VkDescriptorSetLayout(0), dsl_names[0]}});
 
-    auto [renderPass, renderPass_json] = getVkRenderPassCreateInfo(0);
+    auto [renderPass, renderPass_json] = getVkRenderPassCreateInfo(1);
 
-    auto [gp_ci, gp_json] = getVkGraphicsPipelineCreateInfo(
-        0, {getVkPipelineShaderStageCreateInfo(0, VK_SHADER_STAGE_VERTEX_BIT),
-            getVkPipelineShaderStageCreateInfo(0, VK_SHADER_STAGE_FRAGMENT_BIT,
-                                               std::make_tuple(getVkPipelineShaderStageRequiredSubgroupSizeCreateInfo()))});
+    auto [gp_ci, gp_json] = getVkGraphicsPipelineCreateInfo(1);
 
-    auto [pdf, pdf_json] = getVkPhysicalDeviceFeatures2(0, std::make_tuple(getVkPhysicalDeviceSynchronization2Features()));
+    auto [pdf, pdf_json] = getVkPhysicalDeviceFeatures2(1);
 
     auto [shaderFileNames, shaderFileNames_json] = getShaderFileNames({
         {VK_SHADER_STAGE_VERTEX_BIT, "shader.vert.spv"},
+        {VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, "shader.tess_ctrl.spv"},
+        {VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, "shader.tess_eval.spv"},
         {VK_SHADER_STAGE_FRAGMENT_BIT, "shader.frag.spv"},
     });
 

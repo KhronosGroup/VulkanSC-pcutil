@@ -3072,6 +3072,7 @@ class GeneratorBase : protected Base {
                     strm << " | ";
                 }
                 strm << gen_VkCullModeFlagBits_c_str(static_cast<VkCullModeFlagBits>(multi_bit_flag));
+                break;
             }
         }
         auto isnt_part_of_any_matched_multi_bit_flags = [&](const auto bit) {
@@ -3265,6 +3266,7 @@ class GeneratorBase : protected Base {
                     strm << " | ";
                 }
                 strm << gen_VkShaderStageFlagBits_c_str(static_cast<VkShaderStageFlagBits>(multi_bit_flag));
+                break;
             }
         }
         auto isnt_part_of_any_matched_multi_bit_flags = [&](const auto bit) {

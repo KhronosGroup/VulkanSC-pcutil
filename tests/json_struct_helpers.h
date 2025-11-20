@@ -19,35 +19,6 @@
 #include <optional>     // std::optional
 #include <cmath>        // std::isnan
 
-template <typename Base>
-inline VkBaseInStructure& FindLastLastStructInChain(Base& base) {
-    VkBaseInStructure* prev = reinterpret_cast<VkBaseInStructure*>(&base);
-    VkBaseInStructure* current = prev;
-    while (current->pNext) {
-        prev = current;
-        current = const_cast<VkBaseInStructure*>(current->pNext);
-    }
-    return *current;
-}
-
-// Call 'f' with each element of 't', one after the other.
-template <typename T, typename F>
-void for_each_tuple_elem(T&& t, F&& f) {
-    std::apply([&f](auto&&... args) { (f(std::forward<decltype(args)>(args)), ...); }, std::forward<T>(t));
-}
-
-// Chain the pairs of VkStructures and JSON snippets in 'pNext' onto 'ci' and 'json'.
-template <typename InStructure, typename PNext>
-void ChainPNext(InStructure& ci, std::string& json, const PNext& pNext) {
-    using namespace std::string_literals;
-    for_each_tuple_elem(pNext, [&](auto&& elem) {
-        constexpr std::string_view end_of_pNext = R"("pNext": "NULL")";
-        auto& last = FindLastLastStructInChain(ci);
-        last.pNext = reinterpret_cast<const VkBaseInStructure*>(new decltype(elem.first)(elem.first));
-        json.replace(json.find(end_of_pNext), end_of_pNext.length(), R"("pNext": )"s + elem.second);
-    });
-}
-
 const char* shader_stage_flag_to_string(VkShaderStageFlags flags) {
     switch (flags) {
         case VK_SHADER_STAGE_VERTEX_BIT:
@@ -103,6 +74,9 @@ const char* shader_stage_flag_to_string(VkShaderStageFlags flags) {
             break;
         case VK_SHADER_STAGE_CLUSTER_CULLING_BIT_HUAWEI:
             return "VK_SHADER_STAGE_CLUSTER_CULLING_BIT_HUAWEI";
+            break;
+        case VK_SHADER_STAGE_ALL_GRAPHICS | VK_SHADER_STAGE_COMPUTE_BIT:
+            return "VK_SHADER_STAGE_ALL_GRAPHICS | VK_SHADER_STAGE_COMPUTE_BIT";
             break;
         default:
             return "Unexpected flag combination";
@@ -180,75 +154,42 @@ std::pair<vku::safe_VkSamplerYcbcrConversionCreateInfo, std::string> getVkSample
     return {&ci, json};
 }
 
-std::pair<vku::safe_VkSamplerYcbcrConversionInfo, std::string> getVkSamplerYcbcrConversionInfo(
-    VkSamplerYcbcrConversion conversion = VkSamplerYcbcrConversion(1), std::string name = R"()") {
-    using namespace std::string_literals;
+struct SamplerParams {
+    const std::optional<VkSamplerYcbcrConversion> ycbcr_conversion = std::nullopt;
+    const std::optional<std::string> ycbcr_name = std::nullopt;
+};
 
-    VkSamplerYcbcrConversionInfo ci = vku::InitStructHelper();
-    std::string json{};
-
-    ci.conversion = conversion;
-
-    std::string conversion_str{};
-    if (name.empty()) {
-        conversion_str = std::to_string(reinterpret_cast<std::size_t>(conversion));
-    } else {
-        conversion_str = R"(")"s + name + R"(")";
-    }
-
-    json = R"({
-            "conversion": )"s +
-           conversion_str + R"(,
-            "pNext": "NULL",
-            "sType": "VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_INFO"
-        })";
-
-    return {&ci, json};
-}
-
-std::pair<vku::safe_VkSamplerReductionModeCreateInfo, std::string> getVkSamplerReductionModeCreateInfo(uint32_t seed = 0) {
-    using namespace std::string_literals;
-
-    VkSamplerReductionModeCreateInfo ci = vku::InitStructHelper();
-    std::string json{};
-
-    std::string reductionMode_str{};
-    switch (seed % 3) {
-        case 0:
-            ci.reductionMode = VK_SAMPLER_REDUCTION_MODE_WEIGHTED_AVERAGE;
-            reductionMode_str = R"("VK_SAMPLER_REDUCTION_MODE_WEIGHTED_AVERAGE")";
-            break;
-        case 1:
-            ci.reductionMode = VK_SAMPLER_REDUCTION_MODE_MIN;
-            reductionMode_str = R"("VK_SAMPLER_REDUCTION_MODE_MIN")";
-            break;
-        case 2:
-            ci.reductionMode = VK_SAMPLER_REDUCTION_MODE_MAX;
-            reductionMode_str = R"("VK_SAMPLER_REDUCTION_MODE_MAX")";
-            break;
-    }
-
-    json = R"({
-        "sType": "VK_STRUCTURE_TYPE_SAMPLER_REDUCTION_MODE_CREATE_INFO",
-            "pNext": "NULL",
-            "reductionMode": )"s +
-           reductionMode_str + R"(
-        })";
-
-    return {&ci, json};
-}
-
-template <typename... InStructure>
-std::pair<vku::safe_VkSamplerCreateInfo, std::string> getVkSamplerCreateInfo(
-    uint32_t seed = 0, std::tuple<std::pair<InStructure, std::string>...> pNext = std::tuple<>{}) {
+std::pair<vku::safe_VkSamplerCreateInfo, std::string> getVkSamplerCreateInfo(uint32_t seed = 0, SamplerParams params = {}) {
     using namespace std::string_literals;
 
     VkSamplerCreateInfo ci = vku::InitStructHelper();
+    [[maybe_unused]] VkSamplerYcbcrConversionInfo ycbcrci = vku::InitStructHelper();
+    [[maybe_unused]] VkSamplerReductionModeCreateInfo rm_ci = vku::InitStructHelper();
+    std::string conversion_str = R"("NULL")";
+    std::string conversion_json = R"("NULL")";
     std::string json{};
+
+    if (params.ycbcr_conversion) {
+        ycbcrci.conversion = params.ycbcr_conversion.value();
+        if (params.ycbcr_name) {
+            conversion_str = R"(")"s + params.ycbcr_name.value() + R"(")";
+        } else {
+            conversion_str = std::to_string(reinterpret_cast<std::size_t>(params.ycbcr_conversion.value()));
+        }
+        conversion_json = R"({
+            "sType": "VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_INFO",
+            "pNext": "NULL",
+                "conversion": )"s +
+                          conversion_str + R"(
+        })";
+    }
 
     ci.flags = 0;
     switch (seed % 2) {
         case 0:
+            if (params.ycbcr_conversion) {
+                ci.pNext = &ycbcrci;
+            }
             ci.magFilter = VK_FILTER_LINEAR;
             ci.minFilter = VK_FILTER_NEAREST;
             ci.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
@@ -265,27 +206,78 @@ std::pair<vku::safe_VkSamplerCreateInfo, std::string> getVkSamplerCreateInfo(
             ci.borderColor = VK_BORDER_COLOR_INT_TRANSPARENT_BLACK;
             ci.unnormalizedCoordinates = VK_TRUE;
             json = R"({
-            "sType": "VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO",
-            "pNext": "NULL",
-            "flags": 0,
-            "magFilter": "VK_FILTER_LINEAR",
-            "minFilter": "VK_FILTER_NEAREST",
-            "mipmapMode": "VK_SAMPLER_MIPMAP_MODE_LINEAR",
-            "addressModeU": "VK_SAMPLER_ADDRESS_MODE_REPEAT",
-            "addressModeV": "VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT",
-            "addressModeW": "VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE",
-            "mipLodBias": 0.5,
-            "anisotropyEnable": "VK_TRUE",
-            "maxAnisotropy": 2.0,
-            "compareEnable": "VK_TRUE",
-            "compareOp": "VK_COMPARE_OP_ALWAYS",
-            "minLod": 1.0,
-            "maxLod": 8.0,
-            "borderColor": "VK_BORDER_COLOR_INT_TRANSPARENT_BLACK",
-            "unnormalizedCoordinates": "VK_TRUE"
-        })";
+                "sType": "VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO",
+                "pNext": )" +
+                   conversion_json + R"(,
+                "flags": 0,
+                "magFilter": "VK_FILTER_LINEAR",
+                "minFilter": "VK_FILTER_NEAREST",
+                "mipmapMode": "VK_SAMPLER_MIPMAP_MODE_LINEAR",
+                "addressModeU": "VK_SAMPLER_ADDRESS_MODE_REPEAT",
+                "addressModeV": "VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT",
+                "addressModeW": "VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE",
+                "mipLodBias": 0.5,
+                "anisotropyEnable": "VK_TRUE",
+                "maxAnisotropy": 2.0,
+                "compareEnable": "VK_TRUE",
+                "compareOp": "VK_COMPARE_OP_ALWAYS",
+                "minLod": 1.0,
+                "maxLod": 8.0,
+                "borderColor": "VK_BORDER_COLOR_INT_TRANSPARENT_BLACK",
+                "unnormalizedCoordinates": "VK_TRUE"
+            })";
             break;
         case 1:
+            ci.pNext = &rm_ci;
+            if (params.ycbcr_conversion) {
+                rm_ci.pNext = &ycbcrci;
+            }
+            rm_ci.reductionMode = VK_SAMPLER_REDUCTION_MODE_MAX;
+            ci.magFilter = VK_FILTER_LINEAR;
+            ci.minFilter = VK_FILTER_NEAREST;
+            ci.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+            ci.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            ci.addressModeV = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+            ci.addressModeW = VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
+            ci.mipLodBias = 0.5f;
+            ci.anisotropyEnable = VK_TRUE;
+            ci.maxAnisotropy = 2.0f;
+            ci.compareEnable = VK_TRUE;
+            ci.compareOp = VK_COMPARE_OP_ALWAYS;
+            ci.minLod = 1.0f;
+            ci.maxLod = 8.0f;
+            ci.borderColor = VK_BORDER_COLOR_INT_TRANSPARENT_BLACK;
+            ci.unnormalizedCoordinates = VK_TRUE;
+            json = R"({
+                "sType": "VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO",
+                "pNext": {
+                    "sType": "VK_STRUCTURE_TYPE_SAMPLER_REDUCTION_MODE_CREATE_INFO",
+                    "pNext": )" +
+                   conversion_json + R"(,
+                    "reductionMode": "VK_SAMPLER_REDUCTION_MODE_MAX"
+                },
+                "flags": 0,
+                "magFilter": "VK_FILTER_LINEAR",
+                "minFilter": "VK_FILTER_NEAREST",
+                "mipmapMode": "VK_SAMPLER_MIPMAP_MODE_LINEAR",
+                "addressModeU": "VK_SAMPLER_ADDRESS_MODE_REPEAT",
+                "addressModeV": "VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT",
+                "addressModeW": "VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE",
+                "mipLodBias": 0.5,
+                "anisotropyEnable": "VK_TRUE",
+                "maxAnisotropy": 2.0,
+                "compareEnable": "VK_TRUE",
+                "compareOp": "VK_COMPARE_OP_ALWAYS",
+                "minLod": 1.0,
+                "maxLod": 8.0,
+                "borderColor": "VK_BORDER_COLOR_INT_TRANSPARENT_BLACK",
+                "unnormalizedCoordinates": "VK_TRUE"
+            })";
+            break;
+        case 2:
+            if (params.ycbcr_conversion) {
+                ci.pNext = &ycbcrci;
+            }
             ci.magFilter = VK_FILTER_CUBIC_EXT;
             ci.minFilter = VK_FILTER_NEAREST;
             ci.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
@@ -303,7 +295,8 @@ std::pair<vku::safe_VkSamplerCreateInfo, std::string> getVkSamplerCreateInfo(
             ci.unnormalizedCoordinates = VK_TRUE;
             json = R"({
             "sType": "VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO",
-            "pNext": "NULL",
+            "pNext": )" +
+                   conversion_json + R"(,
             "flags": 0,
             "magFilter": "VK_FILTER_CUBIC_EXT",
             "minFilter": "VK_FILTER_NEAREST",
@@ -324,138 +317,136 @@ std::pair<vku::safe_VkSamplerCreateInfo, std::string> getVkSamplerCreateInfo(
             break;
     }
 
-    ChainPNext(ci, json, pNext);
-
     return {&ci, json};
 }
 
-std::pair<vku::safe_VkDescriptorSetLayoutBindingFlagsCreateInfo, std::string> getVkDescriptorSetLayoutBindingFlagsCreateInfo(
-    uint32_t seed = 0, uint32_t count = 1) {
-    using namespace std::string_literals;
-
-    VkDescriptorSetLayoutBindingFlagsCreateInfo ci = vku::InitStructHelper();
-    std::string json{};
-
-    ci.bindingCount = count;
-
-    std::vector<VkDescriptorBindingFlags> bindingFlags{};
-    std::string pBindingFlags_str{};
-    switch (seed % 2) {
-        default:
-            bindingFlags.resize(count, VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT | VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT);
-            ci.pBindingFlags = bindingFlags.data();
-            pBindingFlags_str = "[";
-            for (uint32_t i = 0; i < count; ++i) {
-                pBindingFlags_str += R"("VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT | VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT")";
-                if (i != count - 1) {
-                    pBindingFlags_str += ",";
-                }
-            }
-            pBindingFlags_str += "]";
-            break;
-    }
-
-    json = R"({
-                "sType" : "VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO",
-                "pNext": "NULL",
-                "bindingCount": )"s +
-           std::to_string(ci.bindingCount) + R"(,
-                "pBindingFlags": )"s +
-           pBindingFlags_str + R"(
-            })";
-
-    return {&ci, json};
-}
-
-struct DescriptorSetLayoutBinding {
-    uint32_t descriptorCount;
-    VkShaderStageFlags stageFlags;
+struct DescriptorSetLayoutParams {
     const std::optional<VkSampler> immutableSampler = std::nullopt;
     const std::optional<std::string> immutableSamplerName = std::nullopt;
 };
 
-template <typename... InStructure>
 std::pair<vku::safe_VkDescriptorSetLayoutCreateInfo, std::string> getVkDescriptorSetLayoutCreateInfo(
-    uint32_t seed = 0, std::initializer_list<DescriptorSetLayoutBinding> immutable_samplers = {{1, VK_SHADER_STAGE_ALL}},
-    std::tuple<std::pair<InStructure, std::string>...> pNext = std::tuple<>{}) {
+    uint32_t seed = 0, std::initializer_list<DescriptorSetLayoutParams> params = {}) {
     using namespace std::string_literals;
 
     VkDescriptorSetLayoutCreateInfo ci = vku::InitStructHelper();
     std::string json{};
+    [[maybe_unused]] VkDescriptorSetLayoutBindingFlagsCreateInfo dslbf_ci = vku::InitStructHelper();
+    [[maybe_unused]] std::vector<VkDescriptorBindingFlags> dslbf_bindingFlags{};
+    [[maybe_unused]] std::string dslbf_pBindingFlags_str{};
 
     std::vector<VkDescriptorSetLayoutBinding> bindings{};
     std::string pBindingFlags_str{};
-    ci.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT;
-    switch (seed % 2) {
-        default:
-            if (std::empty(immutable_samplers)) {
-                pBindingFlags_str = R"("NULL")";
-            } else {
-                pBindingFlags_str = "[";
-                for (auto it = immutable_samplers.begin(); it != immutable_samplers.end(); ++it) {
-                    bindings.push_back(VkDescriptorSetLayoutBinding{});
-                    bindings.back().binding = static_cast<uint32_t>(std::distance(immutable_samplers.begin(), it));
-                    bindings.back().descriptorType =
-                        it->immutableSampler ? VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-                    bindings.back().descriptorCount = 1;
-                    bindings.back().stageFlags = it->stageFlags;
-                    bindings.back().pImmutableSamplers = it->immutableSampler ? &it->immutableSampler.value() : nullptr;
-                    pBindingFlags_str +=
-                        R"({
-                        "binding": )"s +
-                        std::to_string(std::distance(immutable_samplers.begin(), it)) + R"(,
-                        "descriptorType": )"s +
-                        (it->immutableSampler ? R"("VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER")"
-                                              : R"("VK_DESCRIPTOR_TYPE_STORAGE_BUFFER")") +
-                        R"(,
-                        "descriptorCount": 1,
-                        "stageFlags": ")"s +
-                        shader_stage_flag_to_string(it->stageFlags) + R"(",
-                        "pImmutableSamplers": )"s +
-                        (it->immutableSampler
-                             ? ("["s +
-                                (it->immutableSamplerName
-                                     ? (R"(")"s + it->immutableSamplerName.value() + R"(")")
-                                     : std::to_string(reinterpret_cast<std::size_t>(it->immutableSampler.value()))) +
-                                "]")
-                             : R"("NULL")"s) +
-                        R"(
-                })";
-                    if (std::next(it) != immutable_samplers.end()) {
-                        pBindingFlags_str += ",";
-                    }
-                }
-                pBindingFlags_str += "]";
-            }
+    VkShaderStageFlags stageFlags;
+    switch (seed / 2) {
+        case 0:
+            stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS | VK_SHADER_STAGE_COMPUTE_BIT;
             break;
-    }
-    ci.bindingCount = static_cast<uint32_t>(immutable_samplers.size());
-    ci.pBindings = bindings.data();
+        default:
+            stageFlags = VK_SHADER_STAGE_ALL;
+    };
 
-    json = R"({
+    ci.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT;
+    if (std::empty(params)) {
+        pBindingFlags_str = R"("NULL")";
+        dslbf_pBindingFlags_str = R"("NULL")";
+    } else {
+        pBindingFlags_str = "[";
+        for (auto it = params.begin(); it != params.end(); ++it) {
+            auto i = std::distance(params.begin(), it);
+            bindings.push_back(VkDescriptorSetLayoutBinding{});
+            bindings.back().binding = static_cast<uint32_t>(i);
+            bindings.back().descriptorType =
+                it->immutableSampler ? VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            bindings.back().descriptorCount = 1;
+            bindings.back().stageFlags = stageFlags;
+            bindings.back().pImmutableSamplers = it->immutableSampler ? &it->immutableSampler.value() : nullptr;
+            pBindingFlags_str +=
+                R"({
+                "binding": )"s +
+                std::to_string(i) + R"(,
+                "descriptorType": )"s +
+                (it->immutableSampler ? R"("VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER")"
+                                      : R"("VK_DESCRIPTOR_TYPE_STORAGE_BUFFER")") +
+                R"(,
+                "descriptorCount": 1,
+                "stageFlags": ")"s +
+                shader_stage_flag_to_string(stageFlags) + R"(",
+                "pImmutableSamplers": )"s +
+                (it->immutableSampler
+                     ? ("["s +
+                        (it->immutableSamplerName ? (R"(")"s + it->immutableSamplerName.value() + R"(")")
+                                                  : std::to_string(reinterpret_cast<std::size_t>(it->immutableSampler.value()))) +
+                        "]")
+                     : R"("NULL")"s) +
+                R"(
+        })";
+            if (std::next(it) != params.end()) {
+                pBindingFlags_str += ",";
+            }
+        }
+        pBindingFlags_str += "]";
+
+        dslbf_pBindingFlags_str = "[";
+        for (uint32_t i = 0; i < params.size(); ++i) {
+            dslbf_pBindingFlags_str +=
+                R"("VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT | VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT")";
+            if (i != params.size() - 1) {
+                dslbf_pBindingFlags_str += ",";
+            }
+        }
+        dslbf_pBindingFlags_str += "]";
+    }
+    ci.bindingCount = static_cast<uint32_t>(bindings.size());
+    ci.pBindings = bindings.data();
+    switch (seed % 2) {
+        case 0:
+            json = R"({
                 "sType" : "VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO",
                 "pNext": "NULL",
                 "flags": "VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT",
                 "bindingCount": )"s +
-           std::to_string(immutable_samplers.size()) + R"(,
+                   std::to_string(ci.bindingCount) + R"(,
                 "pBindings": )"s +
-           pBindingFlags_str + R"(
+                   pBindingFlags_str + R"(
             })";
+            break;
+        case 1:
+            ci.pNext = &dslbf_ci;
+            dslbf_bindingFlags.resize(ci.bindingCount,
+                                      VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT | VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT);
+            dslbf_ci.bindingCount = ci.bindingCount;
+            dslbf_ci.pBindingFlags = dslbf_bindingFlags.data();
 
-    ChainPNext(ci, json, pNext);
+            json = R"({
+                "sType" : "VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO",
+                "pNext": {
+                     "sType" : "VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO",
+                     "pNext": "NULL",
+                     "bindingCount": )"s +
+                   std::to_string(dslbf_ci.bindingCount) + R"(,
+                     "pBindingFlags": )"s +
+                   dslbf_pBindingFlags_str + R"(
+            },
+                "flags": "VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT",
+                "bindingCount": )"s +
+                   std::to_string(ci.bindingCount) + R"(,
+                "pBindings": )"s +
+                   pBindingFlags_str + R"(
+            })";
+            break;
+    }
 
     return {&ci, json};
 }
 
-struct DescriptorSetLayout {
+struct PipelineLayoutParams {
     const std::optional<VkDescriptorSetLayout> descriptorSetLayout = std::nullopt;
     const std::optional<std::string> descriptorSetLayoutName = std::nullopt;
 };
 
-template <typename... InStructure>
 std::pair<vku::safe_VkPipelineLayoutCreateInfo, std::string> getVkPipelineLayoutCreateInfo(
-    uint32_t seed = 0, std::initializer_list<DescriptorSetLayout> descriptor_set_layouts = {{VkDescriptorSetLayout(0)}},
-    std::tuple<std::pair<InStructure, std::string>...> pNext = std::tuple<>{}) {
+    uint32_t seed = 0, std::initializer_list<PipelineLayoutParams> params = {}) {
     using namespace std::string_literals;
 
     VkPipelineLayoutCreateInfo ci = vku::InitStructHelper();
@@ -463,8 +454,9 @@ std::pair<vku::safe_VkPipelineLayoutCreateInfo, std::string> getVkPipelineLayout
 
     std::vector<VkPushConstantRange> pushConstantRanges{};
     std::vector<VkDescriptorSetLayout> setLayouts{};
-    std::string pPushConstantRanges_str{};
-    std::string pSetLayouts_str{};
+    std::string pPushConstantRanges_str = R"("NULL")";
+    std::string pSetLayouts_str = R"("NULL")";
+
     switch (seed % 2) {
         default:
             pushConstantRanges.resize(1);
@@ -473,23 +465,21 @@ std::pair<vku::safe_VkPipelineLayoutCreateInfo, std::string> getVkPipelineLayout
             pushConstantRanges.back().size = 4;
             ci.pushConstantRangeCount = static_cast<uint32_t>(pushConstantRanges.size());
             ci.pPushConstantRanges = pushConstantRanges.data();
-            pPushConstantRanges_str +=
+            pPushConstantRanges_str =
                 R"([{"stageFlags": "VK_SHADER_STAGE_ALL_GRAPHICS | VK_SHADER_STAGE_COMPUTE_BIT", "offset": 0, "size": 4}])";
             break;
     }
 
-    if (std::empty(descriptor_set_layouts)) {
-        pSetLayouts_str = R"("NULL")";
-    } else {
+    if (!std::empty(params)) {
         pSetLayouts_str = "[";
-        for (auto it = descriptor_set_layouts.begin(); it != descriptor_set_layouts.end(); ++it) {
+        for (auto it = params.begin(); it != params.end(); ++it) {
             setLayouts.push_back(it->descriptorSetLayout.value());
             pSetLayouts_str +=
                 it->descriptorSetLayout
                     ? (it->descriptorSetLayoutName ? (R"(")"s + it->descriptorSetLayoutName.value() + R"(")")
                                                    : std::to_string(reinterpret_cast<std::size_t>(it->descriptorSetLayout.value())))
                     : R"("NULL")"s;
-            if (std::next(it) != descriptor_set_layouts.end()) {
+            if (std::next(it) != params.end()) {
                 pSetLayouts_str += ",";
             }
         }
@@ -511,8 +501,6 @@ std::pair<vku::safe_VkPipelineLayoutCreateInfo, std::string> getVkPipelineLayout
                 "pPushConstantRanges": )" +
            pPushConstantRanges_str + R"(,
             })";
-
-    ChainPNext(ci, json, pNext);
 
     return {&ci, json};
 }
@@ -547,74 +535,66 @@ getVkPipelineShaderStageRequiredSubgroupSizeCreateInfo(uint32_t seed = 0) {
 }
 
 template <typename... InStructure>
-std::pair<vku::safe_VkPipelineShaderStageCreateInfo, std::string> getVkPipelineShaderStageCreateInfo(
-    uint32_t seed = 0, VkShaderStageFlagBits stage = VK_SHADER_STAGE_COMPUTE_BIT,
-    std::tuple<std::pair<InStructure, std::string>...> pNext = std::tuple<>{}) {
-    using namespace std::string_literals;
-
-    VkPipelineShaderStageCreateInfo ci = vku::InitStructHelper();
-    std::string json{};
-
-    std::string pSpecializationInfo_str{};
-    VkSpecializationMapEntry mapEntry{};
-    int32_t data{};
-    VkSpecializationInfo specializationInfo{};
-    ci.flags = VK_PIPELINE_SHADER_STAGE_CREATE_REQUIRE_FULL_SUBGROUPS_BIT;
-    ci.stage = stage;
-    ci.module = VK_NULL_HANDLE;
-    ci.pName = "main";
-    switch (seed % 2) {
-        case 0:
-            mapEntry = VkSpecializationMapEntry{0, 0, 4};
-            data = 12345;
-            specializationInfo = VkSpecializationInfo{1, &mapEntry, 4, &data};
-            ci.pSpecializationInfo = &specializationInfo;
-            pSpecializationInfo_str = R"({
-            "mapEntryCount" : 1,
-            "pMapEntries" : [
-                {
-                    "constantID" : 0,
-                    "offset" : 0,
-                    "size" : 4
-                },
-            ],
-            "dataSize" : 4,
-            "pData" : "OTAAAA==",
-            
-        })";
-            break;
-        case 1:
-            pSpecializationInfo_str = "NULL";
-            break;
-    }
-
-    json = R"({
-        "sType": "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
-        "pNext": "NULL",
-        "flags": "VK_PIPELINE_SHADER_STAGE_CREATE_REQUIRE_FULL_SUBGROUPS_BIT",
-        "module": "",
-        "pName": "main",
-        "pSpecializationInfo" : )"s +
-           pSpecializationInfo_str + R"(,
-        "stage" : ")" +
-           shader_stage_flag_to_string(stage) + R"(",
-    })";
-
-    ChainPNext(ci, json, pNext);
-
-    return {&ci, json};
-}
-
-template <typename... InStructure>
-std::pair<vku::safe_VkComputePipelineCreateInfo, std::string> getVkComputePipelineCreateInfo(
-    std::pair<vku::safe_VkPipelineShaderStageCreateInfo, std::string> stage) {
+std::pair<vku::safe_VkComputePipelineCreateInfo, std::string> getVkComputePipelineCreateInfo(uint32_t seed = 0) {
     using namespace std::string_literals;
 
     VkComputePipelineCreateInfo ci = vku::InitStructHelper();
     std::string json{};
 
-    ci.stage = *stage.first.ptr();
+    VkPipelineShaderStageCreateInfo pss_ci = vku::InitStructHelper();
+    std::string pss_json = R"("NULL")";
 
+    VkSpecializationMapEntry mapEntry{};
+    int32_t data{};
+    VkSpecializationInfo specializationInfo{};
+
+    pss_ci.flags = VK_PIPELINE_SHADER_STAGE_CREATE_REQUIRE_FULL_SUBGROUPS_BIT;
+    pss_ci.pName = "main";
+    pss_ci.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+
+    switch (seed % 2) {
+        case 0:
+            pss_json = R"({
+            "sType": "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
+            "pNext": "NULL",
+            "flags": "VK_PIPELINE_SHADER_STAGE_CREATE_REQUIRE_FULL_SUBGROUPS_BIT",
+            "module": "",
+            "pName": "main",
+            "pSpecializationInfo" : "NULL",
+            "stage" : ")"s +
+                       shader_stage_flag_to_string(pss_ci.stage) + R"(",
+        })";
+            break;
+        default:
+            mapEntry = VkSpecializationMapEntry{0, 0, 4};
+            data = 12345;
+            specializationInfo = VkSpecializationInfo{1, &mapEntry, 4, &data};
+            pss_ci.pSpecializationInfo = &specializationInfo;
+            pss_json = R"({
+            "sType": "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
+            "pNext": "NULL",
+            "flags": "VK_PIPELINE_SHADER_STAGE_CREATE_REQUIRE_FULL_SUBGROUPS_BIT",
+            "module": "",
+            "pName": "main",
+            "pSpecializationInfo" : {
+                "mapEntryCount" : 1,
+                "pMapEntries" : [
+                    {
+                        "constantID" : 0,
+                        "offset" : 0,
+                        "size" : 4
+                    },
+                ],
+                "dataSize" : 4,
+                "pData" : "OTAAAA==",
+            },
+            "stage" : ")"s +
+                       shader_stage_flag_to_string(pss_ci.stage) + R"(",
+        })";
+            break;
+    }
+
+    ci.stage = pss_ci;
     json = R"({
             "basePipelineHandle" : "",
             "basePipelineIndex" : 0,
@@ -623,37 +603,102 @@ std::pair<vku::safe_VkComputePipelineCreateInfo, std::string> getVkComputePipeli
             "pNext" : "NULL",
             "sType" : "VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO",
             "stage" : )" +
-           stage.second + R"(
+           pss_json + R"(
         })";
 
     return {&ci, json};
 }
 
-template <typename... InStructure>
-std::pair<vku::safe_VkSubpassDescription, std::string> getVkSubpassDescription(uint32_t seed = 0) {
+std::pair<vku::safe_VkRenderPassCreateInfo, std::string> getVkRenderPassCreateInfo(uint32_t seed = 0) {
     using namespace std::string_literals;
 
-    VkSubpassDescription sd{};
+    VkRenderPassCreateInfo ci = vku::InitStructHelper();
     std::string json{};
 
-    sd.flags = 0;
-    sd.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    VkAttachmentReference inputAttachments{}, colorAttachments{}, resolveAttachments{}, depthAttachments{};
+    std::vector<VkAttachmentDescription> attachments{};
+    std::string pAttachments_str = R"("NULL")";
+    std::vector<VkSubpassDependency> dependencies{};
+    std::string pDependencies_str = R"("NULL")";
+    std::vector<VkSubpassDescription> subpasses{};
+    std::string pSubpasses_str = R"("NULL")";
+    std::vector<VkAttachmentReference> inputAttachments{}, colorAttachments{}, resolveAttachments{}, depthAttachments{};
+
+    [[maybe_unused]] VkRenderPassMultiviewCreateInfo rpmv_ci = vku::InitStructHelper();
+    [[maybe_unused]] std::string rpmv_json = R"("NULL")";
+
+    [[maybe_unused]] std::vector<uint32_t> viewMasks;
+    [[maybe_unused]] std::vector<int32_t> viewOffsets;
+    [[maybe_unused]] std::vector<uint32_t> correlationMasks;
+
+    attachments.push_back({});
+    attachments.back().flags = VK_ATTACHMENT_DESCRIPTION_MAY_ALIAS_BIT;
+    attachments.back().format = VK_FORMAT_R8G8_USCALED;
+    attachments.back().samples = VK_SAMPLE_COUNT_8_BIT;
+    attachments.back().loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachments.back().storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    attachments.back().stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    attachments.back().stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    attachments.back().initialLayout = VK_IMAGE_LAYOUT_GENERAL;
+    attachments.back().finalLayout = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
+    pAttachments_str = R"([{
+            "flags": "VK_ATTACHMENT_DESCRIPTION_MAY_ALIAS_BIT",
+            "format": "VK_FORMAT_R8G8_USCALED",
+            "samples": "VK_SAMPLE_COUNT_8_BIT",
+            "loadOp": "VK_ATTACHMENT_LOAD_OP_DONT_CARE",
+            "storeOp": "VK_ATTACHMENT_STORE_OP_STORE",
+            "stencilLoadOp": "VK_ATTACHMENT_LOAD_OP_LOAD",
+            "stencilStoreOp": "VK_ATTACHMENT_STORE_OP_DONT_CARE",
+            "initialLayout": "VK_IMAGE_LAYOUT_GENERAL",
+            "finalLayout": "VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR"
+    }])";
+    dependencies.push_back({});
+    dependencies.back().srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependencies.back().dstSubpass = 2345;
+    dependencies.back().srcStageMask = VK_PIPELINE_STAGE_NONE_KHR;
+    dependencies.back().dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependencies.back().srcAccessMask = VK_ACCESS_NONE_KHR;
+    dependencies.back().dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    dependencies.back().dependencyFlags = VK_DEPENDENCY_DEVICE_GROUP_BIT;
+    pDependencies_str = R"([{
+        "srcSubpass": 4294967295,
+        "dstSubpass": 2345,
+        "srcStageMask": 0,
+        "dstStageMask": "VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT",
+        "srcAccessMask": 0,
+        "dstAccessMask": "VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT",
+        "dependencyFlags": "VK_DEPENDENCY_DEVICE_GROUP_BIT"
+    }])";
     switch (seed % 2) {
         case 0:
-            inputAttachments = VkAttachmentReference{567, VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL};
-            colorAttachments = VkAttachmentReference{VK_ATTACHMENT_UNUSED, VK_IMAGE_LAYOUT_UNDEFINED};
-            resolveAttachments = VkAttachmentReference{VK_ATTACHMENT_UNUSED, VK_IMAGE_LAYOUT_UNDEFINED};
-            depthAttachments = VkAttachmentReference{VK_ATTACHMENT_UNUSED, VK_IMAGE_LAYOUT_UNDEFINED};
-            sd.inputAttachmentCount = 1;
-            sd.pInputAttachments = &inputAttachments;
-            sd.colorAttachmentCount = 1;
-            sd.pColorAttachments = &colorAttachments;
-            sd.pResolveAttachments = &resolveAttachments;
-            sd.pDepthStencilAttachment = &depthAttachments;
-            sd.preserveAttachmentCount = 0;
-            sd.pPreserveAttachments = nullptr;
-            json = R"({
+            break;
+        case 1:
+            inputAttachments.push_back({567, VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL});
+            colorAttachments.push_back({VK_ATTACHMENT_UNUSED, VK_IMAGE_LAYOUT_UNDEFINED});
+            resolveAttachments.push_back({VK_ATTACHMENT_UNUSED, VK_IMAGE_LAYOUT_UNDEFINED});
+            depthAttachments.push_back({VK_ATTACHMENT_UNUSED, VK_IMAGE_LAYOUT_UNDEFINED});
+            inputAttachments.push_back({});
+            colorAttachments.push_back({567, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL});
+            resolveAttachments.push_back({VK_ATTACHMENT_UNUSED, VK_IMAGE_LAYOUT_UNDEFINED});
+            depthAttachments.push_back({VK_ATTACHMENT_UNUSED, VK_IMAGE_LAYOUT_UNDEFINED});
+            subpasses.push_back({});
+            subpasses.back().inputAttachmentCount = 1;
+            subpasses.back().pInputAttachments = &inputAttachments[0];
+            subpasses.back().colorAttachmentCount = 1;
+            subpasses.back().pColorAttachments = &colorAttachments[0];
+            subpasses.back().pResolveAttachments = &resolveAttachments[0];
+            subpasses.back().pDepthStencilAttachment = &depthAttachments[0];
+            subpasses.back().preserveAttachmentCount = 0;
+            subpasses.back().pPreserveAttachments = nullptr;
+            subpasses.push_back({});
+            subpasses.back().inputAttachmentCount = 0;
+            subpasses.back().pInputAttachments = nullptr;
+            subpasses.back().colorAttachmentCount = 1;
+            subpasses.back().pColorAttachments = &colorAttachments[1];
+            subpasses.back().pResolveAttachments = &resolveAttachments[1];
+            subpasses.back().pDepthStencilAttachment = &depthAttachments[1];
+            subpasses.back().preserveAttachmentCount = 0;
+            subpasses.back().pPreserveAttachments = nullptr;
+            pSubpasses_str = R"([{
                 "flags": 0,
                 "pipelineBindPoint": "VK_PIPELINE_BIND_POINT_GRAPHICS",
                 "inputAttachmentCount": 1,
@@ -682,21 +727,7 @@ std::pair<vku::safe_VkSubpassDescription, std::string> getVkSubpassDescription(u
                 },
                 "preserveAttachmentCount": 0,
                 "pPreserveAttachments": "NULL"
-            })";
-            break;
-        case 1:
-            colorAttachments = VkAttachmentReference{567, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL_KHR};
-            resolveAttachments = VkAttachmentReference{VK_ATTACHMENT_UNUSED, VK_IMAGE_LAYOUT_UNDEFINED};
-            depthAttachments = VkAttachmentReference{VK_ATTACHMENT_UNUSED, VK_IMAGE_LAYOUT_UNDEFINED};
-            sd.inputAttachmentCount = 0;
-            sd.pInputAttachments = nullptr;
-            sd.colorAttachmentCount = 1;
-            sd.pColorAttachments = &colorAttachments;
-            sd.pResolveAttachments = &resolveAttachments;
-            sd.pDepthStencilAttachment = &depthAttachments;
-            sd.preserveAttachmentCount = 0;
-            sd.pPreserveAttachments = nullptr;
-            json = R"({
+            },{
                 "flags": 0,
                 "pipelineBindPoint": "VK_PIPELINE_BIND_POINT_GRAPHICS",
                 "inputAttachmentCount": 0,
@@ -720,67 +751,19 @@ std::pair<vku::safe_VkSubpassDescription, std::string> getVkSubpassDescription(u
                 },
                 "preserveAttachmentCount": 0,
                 "pPreserveAttachments": "NULL"
-            })";
-            break;
-    }
+            }])";
 
-    return {&sd, json};
-}
-
-template <typename... InStructure>
-std::pair<vku::safe_VkRenderPassInputAttachmentAspectCreateInfo, std::string> getVkRenderPassInputAttachmentAspectCreateInfo(
-    uint32_t seed = 0) {
-    using namespace std::string_literals;
-
-    VkRenderPassInputAttachmentAspectCreateInfo ci = vku::InitStructHelper();
-    std::string json{};
-
-    VkInputAttachmentAspectReference aspectReference{};
-    switch (seed % 2) {
-        default:
-            aspectReference = {1, 2, VK_IMAGE_ASPECT_COLOR_BIT};
-            ci.aspectReferenceCount = 1;
-            ci.pAspectReferences = &aspectReference;
-            json = R"({
-            "sType" : "VK_STRUCTURE_TYPE_RENDER_PASS_INPUT_ATTACHMENT_ASPECT_CREATE_INFO",
-            "pNext": "NULL",
-            "aspectReferenceCount": 1,
-            "pAspectReferences": [
-                {
-                    "subpass": 1,
-                    "inputAttachmentIndex": 2,
-                    "aspectMask": "VK_IMAGE_ASPECT_COLOR_BIT"
-                }
-            ]
-        })";
-            break;
-    }
-
-    return {&ci, json};
-}
-
-template <typename... InStructure>
-std::pair<vku::safe_VkRenderPassMultiviewCreateInfo, std::string> getVkRenderPassMultiviewCreateInfo(uint32_t seed = 0) {
-    using namespace std::string_literals;
-
-    VkRenderPassMultiviewCreateInfo ci = vku::InitStructHelper();
-    std::string json{};
-
-    std::vector<uint32_t> viewMasks;
-    std::vector<int32_t> viewOffsets;
-    std::vector<uint32_t> correlationMasks;
-    switch (seed % 2) {
-        default:
             viewMasks = {1};
             viewOffsets = {0, 1};
             correlationMasks = {8};
-            ci.subpassCount = static_cast<uint32_t>(viewMasks.size());
-            ci.pViewMasks = viewMasks.data();
-            ci.dependencyCount = static_cast<uint32_t>(viewOffsets.size());
-            ci.pViewOffsets = viewOffsets.data();
-            ci.correlationMaskCount = static_cast<uint32_t>(correlationMasks.size());
-            ci.pCorrelationMasks = correlationMasks.data();
-            json = R"({
+            ci.pNext = &rpmv_ci;
+            rpmv_ci.subpassCount = static_cast<uint32_t>(viewMasks.size());
+            rpmv_ci.pViewMasks = viewMasks.data();
+            rpmv_ci.dependencyCount = static_cast<uint32_t>(viewOffsets.size());
+            rpmv_ci.pViewOffsets = viewOffsets.data();
+            rpmv_ci.correlationMaskCount = static_cast<uint32_t>(correlationMasks.size());
+            rpmv_ci.pCorrelationMasks = correlationMasks.data();
+            rpmv_json = R"({
                 "sType" : "VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO",
                 "pNext": "NULL",
                 "subpassCount": 1,
@@ -792,136 +775,71 @@ std::pair<vku::safe_VkRenderPassMultiviewCreateInfo, std::string> getVkRenderPas
             })";
             break;
     }
+    ci.attachmentCount = static_cast<uint32_t>(attachments.size());
+    ci.pAttachments = attachments.data();
+    ci.subpassCount = static_cast<uint32_t>(subpasses.size());
+    ci.pSubpasses = subpasses.data();
+    ci.dependencyCount = static_cast<uint32_t>(dependencies.size());
+    ci.pDependencies = dependencies.data();
+
+    json = R"({
+        "sType" : "VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO",
+        "pNext": )"s +
+           rpmv_json + R"(,
+        "flags": 0,
+        "attachmentCount": )" +
+           std::to_string(ci.attachmentCount) + R"(,
+        "pAttachments": )"s +
+           pAttachments_str + R"(,
+        "subpassCount": )" +
+           std::to_string(ci.subpassCount) + R"(,
+        "pSubpasses": )"s +
+           pSubpasses_str + R"(,
+        "dependencyCount": )" +
+           std::to_string(ci.dependencyCount) + R"(,
+        "pDependencies": )"s +
+           pDependencies_str + R"(
+    })";
 
     return {&ci, json};
 }
 
-template <typename... InStructure>
-std::pair<vku::safe_VkRenderPassCreateInfo, std::string> getVkRenderPassCreateInfo(
-    uint32_t seed = 0, std::tuple<std::pair<InStructure, std::string>...> pNext = std::tuple<>{}) {
+std::pair<vku::safe_VkRenderPassCreateInfo2, std::string> getVkRenderPassCreateInfo2(uint32_t seed = 0) {
     using namespace std::string_literals;
 
-    VkRenderPassCreateInfo ci = vku::InitStructHelper();
+    VkRenderPassCreateInfo2 ci = vku::InitStructHelper();
     std::string json{};
 
-    VkSubpassDependency dependencies[1] = {};
-    vku::safe_VkSubpassDescription subpasses[2] = {};
-    switch (seed % 2) {
-        default:
-            VkAttachmentDescription attachments[1] = {};
-            attachments[0].flags = VK_ATTACHMENT_DESCRIPTION_MAY_ALIAS_BIT;
-            attachments[0].format = VK_FORMAT_R8G8_USCALED;
-            attachments[0].samples = VK_SAMPLE_COUNT_8_BIT;
-            attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-            attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-            attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-            attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-            attachments[0].initialLayout = VK_IMAGE_LAYOUT_GENERAL;
-            attachments[0].finalLayout = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
-            dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-            dependencies[0].dstSubpass = 2345;
-            dependencies[0].srcStageMask = VK_PIPELINE_STAGE_NONE_KHR;
-            dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-            dependencies[0].srcAccessMask = VK_ACCESS_NONE_KHR;
-            dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-            dependencies[0].dependencyFlags = VK_DEPENDENCY_DEVICE_GROUP_BIT;
-            auto [sd1, sd1_json] = getVkSubpassDescription(seed);
-            auto [sd2, sd2_json] = getVkSubpassDescription(seed + 1);
-            subpasses[0] = sd1;
-            subpasses[1] = sd2;
-            ci.attachmentCount = 1;
-            ci.pAttachments = attachments;
-            ci.subpassCount = 2;
-            ci.pSubpasses = reinterpret_cast<const VkSubpassDescription*>(subpasses);
-            ci.dependencyCount = 1;
-            ci.pDependencies = dependencies;
-            json = R"({
-            "sType" : "VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO",
-            "pNext": "NULL",
-            "flags": 0,
-            "attachmentCount": 1,
-            "pAttachments": [
-                {
-                    "flags": "VK_ATTACHMENT_DESCRIPTION_MAY_ALIAS_BIT",
-                    "format": "VK_FORMAT_R8G8_USCALED",
-                    "samples": "VK_SAMPLE_COUNT_8_BIT",
-                    "loadOp": "VK_ATTACHMENT_LOAD_OP_DONT_CARE",
-                    "storeOp": "VK_ATTACHMENT_STORE_OP_STORE",
-                    "stencilLoadOp": "VK_ATTACHMENT_LOAD_OP_LOAD",
-                    "stencilStoreOp": "VK_ATTACHMENT_STORE_OP_DONT_CARE",
-                    "initialLayout": "VK_IMAGE_LAYOUT_GENERAL",
-                    "finalLayout": "VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR"
-                }
-            ],
-            "subpassCount": 2,
-            "pSubpasses": [ )" +
-                   sd1_json + R"(,)" + sd2_json + R"(],
-            "dependencyCount": 1,
-            "pDependencies": [
-                {
-                    "srcSubpass": 4294967295,
-                    "dstSubpass": 2345,
-                    "srcStageMask": 0,
-                    "dstStageMask": "VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT",
-                    "srcAccessMask": 0,
-                    "dstAccessMask": "VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT",
-                    "dependencyFlags": "VK_DEPENDENCY_DEVICE_GROUP_BIT"
-                }
-            ]
-        })";
-            break;
-    }
+    std::vector<VkAttachmentDescription2> attachments{};
+    std::string pAttachments_str = R"("NULL")";
+    std::vector<uint32_t> correlatedViewMasks{};
+    std::string pCorrelatedViewMasks_str = R"("NULL")";
+    std::vector<VkSubpassDependency2> dependencies{};
+    std::string pDependencies_str = R"("NULL")";
+    std::vector<VkSubpassDescription2> subpasses{};
+    std::string pSubpasses_str = R"("NULL")";
 
-    ChainPNext(ci, json, pNext);
+    std::vector<VkAttachmentReference2> inputAttachments{}, colorAttachments{}, resolveAttachments{}, depthAttachments{};
 
-    return {&ci, json};
-}
+    VkMemoryBarrier2KHR mb2 = vku::InitStructHelper();
+    std::string mb2_json = R"("NULL")";
 
-template <typename... InStructure>
-std::pair<vku::safe_VkAttachmentDescriptionStencilLayout, std::string> getVkAttachmentDescriptionStencilLayout(uint32_t seed = 0) {
-    using namespace std::string_literals;
+    VkFragmentShadingRateAttachmentInfoKHR fsra_ci = vku::InitStructHelper();
+    std::string fsra_json{};
 
-    VkAttachmentDescriptionStencilLayout ci = vku::InitStructHelper();
-    std::string json{};
-
-    switch (seed % 2) {
-        default:
-            ci.stencilInitialLayout = VK_IMAGE_LAYOUT_GENERAL;
-            ci.stencilFinalLayout = VK_IMAGE_LAYOUT_GENERAL;
-            json = R"({
-            "sType": "VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_STENCIL_LAYOUT",
-            "pNext": "NULL",
-            "stencilInitialLayout": "VK_IMAGE_LAYOUT_GENERAL",
-            "stencilFinalLayout": "VK_IMAGE_LAYOUT_GENERAL"
-        })";
-            break;
-    }
-
-    return {&ci, json};
-}
-
-template <typename... InStructure>
-std::pair<vku::safe_VkAttachmentDescription2, std::string> getVkAttachmentDescription2(
-    uint32_t seed = 0, std::tuple<std::pair<InStructure, std::string>...> pNext = std::tuple<>{}) {
-    using namespace std::string_literals;
-
-    VkAttachmentDescription2 ci = vku::InitStructHelper();
-    std::string json{};
-
-    switch (seed % 2) {
-        default:
-            ci.flags = VK_ATTACHMENT_DESCRIPTION_MAY_ALIAS_BIT;
-            ci.format = VK_FORMAT_R8G8_USCALED;
-            ci.samples = VK_SAMPLE_COUNT_8_BIT;
-            ci.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-            ci.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-            ci.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-            ci.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-            ci.initialLayout = VK_IMAGE_LAYOUT_GENERAL;
-            ci.finalLayout = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
-            json = R"({
+    attachments.push_back(vku::InitStructHelper());
+    attachments.back().flags = VK_ATTACHMENT_DESCRIPTION_MAY_ALIAS_BIT;
+    attachments.back().format = VK_FORMAT_R8G8_USCALED;
+    attachments.back().samples = VK_SAMPLE_COUNT_8_BIT;
+    attachments.back().loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachments.back().storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    attachments.back().stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    attachments.back().stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    attachments.back().initialLayout = VK_IMAGE_LAYOUT_GENERAL;
+    attachments.back().finalLayout = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
+    pAttachments_str = R"([{
+            "pNext" : "NULL",
             "sType" : "VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2",
-            "pNext": "NULL",
             "flags": "VK_ATTACHMENT_DESCRIPTION_MAY_ALIAS_BIT",
             "format": "VK_FORMAT_R8G8_USCALED",
             "samples": "VK_SAMPLE_COUNT_8_BIT",
@@ -931,215 +849,95 @@ std::pair<vku::safe_VkAttachmentDescription2, std::string> getVkAttachmentDescri
             "stencilStoreOp": "VK_ATTACHMENT_STORE_OP_DONT_CARE",
             "initialLayout": "VK_IMAGE_LAYOUT_GENERAL",
             "finalLayout": "VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR"
-        })";
-            break;
-    }
+    }])";
 
-    ChainPNext(ci, json, pNext);
-
-    return {&ci, json};
-}
-
-template <typename... InStructure>
-std::pair<vku::safe_VkAttachmentReference2, std::string> getVkAttachmentReference2(
-    uint32_t seed = 0, std::tuple<std::pair<InStructure, std::string>...> pNext = std::tuple<>{}) {
-    using namespace std::string_literals;
-
-    VkAttachmentReference2 ci = vku::InitStructHelper();
-    std::string json{};
-
+    mb2.srcStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+    mb2.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_READ_NONCOHERENT_BIT_EXT;
+    mb2.dstStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+    mb2.dstAccessMask = VK_ACCESS_2_COMMAND_PREPROCESS_READ_BIT_NV;
+    mb2_json = R"({
+        "sType" : "VK_STRUCTURE_TYPE_MEMORY_BARRIER_2",
+        "pNext": "NULL",
+        "srcStageMask": "VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT",
+        "srcAccessMask": "VK_ACCESS_2_COLOR_ATTACHMENT_READ_NONCOHERENT_BIT_EXT",
+        "dstStageMask": "VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT",
+        "dstAccessMask": "VK_ACCESS_2_COMMAND_PREPROCESS_READ_BIT_EXT"
+    })";
+    dependencies.push_back(vku::InitStructHelper());
+    dependencies.back().pNext = &mb2;
+    dependencies.back().srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependencies.back().dstSubpass = 2345;
+    dependencies.back().srcStageMask = VK_PIPELINE_STAGE_NONE_KHR;
+    dependencies.back().dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependencies.back().srcAccessMask = VK_ACCESS_NONE_KHR;
+    dependencies.back().dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    dependencies.back().dependencyFlags = VK_DEPENDENCY_DEVICE_GROUP_BIT;
+    pDependencies_str = R"([{
+        "sType" : "VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2",
+        "pNext": )"s + mb2_json +
+                        R"(,
+        "srcSubpass": 4294967295,
+        "dstSubpass": 2345,
+        "srcStageMask": 0,
+        "dstStageMask": "VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT",
+        "srcAccessMask": 0,
+        "dstAccessMask": "VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT",
+        "dependencyFlags": "VK_DEPENDENCY_DEVICE_GROUP_BIT",
+        "viewOffset": 0
+    }])";
     switch (seed % 2) {
         case 0:
-            ci.attachment = 0;
-            ci.layout = VK_IMAGE_LAYOUT_GENERAL;
-            ci.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-            json = R"({
-            "sType": "VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2",
-            "pNext": "NULL",
-            "attachment": 0,
-            "layout": "VK_IMAGE_LAYOUT_GENERAL",
-            "aspectMask": "VK_IMAGE_ASPECT_COLOR_BIT"
-        })";
             break;
         case 1:
-            ci.attachment = 1;
-            ci.layout = VK_IMAGE_LAYOUT_GENERAL;
-            ci.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-            json = R"({
-            "sType": "VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2",
-            "pNext": "NULL",
-            "attachment": 1,
-            "layout": "VK_IMAGE_LAYOUT_GENERAL",
-            "aspectMask": "VK_IMAGE_ASPECT_DEPTH_BIT"
-        })";
-            break;
-    }
-
-    ChainPNext(ci, json, pNext);
-
-    return {&ci, json};
-}
-
-template <typename... InStructure>
-std::pair<vku::safe_VkMemoryBarrier2, std::string> getVkMemoryBarrier2KHR(uint32_t seed = 0) {
-    using namespace std::string_literals;
-
-    VkMemoryBarrier2KHR ci = vku::InitStructHelper();
-    std::string json{};
-
-    switch (seed % 2) {
-        default:
-            ci.srcStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
-            ci.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_READ_NONCOHERENT_BIT_EXT;
-            ci.dstStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
-            ci.dstAccessMask = VK_ACCESS_2_COMMAND_PREPROCESS_READ_BIT_NV;
-            json = R"({
-            "sType" : "VK_STRUCTURE_TYPE_MEMORY_BARRIER_2",
-            "pNext": "NULL",
-            "srcStageMask": "VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT",
-            "srcAccessMask": "VK_ACCESS_2_COLOR_ATTACHMENT_READ_NONCOHERENT_BIT_EXT",
-            "dstStageMask": "VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT",
-            "dstAccessMask": "VK_ACCESS_2_COMMAND_PREPROCESS_READ_BIT_EXT"
-        })";
-            break;
-    }
-
-    return {&ci, json};
-}
-
-template <typename... InStructure>
-std::pair<vku::safe_VkSubpassDependency2, std::string> getVkSubpassDependency2(
-    uint32_t seed = 0, std::tuple<std::pair<InStructure, std::string>...> pNext = std::tuple<>{}) {
-    using namespace std::string_literals;
-
-    VkSubpassDependency2 ci = vku::InitStructHelper();
-    std::string json{};
-
-    switch (seed % 2) {
-        default:
-            ci.srcSubpass = VK_SUBPASS_EXTERNAL;
-            ci.dstSubpass = 2345;
-            ci.srcStageMask = VK_PIPELINE_STAGE_NONE_KHR;
-            ci.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-            ci.srcAccessMask = VK_ACCESS_NONE_KHR;
-            ci.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-            ci.dependencyFlags = VK_DEPENDENCY_DEVICE_GROUP_BIT;
-            json = R"({
-            "sType" : "VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2",
-            "pNext": "NULL",
-            "srcSubpass": 4294967295,
-            "dstSubpass": 2345,
-            "srcStageMask": 0,
-            "dstStageMask": "VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT",
-            "srcAccessMask": 0,
-            "dstAccessMask": "VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT",
-            "dependencyFlags": "VK_DEPENDENCY_DEVICE_GROUP_BIT",
-            "viewOffset": 0
-        })";
-            break;
-    }
-
-    ChainPNext(ci, json, pNext);
-
-    return {&ci, json};
-}
-
-template <typename... InStructure>
-std::pair<vku::safe_VkSubpassDescriptionDepthStencilResolve, std::string> getVkSubpassDescriptionDepthStencilResolve(
-    uint32_t seed = 0) {
-    using namespace std::string_literals;
-
-    VkSubpassDescriptionDepthStencilResolve ci = vku::InitStructHelper();
-    std::string json{};
-
-    auto [dsra_ci, dsra_json] = getVkAttachmentReference2(1);
-    switch (seed % 2) {
-        default:
-            ci.depthResolveMode = VK_RESOLVE_MODE_MIN_BIT;
-            ci.stencilResolveMode = VK_RESOLVE_MODE_MAX_BIT;
-            ci.pDepthStencilResolveAttachment = dsra_ci.ptr();
-            json = R"({
-            "sType" : "VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_DEPTH_STENCIL_RESOLVE",
-            "pNext": "NULL",
-            "depthResolveMode": "VK_RESOLVE_MODE_MIN_BIT",
-            "stencilResolveMode": "VK_RESOLVE_MODE_MAX_BIT",
-            "pDepthStencilResolveAttachment": )" +
-                   dsra_json + R"(
-        })";
-            break;
-    }
-
-    return {&ci, json};
-}
-
-template <typename... InStructure>
-std::pair<vku::safe_VkFragmentShadingRateAttachmentInfoKHR, std::string> getVkFragmentShadingRateAttachmentInfoKHR(
-    uint32_t seed = 0) {
-    using namespace std::string_literals;
-
-    VkFragmentShadingRateAttachmentInfoKHR ci = vku::InitStructHelper();
-    std::string json{};
-
-    auto [fsra_ci, fsra_json] = getVkAttachmentReference2(0);
-    switch (seed % 2) {
-        default:
-            ci.pFragmentShadingRateAttachment = fsra_ci.ptr();
-            ci.shadingRateAttachmentTexelSize.width = 4;
-            ci.shadingRateAttachmentTexelSize.height = 4;
-            json = R"({
-            "sType" : "VK_STRUCTURE_TYPE_FRAGMENT_SHADING_RATE_ATTACHMENT_INFO_KHR",
-            "pNext": "NULL",
-            "pFragmentShadingRateAttachment": )" +
-                   fsra_json + R"(,
-            "shadingRateAttachmentTexelSize": {
-                "width": 4,
-                "height": 4
-            }
-        })";
-            break;
-    }
-
-    return {&ci, json};
-}
-
-template <typename... InStructure>
-std::pair<vku::safe_VkSubpassDescription2, std::string> getVkSubpassDescription2(uint32_t seed = 0) {
-    using namespace std::string_literals;
-
-    VkSubpassDescription2 sd = vku::InitStructHelper();
-    std::string json{};
-
-    sd.flags = 0;
-    sd.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    auto [colorar_ci, colorar_json] = getVkAttachmentReference2(0);
-    VkAttachmentReference2 inputAttachments = vku::InitStructHelper(), colorAttachments = vku::InitStructHelper(),
-                           resolveAttachments = vku::InitStructHelper(), depthAttachments = vku::InitStructHelper();
-    inputAttachments.attachment = VK_ATTACHMENT_UNUSED;
-    inputAttachments.layout = VK_IMAGE_LAYOUT_UNDEFINED;
-    inputAttachments.aspectMask = VK_IMAGE_ASPECT_NONE_KHR;
-    colorAttachments.attachment = VK_ATTACHMENT_UNUSED;
-    colorAttachments.layout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachments.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    resolveAttachments.attachment = VK_ATTACHMENT_UNUSED;
-    resolveAttachments.layout = VK_IMAGE_LAYOUT_UNDEFINED;
-    resolveAttachments.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    depthAttachments.attachment = VK_ATTACHMENT_UNUSED;
-    depthAttachments.layout = VK_IMAGE_LAYOUT_UNDEFINED;
-    depthAttachments.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-    switch (seed % 2) {
-        case 0:
-            sd.viewMask = (uint32_t)~0;
-            sd.inputAttachmentCount = 1;
-            sd.pInputAttachments = &inputAttachments;
-            sd.colorAttachmentCount = 1;
-            sd.pColorAttachments = colorar_ci.ptr();
-            sd.pResolveAttachments = &resolveAttachments;
-            sd.pDepthStencilAttachment = &depthAttachments;
-            sd.preserveAttachmentCount = 0;
-            sd.pPreserveAttachments = nullptr;
-            json = R"({
-                "sType" : "VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2",
+            inputAttachments.push_back(vku::InitStructHelper());
+            inputAttachments.back().attachment = VK_ATTACHMENT_UNUSED;
+            inputAttachments.back().layout = VK_IMAGE_LAYOUT_UNDEFINED;
+            inputAttachments.back().aspectMask = VK_IMAGE_ASPECT_NONE_KHR;
+            colorAttachments.push_back(vku::InitStructHelper());
+            colorAttachments.back().attachment = 0;
+            colorAttachments.back().layout = VK_IMAGE_LAYOUT_GENERAL;
+            colorAttachments.back().aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            resolveAttachments.push_back(vku::InitStructHelper());
+            resolveAttachments.back().attachment = VK_ATTACHMENT_UNUSED;
+            resolveAttachments.back().layout = VK_IMAGE_LAYOUT_UNDEFINED;
+            resolveAttachments.back().aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            depthAttachments.push_back(vku::InitStructHelper());
+            depthAttachments.back().attachment = VK_ATTACHMENT_UNUSED;
+            depthAttachments.back().layout = VK_IMAGE_LAYOUT_UNDEFINED;
+            depthAttachments.back().aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+            subpasses.push_back(vku::InitStructHelper());
+            subpasses.back().pNext = &fsra_ci;
+            subpasses.back().viewMask = (uint32_t)~0;
+            subpasses.back().inputAttachmentCount = static_cast<uint32_t>(inputAttachments.size());
+            subpasses.back().pInputAttachments = inputAttachments.data();
+            subpasses.back().colorAttachmentCount = static_cast<uint32_t>(colorAttachments.size());
+            subpasses.back().pColorAttachments = colorAttachments.data();
+            subpasses.back().pResolveAttachments = resolveAttachments.data();
+            subpasses.back().pDepthStencilAttachment = depthAttachments.data();
+            subpasses.back().preserveAttachmentCount = 0;
+            subpasses.back().pPreserveAttachments = nullptr;
+            fsra_ci.pFragmentShadingRateAttachment = &colorAttachments.back();
+            fsra_ci.shadingRateAttachmentTexelSize.width = 4;
+            fsra_ci.shadingRateAttachmentTexelSize.height = 4;
+            fsra_json = R"({
+                "sType" : "VK_STRUCTURE_TYPE_FRAGMENT_SHADING_RATE_ATTACHMENT_INFO_KHR",
                 "pNext": "NULL",
+                "pFragmentShadingRateAttachment": {
+                    "sType": "VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2",
+                    "pNext": "NULL",
+                    "attachment": 0,
+                    "layout": "VK_IMAGE_LAYOUT_GENERAL",
+                    "aspectMask": "VK_IMAGE_ASPECT_COLOR_BIT"
+                },
+                "shadingRateAttachmentTexelSize": {
+                    "width": 4,
+                    "height": 4
+                }
+            })";
+            pSubpasses_str = R"([{
+                "sType" : "VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2",
+                "pNext": )"s +
+                             fsra_json + R"(,
                 "flags": 0,
                 "pipelineBindPoint": "VK_PIPELINE_BIND_POINT_GRAPHICS",
                 "viewMask": 4294967295,
@@ -1155,57 +953,11 @@ std::pair<vku::safe_VkSubpassDescription2, std::string> getVkSubpassDescription2
                 ],
                 "colorAttachmentCount": 1,
                 "pColorAttachments": [
-                    )" +
-                   colorar_json + R"(
-                ],
-                "pResolveAttachments": [
                     {
                         "sType": "VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2",
                         "pNext": "NULL",
-                        "attachment": 4294967295,
-                        "layout": "VK_IMAGE_LAYOUT_UNDEFINED",
-                        "aspectMask": "VK_IMAGE_ASPECT_COLOR_BIT"
-                    }
-                ],
-                "pDepthStencilAttachment": {
-                    "sType": "VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2",
-                    "pNext": "NULL",
-                    "attachment": 4294967295,
-                    "layout": "VK_IMAGE_LAYOUT_UNDEFINED",
-                    "aspectMask": "VK_IMAGE_ASPECT_DEPTH_BIT"
-                },
-                "preserveAttachmentCount": 0,
-                "pPreserveAttachments": "NULL"
-            })";
-
-            ChainPNext(sd, json,
-                       std::make_tuple(getVkFragmentShadingRateAttachmentInfoKHR(), getVkSubpassDescriptionDepthStencilResolve()));
-            break;
-        case 1:
-            sd.viewMask = (uint32_t)~0;
-            sd.inputAttachmentCount = 0;
-            sd.pInputAttachments = nullptr;
-            sd.colorAttachmentCount = 1;
-            sd.pColorAttachments = &colorAttachments;
-            sd.pResolveAttachments = &resolveAttachments;
-            sd.pDepthStencilAttachment = &depthAttachments;
-            sd.preserveAttachmentCount = 0;
-            sd.pPreserveAttachments = nullptr;
-            json = R"({
-                "sType" : "VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2",
-                "pNext": "NULL",
-                "flags": 0,
-                "pipelineBindPoint": "VK_PIPELINE_BIND_POINT_GRAPHICS",
-                "viewMask": 4294967295,
-                "inputAttachmentCount": 0,
-                "pInputAttachments": "NULL",
-                "colorAttachmentCount": 1,
-                "pColorAttachments": [
-                    {
-                        "sType": "VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2",
-                        "pNext": "NULL",
-                        "attachment": 4294967295,
-                        "layout": "VK_IMAGE_LAYOUT_UNDEFINED",
+                        "attachment": 0,
+                        "layout": "VK_IMAGE_LAYOUT_GENERAL",
                         "aspectMask": "VK_IMAGE_ASPECT_COLOR_BIT"
                     }
                 ],
@@ -1227,87 +979,225 @@ std::pair<vku::safe_VkSubpassDescription2, std::string> getVkSubpassDescription2
                 },
                 "preserveAttachmentCount": 0,
                 "pPreserveAttachments": "NULL"
-            })";
+    }])";
             break;
     }
 
-    return {&sd, json};
+    ci.attachmentCount = static_cast<uint32_t>(attachments.size());
+    ci.pAttachments = attachments.data();
+    ci.subpassCount = static_cast<uint32_t>(subpasses.size());
+    ci.pSubpasses = subpasses.data();
+    ci.dependencyCount = static_cast<uint32_t>(dependencies.size());
+    ci.pDependencies = dependencies.data();
+    json = R"({
+        "sType" : "VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2",
+        "pNext": "NULL",
+        "flags": 0,
+        "attachmentCount": )" +
+           std::to_string(ci.attachmentCount) + R"(,
+        "pAttachments": )"s +
+           pAttachments_str + R"(,
+        "correlatedViewMaskCount": )" +
+           std::to_string(ci.correlatedViewMaskCount) + R"(,
+        "pCorrelatedViewMasks": )"s +
+           pCorrelatedViewMasks_str + R"(,
+        "subpassCount": )" +
+           std::to_string(ci.subpassCount) + R"(,
+        "pSubpasses": )"s +
+           pSubpasses_str + R"(,
+        "dependencyCount": )" +
+           std::to_string(ci.dependencyCount) + R"(,
+        "pDependencies": )"s +
+           pDependencies_str + R"(
+    })";
+
+    return {&ci, json};
 }
 
-template <typename... InStructure>
-std::pair<vku::safe_VkRenderPassCreateInfo2, std::string> getVkRenderPassCreateInfo2(
-    uint32_t seed = 0, std::tuple<std::pair<InStructure, std::string>...> pNext = std::tuple<>{}) {
-    using namespace std::string_literals;
-
-    VkRenderPassCreateInfo2 ci = vku::InitStructHelper();
+std::pair<vku::safe_VkShaderModuleCreateInfo, std::string> getVkShaderModuleCreateInfo(uint32_t seed = 0) {
+    VkShaderModuleCreateInfo ci = vku::InitStructHelper();
     std::string json{};
 
-    auto [dependencies, dependencies_json] = getVkSubpassDependency2(0, std::make_tuple(getVkMemoryBarrier2KHR()));
-    vku::safe_VkSubpassDescription2 subpasses[2] = {};
+    uint32_t code = (25 << 0) + (123 << 8) + (42 << 16) + (8 << 24);
+
     switch (seed % 2) {
-        default:
-            VkAttachmentDescription2 attachments[1] = {vku::InitStructHelper()};
-            attachments[0].flags = VK_ATTACHMENT_DESCRIPTION_MAY_ALIAS_BIT;
-            attachments[0].format = VK_FORMAT_R8G8_USCALED;
-            attachments[0].samples = VK_SAMPLE_COUNT_8_BIT;
-            attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-            attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-            attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-            attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-            attachments[0].initialLayout = VK_IMAGE_LAYOUT_GENERAL;
-            attachments[0].finalLayout = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
-            dependencies.srcSubpass = VK_SUBPASS_EXTERNAL;
-            dependencies.dstSubpass = 2345;
-            dependencies.srcStageMask = VK_PIPELINE_STAGE_NONE_KHR;
-            dependencies.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-            dependencies.srcAccessMask = VK_ACCESS_NONE_KHR;
-            dependencies.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-            dependencies.dependencyFlags = VK_DEPENDENCY_DEVICE_GROUP_BIT;
-            auto [sd1, sd1_json] = getVkSubpassDescription2(seed);
-            auto [sd2, sd2_json] = getVkSubpassDescription2(seed + 1);
-            subpasses[0] = sd1;
-            subpasses[1] = sd2;
-            ci.attachmentCount = 1;
-            ci.pAttachments = attachments;
-            ci.subpassCount = 2;
-            ci.pSubpasses = reinterpret_cast<const VkSubpassDescription2*>(subpasses);
-            ci.dependencyCount = 1;
-            ci.pDependencies = dependencies.ptr();
+        case 0:
+            ci.flags = 0;
+            ci.codeSize = 4;
+            ci.pCode = &code;
             json = R"({
-            "sType" : "VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2",
+            "sType" : "VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO",
             "pNext": "NULL",
             "flags": 0,
-            "attachmentCount": 1,
-            "pAttachments": [
-                {
-                    "pNext" : "NULL",
-                    "sType" : "VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2",
-                    "flags": "VK_ATTACHMENT_DESCRIPTION_MAY_ALIAS_BIT",
-                    "format": "VK_FORMAT_R8G8_USCALED",
-                    "samples": "VK_SAMPLE_COUNT_8_BIT",
-                    "loadOp": "VK_ATTACHMENT_LOAD_OP_DONT_CARE",
-                    "storeOp": "VK_ATTACHMENT_STORE_OP_STORE",
-                    "stencilLoadOp": "VK_ATTACHMENT_LOAD_OP_LOAD",
-                    "stencilStoreOp": "VK_ATTACHMENT_STORE_OP_DONT_CARE",
-                    "initialLayout": "VK_IMAGE_LAYOUT_GENERAL",
-                    "finalLayout": "VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR"
-                }
-            ],
-            "correlatedViewMaskCount" : 0,
-            "pCorrelatedViewMasks" : "NULL",
-            "subpassCount": 2,
-            "pSubpasses": [ )" +
-                   sd1_json + R"(,)" + sd2_json + R"(],
-            "dependencyCount": 1,
-            "pDependencies": [
-                )" +
-                   dependencies_json + R"(
-            ]
+            "codeSize": 4,
+            "pCode": "GXsqCA=="
+        })";
+            break;
+        case 1:
+            ci.flags = 0;
+            ci.codeSize = 4;
+            ci.pCode = &code;
+            json = R"({
+            "sType" : "VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO",
+            "pNext": "NULL",
+            "flags": 0,
+            "codeSize": 4,
+            "pCode": [25, 123, 42, 8]
         })";
             break;
     }
 
-    ChainPNext(ci, json, pNext);
+    return {&ci, json};
+}
+
+std::pair<vku::safe_VkDeviceObjectReservationCreateInfo, std::string> getVkDeviceObjectReservationCreateInfo(uint32_t seed = 0) {
+    VkDeviceObjectReservationCreateInfo ci = vku::InitStructHelper();
+    std::string json{};
+
+    std::vector<uint8_t> initialData{};
+    std::vector<VkPipelineCacheCreateInfo> pipelineCacheCreateInfos{};
+    std::vector<VkPipelinePoolSize> pipelinePoolSizes{};
+
+    switch (seed % 2) {
+        default:
+            initialData = {0b01101001, 0b10110111, 0b00011101};
+            pipelineCacheCreateInfos.push_back(vku::InitStructHelper());
+            pipelineCacheCreateInfos.back().flags =
+                VK_PIPELINE_CACHE_CREATE_READ_ONLY_BIT | VK_PIPELINE_CACHE_CREATE_USE_APPLICATION_STORAGE_BIT;
+            pipelineCacheCreateInfos.back().initialDataSize = static_cast<uint32_t>(initialData.size());
+            pipelineCacheCreateInfos.back().pInitialData = initialData.data();
+
+            ci.pipelineCacheCreateInfoCount = static_cast<uint32_t>(pipelineCacheCreateInfos.size());
+            ci.pPipelineCacheCreateInfos = pipelineCacheCreateInfos.data();
+
+            pipelinePoolSizes.push_back(vku::InitStructHelper());
+            pipelinePoolSizes.back().poolEntryCount = 1;
+            pipelinePoolSizes.back().poolEntrySize = 1048576;
+            ci.pipelinePoolSizeCount = static_cast<uint32_t>(pipelinePoolSizes.size());
+            ci.pPipelinePoolSizes = pipelinePoolSizes.data();
+
+            ci.semaphoreRequestCount = 0;
+            ci.commandBufferRequestCount = 1;
+            ci.fenceRequestCount = 1;
+            ci.deviceMemoryRequestCount = 2;
+            ci.bufferRequestCount = 2;
+            ci.imageRequestCount = 0;
+            ci.eventRequestCount = 0;
+            ci.queryPoolRequestCount = 0;
+            ci.bufferViewRequestCount = 0;
+            ci.imageViewRequestCount = 0;
+            ci.layeredImageViewRequestCount = 0;
+            ci.pipelineCacheRequestCount = 1;
+            ci.pipelineLayoutRequestCount = 1;
+            ci.renderPassRequestCount = 1;
+            ci.graphicsPipelineRequestCount = 0;
+            ci.computePipelineRequestCount = 1;
+            ci.descriptorSetLayoutRequestCount = 1;
+            ci.samplerRequestCount = 0;
+            ci.descriptorPoolRequestCount = 1;
+            ci.descriptorSetRequestCount = 1;
+            ci.framebufferRequestCount = 0;
+            ci.commandPoolRequestCount = 2;
+            ci.samplerYcbcrConversionRequestCount = 0;
+            ci.surfaceRequestCount = 0;
+            ci.swapchainRequestCount = 1;
+            ci.displayModeRequestCount = 0;
+            ci.subpassDescriptionRequestCount = 1;
+            ci.attachmentDescriptionRequestCount = 2;
+            ci.descriptorSetLayoutBindingRequestCount = 2;
+            ci.descriptorSetLayoutBindingLimit = 2;
+            ci.maxImageViewMipLevels = 1;
+            ci.maxImageViewArrayLayers = 1;
+            ci.maxLayeredImageViewMipLevels = 0;
+            ci.maxOcclusionQueriesPerPool = 0;
+            ci.maxPipelineStatisticsQueriesPerPool = 0;
+            ci.maxTimestampQueriesPerPool = 0;
+            ci.maxImmutableSamplersPerDescriptorSetLayout = 0;
+            json = R"(json = {R"({
+        "sType" : "VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO",
+        "pNext": "NULL",
+        "pipelineCacheCreateInfoCount": 1,
+        "pPipelineCacheCreateInfos": [
+            {
+                "sType": "VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO",
+                "pNext": "NULL",
+                "flags": "VK_PIPELINE_CACHE_CREATE_READ_ONLY_BIT | VK_PIPELINE_CACHE_CREATE_USE_APPLICATION_STORAGE_BIT",
+                "initialDataSize": 3,
+                "pInitialData": "abcd"
+            }
+        ],
+        "pipelinePoolSizeCount": 1,
+        "pPipelinePoolSizes": [
+            {
+                "sType": "VK_STRUCTURE_TYPE_PIPELINE_POOL_SIZE",
+                "pNext": "NULL",
+                "poolEntryCount": 1,
+                "poolEntrySize": 1048576
+            }
+        ],
+        "semaphoreRequestCount": 0,
+        "commandBufferRequestCount": 1,
+        "fenceRequestCount": 1,
+        "deviceMemoryRequestCount": 2,
+        "bufferRequestCount": 2,
+        "imageRequestCount": 0,
+        "eventRequestCount": 0,
+        "queryPoolRequestCount": 0,
+        "bufferViewRequestCount": 0,
+        "imageViewRequestCount": 0,
+        "layeredImageViewRequestCount": 0,
+        "pipelineCacheRequestCount": 1,
+        "pipelineLayoutRequestCount": 1,
+        "renderPassRequestCount": 1,
+        "graphicsPipelineRequestCount": 0,
+        "computePipelineRequestCount": 1,
+        "descriptorSetLayoutRequestCount": 1,
+        "samplerRequestCount": 0,
+        "descriptorPoolRequestCount": 1,
+        "descriptorSetRequestCount": 1,
+        "framebufferRequestCount": 0,
+        "commandPoolRequestCount": 2,
+        "samplerYcbcrConversionRequestCount": 0,
+        "surfaceRequestCount": 0,
+        "swapchainRequestCount": 1,
+        "displayModeRequestCount": 0,
+        "subpassDescriptionRequestCount": 1,
+        "attachmentDescriptionRequestCount": 2,
+        "descriptorSetLayoutBindingRequestCount": 2,
+        "descriptorSetLayoutBindingLimit": 2,
+        "maxImageViewMipLevels": 1,
+        "maxImageViewArrayLayers": 1,
+        "maxLayeredImageViewMipLevels": 0,
+        "maxOcclusionQueriesPerPool": 0,
+        "maxPipelineStatisticsQueriesPerPool": 0,
+        "maxTimestampQueriesPerPool": 0,
+        "maxImmutableSamplersPerDescriptorSetLayout": 0
+    })";
+            break;
+    }
+
+    return {&ci, json};
+}
+
+std::pair<vku::safe_VkPipelineOfflineCreateInfo, std::string> getVkPipelineOfflineCreateInfo(uint32_t seed = 0) {
+    VkPipelineOfflineCreateInfo ci = vku::InitStructHelper();
+    std::string json{};
+
+    switch (seed % 2) {
+        default:
+            std::array<uint8_t, VK_UUID_SIZE> pipelineIdentifier{85, 43, 255, 24, 155, 64, 62, 24, 0, 0, 0, 0, 0, 0, 0, 0};
+            std::copy(pipelineIdentifier.begin(), pipelineIdentifier.end(), ci.pipelineIdentifier);
+            ci.matchControl = VK_PIPELINE_MATCH_CONTROL_APPLICATION_UUID_EXACT_MATCH;
+            ci.poolEntrySize = 1048576;
+            json = R"({
+            "sType" : "VK_STRUCTURE_TYPE_PIPELINE_OFFLINE_CREATE_INFO",
+            "pNext": "NULL",
+            "pipelineIdentifier": [85, 43, 255, 24, 155, 64, 62, 24, 0, 0, 0, 0, 0, 0, 0, 0],
+            "matchControl": "VK_PIPELINE_MATCH_CONTROL_APPLICATION_UUID_EXACT_MATCH",
+            "poolEntrySize": 1048576
+        })";
+            break;
+    }
 
     return {&ci, json};
 }
@@ -1703,7 +1593,6 @@ std::pair<vku::safe_VkPipelineDynamicStateCreateInfo, std::string> getVkPipeline
     return {&ci, json};
 }
 
-template <typename... InStructure>
 std::pair<vku::safe_VkPipelineDiscardRectangleStateCreateInfoEXT, std::string> getVkPipelineDiscardRectangleStateCreateInfoEXT(
     uint32_t seed = 0) {
     using namespace std::string_literals;
@@ -1748,60 +1637,382 @@ std::pair<vku::safe_VkPipelineDiscardRectangleStateCreateInfoEXT, std::string> g
     return {&ci, json};
 }
 
-template <typename... InStructure>
-std::pair<vku::safe_VkGraphicsPipelineCreateInfo, std::string> getVkGraphicsPipelineCreateInfo(
-    uint32_t seed = 0,
-    std::initializer_list<std::pair<vku::safe_VkPipelineShaderStageCreateInfo, std::string>> stages =
-        {getVkPipelineShaderStageCreateInfo(0, VK_SHADER_STAGE_VERTEX_BIT),
-         getVkPipelineShaderStageCreateInfo(0, VK_SHADER_STAGE_FRAGMENT_BIT)},
-    std::tuple<std::pair<InStructure, std::string>...> pNext = std::tuple<>{}) {
+std::pair<vku::safe_VkGraphicsPipelineCreateInfo, std::string> getVkGraphicsPipelineCreateInfo(uint32_t seed = 0) {
     using namespace std::string_literals;
 
     VkGraphicsPipelineCreateInfo ci = vku::InitStructHelper();
     std::string json{};
 
-    std::vector<vku::safe_VkPipelineShaderStageCreateInfo> pStages;
+    VkPipelineDiscardRectangleStateCreateInfoEXT pdrs_ci = vku::InitStructHelper();
+    std::string pdrs_json = R"("NULL")";
+
+    std::vector<VkPipelineShaderStageCreateInfo> pStages{};
     std::string pStages_str{};
-    pStages_str = "[";
-    for (auto it = stages.begin(); it != stages.end(); ++it) {
-        pStages.push_back(it->first);
-        pStages_str += it->second;
-        if (std::next(it) != stages.end()) {
-            pStages_str += ",";
-        }
+    VkPipelineShaderStageRequiredSubgroupSizeCreateInfo pssrss_ci = vku::InitStructHelper();
+
+    VkPipelineVertexInputStateCreateInfo pvis_ci = vku::InitStructHelper();
+    std::string pvis_json = R"("NULL")";
+    VkPipelineInputAssemblyStateCreateInfo pias_ci = vku::InitStructHelper();
+    std::string pias_json = R"("NULL")";
+    VkPipelineTessellationStateCreateInfo pts_ci = vku::InitStructHelper();
+    std::string pts_json = R"("NULL")";
+    VkPipelineViewportStateCreateInfo pvs_ci = vku::InitStructHelper();
+    std::string pvs_json = R"("NULL")";
+    VkPipelineRasterizationStateCreateInfo prs_ci = vku::InitStructHelper();
+    std::string prs_json = R"("NULL")";
+    VkPipelineMultisampleStateCreateInfo pms_ci = vku::InitStructHelper();
+    std::string pms_json = R"("NULL")";
+    VkPipelineDepthStencilStateCreateInfo pdss_ci = vku::InitStructHelper();
+    std::string pdss_json = R"("NULL")";
+    VkPipelineColorBlendStateCreateInfo pcbs_ci = vku::InitStructHelper();
+    std::string pcbs_json = R"("NULL")";
+    VkPipelineDynamicStateCreateInfo pds_ci = vku::InitStructHelper();
+    std::string pds_json = R"("NULL")";
+
+    VkVertexInputBindingDescription vertexBindingDescriptions[1] = {{0, 32, VK_VERTEX_INPUT_RATE_VERTEX}};
+    VkVertexInputAttributeDescription vertexAttributeDescriptions[2] = {{0, 0, VK_FORMAT_R32G32B32A32_SFLOAT, 0},
+                                                                        {1, 0, VK_FORMAT_R32G32B32A32_SFLOAT, 16}};
+
+    VkViewport viewports[1] = {{0.f, 0.f, 51.f, 51.f, 0.f, 1.f}};
+    VkRect2D scissors[1] = {{VkOffset2D{0, 0}, VkExtent2D{51, 51}}};
+
+    VkPipelineColorBlendAttachmentState attachments[1] = {
+        {VK_FALSE, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_ZERO, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_ZERO,
+         VK_BLEND_OP_ADD,
+         VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT}};
+
+    VkDynamicState dynamicStates[1] = {VK_DYNAMIC_STATE_LINE_WIDTH};
+
+    VkRect2D discardRectangles = {VkOffset2D{0, 0}, VkExtent2D{51, 51}};
+
+    switch (seed % 2) {
+        default:
+            ci.pNext = &pdrs_ci;
+            pssrss_ci.requiredSubgroupSize = 64;
+            pStages.push_back(vku::InitStructHelper());
+            pStages.back().pName = "main";
+            pStages.back().stage = VK_SHADER_STAGE_VERTEX_BIT;
+            pStages.push_back(vku::InitStructHelper());
+            pStages.back().pNext = &pssrss_ci;
+            pStages.back().flags = VK_PIPELINE_SHADER_STAGE_CREATE_REQUIRE_FULL_SUBGROUPS_BIT;
+            pStages.back().pName = "main";
+            pStages.back().stage = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+            pStages.push_back(vku::InitStructHelper());
+            pStages.back().pName = "main";
+            pStages.back().stage = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+            pStages.push_back(vku::InitStructHelper());
+            pStages.back().pName = "main";
+            pStages.back().stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+            pStages_str = R"([
+        {
+            "sType": "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
+            "pNext": "NULL",
+            "flags": 0,
+            "module": "",
+            "pName": "main",
+            "pSpecializationInfo" : "NULL",
+            "stage" : "VK_SHADER_STAGE_VERTEX_BIT",
+        },{
+            "sType": "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
+            "pNext": {
+                "sType": "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO",
+                "pNext": "NULL",
+                "requiredSubgroupSize": 64
+            },
+            "flags": "VK_PIPELINE_SHADER_STAGE_CREATE_REQUIRE_FULL_SUBGROUPS_BIT",
+            "module": "",
+            "pName": "main",
+            "pSpecializationInfo" : "NULL",
+            "stage" : "VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT",
+        },
+        {
+            "sType": "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
+            "pNext": "NULL",
+            "flags": 0,
+            "module": "",
+            "pName": "main",
+            "pSpecializationInfo" : "NULL",
+            "stage" : "VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT",
+        },{
+            "sType": "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
+            "pNext": "NULL",
+            "flags": 0,
+            "module": "",
+            "pName": "main",
+            "pSpecializationInfo" : "NULL",
+            "stage" : "VK_SHADER_STAGE_FRAGMENT_BIT",
+        }])";
+
+            pvis_ci.vertexBindingDescriptionCount = 1;
+            pvis_ci.pVertexBindingDescriptions = vertexBindingDescriptions;
+            pvis_ci.vertexAttributeDescriptionCount = 2;
+            pvis_ci.pVertexAttributeDescriptions = vertexAttributeDescriptions;
+            pvis_json = R"({
+            "sType" : "VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO",
+            "pNext":"NULL",
+            "flags" : 0,
+            "vertexBindingDescriptionCount" : 1,
+            "pVertexBindingDescriptions": [
+                {
+                    "binding" : 0,
+                    "stride" : 32,
+                    "inputRate" : "VK_VERTEX_INPUT_RATE_VERTEX"
+                }
+            ],
+            "vertexAttributeDescriptionCount" : 2,
+            "pVertexAttributeDescriptions": [
+                {
+                    "location" : 0,
+                    "binding" : 0,
+                    "format" : "VK_FORMAT_R32G32B32A32_SFLOAT",
+                    "offset" : 0
+                },
+                {
+                    "location" : 1,
+                    "binding" : 0,
+                    "format" : "VK_FORMAT_R32G32B32A32_SFLOAT",
+                    "offset" : 16
+                }
+            ]
+        })";
+
+            pias_ci.topology = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
+            pias_ci.primitiveRestartEnable = VK_FALSE;
+            pias_json = R"({
+            "sType": "VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO",
+            "pNext": "NULL",
+            "flags": 0,
+            "topology": "VK_PRIMITIVE_TOPOLOGY_PATCH_LIST",
+            "primitiveRestartEnable": "VK_FALSE"
+        })";
+
+            pts_ci.patchControlPoints = 4;
+            pts_json = R"({
+            "sType": "VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO",
+            "pNext": "NULL",
+            "flags": 0,
+            "patchControlPoints": 4
+        })";
+
+            pvs_ci.viewportCount = 1;
+            pvs_ci.pViewports = viewports;
+            pvs_ci.scissorCount = 1;
+            pvs_ci.pScissors = scissors;
+            pvs_json = R"({
+            "sType": "VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO",
+            "pNext": "NULL",
+            "flags": 0,
+            "viewportCount": 1,
+            "pViewports":
+            [
+                {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "width": 51.0,
+                    "height": 51.0,
+                    "minDepth": 0.0,
+                    "maxDepth": 1.0
+                }
+            ],
+            "scissorCount": 1,
+            "pScissors":
+            [
+                {
+                    "offset":
+                    {
+                        "x": 0,
+                        "y": 0
+                    },
+                    "extent":
+                    {
+                        "width": 51,
+                        "height": 51
+                    }
+                }
+            ]
+        })";
+
+            prs_ci.depthClampEnable = VK_FALSE;
+            prs_ci.rasterizerDiscardEnable = VK_FALSE;
+            prs_ci.polygonMode = VK_POLYGON_MODE_FILL;
+            prs_ci.cullMode = 0;
+            prs_ci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+            prs_ci.depthBiasEnable = VK_FALSE;
+            prs_ci.depthBiasConstantFactor = 0.f;
+            prs_ci.depthBiasClamp = 0.f;
+            prs_ci.depthBiasSlopeFactor = 0.f;
+            prs_ci.lineWidth = 1.f;
+            prs_json = R"({
+            "sType": "VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO",
+            "pNext": "NULL",
+            "flags": 0,
+            "depthClampEnable": "VK_FALSE",
+            "rasterizerDiscardEnable": "VK_FALSE",
+            "polygonMode": "VK_POLYGON_MODE_FILL",
+            "cullMode": 0,
+            "frontFace": "VK_FRONT_FACE_COUNTER_CLOCKWISE",
+            "depthBiasEnable": "VK_FALSE",
+            "depthBiasConstantFactor": 0.0,
+            "depthBiasClamp": 0.0,
+            "depthBiasSlopeFactor": 0.0,
+            "lineWidth": 1.0
+        })";
+
+            pms_ci.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+            pms_ci.sampleShadingEnable = VK_FALSE;
+            pms_ci.minSampleShading = 1.f;
+            pms_ci.pSampleMask = nullptr;
+            pms_ci.alphaToCoverageEnable = VK_FALSE;
+            pms_ci.alphaToOneEnable = VK_FALSE;
+            pms_json = R"({
+            "sType": "VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO",
+            "pNext": "NULL",
+            "flags": 0,
+            "rasterizationSamples": "VK_SAMPLE_COUNT_1_BIT",
+            "sampleShadingEnable": "VK_FALSE",
+            "minSampleShading": 1.0,
+            "pSampleMask": "NULL",
+            "alphaToCoverageEnable": "VK_FALSE",
+            "alphaToOneEnable": "VK_FALSE"
+        })";
+
+            pdss_ci.depthTestEnable = VK_TRUE;
+            pdss_ci.depthWriteEnable = VK_TRUE;
+            pdss_ci.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+            pdss_ci.depthBoundsTestEnable = VK_FALSE;
+            pdss_ci.stencilTestEnable = VK_FALSE;
+            pdss_ci.front.failOp = VK_STENCIL_OP_INVERT;
+            pdss_ci.front.passOp = VK_STENCIL_OP_KEEP;
+            pdss_ci.front.depthFailOp = VK_STENCIL_OP_ZERO;
+            pdss_ci.front.compareOp = VK_COMPARE_OP_NEVER;
+            pdss_ci.front.compareMask = 0;
+            pdss_ci.front.writeMask = 0;
+            pdss_ci.front.reference = 0;
+            pdss_ci.back.failOp = VK_STENCIL_OP_INVERT;
+            pdss_ci.back.passOp = VK_STENCIL_OP_KEEP;
+            pdss_ci.back.depthFailOp = VK_STENCIL_OP_ZERO;
+            pdss_ci.back.compareOp = VK_COMPARE_OP_NEVER;
+            pdss_ci.back.compareMask = 0;
+            pdss_ci.back.writeMask = 0;
+            pdss_ci.back.reference = 0;
+            pdss_ci.minDepthBounds = 0.f;
+            pdss_ci.maxDepthBounds = 1.f;
+            pdss_json = R"({
+            "sType": "VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO",
+            "pNext": "NULL",
+            "flags": 0,
+            "depthTestEnable": "VK_TRUE",
+            "depthWriteEnable": "VK_TRUE",
+            "depthCompareOp": "VK_COMPARE_OP_LESS_OR_EQUAL",
+            "depthBoundsTestEnable": "VK_FALSE",
+            "stencilTestEnable": "VK_FALSE",
+            "front":
+            {
+                "failOp": "VK_STENCIL_OP_INVERT",
+                "passOp": "VK_STENCIL_OP_KEEP",
+                "depthFailOp": "VK_STENCIL_OP_ZERO",
+                "compareOp": "VK_COMPARE_OP_NEVER",
+                "compareMask": 0,
+                "writeMask": 0,
+                "reference": 0
+            },
+            "back":
+            {
+                "failOp": "VK_STENCIL_OP_INVERT",
+                "passOp": "VK_STENCIL_OP_KEEP",
+                "depthFailOp": "VK_STENCIL_OP_ZERO",
+                "compareOp": "VK_COMPARE_OP_NEVER",
+                "compareMask": 0,
+                "writeMask": 0,
+                "reference": 0
+            },
+            "minDepthBounds": 0.0,
+            "maxDepthBounds": 1.0
+        })";
+
+            pcbs_ci.logicOpEnable = VK_FALSE;
+            pcbs_ci.logicOp = VK_LOGIC_OP_CLEAR;
+            pcbs_ci.attachmentCount = 1;
+            pcbs_ci.pAttachments = attachments;
+            pcbs_ci.blendConstants[0] = 0.f;
+            pcbs_ci.blendConstants[1] = 0.f;
+            pcbs_ci.blendConstants[2] = 0.f;
+            pcbs_ci.blendConstants[3] = 0.f;
+            pcbs_json = R"({
+            "sType": "VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO",
+            "pNext": "NULL",
+            "flags": 0,
+            "logicOpEnable": "VK_FALSE",
+            "logicOp": "VK_LOGIC_OP_CLEAR",
+            "attachmentCount": 1,
+            "pAttachments":
+            [
+                {
+                    "blendEnable": "VK_FALSE",
+                    "srcColorBlendFactor": "VK_BLEND_FACTOR_ZERO",
+                    "dstColorBlendFactor": "VK_BLEND_FACTOR_ZERO",
+                    "colorBlendOp": "VK_BLEND_OP_ADD",
+                    "srcAlphaBlendFactor": "VK_BLEND_FACTOR_ZERO",
+                    "dstAlphaBlendFactor": "VK_BLEND_FACTOR_ZERO",
+                    "alphaBlendOp": "VK_BLEND_OP_ADD",
+                    "colorWriteMask": "VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT"
+                }
+            ],
+            "blendConstants": [0.0, 0.0, 0.0, 0.0]
+        })";
+
+            pds_ci.dynamicStateCount = 1;
+            pds_ci.pDynamicStates = dynamicStates;
+            pds_json = R"({
+            "sType": "VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO",
+            "pNext": "NULL",
+            "flags": 0,
+            "dynamicStateCount": 1,
+            "pDynamicStates": ["VK_DYNAMIC_STATE_LINE_WIDTH"]
+        })";
+
+            pdrs_ci.discardRectangleMode = VK_DISCARD_RECTANGLE_MODE_EXCLUSIVE_EXT;
+            pdrs_ci.discardRectangleCount = 1;
+            pdrs_ci.pDiscardRectangles = &discardRectangles;
+            pdrs_json = R"({
+            "sType": "VK_STRUCTURE_TYPE_PIPELINE_DISCARD_RECTANGLE_STATE_CREATE_INFO_EXT",
+            "pNext" : "NULL",
+            "flags": 0,
+            "discardRectangleMode": "VK_DISCARD_RECTANGLE_MODE_EXCLUSIVE_EXT",
+            "discardRectangleCount": 1,
+            "pDiscardRectangles": [
+                {
+                    "offset":
+                    {
+                        "x" : 0,
+                        "y" : 0
+                    },
+                    "extent":
+                    {
+                        "width" : 51,
+                        "height" : 51
+                    }
+                }
+            ]
+        })";
+            break;
     }
-    bool has_tessellation_stage = false;
-    for (size_t i = 0; i < pStages.size(); ++i) {
-        if (pStages[i].stage == VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT ||
-            pStages[i].stage == VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT)
-            has_tessellation_stage = true;
-    }
-    pStages_str += "]";
-    auto [pvis_ci, pvis_json] = getVkPipelineVertexInputStateCreateInfo(seed);
-    auto [pias_ci, pias_json] = getVkPipelineInputAssemblyStateCreateInfo(seed);
-    auto [pts_ci, pts_json] = getVkPipelineTessellationStateCreateInfo(seed);
-    auto [pvs_ci, pvs_json] = getVkPipelineViewportStateCreateInfo(seed);
-    auto [prs_ci, prs_json] = getVkPipelineRasterizationStateCreateInfo(seed);
-    auto [pmss_ci, pmss_json] = getVkPipelineMultisampleStateCreateInfo(seed);
-    auto [pdss_ci, pdss_json] = getVkPipelineDepthStencilStateCreateInfo(seed);
-    auto [pcbs_ci, pcbs_json] = getVkPipelineColorBlendStateCreateInfo(seed);
-    auto [pds_ci, pds_json] = getVkPipelineDynamicStateCreateInfo(seed);
 
     ci.stageCount = (uint32_t)pStages.size();
-    ci.pStages = reinterpret_cast<const VkPipelineShaderStageCreateInfo*>(pStages.data());
-    ci.pVertexInputState = pvis_ci.ptr();
-    ci.pInputAssemblyState = pias_ci.ptr();
-    ci.pTessellationState = has_tessellation_stage ? pts_ci.ptr() : nullptr;
-    ci.pViewportState = pvs_ci.ptr();
-    ci.pRasterizationState = prs_ci.ptr();
-    ci.pMultisampleState = pmss_ci.ptr();
-    ci.pDepthStencilState = pdss_ci.ptr();
-    ci.pColorBlendState = pcbs_ci.ptr();
-    ci.pDynamicState = pds_ci.ptr();
-
+    ci.pStages = pStages.data();
+    ci.pVertexInputState = &pvis_ci;
+    ci.pInputAssemblyState = &pias_ci;
+    ci.pTessellationState = &pts_ci;
+    ci.pViewportState = &pvs_ci;
+    ci.pRasterizationState = &prs_ci;
+    ci.pMultisampleState = &pms_ci;
+    ci.pDepthStencilState = &pdss_ci;
+    ci.pColorBlendState = &pcbs_ci;
+    ci.pDynamicState = &pds_ci;
     json = R"({
         "sType": "VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO",
-        "pNext": "NULL",
+        "pNext": )" +
+           pdrs_json + R"(,
         "flags": 0,
         "stageCount": )" +
            std::to_string(ci.stageCount) + R"(,
@@ -1812,13 +2023,13 @@ std::pair<vku::safe_VkGraphicsPipelineCreateInfo, std::string> getVkGraphicsPipe
         "pInputAssemblyState": )" +
            pias_json + R"(,
         "pTessellationState": )" +
-           (has_tessellation_stage ? pts_json : R"("NULL")"s) + R"(,
+           pts_json + R"(,
         "pViewportState": )" +
            pvs_json + R"(,
         "pRasterizationState": )" +
            prs_json + R"(,
         "pMultisampleState": )" +
-           pmss_json + R"(,
+           pms_json + R"(,
         "pDepthStencilState": )" +
            pdss_json + R"(,
         "pColorBlendState": )" +
@@ -1832,98 +2043,16 @@ std::pair<vku::safe_VkGraphicsPipelineCreateInfo, std::string> getVkGraphicsPipe
         "basePipelineIndex" : 0,
     })";
 
-    ChainPNext(ci, json, pNext);
-
     return {vku::safe_VkGraphicsPipelineCreateInfo{&ci, true, true}, json};
 }
 
-std::pair<vku::safe_VkPhysicalDeviceSynchronization2Features, std::string> getVkPhysicalDeviceSynchronization2Features() {
-    using namespace std::string_literals;
-
-    VkPhysicalDeviceSynchronization2Features pdf = vku::InitStructHelper();
-    std::string json{};
-
-    pdf.synchronization2 = VK_TRUE;
-
-    json = R"({
-        "sType": "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES",
-        "pNext": "NULL",
-        "synchronization2": "VK_TRUE"
-    })";
-
-    return {&pdf, json};
-}
-
-std::pair<vku::safe_VkPhysicalDeviceScalarBlockLayoutFeatures, std::string> getVkPhysicalDeviceScalarBlockLayoutFeatures() {
-    using namespace std::string_literals;
-
-    VkPhysicalDeviceScalarBlockLayoutFeatures pdsblf = vku::InitStructHelper();
-    std::string json{};
-
-    pdsblf.scalarBlockLayout = VK_TRUE;
-
-    json = R"({
-        "sType": "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES",
-        "pNext": "NULL",
-        "scalarBlockLayout": "VK_TRUE"
-    })";
-
-    return {&pdsblf, json};
-}
-
-template <typename... InStructure>
-std::pair<vku::safe_VkPhysicalDeviceVulkan11Features, std::string> getVkPhysicalDeviceVulkan11Features(uint32_t seed = 0) {
-    using namespace std::string_literals;
-
-    VkPhysicalDeviceVulkan11Features pdf = vku::InitStructHelper();
-    std::string json{};
-
-    std::string features_str = R"(
-        "storageBuffer16BitAccess" : "VK_FALSE",
-        "uniformAndStorageBuffer16BitAccess" : "VK_FALSE",
-        "storagePushConstant16" : "VK_FALSE",
-        "storageInputOutput16" : "VK_FALSE",
-        "multiview" : "VK_FALSE",
-        "multiviewGeometryShader" : "VK_FALSE",
-        "multiviewTessellationShader" : "VK_FALSE",
-        "variablePointersStorageBuffer" : "VK_FALSE",
-        "variablePointers" : "VK_FALSE",
-        "protectedMemory" : "VK_FALSE",
-        "samplerYcbcrConversion" : "VK_FALSE",
-        "shaderDrawParameters" : "VK_FALSE"
-    )";
-    auto change_to_true = [&](std::string_view feature) {
-        std::string false_snippet = R"(")"s + feature.data() + R"(" : "VK_FALSE")";
-        std::string true_snippet = R"(")"s + feature.data() + R"(" : "VK_TRUE")";
-        features_str.replace(features_str.find(false_snippet), false_snippet.length(), true_snippet);
-    };
-    switch (seed % 2) {
-        case 0:
-            pdf.samplerYcbcrConversion = VK_TRUE;
-            change_to_true("samplerYcbcrConversion");
-            break;
-        case 1:
-            pdf.multiview = VK_TRUE;
-            change_to_true("multiview");
-            break;
-    }
-
-    json = R"({
-        "sType": "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES",
-        "pNext": "NULL",
-        )"s +
-           features_str + R"(
-    })";
-
-    return {&pdf, json};
-}
-
-template <typename... InStructure>
-std::pair<vku::safe_VkPhysicalDeviceFeatures2, std::string> getVkPhysicalDeviceFeatures2(
-    uint32_t seed = 0, std::tuple<std::pair<InStructure, std::string>...> pNext = std::tuple<>{}) {
+std::pair<vku::safe_VkPhysicalDeviceFeatures2, std::string> getVkPhysicalDeviceFeatures2(uint32_t seed = 0) {
     using namespace std::string_literals;
 
     VkPhysicalDeviceFeatures2 pdf = vku::InitStructHelper();
+    [[maybe_unused]] VkPhysicalDeviceVulkan11Features pdv11f = vku::InitStructHelper();
+    [[maybe_unused]] VkPhysicalDeviceScalarBlockLayoutFeatures pdsblf = vku::InitStructHelper();
+    [[maybe_unused]] VkPhysicalDeviceSynchronization2Features pds2f = vku::InitStructHelper();
     std::string json{};
 
     std::string features_str = R"({
@@ -1983,34 +2112,86 @@ std::pair<vku::safe_VkPhysicalDeviceFeatures2, std::string> getVkPhysicalDeviceF
         "vertexPipelineStoresAndAtomics" : "VK_FALSE",
         "wideLines" : "VK_FALSE"
     })";
-    auto change_to_true = [&](std::string_view feature) {
+    std::string features11_str = R"(
+        "storageBuffer16BitAccess" : "VK_FALSE",
+        "uniformAndStorageBuffer16BitAccess" : "VK_FALSE",
+        "storagePushConstant16" : "VK_FALSE",
+        "storageInputOutput16" : "VK_FALSE",
+        "multiview" : "VK_FALSE",
+        "multiviewGeometryShader" : "VK_FALSE",
+        "multiviewTessellationShader" : "VK_FALSE",
+        "variablePointersStorageBuffer" : "VK_FALSE",
+        "variablePointers" : "VK_FALSE",
+        "protectedMemory" : "VK_FALSE",
+        "samplerYcbcrConversion" : "VK_FALSE",
+        "shaderDrawParameters" : "VK_FALSE"
+    )";
+
+    auto change_to_true = [](std::string& features_str, std::string_view feature) {
         std::string false_snippet = R"(")"s + feature.data() + R"(" : "VK_FALSE")";
         std::string true_snippet = R"(")"s + feature.data() + R"(" : "VK_TRUE")";
         features_str.replace(features_str.find(false_snippet), false_snippet.length(), true_snippet);
     };
     switch (seed % 3) {
         case 0:
+            pdf.pNext = &pdv11f;
             pdf.features.robustBufferAccess = VK_TRUE;
-            change_to_true("robustBufferAccess");
+            pdv11f.samplerYcbcrConversion = VK_TRUE;
+            change_to_true(features_str, "robustBufferAccess");
+            change_to_true(features11_str, "samplerYcbcrConversion");
+            json = R"({
+                "sType": "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2",
+                "pNext": {
+                    "sType": "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES",
+                    "pNext": "NULL",
+                    )"s +
+                   features11_str + R"(
+                },
+                "features": )"s +
+                   features_str + R"(
+            })";
             break;
         case 1:
+            pdf.pNext = &pdv11f;
             pdf.features.sparseBinding = VK_TRUE;
-            change_to_true("sparseBinding");
+            pdv11f.multiview = VK_TRUE;
+            change_to_true(features_str, "sparseBinding");
+            change_to_true(features11_str, "multiview");
+            json = R"({
+                "sType": "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2",
+                "pNext": {
+                    "sType": "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES",
+                    "pNext": "NULL",
+                    )"s +
+                   features11_str + R"(
+                },
+                "features": )"s +
+                   features_str + R"(
+            })";
             break;
         case 2:
+            pdf.pNext = &pdsblf;
+            pdsblf.pNext = &pds2f;
             pdf.features.wideLines = VK_TRUE;
-            change_to_true("wideLines");
+            pdsblf.scalarBlockLayout = VK_TRUE;
+            pds2f.synchronization2 = VK_TRUE;
+            change_to_true(features_str, "wideLines");
+            json = R"({
+                "sType": "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2",
+                "pNext": {
+                    "sType": "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES",
+                    "pNext": {
+                        "sType": "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES",
+                        "pNext": "NULL",
+                        "synchronization2": "VK_TRUE"
+                    },
+                    "scalarBlockLayout": "VK_TRUE"
+                },
+                "features": )"s +
+                   features_str + R"(
+            })";
             break;
     }
-
-    json = R"({
-        "sType": "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2",
-        "pNext": "NULL",
-        "features": )"s +
-           features_str + R"(
-    })";
-
-    ChainPNext(pdf, json, pNext);
 
     return {&pdf, json};
 }
@@ -2302,21 +2483,6 @@ void CompareStruct(const vku::safe_VkPipelineLayoutCreateInfo& ref, const VkPipe
     }
 }
 
-void CompareStruct(const vku::safe_VkRenderPassInputAttachmentAspectCreateInfo& ref,
-                   const VkRenderPassInputAttachmentAspectCreateInfo& res) {
-    EXPECT_EQ(ref.sType, res.sType);
-    EXPECT_EQ(ref.aspectReferenceCount, res.aspectReferenceCount);
-    if (ref.aspectReferenceCount) {
-        for (uint32_t i = 0; i < ref.aspectReferenceCount; ++i) {
-            EXPECT_EQ(ref.pAspectReferences[i].subpass, res.pAspectReferences[i].subpass);
-            EXPECT_EQ(ref.pAspectReferences[i].inputAttachmentIndex, res.pAspectReferences[i].inputAttachmentIndex);
-            EXPECT_EQ(ref.pAspectReferences[i].aspectMask, res.pAspectReferences[i].aspectMask);
-        }
-    } else {
-        EXPECT_EQ(nullptr, res.pAspectReferences);
-    }
-}
-
 void CompareStruct(const vku::safe_VkRenderPassMultiviewCreateInfo& ref, const VkRenderPassMultiviewCreateInfo& res) {
     EXPECT_EQ(ref.sType, res.sType);
     EXPECT_EQ(ref.subpassCount, res.subpassCount);
@@ -2351,10 +2517,6 @@ void CompareStruct(const vku::safe_VkRenderPassCreateInfo& ref, const VkRenderPa
                                  *res_pNext = reinterpret_cast<const VkBaseInStructure*>(res.pNext);
          ref_pNext != nullptr; ref_pNext = ref_pNext->pNext, res_pNext = res_pNext->pNext) {
         switch (ref_pNext->sType) {
-            case VK_STRUCTURE_TYPE_RENDER_PASS_INPUT_ATTACHMENT_ASPECT_CREATE_INFO:
-                CompareStruct(*reinterpret_cast<const vku::safe_VkRenderPassInputAttachmentAspectCreateInfo*>(ref_pNext),
-                              *reinterpret_cast<const VkRenderPassInputAttachmentAspectCreateInfo*>(res_pNext));
-                break;
             case VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO:
                 CompareStruct(*reinterpret_cast<const vku::safe_VkRenderPassMultiviewCreateInfo*>(ref_pNext),
                               *reinterpret_cast<const VkRenderPassMultiviewCreateInfo*>(res_pNext));
@@ -2450,22 +2612,12 @@ void CompareStruct(const vku::safe_VkRenderPassCreateInfo& ref, const VkRenderPa
     }
 }
 
-void CompareStruct(const vku::safe_VkAttachmentDescriptionStencilLayout& ref, const VkAttachmentDescriptionStencilLayout& res) {
-    EXPECT_EQ(ref.sType, res.sType);
-    EXPECT_EQ(ref.stencilInitialLayout, res.stencilInitialLayout);
-    EXPECT_EQ(ref.stencilFinalLayout, res.stencilFinalLayout);
-}
-
 void CompareStruct(const vku::safe_VkAttachmentDescription2& ref, const VkAttachmentDescription2& res) {
     EXPECT_EQ(ref.sType, res.sType);
     for (const VkBaseInStructure *ref_pNext = reinterpret_cast<const VkBaseInStructure*>(ref.pNext),
                                  *res_pNext = reinterpret_cast<const VkBaseInStructure*>(res.pNext);
          ref_pNext != nullptr; ref_pNext = ref_pNext->pNext, res_pNext = res_pNext->pNext) {
         switch (ref_pNext->sType) {
-            case VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_STENCIL_LAYOUT:
-                CompareStruct(*reinterpret_cast<const vku::safe_VkAttachmentDescriptionStencilLayout*>(ref_pNext),
-                              *reinterpret_cast<const VkAttachmentDescriptionStencilLayout*>(res_pNext));
-                break;
             default:
                 FAIL() << "Unkown sType found in reference struct";
                 break;
@@ -2621,10 +2773,6 @@ void CompareStruct(const vku::safe_VkRenderPassCreateInfo2& ref, const VkRenderP
                                  *res_pNext = reinterpret_cast<const VkBaseInStructure*>(res.pNext);
          ref_pNext != nullptr; ref_pNext = ref_pNext->pNext, res_pNext = res_pNext->pNext) {
         switch (ref_pNext->sType) {
-            case VK_STRUCTURE_TYPE_RENDER_PASS_INPUT_ATTACHMENT_ASPECT_CREATE_INFO:
-                CompareStruct(*reinterpret_cast<const vku::safe_VkRenderPassInputAttachmentAspectCreateInfo*>(ref_pNext),
-                              *reinterpret_cast<const VkRenderPassInputAttachmentAspectCreateInfo*>(res_pNext));
-                break;
             case VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO:
                 CompareStruct(*reinterpret_cast<const vku::safe_VkRenderPassMultiviewCreateInfo*>(ref_pNext),
                               *reinterpret_cast<const VkRenderPassMultiviewCreateInfo*>(res_pNext));
@@ -2666,6 +2814,149 @@ void CompareStruct(const vku::safe_VkRenderPassCreateInfo2& ref, const VkRenderP
     } else {
         EXPECT_EQ(nullptr, res.pCorrelatedViewMasks);
     }
+}
+
+void CompareStruct(const vku::safe_VkShaderModuleCreateInfo& ref, const VkShaderModuleCreateInfo& res) {
+    EXPECT_EQ(ref.sType, res.sType);
+    for (const VkBaseInStructure *ref_pNext = reinterpret_cast<const VkBaseInStructure*>(ref.pNext),
+                                 *res_pNext = reinterpret_cast<const VkBaseInStructure*>(res.pNext);
+         ref_pNext != nullptr; ref_pNext = ref_pNext->pNext, res_pNext = res_pNext->pNext) {
+        switch (ref_pNext->sType) {
+            default:
+                FAIL() << "Unkown sType found in reference struct";
+                break;
+        }
+    }
+    EXPECT_EQ(ref.flags, res.flags);
+    EXPECT_EQ(ref.codeSize, res.codeSize);
+    if (ref.codeSize) {
+        for (uint32_t i = 0; i < ref.codeSize; ++i) {
+            EXPECT_EQ(reinterpret_cast<const uint8_t*>(ref.pCode)[i], reinterpret_cast<const uint8_t*>(res.pCode)[i]);
+        }
+    } else {
+        EXPECT_EQ(nullptr, res.pCode);
+    }
+}
+
+void CompareStruct(const vku::safe_VkPipelineCacheCreateInfo& ref, const VkPipelineCacheCreateInfo& res) {
+    EXPECT_EQ(ref.sType, res.sType);
+    for (const VkBaseInStructure *ref_pNext = reinterpret_cast<const VkBaseInStructure*>(ref.pNext),
+                                 *res_pNext = reinterpret_cast<const VkBaseInStructure*>(res.pNext);
+         ref_pNext != nullptr; ref_pNext = ref_pNext->pNext, res_pNext = res_pNext->pNext) {
+        switch (ref_pNext->sType) {
+            default:
+                FAIL() << "Unkown sType found in reference struct";
+                break;
+        }
+    }
+    EXPECT_EQ(ref.flags, res.flags);
+    EXPECT_EQ(ref.initialDataSize, res.initialDataSize);
+    if (ref.initialDataSize) {
+        for (uint32_t i = 0; i < ref.initialDataSize; ++i) {
+            EXPECT_EQ(reinterpret_cast<const uint8_t*>(ref.pInitialData)[i], reinterpret_cast<const uint8_t*>(res.pInitialData)[i]);
+        }
+    } else {
+        EXPECT_EQ(nullptr, res.pInitialData);
+    }
+}
+
+void CompareStruct(const vku::safe_VkPipelinePoolSize& ref, const VkPipelinePoolSize& res) {
+    EXPECT_EQ(ref.sType, res.sType);
+    for (const VkBaseInStructure *ref_pNext = reinterpret_cast<const VkBaseInStructure*>(ref.pNext),
+                                 *res_pNext = reinterpret_cast<const VkBaseInStructure*>(res.pNext);
+         ref_pNext != nullptr; ref_pNext = ref_pNext->pNext, res_pNext = res_pNext->pNext) {
+        switch (ref_pNext->sType) {
+            default:
+                FAIL() << "Unkown sType found in reference struct";
+                break;
+        }
+    }
+    EXPECT_EQ(ref.poolEntryCount, res.poolEntryCount);
+    EXPECT_EQ(ref.poolEntrySize, res.poolEntrySize);
+}
+
+void CompareStruct(const vku::safe_VkDeviceObjectReservationCreateInfo& ref, const VkDeviceObjectReservationCreateInfo& res) {
+    EXPECT_EQ(ref.sType, res.sType);
+    for (const VkBaseInStructure *ref_pNext = reinterpret_cast<const VkBaseInStructure*>(ref.pNext),
+                                 *res_pNext = reinterpret_cast<const VkBaseInStructure*>(res.pNext);
+         ref_pNext != nullptr; ref_pNext = ref_pNext->pNext, res_pNext = res_pNext->pNext) {
+        switch (ref_pNext->sType) {
+            default:
+                FAIL() << "Unkown sType found in reference struct";
+                break;
+        }
+    }
+    EXPECT_EQ(ref.pipelineCacheCreateInfoCount, res.pipelineCacheCreateInfoCount);
+    if (ref.pipelineCacheCreateInfoCount) {
+        for (uint32_t i = 0; i < ref.pipelineCacheCreateInfoCount; ++i) {
+            CompareStruct(ref.pPipelineCacheCreateInfos[i], res.pPipelineCacheCreateInfos[i]);
+        }
+    } else {
+        EXPECT_EQ(nullptr, res.pPipelineCacheCreateInfos);
+    }
+    EXPECT_EQ(ref.pipelinePoolSizeCount, res.pipelinePoolSizeCount);
+    if (ref.pipelinePoolSizeCount) {
+        for (uint32_t i = 0; i < ref.pipelinePoolSizeCount; ++i) {
+            CompareStruct(ref.pPipelinePoolSizes[i], res.pPipelinePoolSizes[i]);
+        }
+    } else {
+        EXPECT_EQ(nullptr, res.pPipelinePoolSizes);
+    }
+    EXPECT_EQ(ref.semaphoreRequestCount, res.semaphoreRequestCount);
+    EXPECT_EQ(ref.commandBufferRequestCount, res.commandBufferRequestCount);
+    EXPECT_EQ(ref.fenceRequestCount, res.fenceRequestCount);
+    EXPECT_EQ(ref.deviceMemoryRequestCount, res.deviceMemoryRequestCount);
+    EXPECT_EQ(ref.bufferRequestCount, res.bufferRequestCount);
+    EXPECT_EQ(ref.imageRequestCount, res.imageRequestCount);
+    EXPECT_EQ(ref.eventRequestCount, res.eventRequestCount);
+    EXPECT_EQ(ref.queryPoolRequestCount, res.queryPoolRequestCount);
+    EXPECT_EQ(ref.bufferViewRequestCount, res.bufferViewRequestCount);
+    EXPECT_EQ(ref.imageViewRequestCount, res.imageViewRequestCount);
+    EXPECT_EQ(ref.layeredImageViewRequestCount, res.layeredImageViewRequestCount);
+    EXPECT_EQ(ref.pipelineCacheRequestCount, res.pipelineCacheRequestCount);
+    EXPECT_EQ(ref.pipelineLayoutRequestCount, res.pipelineLayoutRequestCount);
+    EXPECT_EQ(ref.renderPassRequestCount, res.renderPassRequestCount);
+    EXPECT_EQ(ref.graphicsPipelineRequestCount, res.graphicsPipelineRequestCount);
+    EXPECT_EQ(ref.computePipelineRequestCount, res.computePipelineRequestCount);
+    EXPECT_EQ(ref.descriptorSetLayoutRequestCount, res.descriptorSetLayoutRequestCount);
+    EXPECT_EQ(ref.samplerRequestCount, res.samplerRequestCount);
+    EXPECT_EQ(ref.descriptorPoolRequestCount, res.descriptorPoolRequestCount);
+    EXPECT_EQ(ref.descriptorSetRequestCount, res.descriptorSetRequestCount);
+    EXPECT_EQ(ref.framebufferRequestCount, res.framebufferRequestCount);
+    EXPECT_EQ(ref.commandPoolRequestCount, res.commandPoolRequestCount);
+    EXPECT_EQ(ref.samplerYcbcrConversionRequestCount, res.samplerYcbcrConversionRequestCount);
+    EXPECT_EQ(ref.surfaceRequestCount, res.surfaceRequestCount);
+    EXPECT_EQ(ref.swapchainRequestCount, res.swapchainRequestCount);
+    EXPECT_EQ(ref.displayModeRequestCount, res.displayModeRequestCount);
+    EXPECT_EQ(ref.subpassDescriptionRequestCount, res.subpassDescriptionRequestCount);
+    EXPECT_EQ(ref.attachmentDescriptionRequestCount, res.attachmentDescriptionRequestCount);
+    EXPECT_EQ(ref.descriptorSetLayoutBindingRequestCount, res.descriptorSetLayoutBindingRequestCount);
+    EXPECT_EQ(ref.descriptorSetLayoutBindingLimit, res.descriptorSetLayoutBindingLimit);
+    EXPECT_EQ(ref.maxImageViewMipLevels, res.maxImageViewMipLevels);
+    EXPECT_EQ(ref.maxImageViewArrayLayers, res.maxImageViewArrayLayers);
+    EXPECT_EQ(ref.maxLayeredImageViewMipLevels, res.maxLayeredImageViewMipLevels);
+    EXPECT_EQ(ref.maxOcclusionQueriesPerPool, res.maxOcclusionQueriesPerPool);
+    EXPECT_EQ(ref.maxPipelineStatisticsQueriesPerPool, res.maxPipelineStatisticsQueriesPerPool);
+    EXPECT_EQ(ref.maxTimestampQueriesPerPool, res.maxTimestampQueriesPerPool);
+    EXPECT_EQ(ref.maxImmutableSamplersPerDescriptorSetLayout, res.maxImmutableSamplersPerDescriptorSetLayout);
+}
+
+void CompareStruct(const vku::safe_VkPipelineOfflineCreateInfo& ref, const VkPipelineOfflineCreateInfo& res) {
+    EXPECT_EQ(ref.sType, res.sType);
+    for (const VkBaseInStructure *ref_pNext = reinterpret_cast<const VkBaseInStructure*>(ref.pNext),
+                                 *res_pNext = reinterpret_cast<const VkBaseInStructure*>(res.pNext);
+         ref_pNext != nullptr; ref_pNext = ref_pNext->pNext, res_pNext = res_pNext->pNext) {
+        switch (ref_pNext->sType) {
+            default:
+                FAIL() << "Unkown sType found in reference struct";
+                break;
+        }
+    }
+    for (uint32_t i = 0; i < VK_UUID_SIZE; ++i) {
+        EXPECT_EQ(ref.pipelineIdentifier[i], res.pipelineIdentifier[i]);
+    }
+    EXPECT_EQ(ref.matchControl, res.matchControl);
+    EXPECT_EQ(ref.poolEntrySize, res.poolEntrySize);
 }
 
 void CompareStruct(const vku::safe_VkPipelineShaderStageRequiredSubgroupSizeCreateInfo& ref,

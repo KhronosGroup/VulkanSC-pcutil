@@ -287,6 +287,7 @@ class JsonGenGenerator(BaseGenerator):
                                 strm << " | ";
                             }}
                             strm << gen_{flags.bitmaskName}_c_str(static_cast<{flags.bitmaskName}>(multi_bit_flag));
+                            break;
                         }}
                     }}
                     auto isnt_part_of_any_matched_multi_bit_flags = [&](const auto bit){{

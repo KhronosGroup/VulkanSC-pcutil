@@ -614,8 +614,10 @@ ComputePipelineData::ComputePipelineData(const VkComputePipelineCreateInfo* ci, 
 
     if (auto result = device_data.shader_module_map.find(create_info.stage.module); result->first) {
         shader_module_data = *result->second;
+    } else if (auto shader_module_ci = vku::FindStructInPNextChain<VkShaderModuleCreateInfo>(ci->stage.pNext); ci->stage.module == VK_NULL_HANDLE && shader_module_ci) {
+        shader_module_data = {shader_module_ci};
     } else {
-        LOG("[%s] ERROR: Failed to find shader module in accelerating structure referenced by compute pipeline.",
+        LOG("[%s] ERROR: Failed to find shader module in accelerating structure referenced by compute pipeline nor in pNext chain.",
             VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
     }
 

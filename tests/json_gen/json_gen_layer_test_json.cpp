@@ -304,6 +304,195 @@ TEST_F(JSON, ComputeSimple) {
     EXPECT_TRUE(CompareJson(result_json, ref_json));
 }
 
+TEST_F(JSON, ComputeSimpleMaintenance5) {
+    TEST_DESCRIPTION("Tests whether generated pipeline JSON for a minimal compute pipeline is as expected");
+
+    auto instance_ci = std::make_unique<VkInstanceCreateInfo>(vku::InitStructHelper());
+    VkInstance instance;
+    vkCreateInstance(instance_ci.get(), nullptr, &instance);
+
+    uint32_t phys_dev_count = 1;
+    std::vector<VkPhysicalDevice> phys_devs(phys_dev_count);
+    vkEnumeratePhysicalDevices(instance, &phys_dev_count, phys_devs.data());
+
+    auto maintenance5_feature_ci = std::make_unique<VkPhysicalDeviceMaintenance5FeaturesKHR>(vku::InitStructHelper());
+    maintenance5_feature_ci->maintenance5 = VK_TRUE;
+    auto features_ci = std::make_unique<VkPhysicalDeviceFeatures2>(vku::InitStructHelper());
+    features_ci->pNext = maintenance5_feature_ci.get();
+    auto device_ci = std::make_unique<VkDeviceCreateInfo>(vku::InitStructHelper());
+    const char* enabled_exts[1] = {VK_KHR_MAINTENANCE_5_EXTENSION_NAME};
+    device_ci->pNext = features_ci.get();
+    device_ci->enabledExtensionCount = 1;
+    device_ci->ppEnabledExtensionNames = enabled_exts;
+    VkDevice device;
+    vkCreateDevice(phys_devs[0], device_ci.get(), nullptr, &device);
+
+    auto shader_module_ci = std::make_unique<VkShaderModuleCreateInfo>(vku::InitStructHelper());
+    std::vector<uint32_t> ref_spirv{1, 2, 3, 4};
+    shader_module_ci->codeSize = ref_spirv.size() * sizeof(uint32_t);
+    shader_module_ci->pCode = ref_spirv.data();
+
+    auto ds_layout_ci = std::make_unique<VkDescriptorSetLayoutCreateInfo>(vku::InitStructHelper());
+    VkDescriptorSetLayout ds_layout;
+    vkCreateDescriptorSetLayout(device, ds_layout_ci.get(), NULL, &ds_layout);
+
+    auto pipeline_layout_ci = std::make_unique<VkPipelineLayoutCreateInfo>(vku::InitStructHelper());
+    VkPipelineLayout pipeline_layout;
+    vkCreatePipelineLayout(device, pipeline_layout_ci.get(), NULL, &pipeline_layout);
+
+    auto pipeline_stage_ci = std::make_unique<VkPipelineShaderStageCreateInfo>(vku::InitStructHelper());
+    pipeline_stage_ci->pNext = shader_module_ci.get();
+    pipeline_stage_ci->stage = VK_SHADER_STAGE_COMPUTE_BIT;
+    pipeline_stage_ci->pName = "main";
+    auto compute_pipeline_ci = std::make_unique<VkComputePipelineCreateInfo>(vku::InitStructHelper());
+    compute_pipeline_ci->layout = pipeline_layout;
+    compute_pipeline_ci->stage = *pipeline_stage_ci;
+    VkPipeline pipeline;
+    vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, compute_pipeline_ci.get(), NULL, &pipeline);
+
+    vkDestroyPipeline(device, pipeline, nullptr);
+    vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
+    vkDestroyDescriptorSetLayout(device, ds_layout, nullptr);
+    vkDestroyDevice(device, nullptr);
+    vkDestroyInstance(instance, nullptr);
+
+    size_t pipeline_id = 3;
+
+    auto result_json = GetJson(pipeline_id);
+    auto result_spirv = GetSpirv(pipeline_id, "compute");
+    EXPECT_TRUE(ValidatePipelineJson(std::string(result_json)));
+
+    std::string ref_json = {R"({
+    "ComputePipelineState" : 
+    {
+        "ComputePipeline" : 
+        {
+            "basePipelineHandle" : "",
+            "basePipelineIndex" : 0,
+            "flags" : 0,
+            "layout" : "",
+            "pNext" : "NULL",
+            "sType" : "VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO",
+            "stage" : 
+            {
+                "flags" : 0,
+                "module" : "",
+                "pName" : "main",
+                "pNext" : "NULL",
+                "pSpecializationInfo" : "NULL",
+                "sType" : "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO",
+                "stage" : "VK_SHADER_STAGE_COMPUTE_BIT"
+            }
+        },
+        "PhysicalDeviceFeatures" : 
+        {
+            "features" : 
+            {
+                "alphaToOne" : "VK_FALSE",
+                "depthBiasClamp" : "VK_FALSE",
+                "depthBounds" : "VK_FALSE",
+                "depthClamp" : "VK_FALSE",
+                "drawIndirectFirstInstance" : "VK_FALSE",
+                "dualSrcBlend" : "VK_FALSE",
+                "fillModeNonSolid" : "VK_FALSE",
+                "fragmentStoresAndAtomics" : "VK_FALSE",
+                "fullDrawIndexUint32" : "VK_FALSE",
+                "geometryShader" : "VK_FALSE",
+                "imageCubeArray" : "VK_FALSE",
+                "independentBlend" : "VK_FALSE",
+                "inheritedQueries" : "VK_FALSE",
+                "largePoints" : "VK_FALSE",
+                "logicOp" : "VK_FALSE",
+                "multiDrawIndirect" : "VK_FALSE",
+                "multiViewport" : "VK_FALSE",
+                "occlusionQueryPrecise" : "VK_FALSE",
+                "pipelineStatisticsQuery" : "VK_FALSE",
+                "robustBufferAccess" : "VK_FALSE",
+                "sampleRateShading" : "VK_FALSE",
+                "samplerAnisotropy" : "VK_FALSE",
+                "shaderClipDistance" : "VK_FALSE",
+                "shaderCullDistance" : "VK_FALSE",
+                "shaderFloat64" : "VK_FALSE",
+                "shaderImageGatherExtended" : "VK_FALSE",
+                "shaderInt16" : "VK_FALSE",
+                "shaderInt64" : "VK_FALSE",
+                "shaderResourceMinLod" : "VK_FALSE",
+                "shaderResourceResidency" : "VK_FALSE",
+                "shaderSampledImageArrayDynamicIndexing" : "VK_FALSE",
+                "shaderStorageBufferArrayDynamicIndexing" : "VK_FALSE",
+                "shaderStorageImageArrayDynamicIndexing" : "VK_FALSE",
+                "shaderStorageImageExtendedFormats" : "VK_FALSE",
+                "shaderStorageImageMultisample" : "VK_FALSE",
+                "shaderStorageImageReadWithoutFormat" : "VK_FALSE",
+                "shaderStorageImageWriteWithoutFormat" : "VK_FALSE",
+                "shaderTessellationAndGeometryPointSize" : "VK_FALSE",
+                "shaderUniformBufferArrayDynamicIndexing" : "VK_FALSE",
+                "sparseBinding" : "VK_FALSE",
+                "sparseResidency16Samples" : "VK_FALSE",
+                "sparseResidency2Samples" : "VK_FALSE",
+                "sparseResidency4Samples" : "VK_FALSE",
+                "sparseResidency8Samples" : "VK_FALSE",
+                "sparseResidencyAliased" : "VK_FALSE",
+                "sparseResidencyBuffer" : "VK_FALSE",
+                "sparseResidencyImage2D" : "VK_FALSE",
+                "sparseResidencyImage3D" : "VK_FALSE",
+                "tessellationShader" : "VK_FALSE",
+                "textureCompressionASTC_LDR" : "VK_FALSE",
+                "textureCompressionBC" : "VK_FALSE",
+                "textureCompressionETC2" : "VK_FALSE",
+                "variableMultisampleRate" : "VK_FALSE",
+                "vertexPipelineStoresAndAtomics" : "VK_FALSE",
+                "wideLines" : "VK_FALSE"
+            },
+            "pNext" : "NULL",
+            "sType" : "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2"
+        },
+        "PipelineLayout" : 
+        {
+            "flags" : 0,
+            "pNext" : "NULL",
+            "pPushConstantRanges" : "NULL",
+            "pSetLayouts" : "NULL",
+            "pushConstantRangeCount" : 0,
+            "sType" : "VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO",
+            "setLayoutCount" : 0
+        },
+        "ShaderFileNames" : 
+        [
+            {
+                "filename" : "json_gen_layer_test_json_pipeline_#.compute.spv",
+                "stage" : "VK_SHADER_STAGE_COMPUTE_BIT"
+            }
+        ]
+    },
+    "EnabledExtensions" : [],
+    "PipelineUUID" :
+    [
+        60,
+        107,
+        242,
+        102,
+        76,
+        42,
+        138,
+        202,
+        223,
+        212,
+        110,
+        146,
+        235,
+        193,
+        36,
+        196
+    ]
+})"};
+    WriteIds(ref_json, pipeline_id);
+
+    auto spirv_words_match = std::equal(result_spirv.begin(), result_spirv.end(), ref_spirv.begin(), ref_spirv.end());
+    EXPECT_TRUE(spirv_words_match);
+    EXPECT_TRUE(CompareJson(result_json, ref_json));
+}
+
 TEST_F(JSON, ComputeCustomRelativePath) {
     TEST_DESCRIPTION("Tests whether generating to a relative location is as expected");
 

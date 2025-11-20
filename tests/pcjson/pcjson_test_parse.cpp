@@ -287,123 +287,13 @@ TEST_F(Parse, VkShaderModuleCreateInfo) {
 TEST_F(Parse, VkDeviceObjectReservationCreateInfo) {
     TEST_DESCRIPTION("Tests parsing of a reasonably complex object reservation create info JSON");
 
-    VkDeviceObjectReservationCreateInfo dor_ci;
-    std::string json = {R"({
-        "sType" : "VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO",
-        "pNext": "NULL",
-        "pipelineCacheCreateInfoCount": 1,
-        "pPipelineCacheCreateInfos": [
-            {
-                "sType": "VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO",
-                "pNext": "NULL",
-                "flags": "VK_PIPELINE_CACHE_CREATE_READ_ONLY_BIT | VK_PIPELINE_CACHE_CREATE_USE_APPLICATION_STORAGE_BIT",
-                "initialDataSize": 3,
-                "pInitialData": "abcd"
-            }
-        ],
-        "pipelinePoolSizeCount": 1,
-        "pPipelinePoolSizes": [
-            {
-                "sType": "VK_STRUCTURE_TYPE_PIPELINE_POOL_SIZE",
-                "pNext": "NULL",
-                "poolEntryCount": 1,
-                "poolEntrySize": 1048576
-            }
-        ],
-        "semaphoreRequestCount": 0,
-        "commandBufferRequestCount": 1,
-        "fenceRequestCount": 1,
-        "deviceMemoryRequestCount": 2,
-        "bufferRequestCount": 2,
-        "imageRequestCount": 0,
-        "eventRequestCount": 0,
-        "queryPoolRequestCount": 0,
-        "bufferViewRequestCount": 0,
-        "imageViewRequestCount": 0,
-        "layeredImageViewRequestCount": 0,
-        "pipelineCacheRequestCount": 1,
-        "pipelineLayoutRequestCount": 1,
-        "renderPassRequestCount": 1,
-        "graphicsPipelineRequestCount": 0,
-        "computePipelineRequestCount": 1,
-        "descriptorSetLayoutRequestCount": 1,
-        "samplerRequestCount": 0,
-        "descriptorPoolRequestCount": 1,
-        "descriptorSetRequestCount": 1,
-        "framebufferRequestCount": 0,
-        "commandPoolRequestCount": 2,
-        "samplerYcbcrConversionRequestCount": 0,
-        "surfaceRequestCount": 0,
-        "swapchainRequestCount": 1,
-        "displayModeRequestCount": 0,
-        "subpassDescriptionRequestCount": 1,
-        "attachmentDescriptionRequestCount": 2,
-        "descriptorSetLayoutBindingRequestCount": 2,
-        "descriptorSetLayoutBindingLimit": 2,
-        "maxImageViewMipLevels": 1,
-        "maxImageViewArrayLayers": 1,
-        "maxLayeredImageViewMipLevels": 0,
-        "maxOcclusionQueriesPerPool": 0,
-        "maxPipelineStatisticsQueriesPerPool": 0,
-        "maxTimestampQueriesPerPool": 0,
-        "maxImmutableSamplersPerDescriptorSetLayout": 0
-    })"};
+    for (auto seed : {0}) {
+        auto [ref_ci, json_in] = getVkDeviceObjectReservationCreateInfo(seed);
 
-    CHECK_PARSE(vpjParseSingleStructJson(this->parser_, json.c_str(), &dor_ci, &msg_));
-
-    EXPECT_EQ(dor_ci.sType, VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO);
-    EXPECT_EQ(dor_ci.pNext, nullptr);
-    EXPECT_EQ(dor_ci.pipelineCacheCreateInfoCount, 1);
-    EXPECT_EQ(dor_ci.pPipelineCacheCreateInfos[0].sType, VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO);
-    EXPECT_EQ(dor_ci.pPipelineCacheCreateInfos[0].pNext, nullptr);
-    EXPECT_EQ(dor_ci.pPipelineCacheCreateInfos[0].flags,
-              VK_PIPELINE_CACHE_CREATE_READ_ONLY_BIT | VK_PIPELINE_CACHE_CREATE_USE_APPLICATION_STORAGE_BIT);
-    EXPECT_EQ(dor_ci.pPipelineCacheCreateInfos[0].initialDataSize, 3);
-    EXPECT_EQ(static_cast<const unsigned char*>(dor_ci.pPipelineCacheCreateInfos[0].pInitialData)[0], 0b01101001);
-    EXPECT_EQ(static_cast<const unsigned char*>(dor_ci.pPipelineCacheCreateInfos[0].pInitialData)[1], 0b10110111);
-    EXPECT_EQ(static_cast<const unsigned char*>(dor_ci.pPipelineCacheCreateInfos[0].pInitialData)[2], 0b00011101);
-    EXPECT_EQ(dor_ci.pipelinePoolSizeCount, 1);
-    EXPECT_EQ(dor_ci.pPipelinePoolSizes[0].sType, VK_STRUCTURE_TYPE_PIPELINE_POOL_SIZE);
-    EXPECT_EQ(dor_ci.pPipelinePoolSizes[0].pNext, nullptr);
-    EXPECT_EQ(dor_ci.pPipelinePoolSizes[0].poolEntryCount, 1);
-    EXPECT_EQ(dor_ci.pPipelinePoolSizes[0].poolEntrySize, 1048576);
-    EXPECT_EQ(dor_ci.semaphoreRequestCount, 0);
-    EXPECT_EQ(dor_ci.commandBufferRequestCount, 1);
-    EXPECT_EQ(dor_ci.fenceRequestCount, 1);
-    EXPECT_EQ(dor_ci.deviceMemoryRequestCount, 2);
-    EXPECT_EQ(dor_ci.bufferRequestCount, 2);
-    EXPECT_EQ(dor_ci.imageRequestCount, 0);
-    EXPECT_EQ(dor_ci.eventRequestCount, 0);
-    EXPECT_EQ(dor_ci.queryPoolRequestCount, 0);
-    EXPECT_EQ(dor_ci.bufferViewRequestCount, 0);
-    EXPECT_EQ(dor_ci.imageViewRequestCount, 0);
-    EXPECT_EQ(dor_ci.layeredImageViewRequestCount, 0);
-    EXPECT_EQ(dor_ci.pipelineCacheRequestCount, 1);
-    EXPECT_EQ(dor_ci.pipelineLayoutRequestCount, 1);
-    EXPECT_EQ(dor_ci.renderPassRequestCount, 1);
-    EXPECT_EQ(dor_ci.graphicsPipelineRequestCount, 0);
-    EXPECT_EQ(dor_ci.computePipelineRequestCount, 1);
-    EXPECT_EQ(dor_ci.descriptorSetLayoutRequestCount, 1);
-    EXPECT_EQ(dor_ci.samplerRequestCount, 0);
-    EXPECT_EQ(dor_ci.descriptorPoolRequestCount, 1);
-    EXPECT_EQ(dor_ci.descriptorSetRequestCount, 1);
-    EXPECT_EQ(dor_ci.framebufferRequestCount, 0);
-    EXPECT_EQ(dor_ci.commandPoolRequestCount, 2);
-    EXPECT_EQ(dor_ci.samplerYcbcrConversionRequestCount, 0);
-    EXPECT_EQ(dor_ci.surfaceRequestCount, 0);
-    EXPECT_EQ(dor_ci.swapchainRequestCount, 1);
-    EXPECT_EQ(dor_ci.displayModeRequestCount, 0);
-    EXPECT_EQ(dor_ci.subpassDescriptionRequestCount, 1);
-    EXPECT_EQ(dor_ci.attachmentDescriptionRequestCount, 2);
-    EXPECT_EQ(dor_ci.descriptorSetLayoutBindingRequestCount, 2);
-    EXPECT_EQ(dor_ci.descriptorSetLayoutBindingLimit, 2);
-    EXPECT_EQ(dor_ci.maxImageViewMipLevels, 1);
-    EXPECT_EQ(dor_ci.maxImageViewArrayLayers, 1);
-    EXPECT_EQ(dor_ci.maxLayeredImageViewMipLevels, 0);
-    EXPECT_EQ(dor_ci.maxOcclusionQueriesPerPool, 0);
-    EXPECT_EQ(dor_ci.maxPipelineStatisticsQueriesPerPool, 0);
-    EXPECT_EQ(dor_ci.maxTimestampQueriesPerPool, 0);
-    EXPECT_EQ(dor_ci.maxImmutableSamplersPerDescriptorSetLayout, 0);
+        VkDeviceObjectReservationCreateInfo res_ci{};
+        CHECK_PARSE(vpjParseSingleStructJson(this->parser_, json_in.c_str(), &res_ci, &msg_));
+        CompareStruct(ref_ci, res_ci);
+    }
 }
 
 TEST_F(Parse, VkPipelineOfflineCreateInfo) {

@@ -505,36 +505,6 @@ std::pair<vku::safe_VkPipelineLayoutCreateInfo, std::string> getVkPipelineLayout
     return {&ci, json};
 }
 
-std::pair<vku::safe_VkPipelineShaderStageRequiredSubgroupSizeCreateInfo, std::string>
-getVkPipelineShaderStageRequiredSubgroupSizeCreateInfo(uint32_t seed = 0) {
-    using namespace std::string_literals;
-
-    VkPipelineShaderStageRequiredSubgroupSizeCreateInfo ci = vku::InitStructHelper();
-    std::string json{};
-
-    switch (seed % 3) {
-        case 0:
-            ci.requiredSubgroupSize = 32;
-            break;
-        case 1:
-            ci.requiredSubgroupSize = 64;
-            break;
-        case 2:
-            ci.requiredSubgroupSize = 256;
-            break;
-    }
-
-    json = R"({
-        "sType": "VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO",
-            "pNext": "NULL",
-            "requiredSubgroupSize": )"s +
-           std::to_string(ci.requiredSubgroupSize) + R"(
-        })";
-
-    return {&ci, json};
-}
-
-template <typename... InStructure>
 std::pair<vku::safe_VkComputePipelineCreateInfo, std::string> getVkComputePipelineCreateInfo(uint32_t seed = 0) {
     using namespace std::string_literals;
 
@@ -1050,6 +1020,8 @@ std::pair<vku::safe_VkShaderModuleCreateInfo, std::string> getVkShaderModuleCrea
     return {&ci, json};
 }
 
+// TODO: Uncomment all code once safe struct issue is resolved.
+// see: https://github.com/KhronosGroup/Vulkan-Utility-Libraries/issues/343
 std::pair<vku::safe_VkDeviceObjectReservationCreateInfo, std::string> getVkDeviceObjectReservationCreateInfo(uint32_t seed = 0) {
     VkDeviceObjectReservationCreateInfo ci = vku::InitStructHelper();
     std::string json{};
@@ -1057,22 +1029,39 @@ std::pair<vku::safe_VkDeviceObjectReservationCreateInfo, std::string> getVkDevic
     std::vector<uint8_t> initialData{};
     std::vector<VkPipelineCacheCreateInfo> pipelineCacheCreateInfos{};
     std::vector<VkPipelinePoolSize> pipelinePoolSizes{};
+    std::string pPipelineCacheCreateInfos_str = R"("NULL")", pPipelinePoolSizes_str = R"("NULL")";
 
     switch (seed % 2) {
         default:
-            initialData = {0b01101001, 0b10110111, 0b00011101};
-            pipelineCacheCreateInfos.push_back(vku::InitStructHelper());
-            pipelineCacheCreateInfos.back().flags =
-                VK_PIPELINE_CACHE_CREATE_READ_ONLY_BIT | VK_PIPELINE_CACHE_CREATE_USE_APPLICATION_STORAGE_BIT;
-            pipelineCacheCreateInfos.back().initialDataSize = static_cast<uint32_t>(initialData.size());
-            pipelineCacheCreateInfos.back().pInitialData = initialData.data();
-
+            // initialData = {0b01101001, 0b10110111, 0b00011101};
+            // pipelineCacheCreateInfos.push_back(vku::InitStructHelper());
+            // pipelineCacheCreateInfos.back().flags =
+            //     VK_PIPELINE_CACHE_CREATE_READ_ONLY_BIT | VK_PIPELINE_CACHE_CREATE_USE_APPLICATION_STORAGE_BIT;
+            // pipelineCacheCreateInfos.back().initialDataSize = static_cast<uint32_t>(initialData.size());
+            // pipelineCacheCreateInfos.back().pInitialData = initialData.data();
+            // pPipelineCacheCreateInfos_str = R"([
+            //     {
+            //         "sType": "VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO",
+            //         "pNext": "NULL",
+            //         "flags": "VK_PIPELINE_CACHE_CREATE_READ_ONLY_BIT | VK_PIPELINE_CACHE_CREATE_USE_APPLICATION_STORAGE_BIT",
+            //         "initialDataSize": 3,
+            //         "pInitialData": "abcd"
+            //     }
+            //])";
             ci.pipelineCacheCreateInfoCount = static_cast<uint32_t>(pipelineCacheCreateInfos.size());
             ci.pPipelineCacheCreateInfos = pipelineCacheCreateInfos.data();
 
-            pipelinePoolSizes.push_back(vku::InitStructHelper());
-            pipelinePoolSizes.back().poolEntryCount = 1;
-            pipelinePoolSizes.back().poolEntrySize = 1048576;
+            // pipelinePoolSizes.push_back(vku::InitStructHelper());
+            // pipelinePoolSizes.back().poolEntryCount = 1;
+            // pipelinePoolSizes.back().poolEntrySize = 1048576;
+            // pPipelinePoolSizes_str = R"([
+            //     {
+            //         "sType": "VK_STRUCTURE_TYPE_PIPELINE_POOL_SIZE",
+            //         "pNext": "NULL",
+            //         "poolEntryCount": 1,
+            //         "poolEntrySize": 1048576
+            //     }
+            //])";
             ci.pipelinePoolSizeCount = static_cast<uint32_t>(pipelinePoolSizes.size());
             ci.pPipelinePoolSizes = pipelinePoolSizes.data();
 
@@ -1113,28 +1102,17 @@ std::pair<vku::safe_VkDeviceObjectReservationCreateInfo, std::string> getVkDevic
             ci.maxPipelineStatisticsQueriesPerPool = 0;
             ci.maxTimestampQueriesPerPool = 0;
             ci.maxImmutableSamplersPerDescriptorSetLayout = 0;
-            json = R"(json = {R"({
+            json = R"({
         "sType" : "VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO",
         "pNext": "NULL",
-        "pipelineCacheCreateInfoCount": 1,
-        "pPipelineCacheCreateInfos": [
-            {
-                "sType": "VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO",
-                "pNext": "NULL",
-                "flags": "VK_PIPELINE_CACHE_CREATE_READ_ONLY_BIT | VK_PIPELINE_CACHE_CREATE_USE_APPLICATION_STORAGE_BIT",
-                "initialDataSize": 3,
-                "pInitialData": "abcd"
-            }
-        ],
-        "pipelinePoolSizeCount": 1,
-        "pPipelinePoolSizes": [
-            {
-                "sType": "VK_STRUCTURE_TYPE_PIPELINE_POOL_SIZE",
-                "pNext": "NULL",
-                "poolEntryCount": 1,
-                "poolEntrySize": 1048576
-            }
-        ],
+        "pipelineCacheCreateInfoCount": )" +
+                   std::to_string(pipelineCacheCreateInfos.size()) + R"(,
+        "pPipelineCacheCreateInfos": )" +
+                   pPipelineCacheCreateInfos_str + R"(,
+        "pipelinePoolSizeCount": )" +
+                   std::to_string(pipelinePoolSizes.size()) + R"(,
+        "pPipelinePoolSizes": )" +
+                   pPipelinePoolSizes_str + R"(,
         "semaphoreRequestCount": 0,
         "commandBufferRequestCount": 1,
         "fenceRequestCount": 1,
@@ -1195,441 +1173,6 @@ std::pair<vku::safe_VkPipelineOfflineCreateInfo, std::string> getVkPipelineOffli
             "pipelineIdentifier": [85, 43, 255, 24, 155, 64, 62, 24, 0, 0, 0, 0, 0, 0, 0, 0],
             "matchControl": "VK_PIPELINE_MATCH_CONTROL_APPLICATION_UUID_EXACT_MATCH",
             "poolEntrySize": 1048576
-        })";
-            break;
-    }
-
-    return {&ci, json};
-}
-
-template <typename... InStructure>
-std::pair<vku::safe_VkPipelineVertexInputStateCreateInfo, std::string> getVkPipelineVertexInputStateCreateInfo(
-    uint32_t seed = 0, std::tuple<std::pair<InStructure, std::string>...> pNext = std::tuple<>{}) {
-    using namespace std::string_literals;
-
-    VkPipelineVertexInputStateCreateInfo ci = vku::InitStructHelper();
-    std::string json{};
-
-    switch (seed % 2) {
-        default:
-            VkVertexInputBindingDescription vertexBindingDescriptions[1] = {{0, 32, VK_VERTEX_INPUT_RATE_VERTEX}};
-            VkVertexInputAttributeDescription vertexAttributeDescriptions[2] = {{0, 0, VK_FORMAT_R32G32B32A32_SFLOAT, 0},
-                                                                                {1, 0, VK_FORMAT_R32G32B32A32_SFLOAT, 16}};
-            ci.vertexBindingDescriptionCount = 1;
-            ci.pVertexBindingDescriptions = vertexBindingDescriptions;
-            ci.vertexAttributeDescriptionCount = 2;
-            ci.pVertexAttributeDescriptions = vertexAttributeDescriptions;
-            json = R"({
-            "sType" : "VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO",
-            "pNext":"NULL",
-            "flags" : 0,
-            "vertexBindingDescriptionCount" : 1,
-            "pVertexBindingDescriptions": [
-                {
-                    "binding" : 0,
-                    "stride" : 32,
-                    "inputRate" : "VK_VERTEX_INPUT_RATE_VERTEX"
-                }
-            ],
-            "vertexAttributeDescriptionCount" : 2,
-            "pVertexAttributeDescriptions": [
-                {
-                    "location" : 0,
-                    "binding" : 0,
-                    "format" : "VK_FORMAT_R32G32B32A32_SFLOAT",
-                    "offset" : 0
-                },
-                {
-                    "location" : 1,
-                    "binding" : 0,
-                    "format" : "VK_FORMAT_R32G32B32A32_SFLOAT",
-                    "offset" : 16
-                }
-            ]
-        })";
-            break;
-    }
-
-    ChainPNext(ci, json, pNext);
-
-    return {&ci, json};
-}
-
-template <typename... InStructure>
-std::pair<vku::safe_VkPipelineInputAssemblyStateCreateInfo, std::string> getVkPipelineInputAssemblyStateCreateInfo(
-    uint32_t seed = 0, std::tuple<std::pair<InStructure, std::string>...> pNext = std::tuple<>{}) {
-    using namespace std::string_literals;
-
-    VkPipelineInputAssemblyStateCreateInfo ci = vku::InitStructHelper();
-    std::string json{};
-
-    switch (seed % 2) {
-        default:
-            ci.topology = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
-            ci.primitiveRestartEnable = VK_FALSE;
-            json = R"({
-            "sType": "VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO",
-            "pNext": "NULL",
-            "flags": 0,
-            "topology": "VK_PRIMITIVE_TOPOLOGY_PATCH_LIST",
-            "primitiveRestartEnable": "VK_FALSE"
-        })";
-            break;
-    }
-
-    ChainPNext(ci, json, pNext);
-
-    return {&ci, json};
-}
-
-template <typename... InStructure>
-std::pair<vku::safe_VkPipelineTessellationStateCreateInfo, std::string> getVkPipelineTessellationStateCreateInfo(
-    uint32_t seed = 0, std::tuple<std::pair<InStructure, std::string>...> pNext = std::tuple<>{}) {
-    using namespace std::string_literals;
-
-    VkPipelineTessellationStateCreateInfo ci = vku::InitStructHelper();
-    std::string json{};
-
-    switch (seed % 2) {
-        default:
-            ci.patchControlPoints = 4;
-            json = R"({
-            "sType": "VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO",
-            "pNext": "NULL",
-            "flags": 0,
-            "patchControlPoints": 4
-        })";
-            break;
-    }
-
-    ChainPNext(ci, json, pNext);
-
-    return {&ci, json};
-}
-
-template <typename... InStructure>
-std::pair<vku::safe_VkPipelineViewportStateCreateInfo, std::string> getVkPipelineViewportStateCreateInfo(
-    uint32_t seed = 0, std::tuple<std::pair<InStructure, std::string>...> pNext = std::tuple<>{}) {
-    using namespace std::string_literals;
-
-    VkPipelineViewportStateCreateInfo ci = vku::InitStructHelper();
-    std::string json{};
-
-    switch (seed % 2) {
-        default:
-            VkViewport viewports[1] = {{0.f, 0.f, 51.f, 51.f, 0.f, 1.f}};
-            VkRect2D scissors[1] = {{VkOffset2D{0, 0}, VkExtent2D{51, 51}}};
-            ci.viewportCount = 1;
-            ci.pViewports = viewports;
-            ci.scissorCount = 1;
-            ci.pScissors = scissors;
-            json = R"({
-            "sType": "VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO",
-            "pNext": "NULL",
-            "flags": 0,
-            "viewportCount": 1,
-            "pViewports":
-            [
-                {
-                    "x": 0.0,
-                    "y": 0.0,
-                    "width": 51.0,
-                    "height": 51.0,
-                    "minDepth": 0.0,
-                    "maxDepth": 1.0
-                }
-            ],
-            "scissorCount": 1,
-            "pScissors":
-            [
-                {
-                    "offset":
-                    {
-                        "x": 0,
-                        "y": 0
-                    },
-                    "extent":
-                    {
-                        "width": 51,
-                        "height": 51
-                    }
-                }
-            ]
-        })";
-            break;
-    }
-
-    ChainPNext(ci, json, pNext);
-
-    return {vku::safe_VkPipelineViewportStateCreateInfo{&ci, false, false}, json};
-}
-
-template <typename... InStructure>
-std::pair<vku::safe_VkPipelineRasterizationStateCreateInfo, std::string> getVkPipelineRasterizationStateCreateInfo(
-    uint32_t seed = 0, std::tuple<std::pair<InStructure, std::string>...> pNext = std::tuple<>{}) {
-    using namespace std::string_literals;
-
-    VkPipelineRasterizationStateCreateInfo ci = vku::InitStructHelper();
-    std::string json{};
-
-    switch (seed % 2) {
-        default:
-            ci.depthClampEnable = VK_FALSE;
-            ci.rasterizerDiscardEnable = VK_FALSE;
-            ci.polygonMode = VK_POLYGON_MODE_FILL;
-            ci.cullMode = 0;
-            ci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-            ci.depthBiasEnable = VK_FALSE;
-            ci.depthBiasConstantFactor = 0.f;
-            ci.depthBiasClamp = 0.f;
-            ci.depthBiasSlopeFactor = 0.f;
-            ci.lineWidth = 1.f;
-            json = R"({
-            "sType": "VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO",
-            "pNext": "NULL",
-            "flags": 0,
-            "depthClampEnable": "VK_FALSE",
-            "rasterizerDiscardEnable": "VK_FALSE",
-            "polygonMode": "VK_POLYGON_MODE_FILL",
-            "cullMode": 0,
-            "frontFace": "VK_FRONT_FACE_COUNTER_CLOCKWISE",
-            "depthBiasEnable": "VK_FALSE",
-            "depthBiasConstantFactor": 0.0,
-            "depthBiasClamp": 0.0,
-            "depthBiasSlopeFactor": 0.0,
-            "lineWidth": 1.0
-        })";
-            break;
-    }
-
-    ChainPNext(ci, json, pNext);
-
-    return {&ci, json};
-}
-
-template <typename... InStructure>
-std::pair<vku::safe_VkPipelineMultisampleStateCreateInfo, std::string> getVkPipelineMultisampleStateCreateInfo(
-    uint32_t seed = 0, std::tuple<std::pair<InStructure, std::string>...> pNext = std::tuple<>{}) {
-    using namespace std::string_literals;
-
-    VkPipelineMultisampleStateCreateInfo ci = vku::InitStructHelper();
-    std::string json{};
-
-    switch (seed % 2) {
-        default:
-            ci.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-            ci.sampleShadingEnable = VK_FALSE;
-            ci.minSampleShading = 1.f;
-            ci.pSampleMask = nullptr;
-            ci.alphaToCoverageEnable = VK_FALSE;
-            ci.alphaToOneEnable = VK_FALSE;
-            json = R"({
-            "sType": "VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO",
-            "pNext": "NULL",
-            "flags": 0,
-            "rasterizationSamples": "VK_SAMPLE_COUNT_1_BIT",
-            "sampleShadingEnable": "VK_FALSE",
-            "minSampleShading": 1.0,
-            "pSampleMask": "NULL",
-            "alphaToCoverageEnable": "VK_FALSE",
-            "alphaToOneEnable": "VK_FALSE"
-        })";
-            break;
-    }
-
-    ChainPNext(ci, json, pNext);
-
-    return {&ci, json};
-}
-
-template <typename... InStructure>
-std::pair<vku::safe_VkPipelineDepthStencilStateCreateInfo, std::string> getVkPipelineDepthStencilStateCreateInfo(
-    uint32_t seed = 0, std::tuple<std::pair<InStructure, std::string>...> pNext = std::tuple<>{}) {
-    using namespace std::string_literals;
-
-    VkPipelineDepthStencilStateCreateInfo ci = vku::InitStructHelper();
-    std::string json{};
-
-    switch (seed % 2) {
-        default:
-            ci.depthTestEnable = VK_TRUE;
-            ci.depthWriteEnable = VK_TRUE;
-            ci.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
-            ci.depthBoundsTestEnable = VK_FALSE;
-            ci.stencilTestEnable = VK_FALSE;
-            ci.front.failOp = VK_STENCIL_OP_INVERT;
-            ci.front.passOp = VK_STENCIL_OP_KEEP;
-            ci.front.depthFailOp = VK_STENCIL_OP_ZERO;
-            ci.front.compareOp = VK_COMPARE_OP_NEVER;
-            ci.front.compareMask = 0;
-            ci.front.writeMask = 0;
-            ci.front.reference = 0;
-            ci.back.failOp = VK_STENCIL_OP_INVERT;
-            ci.back.passOp = VK_STENCIL_OP_KEEP;
-            ci.back.depthFailOp = VK_STENCIL_OP_ZERO;
-            ci.back.compareOp = VK_COMPARE_OP_NEVER;
-            ci.back.compareMask = 0;
-            ci.back.writeMask = 0;
-            ci.back.reference = 0;
-            ci.minDepthBounds = 0.f;
-            ci.maxDepthBounds = 1.f;
-            json = R"({
-            "sType": "VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO",
-            "pNext": "NULL",
-            "flags": 0,
-            "depthTestEnable": "VK_TRUE",
-            "depthWriteEnable": "VK_TRUE",
-            "depthCompareOp": "VK_COMPARE_OP_LESS_OR_EQUAL",
-            "depthBoundsTestEnable": "VK_FALSE",
-            "stencilTestEnable": "VK_FALSE",
-            "front":
-            {
-                "failOp": "VK_STENCIL_OP_INVERT",
-                "passOp": "VK_STENCIL_OP_KEEP",
-                "depthFailOp": "VK_STENCIL_OP_ZERO",
-                "compareOp": "VK_COMPARE_OP_NEVER",
-                "compareMask": 0,
-                "writeMask": 0,
-                "reference": 0
-            },
-            "back":
-            {
-                "failOp": "VK_STENCIL_OP_INVERT",
-                "passOp": "VK_STENCIL_OP_KEEP",
-                "depthFailOp": "VK_STENCIL_OP_ZERO",
-                "compareOp": "VK_COMPARE_OP_NEVER",
-                "compareMask": 0,
-                "writeMask": 0,
-                "reference": 0
-            },
-            "minDepthBounds": 0.0,
-            "maxDepthBounds": 1.0
-        })";
-            break;
-    }
-
-    ChainPNext(ci, json, pNext);
-
-    return {&ci, json};
-}
-
-template <typename... InStructure>
-std::pair<vku::safe_VkPipelineColorBlendStateCreateInfo, std::string> getVkPipelineColorBlendStateCreateInfo(
-    uint32_t seed = 0, std::tuple<std::pair<InStructure, std::string>...> pNext = std::tuple<>{}) {
-    using namespace std::string_literals;
-
-    VkPipelineColorBlendStateCreateInfo ci = vku::InitStructHelper();
-    std::string json{};
-
-    switch (seed % 2) {
-        default:
-            VkPipelineColorBlendAttachmentState attachments[1] = {
-                {VK_FALSE, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_ZERO, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_ZERO,
-                 VK_BLEND_OP_ADD,
-                 VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT}};
-            ci.logicOpEnable = VK_FALSE;
-            ci.logicOp = VK_LOGIC_OP_CLEAR;
-            ci.attachmentCount = 1;
-            ci.pAttachments = attachments;
-            ci.blendConstants[0] = 0.f;
-            ci.blendConstants[1] = 0.f;
-            ci.blendConstants[2] = 0.f;
-            ci.blendConstants[3] = 0.f;
-            json = R"({
-            "sType": "VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO",
-            "pNext": "NULL",
-            "flags": 0,
-            "logicOpEnable": "VK_FALSE",
-            "logicOp": "VK_LOGIC_OP_CLEAR",
-            "attachmentCount": 1,
-            "pAttachments":
-            [
-                {
-                    "blendEnable": "VK_FALSE",
-                    "srcColorBlendFactor": "VK_BLEND_FACTOR_ZERO",
-                    "dstColorBlendFactor": "VK_BLEND_FACTOR_ZERO",
-                    "colorBlendOp": "VK_BLEND_OP_ADD",
-                    "srcAlphaBlendFactor": "VK_BLEND_FACTOR_ZERO",
-                    "dstAlphaBlendFactor": "VK_BLEND_FACTOR_ZERO",
-                    "alphaBlendOp": "VK_BLEND_OP_ADD",
-                    "colorWriteMask": "VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT"
-                }
-            ],
-            "blendConstants": [0.0, 0.0, 0.0, 0.0]
-        })";
-            break;
-    }
-
-    ChainPNext(ci, json, pNext);
-
-    return {&ci, json};
-}
-
-template <typename... InStructure>
-std::pair<vku::safe_VkPipelineDynamicStateCreateInfo, std::string> getVkPipelineDynamicStateCreateInfo(
-    uint32_t seed = 0, std::tuple<std::pair<InStructure, std::string>...> pNext = std::tuple<>{}) {
-    using namespace std::string_literals;
-
-    VkPipelineDynamicStateCreateInfo ci = vku::InitStructHelper();
-    std::string json{};
-
-    switch (seed % 2) {
-        default:
-            VkDynamicState dynamicStates[1] = {VK_DYNAMIC_STATE_LINE_WIDTH};
-            ci.dynamicStateCount = 1;
-            ci.pDynamicStates = dynamicStates;
-            json = R"({
-            "sType": "VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO",
-            "pNext": "NULL",
-            "flags": 0,
-            "dynamicStateCount": 1,
-            "pDynamicStates": ["VK_DYNAMIC_STATE_LINE_WIDTH"]
-        })";
-            break;
-    }
-
-    ChainPNext(ci, json, pNext);
-
-    return {&ci, json};
-}
-
-std::pair<vku::safe_VkPipelineDiscardRectangleStateCreateInfoEXT, std::string> getVkPipelineDiscardRectangleStateCreateInfoEXT(
-    uint32_t seed = 0) {
-    using namespace std::string_literals;
-
-    VkPipelineDiscardRectangleStateCreateInfoEXT ci = vku::InitStructHelper();
-    std::string json{};
-
-    ci.sType = VK_STRUCTURE_TYPE_PIPELINE_DISCARD_RECTANGLE_STATE_CREATE_INFO_EXT;
-    ci.pNext = nullptr;
-    ci.flags = 0;
-    VkRect2D discardRectangles{};
-    switch (seed % 2) {
-        default:
-            discardRectangles = {VkOffset2D{0, 0}, VkExtent2D{51, 51}};
-            ci.discardRectangleMode = VK_DISCARD_RECTANGLE_MODE_EXCLUSIVE_EXT;
-            ci.discardRectangleCount = 1;
-            ci.pDiscardRectangles = &discardRectangles;
-            json = R"({
-            "sType": "VK_STRUCTURE_TYPE_PIPELINE_DISCARD_RECTANGLE_STATE_CREATE_INFO_EXT",
-            "pNext" : "NULL",
-            "flags": 0,
-            "discardRectangleMode": "VK_DISCARD_RECTANGLE_MODE_EXCLUSIVE_EXT",
-            "discardRectangleCount": 1,
-            "pDiscardRectangles": [
-                {
-                    "offset":
-                    {
-                        "x" : 0,
-                        "y" : 0
-                    },
-                    "extent":
-                    {
-                        "width" : 51,
-                        "height" : 51
-                    }
-                }
-            ]
         })";
             break;
     }

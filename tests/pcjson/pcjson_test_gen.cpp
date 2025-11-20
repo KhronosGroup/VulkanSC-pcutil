@@ -185,141 +185,17 @@ TEST_F(Gen, VkShaderModuleCreateInfo) {
     }
 }
 
-// TODO: Use getVkDeviceObjectReservationCreateInfo once safe struct issue is resolved.
-// see: https://github.com/KhronosGroup/Vulkan-Utility-Libraries/issues/343
 TEST_F(Gen, VkDeviceObjectReservationCreateInfo) {
     TEST_DESCRIPTION("Tests generating of a reasonably complex object reservation create info JSON");
 
-    std::string ref_json = {R"({
-        "sType" : "VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO",
-        "pNext": "NULL",
-        "pipelineCacheCreateInfoCount": 1,
-        "pPipelineCacheCreateInfos": [
-            {
-                "sType": "VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO",
-                "pNext": "NULL",
-                "flags": "VK_PIPELINE_CACHE_CREATE_READ_ONLY_BIT | VK_PIPELINE_CACHE_CREATE_USE_APPLICATION_STORAGE_BIT",
-                "initialDataSize": 3,
-                "pInitialData": "abcd"
-            }
-        ],
-        "pipelinePoolSizeCount": 1,
-        "pPipelinePoolSizes": [
-            {
-                "sType": "VK_STRUCTURE_TYPE_PIPELINE_POOL_SIZE",
-                "pNext": "NULL",
-                "poolEntryCount": 1,
-                "poolEntrySize": 1048576
-            }
-        ],
-        "semaphoreRequestCount": 0,
-        "commandBufferRequestCount": 1,
-        "fenceRequestCount": 1,
-        "deviceMemoryRequestCount": 2,
-        "bufferRequestCount": 2,
-        "imageRequestCount": 0,
-        "eventRequestCount": 0,
-        "queryPoolRequestCount": 0,
-        "bufferViewRequestCount": 0,
-        "imageViewRequestCount": 0,
-        "layeredImageViewRequestCount": 0,
-        "pipelineCacheRequestCount": 1,
-        "pipelineLayoutRequestCount": 1,
-        "renderPassRequestCount": 1,
-        "graphicsPipelineRequestCount": 0,
-        "computePipelineRequestCount": 1,
-        "descriptorSetLayoutRequestCount": 1,
-        "samplerRequestCount": 0,
-        "descriptorPoolRequestCount": 1,
-        "descriptorSetRequestCount": 1,
-        "framebufferRequestCount": 0,
-        "commandPoolRequestCount": 2,
-        "samplerYcbcrConversionRequestCount": 0,
-        "surfaceRequestCount": 0,
-        "swapchainRequestCount": 1,
-        "displayModeRequestCount": 0,
-        "subpassDescriptionRequestCount": 1,
-        "attachmentDescriptionRequestCount": 2,
-        "descriptorSetLayoutBindingRequestCount": 2,
-        "descriptorSetLayoutBindingLimit": 2,
-        "maxImageViewMipLevels": 1,
-        "maxImageViewArrayLayers": 1,
-        "maxLayeredImageViewMipLevels": 0,
-        "maxOcclusionQueriesPerPool": 0,
-        "maxPipelineStatisticsQueriesPerPool": 0,
-        "maxTimestampQueriesPerPool": 0,
-        "maxImmutableSamplersPerDescriptorSetLayout": 0
-    })"};
+    for (auto seed : {0}) {
+        auto [ci_in, ref_json] = getVkDeviceObjectReservationCreateInfo(seed);
 
-    VkDeviceObjectReservationCreateInfo dor_ci{};
-
-    dor_ci.sType = VK_STRUCTURE_TYPE_DEVICE_OBJECT_RESERVATION_CREATE_INFO;
-    dor_ci.pNext = nullptr;
-
-    VkPipelineCacheCreateInfo pipelineCacheCreateInfos[1] = {};
-    dor_ci.pipelineCacheCreateInfoCount = 1;
-    pipelineCacheCreateInfos[0].sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
-    pipelineCacheCreateInfos[0].pNext = nullptr;
-    pipelineCacheCreateInfos[0].flags =
-        VK_PIPELINE_CACHE_CREATE_READ_ONLY_BIT | VK_PIPELINE_CACHE_CREATE_USE_APPLICATION_STORAGE_BIT;
-
-    uint8_t initialData[3] = {0b01101001, 0b10110111, 0b00011101};
-    pipelineCacheCreateInfos[0].initialDataSize = 3;
-    pipelineCacheCreateInfos->pInitialData = initialData;
-
-    dor_ci.pPipelineCacheCreateInfos = pipelineCacheCreateInfos;
-
-    VkPipelinePoolSize pipelinePoolSizes[1] = {};
-    dor_ci.pipelinePoolSizeCount = 1;
-    pipelinePoolSizes[0].sType = VK_STRUCTURE_TYPE_PIPELINE_POOL_SIZE;
-    pipelinePoolSizes[0].pNext = nullptr;
-    pipelinePoolSizes[0].poolEntryCount = 1;
-    pipelinePoolSizes[0].poolEntrySize = 1048576;
-    dor_ci.pPipelinePoolSizes = pipelinePoolSizes;
-
-    dor_ci.semaphoreRequestCount = 0;
-    dor_ci.commandBufferRequestCount = 1;
-    dor_ci.fenceRequestCount = 1;
-    dor_ci.deviceMemoryRequestCount = 2;
-    dor_ci.bufferRequestCount = 2;
-    dor_ci.imageRequestCount = 0;
-    dor_ci.eventRequestCount = 0;
-    dor_ci.queryPoolRequestCount = 0;
-    dor_ci.bufferViewRequestCount = 0;
-    dor_ci.imageViewRequestCount = 0;
-    dor_ci.layeredImageViewRequestCount = 0;
-    dor_ci.pipelineCacheRequestCount = 1;
-    dor_ci.pipelineLayoutRequestCount = 1;
-    dor_ci.renderPassRequestCount = 1;
-    dor_ci.graphicsPipelineRequestCount = 0;
-    dor_ci.computePipelineRequestCount = 1;
-    dor_ci.descriptorSetLayoutRequestCount = 1;
-    dor_ci.samplerRequestCount = 0;
-    dor_ci.descriptorPoolRequestCount = 1;
-    dor_ci.descriptorSetRequestCount = 1;
-    dor_ci.framebufferRequestCount = 0;
-    dor_ci.commandPoolRequestCount = 2;
-    dor_ci.samplerYcbcrConversionRequestCount = 0;
-    dor_ci.surfaceRequestCount = 0;
-    dor_ci.swapchainRequestCount = 1;
-    dor_ci.displayModeRequestCount = 0;
-    dor_ci.subpassDescriptionRequestCount = 1;
-    dor_ci.attachmentDescriptionRequestCount = 2;
-    dor_ci.descriptorSetLayoutBindingRequestCount = 2;
-    dor_ci.descriptorSetLayoutBindingLimit = 2;
-    dor_ci.maxImageViewMipLevels = 1;
-    dor_ci.maxImageViewArrayLayers = 1;
-    dor_ci.maxLayeredImageViewMipLevels = 0;
-    dor_ci.maxOcclusionQueriesPerPool = 0;
-    dor_ci.maxPipelineStatisticsQueriesPerPool = 0;
-    dor_ci.maxTimestampQueriesPerPool = 0;
-    dor_ci.maxImmutableSamplersPerDescriptorSetLayout = 0;
-
-    const char* result_json = nullptr;
-
-    EXPECT_TRUE(vpjGenerateSingleStructJson(generator_, &dor_ci, &result_json, &msg_));
-    CHECK_GEN();
-    EXPECT_TRUE(CompareJson(result_json, ref_json));
+        const char* result_json = nullptr;
+        EXPECT_TRUE(vpjGenerateSingleStructJson(generator_, &ci_in, &result_json, &msg_));
+        CHECK_GEN();
+        EXPECT_TRUE(CompareJson(result_json, ref_json));
+    }
 }
 
 TEST_F(Gen, VkPipelineOfflineCreateInfo) {

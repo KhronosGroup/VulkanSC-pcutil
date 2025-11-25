@@ -7,7 +7,7 @@
 
 #include <gtest/gtest.h>
 
-#include "pcreader.hpp"
+#include <vulkan/pcutil/pcreader.hpp>
 
 #include "pcutil_test_writer_helper.h"
 

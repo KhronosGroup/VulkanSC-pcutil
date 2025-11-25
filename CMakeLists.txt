@@ -6,7 +6,7 @@
 # ~~~
 cmake_minimum_required(VERSION 3.22.1)
 
-project(VulkanSC-Pipeline-Cache-Utils)
+project(VulkanSC-Pipeline-Cache-Utils VERSION 1.0.19)
 
 option(BUILD_TESTS "Build pipeline cache utils unit tests of built" ${PROJECT_IS_TOP_LEVEL})
 option(BUILD_VKSCPCINFO "Build vkscpcinfo" ON)
@@ -14,6 +14,7 @@ option(BUILD_JSON_GEN_LAYER "Build JSON gen layer" ON)
 option(BUILD_WERROR "Treat pipeline cache utils compiler warnings as errors" ${PROJECT_IS_TOP_LEVEL})
 option(ENABLE_ADDRESS_SANITIZER "Use address sanitization")
 option(ENABLE_THREAD_SANITIZER "Use thread sanitization")
+option(PCU_ENABLE_INSTALL "Install VulkanSC-pcutil" ${PROJECT_IS_TOP_LEVEL})
 
 set(API_TYPE "vulkansc")
 add_definitions(-DVULKANSC)
@@ -54,8 +55,6 @@ if (BUILD_TESTS) # Layer testing needs the loader
     find_package(VulkanLoader REQUIRED CONFIG QUIET)
     find_vk_package(VulkanLoader ${VULKAN_LOADER_INSTALL_DIR})
 endif()
-
-include(GNUInstallDirs)
 
 if (BUILD_WERROR)
     add_compile_options("$<IF:$<CXX_COMPILER_ID:MSVC>,/WX,-Werror>")
@@ -140,6 +139,11 @@ if (PCU_CODEGEN)
     )
 endif()
 
+if(PCU_ENABLE_INSTALL)
+    include(GNUInstallDirs)
+    include(CMakePackageConfigHelpers)
+endif()
+
 add_subdirectory(library/pcutil)
 add_subdirectory(library/pcjson)
 
@@ -154,4 +158,20 @@ endif()
 if(BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
+endif()
+
+if(PCU_ENABLE_INSTALL)
+    install(EXPORT VulkanSCPCUtilConfig NAMESPACE "VulkanSC::" DESTINATION "share/cmake/VulkanSCPCUtil")
+
+    set(version_config "${CMAKE_CURRENT_BINARY_DIR}/generated/VulkanSCPCUtilConfigVersion.cmake")
+    write_basic_package_version_file("${version_config}" COMPATIBILITY SameMajorVersion ARCH_INDEPENDENT)
+    install(FILES "${version_config}" DESTINATION "share/cmake/VulkanSCPCUtil")
+
+    if(BUILD_JSON_GEN_LAYER)
+        install(EXPORT VulkanJSONGenLayerConfig DESTINATION share/cmake/VulkanJSONGenLayer NAMESPACE Vulkan::)
+
+        set(version_config "${CMAKE_CURRENT_BINARY_DIR}/generated/VulkanJSONGenLayerConfigVersion.cmake")
+        write_basic_package_version_file("${version_config}" COMPATIBILITY SameMajorVersion ARCH_INDEPENDENT)
+        install(FILES "${version_config}" DESTINATION "share/cmake/VulkanJSONGenLayer")
+    endif()
 endif()

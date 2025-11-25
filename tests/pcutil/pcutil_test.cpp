@@ -13,8 +13,8 @@
 #include <vector>
 #include <string>
 
-#include "pcreader.hpp"
-#include "pcwriter.hpp"
+#include <vulkan/pcutil/pcreader.hpp>
+#include <vulkan/pcutil/pcwriter.hpp>
 
 #include <vulkan/vulkan_sc.h>
 

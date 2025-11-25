@@ -4,6 +4,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 # ~~~
+
 add_library(VulkanSCPCJson)
 add_library(VulkanSC::PCJson ALIAS VulkanSCPCJson)
 
@@ -16,9 +17,11 @@ target_sources(VulkanSCPCJson PRIVATE
 
 target_include_directories(VulkanSCPCJson
     PRIVATE
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/vulkan/pcjson>
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/library/pcjson>
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/library/pcjson/generated>
+        $<BUILD_INTERFACE:
+            ${PROJECT_SOURCE_DIR}/include/vulkan/pcjson
+            ${PROJECT_SOURCE_DIR}/library/pcjson
+            ${PROJECT_SOURCE_DIR}/library/pcjson/generated
+        >
     PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
@@ -26,11 +29,13 @@ target_include_directories(VulkanSCPCJson
 
 find_package(jsoncpp REQUIRED CONFIG QUIET)
 find_package(hashlib REQUIRED CONFIG QUIET)
-target_link_libraries(VulkanSCPCJson PRIVATE jsoncpp_static hashlib::hashlib Vulkan::Headers)
-set_target_properties(VulkanSCPCJson PROPERTIES OUTPUT_NAME vkscpcjson)
-
-install(TARGETS VulkanSCPCJson)
-install(
-    DIRECTORY ${PROJECT_SOURCE_DIR}/include/vulkan/pcjson
-    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/vulkan"
+target_link_libraries(VulkanSCPCJson PRIVATE
+    $<BUILD_INTERFACE:
+        jsoncpp_static
+        hashlib::hashlib
+        Vulkan::Headers
+    >
+)
+set_target_properties(VulkanSCPCJson PROPERTIES
+    OUTPUT_NAME vkscpcjson
 )

@@ -17,7 +17,7 @@
 #include <cctype>
 #include <string>
 
-#include "pcreader.hpp"
+#include <vulkan/pcutil/pcreader.hpp>
 #include <vulkan/vulkan_sc.h>
 
 using namespace std;

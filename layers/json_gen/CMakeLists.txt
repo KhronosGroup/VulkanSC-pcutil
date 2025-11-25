@@ -36,7 +36,6 @@ target_link_libraries(VulkanJSONGenLayer
         Vulkan::Headers
         Vulkan::UtilityHeaders
         VulkanSC::PCJson
-    PUBLIC
         Vulkan::SafeStruct
 )
 
@@ -48,7 +47,7 @@ set_target_properties(VulkanJSONGenLayer PROPERTIES OUTPUT_NAME ${LAYER_NAME})
 # This code generates the appropriate json for both local testing and the installation.
 # NOTE: For WIN32 the JSON and dll MUST be placed in the same location, due to Win32 using a relative path for installation.
 set(INPUT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${LAYER_NAME}.json.in")
-set(INTERMEDIATE_FILE "${CMAKE_CURRENT_BINARY_DIR}/json/validation.json")
+set(INTERMEDIATE_FILE "${CMAKE_CURRENT_BINARY_DIR}/json/VkLayer_json_gen.json")
 set(OUTPUT_FILE_FINAL_NAME "${LAYER_NAME}.json")
     set(JSON_LAYER_NAME "VK_LAYER_KHRONOS_json_gen")
 set(LAYER_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR})
@@ -70,3 +69,8 @@ configure_file("${INPUT_FILE}" "${INTERMEDIATE_FILE}" @ONLY)
 add_custom_command(TARGET VulkanJSONGenLayer POST_BUILD
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${INTERMEDIATE_FILE}" $<TARGET_FILE_DIR:VulkanJSONGenLayer>/${OUTPUT_FILE_FINAL_NAME}
 )
+
+if(PCU_ENABLE_INSTALL)
+    install(TARGETS VulkanJSONGenLayer EXPORT VulkanJSONGenLayerConfig LIBRARY DESTINATION "${CMAKE_INSTALL_BINDIR}")
+    set_target_properties(VulkanJSONGenLayer PROPERTIES EXPORT_NAME "JSONGenLayer")
+endif()

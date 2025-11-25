@@ -7,7 +7,7 @@
 
 #include "pcutil_test_writer_helper.h"
 
-#include "pcreader.hpp"
+#include <vulkan/pcutil/pcreader.hpp>
 
 const uint8_t PCWriterTestData::sample_payload[8] = {0xde, 0xad, 0xde, 0xad, 0xbe, 0xef, 0x7a, 0xc0};
 

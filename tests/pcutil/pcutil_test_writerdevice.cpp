@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "pcwriter.hpp"
+#include <vulkan/pcutil/pcwriter.hpp>
 #include <vulkan/vulkan_sc.h>
 
 #include <gtest/gtest.h>

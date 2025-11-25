@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "pcwriter.hpp"
+#include <vulkan/pcutil/pcwriter.hpp>
 #include <vulkan/vulkan_sc.h>
 
 #include <cstdint>

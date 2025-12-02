@@ -35,7 +35,7 @@ class ParserBase : protected Base {
             } else {
                 return reinterpret_cast<VkShaderModule>((void*)parse_string(json, l));
             }
-        } else if (json.isUInt()) {
+        } else if (json.isUInt64()) {
             return VkShaderModule(parse_uint64_t(json, l));
         } else {
             Error() << "Invalid handle";
@@ -51,7 +51,7 @@ class ParserBase : protected Base {
             } else {
                 return reinterpret_cast<VkPipelineLayout>((void*)parse_string(json, l));
             }
-        } else if (json.isUInt()) {
+        } else if (json.isUInt64()) {
             return VkPipelineLayout(parse_uint64_t(json, l));
         } else {
             Error() << "Invalid handle";
@@ -67,7 +67,7 @@ class ParserBase : protected Base {
             } else {
                 return reinterpret_cast<VkRenderPass>((void*)parse_string(json, l));
             }
-        } else if (json.isUInt()) {
+        } else if (json.isUInt64()) {
             return VkRenderPass(parse_uint64_t(json, l));
         } else {
             Error() << "Invalid handle";
@@ -83,7 +83,7 @@ class ParserBase : protected Base {
             } else {
                 return reinterpret_cast<VkPipeline>((void*)parse_string(json, l));
             }
-        } else if (json.isUInt()) {
+        } else if (json.isUInt64()) {
             return VkPipeline(parse_uint64_t(json, l));
         } else {
             Error() << "Invalid handle";
@@ -99,7 +99,7 @@ class ParserBase : protected Base {
             } else {
                 return reinterpret_cast<VkSamplerYcbcrConversion>((void*)parse_string(json, l));
             }
-        } else if (json.isUInt()) {
+        } else if (json.isUInt64()) {
             return VkSamplerYcbcrConversion(parse_uint64_t(json, l));
         } else {
             Error() << "Invalid handle";
@@ -115,7 +115,7 @@ class ParserBase : protected Base {
             } else {
                 return reinterpret_cast<VkSampler>((void*)parse_string(json, l));
             }
-        } else if (json.isUInt()) {
+        } else if (json.isUInt64()) {
             return VkSampler(parse_uint64_t(json, l));
         } else {
             Error() << "Invalid handle";
@@ -131,7 +131,7 @@ class ParserBase : protected Base {
             } else {
                 return reinterpret_cast<VkDescriptorSetLayout>((void*)parse_string(json, l));
             }
-        } else if (json.isUInt()) {
+        } else if (json.isUInt64()) {
             return VkDescriptorSetLayout(parse_uint64_t(json, l));
         } else {
             Error() << "Invalid handle";

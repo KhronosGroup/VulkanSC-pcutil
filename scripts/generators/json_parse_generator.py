@@ -419,7 +419,7 @@ class JsonParseGenerator(BaseGenerator):
                     }} else {{
                         return reinterpret_cast<{handle.name}>((void*)parse_string(json, l));
                     }}
-                }} else if (json.isUInt()) {{
+                }} else if (json.isUInt64()) {{
                     return {handle.name}(parse_uint64_t(json, l));
                 }} else {{
                     Error() << "Invalid handle";

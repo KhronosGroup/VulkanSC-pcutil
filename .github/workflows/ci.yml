@@ -43,7 +43,7 @@ jobs:
         # Default clang-format in oldest supported Ubuntu (22.04), also available in 24.04
         clang-format-version: '14'
     - name: Check REUSE compliance
-      uses: fsfe/reuse-action@v5.0.0
+      uses: fsfe/reuse-action@v6.0.0
     - name: Install Python
       uses: actions/setup-python@v5
       with:

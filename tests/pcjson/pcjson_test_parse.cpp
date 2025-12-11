@@ -855,3 +855,232 @@ TEST_F(Parse, ObjectNameRemapping) {
     EXPECT_EQ(uint64_t(descriptorSetLayouts[2].pBindings[0].pImmutableSamplers[0]), 0);
     EXPECT_EQ(uint64_t(descriptorSetLayouts[2].pBindings[0].pImmutableSamplers[1]), 1);
 }
+
+TEST_F(Parse, ComputePipelineJSONAbove32Bit) {
+    TEST_DESCRIPTION(
+        "Tests parsing of a reasonably simple compute pipeline JSON with handles values not representable as 32-bit values");
+
+    VpjData data{};
+    constexpr uint64_t base = 4'294'967'295;
+
+    const char* ycbcr_names[1] = {"YcbcrConversion1"};
+    auto [ycbcr_ci, ycbcr_json] = getVkSamplerYcbcrConversionCreateInfo(0);
+
+    const char* sampler_names[2] = {"ImmutableSampler1", "YcbcrSampler1"};
+    auto [immut_sampler_ci, immut_sampler_json] = getVkSamplerCreateInfo(0);
+    auto [ycbcr_sampler_ci, ycbcr_sampler_json] = getVkSamplerCreateInfo(0, {VkSamplerYcbcrConversion(base + 1), ycbcr_names[0]});
+    VkSamplerCreateInfo sampler_ci[2] = {*immut_sampler_ci.ptr(), *ycbcr_sampler_ci.ptr()};
+
+    const char* dsl_names[1] = {"DescriptorSetLayout1"};
+    auto [dsl_ci, dsl_json] =
+        getVkDescriptorSetLayoutCreateInfo(0, {{VkSampler(base + 1), sampler_names[0]}, {VkSampler(base + 2), sampler_names[1]}});
+
+    auto [pl_ci, pl_json] = getVkPipelineLayoutCreateInfo(0, {{VkDescriptorSetLayout(base + 1), dsl_names[0]}});
+
+    auto [cp_ci, cp_json] = getVkComputePipelineCreateInfo(0);
+
+    auto [pdf, pdf_json] = getVkPhysicalDeviceFeatures2(0);
+
+    auto [shaderFileNames, shaderFileNames_json] = getShaderFileNames({{VK_SHADER_STAGE_COMPUTE_BIT, "shader.comp.spv"}});
+
+    const char* enabled_extensions[1] = {"VK_EXT_robustness2"};
+
+    const std::string json = R"({
+        "ComputePipelineState" :
+        {
+            "ComputePipeline" : )" +
+                             cp_json +
+                             R"(,
+            "DescriptorSetLayouts" :
+            [
+                {
+                    ")" + dsl_names[0] +
+                             R"(" : )" + dsl_json + R"(
+                }
+            ],
+            "ImmutableSamplers" :
+            [
+                {
+                    ")" + sampler_names[0] +
+                             R"(" : )" + immut_sampler_json + R"(
+                },
+                {
+                    ")" + sampler_names[1] +
+                             R"(" : )" + ycbcr_sampler_json + R"(
+                }
+            ],
+            "PhysicalDeviceFeatures" : )" +
+                             pdf_json + R"(,
+            "PipelineLayout" : )" +
+                             pl_json +
+                             R"(,
+            "ShaderFileNames" : )" +
+                             shaderFileNames_json +
+                             R"(,
+            "YcbcrSamplers" :
+            [
+                {
+                    ")" + ycbcr_names[0] +
+                             R"(" : )" + ycbcr_json + R"(
+                }
+            ]
+        },
+        "EnabledExtensions" :
+        [
+            "VK_EXT_robustness2"
+        ],
+        "PipelineUUID" : [85, 43, 255, 24, 155, 64, 62, 24, 0, 0, 0, 0, 0, 0, 0, 0]
+    })";
+
+    VpjData ref_data{};
+    ref_data.enabledExtensionCount = 1;
+    ref_data.ppEnabledExtensions = enabled_extensions;
+    ref_data.computePipelineState.pComputePipeline = &cp_ci;
+    ref_data.computePipelineState.pPipelineLayout = &pl_ci;
+    ref_data.computePipelineState.immutableSamplerCount = 2;
+    ref_data.computePipelineState.ppImmutableSamplerNames = sampler_names;
+    ref_data.computePipelineState.pImmutableSamplers = sampler_ci;
+    ref_data.computePipelineState.ycbcrSamplerCount = 1;
+    ref_data.computePipelineState.ppYcbcrSamplerNames = ycbcr_names;
+    ref_data.computePipelineState.pYcbcrSamplers = &ycbcr_ci;
+    ref_data.computePipelineState.descriptorSetLayoutCount = 1;
+    ref_data.computePipelineState.pDescriptorSetLayouts = &dsl_ci;
+    ref_data.computePipelineState.ppDescriptorSetLayoutNames = dsl_names;
+    ref_data.computePipelineState.pPhysicalDeviceFeatures = &pdf;
+    ref_data.computePipelineState.shaderFileNameCount = (uint32_t)shaderFileNames.size();
+    ref_data.computePipelineState.pShaderFileNames = shaderFileNames.data();
+
+    ref_data.pipelineUUID[0] = 85;
+    ref_data.pipelineUUID[1] = 43;
+    ref_data.pipelineUUID[2] = 255;
+    ref_data.pipelineUUID[3] = 24;
+    ref_data.pipelineUUID[4] = 155;
+    ref_data.pipelineUUID[5] = 64;
+    ref_data.pipelineUUID[6] = 62;
+    ref_data.pipelineUUID[7] = 24;
+
+    EXPECT_TRUE(vpjParsePipelineJson(this->parser_, json.c_str(), &data, &msg_));
+    CHECK_PARSE(true);
+
+    CompareData<VpjComputePipelineState>(ref_data, data);
+}
+
+TEST_F(Parse, GraphicsPipelineJSONAbove32Bit) {
+    TEST_DESCRIPTION(
+        "Tests parsing of a reasonably simple graphics pipeline JSON with handles values not representable as 32-bit values");
+
+    VpjData data{};
+    constexpr uint64_t base = 4'294'967'295;
+
+    const char* ycbcr_names[1] = {"YcbcrConversion1"};
+    auto [ycbcr_ci, ycbcr_json] = getVkSamplerYcbcrConversionCreateInfo(1);
+
+    const char* sampler_names[2] = {"ImmutableSampler1", "YcbcrSampler1"};
+    auto [immut_sampler_ci, immut_sampler_json] = getVkSamplerCreateInfo(1);
+    auto [ycbcr_sampler_ci, ycbcr_sampler_json] = getVkSamplerCreateInfo(1, {VkSamplerYcbcrConversion(base + 1), ycbcr_names[0]});
+    VkSamplerCreateInfo sampler_ci[2] = {*immut_sampler_ci.ptr(), *ycbcr_sampler_ci.ptr()};
+
+    const char* dsl_names[1] = {"DescriptorSetLayout1"};
+    auto [dsl_ci, dsl_json] =
+        getVkDescriptorSetLayoutCreateInfo(1, {{VkSampler(base + 1), sampler_names[0]}, {VkSampler(base + 2), sampler_names[1]}});
+
+    auto [pl_ci, pl_json] = getVkPipelineLayoutCreateInfo(1, {{VkDescriptorSetLayout(base + 1), dsl_names[0]}});
+
+    auto [renderPass, renderPass_json] = getVkRenderPassCreateInfo(1);
+
+    auto [gp_ci, gp_json] = getVkGraphicsPipelineCreateInfo(1);
+
+    auto [pdf, pdf_json] = getVkPhysicalDeviceFeatures2(1);
+
+    auto [shaderFileNames, shaderFileNames_json] = getShaderFileNames({
+        {VK_SHADER_STAGE_VERTEX_BIT, "shader.vert.spv"},
+        {VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, "shader.tess_ctrl.spv"},
+        {VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, "shader.tess_eval.spv"},
+        {VK_SHADER_STAGE_FRAGMENT_BIT, "shader.frag.spv"},
+    });
+
+    const char* enabled_extensions[1] = {"VK_EXT_robustness2"};
+
+    const std::string json = R"({
+        "GraphicsPipelineState" :
+        {
+            "Renderpass": )" +
+                             renderPass_json +
+                             R"(,
+            "GraphicsPipeline" : )" +
+                             gp_json +
+                             R"(,
+            "DescriptorSetLayouts" :
+            [
+                {
+                    ")" + dsl_names[0] +
+                             R"(" : )" + dsl_json + R"(
+                }
+            ],
+            "ImmutableSamplers" :
+            [
+                {
+                    ")" + sampler_names[0] +
+                             R"(" : )" + immut_sampler_json + R"(
+                },
+                {
+                    ")" + sampler_names[1] +
+                             R"(" : )" + ycbcr_sampler_json + R"(
+                }
+            ],
+            "PhysicalDeviceFeatures" : )" +
+                             pdf_json + R"(,
+            "PipelineLayout" : )" +
+                             pl_json +
+                             R"(,
+            "ShaderFileNames" : )" +
+                             shaderFileNames_json +
+                             R"(,
+            "YcbcrSamplers" :
+            [
+                {
+                    ")" + ycbcr_names[0] +
+                             R"(" : )" + ycbcr_json + R"(
+                }
+            ]
+        },
+        "EnabledExtensions" :
+        [
+            "VK_EXT_robustness2"
+        ],
+        "PipelineUUID" : [85, 43, 255, 24, 155, 64, 62, 24, 0, 0, 0, 0, 0, 0, 0, 0]
+    })";
+
+    VpjData ref_data{};
+    ref_data.enabledExtensionCount = 1;
+    ref_data.ppEnabledExtensions = enabled_extensions;
+    ref_data.graphicsPipelineState.pGraphicsPipeline = &gp_ci;
+    ref_data.graphicsPipelineState.pRenderPass = &renderPass;
+    ref_data.graphicsPipelineState.pPipelineLayout = &pl_ci;
+    ref_data.graphicsPipelineState.immutableSamplerCount = 2;
+    ref_data.graphicsPipelineState.ppImmutableSamplerNames = sampler_names;
+    ref_data.graphicsPipelineState.pImmutableSamplers = sampler_ci;
+    ref_data.graphicsPipelineState.ycbcrSamplerCount = 1;
+    ref_data.graphicsPipelineState.ppYcbcrSamplerNames = ycbcr_names;
+    ref_data.graphicsPipelineState.pYcbcrSamplers = &ycbcr_ci;
+    ref_data.graphicsPipelineState.descriptorSetLayoutCount = 1;
+    ref_data.graphicsPipelineState.pDescriptorSetLayouts = &dsl_ci;
+    ref_data.graphicsPipelineState.ppDescriptorSetLayoutNames = dsl_names;
+    ref_data.graphicsPipelineState.pPhysicalDeviceFeatures = &pdf;
+    ref_data.graphicsPipelineState.shaderFileNameCount = (uint32_t)shaderFileNames.size();
+    ref_data.graphicsPipelineState.pShaderFileNames = shaderFileNames.data();
+
+    ref_data.pipelineUUID[0] = 85;
+    ref_data.pipelineUUID[1] = 43;
+    ref_data.pipelineUUID[2] = 255;
+    ref_data.pipelineUUID[3] = 24;
+    ref_data.pipelineUUID[4] = 155;
+    ref_data.pipelineUUID[5] = 64;
+    ref_data.pipelineUUID[6] = 62;
+    ref_data.pipelineUUID[7] = 24;
+
+    EXPECT_TRUE(vpjParsePipelineJson(this->parser_, json.c_str(), &data, &msg_));
+    CHECK_PARSE(true);
+
+    CompareData<VpjGraphicsPipelineState>(ref_data, data);
+}

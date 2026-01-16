@@ -10,6 +10,7 @@ The following components are available in this repository:
 - [*Vulkan SC Pipeline JSON Generator/Parser Library*](include/vulkan/pcjson/)
 - [*Vulkan SC Pipeline Cache Reader/Wrtier Library*](include/vulkan/pcutil/)
 - [*Vulkan SC Pipeline Cache Command Line Utility*](vkscpcinfo/)
+- [*Vulkan SC Pipeline Cache Compiler Helper Tool*](vkscpcctool/)
 - [*Vulkan Pipeline JSON Generator Layer (VK_LAYER_KHRONOS_json_gen)*](layers/json_gen/)
 
 ## Contact Information

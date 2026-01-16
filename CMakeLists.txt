@@ -51,6 +51,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 find_package(VulkanHeaders REQUIRED CONFIG QUIET)
 find_package(VulkanUtilityLibraries REQUIRED CONFIG QUIET)
 find_package(jsoncpp REQUIRED CONFIG QUIET)
+find_package(cxxopts REQUIRED CONFIG QUIET)
 if (BUILD_TESTS) # Layer testing needs the loader
     find_package(VulkanLoader REQUIRED CONFIG QUIET)
     find_vk_package(VulkanLoader ${VULKAN_LOADER_INSTALL_DIR})
@@ -139,11 +140,6 @@ if (PCU_CODEGEN)
     )
 endif()
 
-if(PCU_ENABLE_INSTALL)
-    include(GNUInstallDirs)
-    include(CMakePackageConfigHelpers)
-endif()
-
 add_subdirectory(library/pcutil)
 add_subdirectory(library/pcjson)
 
@@ -155,19 +151,39 @@ if(BUILD_VKSCPCINFO)
     add_subdirectory(vkscpcinfo)
 endif()
 
+add_subdirectory(vkscpcctool)
+
 if(BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
 endif()
 
 if(PCU_ENABLE_INSTALL)
+    include(GNUInstallDirs)
+    include(CMakePackageConfigHelpers)
+
     install(EXPORT VulkanSCPCUtilConfig NAMESPACE "VulkanSC::" DESTINATION "share/cmake/VulkanSCPCUtil")
 
     set(version_config "${CMAKE_CURRENT_BINARY_DIR}/generated/VulkanSCPCUtilConfigVersion.cmake")
     write_basic_package_version_file("${version_config}" COMPATIBILITY SameMajorVersion ARCH_INDEPENDENT)
     install(FILES "${version_config}" DESTINATION "share/cmake/VulkanSCPCUtil")
 
+    install(TARGETS VulkanSCPCUtil EXPORT VulkanSCPCUtilConfig)
+    install(
+        DIRECTORY "${PROJECT_SOURCE_DIR}/include/vulkan/pcutil"
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/vulkan"
+    )
+
+    install(TARGETS vkscpcctool)
+    install(FILES
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/PccDiscovery.cmake"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/PcJsonDyndepScanner.cmake"
+        DESTINATION "share/cmake/Modules")
+
     if(BUILD_JSON_GEN_LAYER)
+        install(TARGETS VulkanJSONGenLayer EXPORT VulkanJSONGenLayerConfig LIBRARY DESTINATION "${CMAKE_INSTALL_BINDIR}")
+        set_target_properties(VulkanJSONGenLayer PROPERTIES EXPORT_NAME "JSONGenLayer")
+
         install(EXPORT VulkanJSONGenLayerConfig DESTINATION share/cmake/VulkanJSONGenLayer NAMESPACE Vulkan::)
 
         set(version_config "${CMAKE_CURRENT_BINARY_DIR}/generated/VulkanJSONGenLayerConfigVersion.cmake")

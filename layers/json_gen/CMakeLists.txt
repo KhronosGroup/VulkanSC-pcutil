@@ -69,8 +69,3 @@ configure_file("${INPUT_FILE}" "${INTERMEDIATE_FILE}" @ONLY)
 add_custom_command(TARGET VulkanJSONGenLayer POST_BUILD
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${INTERMEDIATE_FILE}" $<TARGET_FILE_DIR:VulkanJSONGenLayer>/${OUTPUT_FILE_FINAL_NAME}
 )
-
-if(PCU_ENABLE_INSTALL)
-    install(TARGETS VulkanJSONGenLayer EXPORT VulkanJSONGenLayerConfig LIBRARY DESTINATION "${CMAKE_INSTALL_BINDIR}")
-    set_target_properties(VulkanJSONGenLayer PROPERTIES EXPORT_NAME "JSONGenLayer")
-endif()

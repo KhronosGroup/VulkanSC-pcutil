@@ -159,7 +159,6 @@ if(BUILD_TESTS)
 endif()
 
 if(PCU_ENABLE_INSTALL)
-    include(GNUInstallDirs)
     include(CMakePackageConfigHelpers)
 
     install(EXPORT VulkanSCPCUtilConfig NAMESPACE "VulkanSC::" DESTINATION "share/cmake/VulkanSCPCUtil")

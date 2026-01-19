@@ -85,7 +85,7 @@ class API {
   private:
     void Close() {
         if (loader_module_) {
-#if defined(_Win32)
+#if defined(_WIN32)
             FreeLibrary((HMODULE)loader_module_);
 #else
             dlclose(loader_module_);
@@ -118,21 +118,21 @@ void list_devices() {
 
     VkResult result = VK_SUCCESS;
 
-    VkApplicationInfo app_info = {.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-                                  .pNext = NULL,
-                                  .pApplicationName = "vkscpcctool",
-                                  .applicationVersion = 0,
-                                  .pEngineName = NULL,
-                                  .engineVersion = 0,
-                                  .apiVersion = VKSC_API_VERSION_1_0};
-    VkInstanceCreateInfo inst_info = {.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-                                      .pNext = NULL,
-                                      .flags = 0,
-                                      .pApplicationInfo = &app_info,
-                                      .enabledLayerCount = 0,
-                                      .ppEnabledLayerNames = NULL,
-                                      .enabledExtensionCount = 0,
-                                      .ppEnabledExtensionNames = NULL};
+    VkApplicationInfo app_info = {/*.sType = */ VK_STRUCTURE_TYPE_APPLICATION_INFO,
+                                  /*.pNext = */ NULL,
+                                  /*.pApplicationName = */ "vkscpcctool",
+                                  /*.applicationVersion = */ 0,
+                                  /*.pEngineName = */ NULL,
+                                  /*.engineVersion = */ 0,
+                                  /*.apiVersion = */ VKSC_API_VERSION_1_0};
+    VkInstanceCreateInfo inst_info = {/*.sType = */ VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+                                      /*.pNext = */ NULL,
+                                      /*.flags = */ 0,
+                                      /*.pApplicationInfo = */ &app_info,
+                                      /*.enabledLayerCount = */ 0,
+                                      /*.ppEnabledLayerNames = */ NULL,
+                                      /*.enabledExtensionCount = */ 0,
+                                      /*.ppEnabledExtensionNames = */ NULL};
     VkInstance instance = VK_NULL_HANDLE;
     result = api.CreateInstance(&inst_info, nullptr, &instance);
     if (result != VK_SUCCESS) {
@@ -164,7 +164,8 @@ void list_devices() {
     }
 
     for (auto phys_dev : phys_devs) {
-        VkPhysicalDeviceProperties2 phys_props = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, .pNext = NULL};
+        VkPhysicalDeviceProperties2 phys_props = {/*.sType = */ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
+                                                  /*.pNext = */ NULL};
         api.GetPhysicalDeviceProperties2(phys_dev, &phys_props);
 
         printf("0x%08x %s\n", phys_props.properties.deviceID, phys_props.properties.deviceName);

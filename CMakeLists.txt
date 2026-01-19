@@ -176,8 +176,9 @@ if(PCU_ENABLE_INSTALL)
 
     install(TARGETS vkscpcctool)
     install(FILES
-        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/PccDiscovery.cmake"
-        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/PcJsonDyndepScanner.cmake"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/VulkanSCPccDiscovery.cmake"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/VulkanSCPccUtilities.cmake"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/VulkanSCPcJsonDyndepScanner.cmake"
         DESTINATION "share/cmake/Modules")
 
     if(BUILD_JSON_GEN_LAYER)

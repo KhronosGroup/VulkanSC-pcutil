@@ -5,6 +5,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # ~~~
 
+if(CMAKE_SCRIPT_MODE_FILE)
+    message("List of available Vulkan SC PCC target architectures/devices (possible values of VulkanSC_PCC):")
+    foreach(PCC IN LISTS VulkanSC_PCC_OPTIONS)
+        message("\t* ${PCC}")
+    endforeach()
+    return()
+endif()
+
 find_program(VulkanSC_PCCTOOL_EXECUTABLE
     REQUIRED
     NAMES vkscpcctool
@@ -118,7 +126,7 @@ if(NOT "${VulkanSC_PCC_EXECUTABLE}")
                     endif()
                     list(APPEND VulkanSC_PCC_OPTIONS "${PCC_NAME} - ${ARCH_NAME}")
                 else()
-                    message(DEBUG "PCC skipped: ${PCC_NAME} - ${ARCH_NAME} (an entry with the same name is already registered)")
+                    message(DEBUG "Target architecture skipped: ${PCC_NAME} - ${ARCH_NAME} (an entry with the same name is already registered)")
                 endif()
             endforeach()
         endif()
@@ -178,7 +186,7 @@ if(NOT "${VulkanSC_PCC_EXECUTABLE}")
                             endif()
                             list(APPEND VulkanSC_PCC_OPTIONS "${PCC_NAME} - ${DEVICE_NAME}")
                         else()
-                            message(DEBUG "PCC skipped: ${PCC_NAME} - ${DEVICE_NAME} (an entry with the same name is already registered)")
+                            message(DEBUG "Target device skipped: ${PCC_NAME} - ${DEVICE_NAME} (an entry with the same name is already registered)")
                         endif()
                     endif()
                 endforeach()
@@ -189,6 +197,8 @@ if(NOT "${VulkanSC_PCC_EXECUTABLE}")
         endif()
     endforeach()
 
+    set(VulkanSC_PCC_DISCOVERY_RESULT "${VulkanSC_PCC_OPTIONS}" CACHE INTERNAL "List of discovered PCC options")
+
     # Set Emulation PCC as default if available
     list(LENGTH VulkanSC_PCC_OPTIONS VulkanSC_PCC_OPTIONS_LENGTH)
     if(NOT VulkanSC_PCC_OPTIONS_LENGTH EQUAL 0)
@@ -198,6 +208,7 @@ if(NOT "${VulkanSC_PCC_EXECUTABLE}")
         else()
             list(GET VulkanSC_PCC_OPTIONS 0 VulkanSC_PCC_DEFAULT)
         endif()
+        message(STATUS "Selected PCC compiler: ${VulkanSC_PCC_DEFAULT}")
     else()
         message(FATAL_ERROR "No installed Vulkan SC pipeline cache compiler found.\n"
                             "Alternatively, custom Vulkan SC pipeline cache compiler can be configured with VulkanSC_PCC_EXECUTABLE.")
@@ -234,4 +245,8 @@ if(NOT "${VulkanSC_PCC_EXECUTABLE}")
     set(VulkanSC_VENDOR_ID_FILTER "${VulkanSC_VENDOR_ID_FILTER_DEFAULT}" CACHE STRING "The VK_LOADER_VENDOR_ID_FILTER given to the Vulkan SC loader")
     set(VulkanSC_DEVICE_ID_FILTER "${VulkanSC_DEVICE_ID_FILTER_DEFAULT}" CACHE STRING "The VK_LOADER_DEVICE_ID_FILTER given to the Vulkan SC loader")
     set(VulkanSC_DRIVER_ID_FILTER "${VulkanSC_DRIVER_ID_FILTER_DEFAULT}" CACHE STRING "The VK_LOADER_DRIVER_ID_FILTER given to the Vulkan SC loader")
+endif()
+
+if(DEFINED CACHE{VulkanSC_PCC_DISCOVERY_RESULT})
+    add_custom_target(VulkanSC_PCC_ListOptions COMMAND "${CMAKE_COMMAND}" -D VulkanSC_PCC_OPTIONS="${VulkanSC_PCC_DISCOVERY_RESULT}" -P "${CMAKE_CURRENT_LIST_FILE}")
 endif()

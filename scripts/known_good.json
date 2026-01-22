@@ -63,6 +63,19 @@
             ]
         },
         {
+            "name": "cxxopts",
+            "url": "https://github.com/jarro2783/cxxopts.git",
+            "sub_dir": "cxxopts",
+            "build_dir": "cxxopts/build",
+            "install_dir": "cxxopts/build/install",
+            "commit": "v3.2.1",
+            "cmake_options": [
+                "-DCXXOPTS_BUILD_EXAMPLES=OFF",
+                "-DCXXOPTS_BUILD_TESTS=OFF",
+                "-DCXXOPTS_ENABLE_WARNINGS=OFF"
+            ]
+        },
+        {
             "name": "googletest",
             "url": "https://github.com/google/googletest.git",
             "sub_dir": "googletest",
@@ -299,6 +312,7 @@
         "jsoncpp": "JSONCPP_INSTALL_DIR",
         "valijson": "VALIJSON_INSTALL_DIR",
         "hashlib": "HASHLIB_INSTALL_DIR",
+        "cxxopts": "CXXOPTS_INSTALL_DIR",
         "googletest": "GOOGLETEST_INSTALL_DIR",
         "Vulkan-Loader": "VULKAN_LOADER_INSTALL_DIR",
         "VulkanSC-Loader": "VULKANSC_LOADER_INSTALL_DIR",

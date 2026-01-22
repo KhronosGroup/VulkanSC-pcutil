@@ -16,11 +16,3 @@ target_link_libraries(VulkanSCPCUtil INTERFACE Vulkan::Headers)
 set_target_properties(VulkanSCPCUtil PROPERTIES
     EXPORT_NAME PCUtil
 )
-
-if(PCU_ENABLE_INSTALL)
-    install(TARGETS VulkanSCPCUtil EXPORT VulkanSCPCUtilConfig)
-    install(
-        DIRECTORY "${PROJECT_SOURCE_DIR}/include/vulkan/pcutil"
-        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/vulkan"
-    )
-endif()

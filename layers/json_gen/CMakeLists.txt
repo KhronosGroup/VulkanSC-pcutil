@@ -41,26 +41,20 @@ target_link_libraries(VulkanJSONGenLayer
 
 set_target_properties(VulkanJSONGenLayer PROPERTIES OUTPUT_NAME ${LAYER_NAME})
 
-# There are 2 primary deliverables for the validation layers.
-# - The actual library VkLayer_khronos_validation.(dll|so|dylib)
-# - The respective json file, VkLayer_khronos_validation.json
+# There are 2 primary deliverables for the JSON gen layer.
+# - The actual library VkLayer_json_gen.(dll|so)
+# - The respective json file, VkLayer_json_gen.json
 # This code generates the appropriate json for both local testing and the installation.
 # NOTE: For WIN32 the JSON and dll MUST be placed in the same location, due to Win32 using a relative path for installation.
 set(INPUT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${LAYER_NAME}.json.in")
 set(INTERMEDIATE_FILE "${CMAKE_CURRENT_BINARY_DIR}/json/VkLayer_json_gen.json")
 set(OUTPUT_FILE_FINAL_NAME "${LAYER_NAME}.json")
-    set(JSON_LAYER_NAME "VK_LAYER_KHRONOS_json_gen")
-set(LAYER_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR})
-if (WIN32)
-    set(LAYER_INSTALL_DIR ${CMAKE_INSTALL_BINDIR}) # WIN32/MINGW expect the dll in the `bin` dir, this matches our WIN32 SDK process
-endif()
+set(JSON_LAYER_NAME "VK_LAYER_KHRONOS_json_gen")
 
-if (WIN32)
-    set(JSON_LIBRARY_PATH ".\\\\${LAYER_NAME}.dll")
-elseif(APPLE)
-    set(JSON_LIBRARY_PATH "./lib${LAYER_NAME}.dylib")
+if(WIN32)
+    set(JSON_LIBRARY_PATH ".\\\\${CMAKE_SHARED_LIBRARY_PREFIX}${LAYER_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}")
 else()
-    set(JSON_LIBRARY_PATH "./lib${LAYER_NAME}.so")
+    set(JSON_LIBRARY_PATH "./${CMAKE_SHARED_LIBRARY_PREFIX}${LAYER_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}")
 endif()
 
 configure_file("${INPUT_FILE}" "${INTERMEDIATE_FILE}" @ONLY)
@@ -70,7 +64,29 @@ add_custom_command(TARGET VulkanJSONGenLayer POST_BUILD
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${INTERMEDIATE_FILE}" $<TARGET_FILE_DIR:VulkanJSONGenLayer>/${OUTPUT_FILE_FINAL_NAME}
 )
 
+# For UNIX-based systems, `library_path` should not contain a relative path (indicated by "./") before installing to system directories
+# This json isn't used for regular local development, it's used for installation
 if(PCU_ENABLE_INSTALL)
-    install(TARGETS VulkanJSONGenLayer EXPORT VulkanJSONGenLayerConfig LIBRARY DESTINATION "${CMAKE_INSTALL_BINDIR}")
-    set_target_properties(VulkanJSONGenLayer PROPERTIES EXPORT_NAME "JSONGenLayer")
+    include(GNUInstallDirs)
+    if (WIN32)
+        set(LAYER_INSTALL_DIR ${CMAKE_INSTALL_BINDIR}) # WIN32/MINGW expect the dll in the `bin` dir, this matches our WIN32 SDK process
+    else()
+        set(LAYER_INSTALL_DIR ${CMAKE_INSTALL_DATAROOTDIR}/vulkan/explicit_layer.d)
+    endif()
+
+    if (UNIX)
+        set(UNIX_INTERMEDIATE_FILE "${CMAKE_CURRENT_BINARY_DIR}/json/unix_install_validation.json")
+        set(JSON_LIBRARY_PATH "${CMAKE_SHARED_LIBRARY_PREFIX}${LAYER_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}")
+
+        configure_file(${INPUT_FILE} ${UNIX_INTERMEDIATE_FILE} @ONLY)
+
+        install(FILES ${UNIX_INTERMEDIATE_FILE} DESTINATION ${LAYER_INSTALL_DIR} RENAME ${OUTPUT_FILE_FINAL_NAME})
+    endif()
+
+    if (WIN32)
+        install(FILES ${INTERMEDIATE_FILE} DESTINATION ${LAYER_INSTALL_DIR} RENAME ${OUTPUT_FILE_FINAL_NAME})
+    endif()
+    if (MSVC)
+        install(FILES $<TARGET_PDB_FILE:VulkanJSONGenLayer> DESTINATION ${LAYER_INSTALL_DIR} OPTIONAL)
+    endif()
 endif()

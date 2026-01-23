@@ -45,7 +45,7 @@ function(resolve_vksc_pcc_executable PCC_EXECUTABLE PCC_JSON_PATH OUT_VAR)
 endfunction()
 
 # If a PCC executable is set manually then do not perform the PCC discovery
-if(NOT "${VulkanSC_PCC_EXECUTABLE}")
+if(NOT DEFINED VulkanSC_PCC_EXECUTABLE)
     if(WIN32)
         # Find PCC JSON manifests in the registry
         if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")

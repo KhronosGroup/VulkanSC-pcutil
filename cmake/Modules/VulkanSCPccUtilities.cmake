@@ -104,7 +104,6 @@ function(ADD_VKSC_PIPELINE_CACHE TARGET_NAME)
         string(APPEND PCC_COMMAND_STRING " ${VulkanSC_DEVICE_FLAGS}")
     endif()
     separate_arguments(PCC_COMMAND NATIVE_COMMAND PROGRAM SEPARATE_ARGS "${PCC_COMMAND_STRING}")
-    message(DEBUG "PCC_COMMAND: ${PCC_COMMAND}")
     add_custom_command(
         COMMAND ${PCC_COMMAND}
         COMMAND_EXPAND_LISTS

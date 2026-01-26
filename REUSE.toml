@@ -19,8 +19,7 @@ path = [
     "json/vk.json",
     "json/vkpcc.json",
     "json/vksc_pipeline_schema.json",
-    "layers/json_gen/VkLayer_json_gen.json.in",
-    "layers/json_gen/VkSCLayer_json_gen.json.in"
+    "layers/json_gen/VkLayer_khronos_json_gen.json.in"
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2025 The Khronos Group, Inc."

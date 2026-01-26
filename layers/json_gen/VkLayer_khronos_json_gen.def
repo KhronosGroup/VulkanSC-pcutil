@@ -8,7 +8,7 @@
 ;
 ;;;;  End Copyright Notice ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-LIBRARY VkLayer_json_gen
+LIBRARY VkLayer_khronos_json_gen
 EXPORTS
 vkGetInstanceProcAddr
 vkGetDeviceProcAddr

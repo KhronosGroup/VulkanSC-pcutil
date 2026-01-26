@@ -181,11 +181,6 @@ if(PCU_ENABLE_INSTALL)
         DESTINATION "share/cmake/Modules")
 
     if(BUILD_JSON_GEN_LAYER)
-        install(TARGETS VulkanJSONGenLayer
-            EXPORT VulkanJSONGenLayerConfig
-            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        )
         set_target_properties(VulkanJSONGenLayer PROPERTIES EXPORT_NAME "JSONGenLayer")
 
         install(EXPORT VulkanJSONGenLayerConfig DESTINATION share/cmake/VulkanJSONGenLayer NAMESPACE Vulkan::)

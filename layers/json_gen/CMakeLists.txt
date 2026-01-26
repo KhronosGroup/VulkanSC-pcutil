@@ -68,10 +68,10 @@ add_custom_command(TARGET VulkanJSONGenLayer POST_BUILD
 # This json isn't used for regular local development, it's used for installation
 if(PCU_ENABLE_INSTALL)
     include(GNUInstallDirs)
+
+    set(LAYER_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR})
     if (WIN32)
         set(LAYER_INSTALL_DIR ${CMAKE_INSTALL_BINDIR}) # WIN32/MINGW expect the dll in the `bin` dir, this matches our WIN32 SDK process
-    else()
-        set(LAYER_INSTALL_DIR ${CMAKE_INSTALL_DATAROOTDIR}/vulkan/explicit_layer.d)
     endif()
 
     if (UNIX)
@@ -80,7 +80,7 @@ if(PCU_ENABLE_INSTALL)
 
         configure_file(${INPUT_FILE} ${UNIX_INTERMEDIATE_FILE} @ONLY)
 
-        install(FILES ${UNIX_INTERMEDIATE_FILE} DESTINATION ${LAYER_INSTALL_DIR} RENAME ${OUTPUT_FILE_FINAL_NAME})
+        install(FILES ${UNIX_INTERMEDIATE_FILE} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/vulkan/explicit_layer.d RENAME ${OUTPUT_FILE_FINAL_NAME})
     endif()
 
     if (WIN32)
@@ -89,4 +89,6 @@ if(PCU_ENABLE_INSTALL)
     if (MSVC)
         install(FILES $<TARGET_PDB_FILE:VulkanJSONGenLayer> DESTINATION ${LAYER_INSTALL_DIR} OPTIONAL)
     endif()
+
+    install(TARGETS VulkanJSONGenLayer EXPORT VulkanJSONGenLayerConfig DESTINATION ${LAYER_INSTALL_DIR})
 endif()

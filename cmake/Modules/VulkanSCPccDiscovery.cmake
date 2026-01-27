@@ -44,11 +44,42 @@ function(resolve_vksc_pcc_executable PCC_EXECUTABLE PCC_JSON_PATH OUT_VAR)
     message(DEBUG "PCC resolved: ${PCC_EXECUTABLE}")
 endfunction()
 
+function(glob_vksc_pcc_jsons OUT_VAR)
+    if(WIN32)
+        set(MANIFEST_DIRS $ENV{VULKANSC_SDK}/share/vulkansc/pcc.d)
+    else()
+        set(MANIFEST_DIRS
+            $ENV{VULKANSC_SDK}/share/vulkansc/pcc.d
+            $ENV{HOME}/.config/vulkansc/pcc.d
+            $ENV{HOME}/.local/share/vulkansc/pcc.d
+            /usr/local/share/vulkansc/pcc.d
+            /usr/local/etc/vulkansc/pcc.d
+            /usr/share/vulkansc/pcc.d
+            /etc/vulkansc/pcc.d
+            /etc/xdg/vulkansc/pcc.d
+    )
+    endif()
+    foreach(MANIFEST_DIR IN LISTS MANIFEST_DIRS)
+        file(GLOB PCC_GLOBBED_PATHS "${MANIFEST_DIR}/*.json")
+        foreach(PCC_GLOBBED_PATH IN LISTS PCC_GLOBBED_PATHS)
+            file(REAL_PATH "${PCC_GLOBBED_PATH}" PCC_GLOBBED_PATH)
+            if(NOT PCC_GLOBBED_PATH IN_LIST PCC_JSON_PATHS)
+                message(DEBUG "Discovered PCJSON: ${PCC_GLOBBED_PATH}")
+                list(APPEND PCC_JSON_PATHS "${PCC_GLOBBED_PATH}")
+            else()
+                message(DEBUG "Skipped PCJSON: ${PCC_GLOBBED_PATH} (a file resolving to the same file already found)")
+            endif()
+        endforeach()
+    endforeach()
+    set(${OUT_VAR} "${PCC_JSON_PATHS}" PARENT_SCOPE)
+endfunction()
+
 # If a PCC executable is set manually then do not perform the PCC discovery
 if(NOT DEFINED VulkanSC_PCC_EXECUTABLE)
+    glob_vksc_pcc_jsons(PCC_JSON_PATHS)
     if(WIN32)
-        # Find PCC JSON manifests in the registry
         if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
+            # Find PCC JSON manifests in the registry
             foreach(HIVE IN ITEMS HKLM HKCU)
                 cmake_host_system_information(
                     RESULT PCC_PROP_NAMES
@@ -67,29 +98,6 @@ if(NOT DEFINED VulkanSC_PCC_EXECUTABLE)
         else()
             message(FATAL_ERROR "PCC (pipeline cache compiler) discovery on Windows requires CMake 3.24 or newer")
         endif()
-    else()
-        # Find PCC JSON manifests in the supported FHS locations
-        foreach(MANIFEST_DIR IN ITEMS
-            $ENV{VULKANSC_SDK}/share/vulkansc/pcc.d
-            $ENV{HOME}/.config/vulkansc/pcc.d
-            $ENV{HOME}/.local/share/vulkansc/pcc.d
-            /usr/local/share/vulkansc/pcc.d
-            /usr/local/etc/vulkansc/pcc.d
-            /usr/share/vulkansc/pcc.d
-            /etc/vulkansc/pcc.d
-            /etc/xdg/vulkansc/pcc.d
-        )
-            file(GLOB PCC_GLOBBED_PATHS "${MANIFEST_DIR}/*.json")
-            foreach(PCC_GLOBBED_PATH IN LISTS PCC_GLOBBED_PATHS)
-                file(REAL_PATH "${PCC_GLOBBED_PATH}" PCC_GLOBBED_PATH)
-                if(NOT PCC_GLOBBED_PATH IN_LIST PCC_JSON_PATHS)
-                    message(DEBUG "Discovered PCJSON: ${PCC_GLOBBED_PATH}")
-                    list(APPEND PCC_JSON_PATHS "${PCC_GLOBBED_PATH}")
-                else()
-                    message(DEBUG "Skipped PCJSON: ${PCC_GLOBBED_PATH} (a file resolving to the same file already found)")
-                endif()
-            endforeach()
-        endforeach()
     endif()
     foreach(PCC_JSON_PATH IN LISTS PCC_JSON_PATHS)
         message(DEBUG "Processing PCJSON: ${PCC_JSON_PATH}")

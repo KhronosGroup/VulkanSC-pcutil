@@ -34,6 +34,10 @@ target_link_libraries(VulkanJSONGenLayer
         Vulkan::SafeStruct
 )
 
+if(MSVC)
+    target_link_options(VulkanJSONGenLayer PRIVATE /DEF:${CMAKE_CURRENT_SOURCE_DIR}/${LAYER_NAME}.def)
+endif()
+
 set_target_properties(VulkanJSONGenLayer PROPERTIES OUTPUT_NAME ${LAYER_NAME})
 
 # There are 2 primary deliverables for the JSON gen layer.

@@ -59,7 +59,7 @@ function(TARGET_EMBED_VKSC_ENVIRONMENT target)
 
     if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         set_target_properties(DeviceFilterStub PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-        target_link_options(${target} ${link_type} $<$<CXX_COMPILER_ID:MSVC>:/NODEFAULTLIB:LIBCMT>)
+        target_link_options(${target} ${link_type} $<$<CXX_COMPILER_ID:MSVC>:/NODEFAULTLIB:LIBCMT$<$<CONFIG:Debug>:D>>)
     endif()
 endfunction()
 

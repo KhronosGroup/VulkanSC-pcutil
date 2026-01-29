@@ -65,9 +65,9 @@ endfunction()
 
 function(ADD_VKSC_PIPELINE_CACHE TARGET_NAME)
     cmake_parse_arguments(ARG
-        "DEBUG"      # options
-        "PATH;FLAGS" # single-value args
-        ""           # multi-value args
+        "DEBUG"          # options
+        "PATH;FLAGS;OUT" # single-value args
+        ""               # multi-value args
         ${ARGN}
     )
     cmake_path(IS_RELATIVE ARG_PATH ARG_PATH_IS_RELATIVE)
@@ -76,13 +76,20 @@ function(ADD_VKSC_PIPELINE_CACHE TARGET_NAME)
     endif()
     get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
     if(GENERATOR_IS_MULTI_CONFIG)
-        set(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/${TARGET_NAME}.bin")
+        if(NOT DEFINED ARG_OUT)
+            set(ARG_OUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/${TARGET_NAME}.bin")
+        endif()
         set(DEPFILE "${TARGET_NAME}.$<CONFIG>.dyndep")
     else()
-        set(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}.bin")
+        if(NOT DEFINED ARG_OUT)
+            set(ARG_OUT "${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}.bin")
+        endif()
         set(DEPFILE "${TARGET_NAME}.dyndep")
     endif()
-
+    cmake_path(IS_RELATIVE ARG_OUT ARG_OUT_IS_RELATIVE)
+    if(ARG_OUT_IS_RELATIVE)
+        cmake_path(ABSOLUTE_PATH ARG_OUT BASE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+    endif()
     get_property(LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
     if(NOT CXX IN_LIST LANGUAGES)
         message(FATAL_ERROR
@@ -93,7 +100,7 @@ function(ADD_VKSC_PIPELINE_CACHE TARGET_NAME)
 
     set(VulkanSC_PCC_DYNDEP_SCANNER "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/VulkanSCPcJsonDyndepScanner.cmake")
 
-    set(PCC_COMMAND_STRING "${VulkanSC_PCC_EXECUTABLE} --path ${ARG_PATH} --out ${OUTPUT} ${ARG_FLAGS}")
+    set(PCC_COMMAND_STRING "${VulkanSC_PCC_EXECUTABLE} --path ${ARG_PATH} --out ${ARG_OUT} ${ARG_FLAGS}")
     if(ARG_DEBUG AND VulkanSC_PCC_DEBUG_FLAG)
         string(APPEND PCC_COMMAND_STRING " ${VulkanSC_PCC_DEBUG_FLAG}")
     endif()

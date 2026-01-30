@@ -13,6 +13,8 @@ The following components are available in this repository:
 - [*Vulkan SC Pipeline Cache Compiler Helper Tool*](vkscpcctool/)
 - [*Vulkan Pipeline JSON Generator Layer (VK_LAYER_KHRONOS_json_gen)*](layers/json_gen/)
 
+The repository also contains the tooling used for discovering Pipeline Cache Compiler toolchains supporting specific target architectures/devices through PCC manifest files, as described in the [PCC discovery](docs/PccDiscovery.md) documentation.
+
 ## Contact Information
 * [Daniel Rakos](mailto:daniel.rakos@rastergrid.com)
 

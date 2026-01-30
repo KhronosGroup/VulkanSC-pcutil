@@ -61,7 +61,7 @@ if(NOT DEFINED VulkanSC_PCC_EXECUTABLE)
     if(WIN32)
         # Find PCC JSON manifests in the registry
         if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
-            foreach(HIVE IN ITEMS HKLM HKCU)
+            foreach(HIVE IN ITEMS HKCU HKLM)
                 cmake_host_system_information(
                     RESULT PCC_PROP_NAMES
                     QUERY WINDOWS_REGISTRY "${HIVE}/SOFTWARE/Khronos/VulkanSC/PCC" VALUE_NAMES

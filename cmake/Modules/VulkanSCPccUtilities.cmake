@@ -72,7 +72,7 @@ function(ADD_VKSC_PIPELINE_CACHE TARGET_NAME)
     cmake_parse_arguments(ARG
         "DEBUG"          # options
         "PATH;FLAGS;OUT" # single-value args
-        ""               # multi-value args
+        "DEPENDS"        # multi-value args
         ${ARGN}
     )
     cmake_path(IS_RELATIVE ARG_PATH ARG_PATH_IS_RELATIVE)
@@ -116,36 +116,50 @@ function(ADD_VKSC_PIPELINE_CACHE TARGET_NAME)
         string(APPEND PCC_COMMAND_STRING " ${VulkanSC_PCC_DEVICE_FLAGS}")
     endif()
     separate_arguments(PCC_COMMAND NATIVE_COMMAND PROGRAM SEPARATE_ARGS "${PCC_COMMAND_STRING}")
+
+    file(RELATIVE_PATH RELATIVE_ARG_OUT "${CMAKE_BINARY_DIR}" "${ARG_OUT}")
+    file(TO_NATIVE_PATH "${RELATIVE_ARG_OUT}" RELATIVE_ARG_OUT)
+    if(CMAKE_GENERATOR MATCHES "Visual Studio")
+        set(COMMENT "Building pipeline cache binary ${RELATIVE_ARG_OUT}")
+    else()
+        set(COMMENT "Building PC binary ${RELATIVE_ARG_OUT}")
+    endif()
     add_custom_command(
         COMMAND ${PCC_COMMAND}
         COMMAND_EXPAND_LISTS
         WORKING_DIRECTORY "${ARG_PATH}"
         OUTPUT
-            "${OUTPUT}"
+            "${ARG_OUT}"
         DEPENDS
             "${VulkanSC_PCC_EXECUTABLE}"
-        DEPFILE
-            "${DEPFILE}"
-        COMMENT
-            "Building PCJSON ${OUTPUT}"
+        DEPFILE "${DEPFILE}"
+        COMMENT "${COMMENT}"
     )
-    add_custom_target(${TARGET_NAME}_vksc_pcjson_scan_ ALL
+    add_custom_target(${TARGET_NAME} ALL
+        DEPENDS
+            "${ARG_OUT}"
+            ${ARG_DEPENDS}
+    )
+
+    if(CMAKE_GENERATOR MATCHES "Visual Studio")
+        file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${DEPFILE}" NATIVE_DEPFILE)
+        set(COMMENT "Scanning PCJSON dynamic dependencies -> ${NATIVE_DEPFILE}")
+    else()
+        file(RELATIVE_PATH RELATIVE_DEPFILE "${CMAKE_BINARY_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/${DEPFILE}")
+        set(COMMENT "Scanning PCJSON dynamic dependencies ${RELATIVE_DEPFILE}")
+    endif()
+    add_custom_target(${TARGET_NAME}_scan ALL
         COMMAND "${CMAKE_COMMAND}"
             -D ARG_PATH:PATH="${ARG_PATH}"
-            -D ARG_OUTPUT:FILEPATH="${OUTPUT}"
+            -D ARG_OUTPUT:FILEPATH="${ARG_OUT}"
             -D ARG_DEPFILE:FILEPATH="${CMAKE_CURRENT_BINARY_DIR}/${DEPFILE}"
             -P "${VulkanSC_PCC_DYNDEP_SCANNER}"
         WORKING_DIRECTORY "${ARG_PATH}"
         BYPRODUCTS
             "${DEPFILE}"
-        COMMENT
-            "Scanning PCJSON dynamic dependencies for ${DEPFILE}"
+        COMMENT "${COMMENT}"
     )
-    add_custom_target(${TARGET_NAME} ALL
-        DEPENDS
-            "${OUTPUT}"
-    )
-    add_dependencies(${TARGET_NAME} ${TARGET_NAME}_vksc_pcjson_scan_)
+    add_dependencies(${TARGET_NAME} ${TARGET_NAME}_scan)
 endfunction()
 
 # Only include environment stub if not cross-compiling

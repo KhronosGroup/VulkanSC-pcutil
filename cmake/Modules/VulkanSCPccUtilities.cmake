@@ -59,7 +59,12 @@ function(TARGET_EMBED_VKSC_ENVIRONMENT target)
 
     if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         set_target_properties(DeviceFilterStub PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-        target_link_options(${target} ${link_type} $<$<CXX_COMPILER_ID:MSVC>:/NODEFAULTLIB:LIBCMT$<$<CONFIG:Debug>:D>>)
+        if(CMAKE_GENERATOR MATCHES "Visual Studio")
+            target_link_options(${target} ${link_type}
+                    $<$<AND:$<OR:$<AND:$<LINK_LANGUAGE:C>,$<OR:$<C_COMPILER_ID:MSVC>,$<C_COMPILER_FRONTEND_VARIANT:MSVC>>>,$<AND:$<LINK_LANGUAGE:CXX>,$<OR:$<CXX_COMPILER_ID:MSVC>,$<CXX_COMPILER_FRONTEND_VARIANT:MSVC>>>>,$<STREQUAL:$<GENEX_EVAL:$<TARGET_PROPERTY:MSVC_RUNTIME_LIBRARY>>,MultiThreaded$<GENEX_EVAL:$<$<CONFIG:Debug>:Debug>>>>:/NODEFAULTLIB:MSVCRT>
+                    $<$<AND:$<OR:$<AND:$<LINK_LANGUAGE:C>,$<OR:$<C_COMPILER_ID:MSVC>,$<C_COMPILER_FRONTEND_VARIANT:MSVC>>>,$<AND:$<LINK_LANGUAGE:CXX>,$<OR:$<CXX_COMPILER_ID:MSVC>,$<CXX_COMPILER_FRONTEND_VARIANT:MSVC>>>>,$<OR:$<STREQUAL:$<GENEX_EVAL:$<TARGET_PROPERTY:MSVC_RUNTIME_LIBRARY>>,MultiThreaded$<GENEX_EVAL:$<$<CONFIG:Debug>:Debug>>DLL>,$<NOT:$<BOOL:$<GENEX_EVAL:$<TARGET_PROPERTY:MSVC_RUNTIME_LIBRARY>>>>>>:/NODEFAULTLIB:LIBCMT>
+    )
+        endif()
     endif()
 endfunction()
 

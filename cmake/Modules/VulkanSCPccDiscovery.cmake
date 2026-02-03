@@ -7,7 +7,6 @@
 
 if(CMAKE_SCRIPT_MODE_FILE)
     load_cache("${CACHE_DIR}" READ_WITH_PREFIX _ VulkanSC_PCC-STRINGS)
-    message("List of available Vulkan SC PCC target architectures/devices (possible values of VulkanSC_PCC):")
     foreach(PCC IN LISTS _VulkanSC_PCC-STRINGS)
         message("\t* ${PCC}")
     endforeach()
@@ -263,5 +262,10 @@ if(NOT DEFINED VulkanSC_PCC_EXECUTABLE)
 endif()
 
 if(DEFINED CACHE{VulkanSC_PCC_DISCOVERY})
-    add_custom_target(VulkanSC_PCC_ListOptions COMMAND "${CMAKE_COMMAND}" -D CACHE_DIR="${CMAKE_BINARY_DIR}" -P "${CMAKE_CURRENT_LIST_FILE}")
+    add_custom_target(VulkanSC_PCC_ListOptions
+        COMMAND "${CMAKE_COMMAND}"
+            -D CACHE_DIR="${CMAKE_BINARY_DIR}"
+            -P "${CMAKE_CURRENT_LIST_FILE}"
+        COMMENT "List of available Vulkan SC PCC target architectures/devices (possible values of VulkanSC_PCC):"
+    )
 endif()

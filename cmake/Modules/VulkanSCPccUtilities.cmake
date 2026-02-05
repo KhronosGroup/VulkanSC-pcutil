@@ -28,7 +28,7 @@ function(TARGET_EMBED_VKSC_ENVIRONMENT target)
             list(GET env_separated 0 env_name)
             list(GET env_separated 1 env_value)
 
-            if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+            if (WIN32)
                 string(APPEND EmbeddedHelperSource "        _putenv_s(\"${env_name}\", \"${env_value}\")\;\n")
             else()
                 string(APPEND EmbeddedHelperSource "        setenv(\"${env_name}\", \"${env_value}\", 1)\;\n")
@@ -63,7 +63,7 @@ function(TARGET_EMBED_VKSC_ENVIRONMENT target)
         endif()
     endif()
 
-    if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    if (WIN32)
         set_target_properties(DeviceFilterStub PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
         if(CMAKE_GENERATOR MATCHES "Visual Studio")
             target_link_options(${target} ${link_type}

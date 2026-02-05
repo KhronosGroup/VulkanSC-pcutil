@@ -6,6 +6,12 @@
 # ~~~
 
 function(TARGET_EMBED_VKSC_ENVIRONMENT target)
+    # NOTE: Due to CMP0165, enable_language() can only be reliably called after the project() declaration
+    if(NOT DEFINED PROJECT_NAME)
+        message(FATAL_ERROR "Please include VulkanSCPccUtilities after your CMake project() declaration")
+    endif()
+    enable_language(CXX)
+
     set(EmbeddedEnviromentFileName "${CMAKE_CURRENT_BINARY_DIR}/DeviceFilterStub.cpp")
     set(EmbeddedEnvHelperClassName "SetEnvHelper_${target}")
 
@@ -22,7 +28,7 @@ function(TARGET_EMBED_VKSC_ENVIRONMENT target)
             list(GET env_separated 0 env_name)
             list(GET env_separated 1 env_value)
 
-            if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+            if (WIN32)
                 string(APPEND EmbeddedHelperSource "        _putenv_s(\"${env_name}\", \"${env_value}\")\;\n")
             else()
                 string(APPEND EmbeddedHelperSource "        setenv(\"${env_name}\", \"${env_value}\", 1)\;\n")
@@ -57,14 +63,12 @@ function(TARGET_EMBED_VKSC_ENVIRONMENT target)
         endif()
     endif()
 
-    if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    if (WIN32)
         set_target_properties(DeviceFilterStub PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-        if(CMAKE_GENERATOR MATCHES "Visual Studio")
-            target_link_options(${target} ${link_type}
-                    $<$<AND:$<OR:$<AND:$<LINK_LANGUAGE:C>,$<OR:$<C_COMPILER_ID:MSVC>,$<C_COMPILER_FRONTEND_VARIANT:MSVC>>>,$<AND:$<LINK_LANGUAGE:CXX>,$<OR:$<CXX_COMPILER_ID:MSVC>,$<CXX_COMPILER_FRONTEND_VARIANT:MSVC>>>>,$<STREQUAL:$<GENEX_EVAL:$<TARGET_PROPERTY:MSVC_RUNTIME_LIBRARY>>,MultiThreaded$<GENEX_EVAL:$<$<CONFIG:Debug>:Debug>>>>:/NODEFAULTLIB:MSVCRT>
-                    $<$<AND:$<OR:$<AND:$<LINK_LANGUAGE:C>,$<OR:$<C_COMPILER_ID:MSVC>,$<C_COMPILER_FRONTEND_VARIANT:MSVC>>>,$<AND:$<LINK_LANGUAGE:CXX>,$<OR:$<CXX_COMPILER_ID:MSVC>,$<CXX_COMPILER_FRONTEND_VARIANT:MSVC>>>>,$<OR:$<STREQUAL:$<GENEX_EVAL:$<TARGET_PROPERTY:MSVC_RUNTIME_LIBRARY>>,MultiThreaded$<GENEX_EVAL:$<$<CONFIG:Debug>:Debug>>DLL>,$<NOT:$<BOOL:$<GENEX_EVAL:$<TARGET_PROPERTY:MSVC_RUNTIME_LIBRARY>>>>>>:/NODEFAULTLIB:LIBCMT>
-    )
-        endif()
+        target_link_options(${target} ${link_type}
+            $<$<AND:$<OR:$<AND:$<LINK_LANGUAGE:C>,$<OR:$<C_COMPILER_ID:MSVC>,$<C_COMPILER_FRONTEND_VARIANT:MSVC>>>,$<AND:$<LINK_LANGUAGE:CXX>,$<OR:$<CXX_COMPILER_ID:MSVC>,$<CXX_COMPILER_FRONTEND_VARIANT:MSVC>>>>,$<STREQUAL:$<GENEX_EVAL:$<TARGET_PROPERTY:MSVC_RUNTIME_LIBRARY>>,$<IF:$<CONFIG:Debug>,MultiThreadedDebug,MultiThreaded>>>:$<IF:$<CONFIG:Debug>,/NODEFAULTLIB:MSVCRTD,/NODEFAULTLIB:MSVCRT>>
+            $<$<AND:$<OR:$<AND:$<LINK_LANGUAGE:C>,$<OR:$<C_COMPILER_ID:MSVC>,$<C_COMPILER_FRONTEND_VARIANT:MSVC>>>,$<AND:$<LINK_LANGUAGE:CXX>,$<OR:$<CXX_COMPILER_ID:MSVC>,$<CXX_COMPILER_FRONTEND_VARIANT:MSVC>>>>,$<OR:$<STREQUAL:$<GENEX_EVAL:$<TARGET_PROPERTY:MSVC_RUNTIME_LIBRARY>>,$<IF:$<CONFIG:Debug>,MultiThreadedDebugDLL,MultiThreadedDLL>>,$<NOT:$<BOOL:$<GENEX_EVAL:$<TARGET_PROPERTY:MSVC_RUNTIME_LIBRARY>>>>>>:$<IF:$<CONFIG:Debug>,/NODEFAULTLIB:LIBCMTD,/NODEFAULTLIB:LIBCMT>>
+        )
     endif()
 endfunction()
 
@@ -94,13 +98,6 @@ function(ADD_VKSC_PIPELINE_CACHE TARGET_NAME)
     cmake_path(IS_RELATIVE ARG_OUT ARG_OUT_IS_RELATIVE)
     if(ARG_OUT_IS_RELATIVE)
         cmake_path(ABSOLUTE_PATH ARG_OUT BASE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-    endif()
-    get_property(LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
-    if(NOT CXX IN_LIST LANGUAGES)
-        message(FATAL_ERROR
-            "VulkanSC SDK CMake integration requires CXX language support be enabled. "
-            "The VulkanSC package cannot reliably enable_language(CXX). For details, see CMP0165."
-        )
     endif()
 
     set(VulkanSC_PCC_DYNDEP_SCANNER "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/VulkanSCPcJsonDyndepScanner.cmake")
@@ -163,7 +160,7 @@ function(ADD_VKSC_PIPELINE_CACHE TARGET_NAME)
 endfunction()
 
 # Only include environment stub if not cross-compiling
-if(NOT CMAKE_CROSSCOMPILING)
+if(NOT CMAKE_CROSSCOMPILING AND NOT DEFINED VulkanSC_NO_EMBEDDED_ENVIRONMENT_STUB)
     if(VulkanSC_PCC_VENDOR_ID_FILTER)
         list(APPEND EMBEDDED_ENVIRONMENT "VK_LOADER_VENDOR_ID_FILTER=${VulkanSC_PCC_VENDOR_ID_FILTER}")
     endif()

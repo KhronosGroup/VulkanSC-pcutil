@@ -6,6 +6,12 @@
 # ~~~
 
 function(TARGET_EMBED_VKSC_ENVIRONMENT target)
+    # NOTE: Due to CMP0165, enable_language() can only be reliably called after the project() declaration
+    if(NOT DEFINED PROJECT_NAME)
+        message(FATAL_ERROR "Please include VulkanSCPccUtilities after your CMake project() declaration")
+    endif()
+    enable_language(CXX)
+
     set(EmbeddedEnviromentFileName "${CMAKE_CURRENT_BINARY_DIR}/DeviceFilterStub.cpp")
     set(EmbeddedEnvHelperClassName "SetEnvHelper_${target}")
 
@@ -94,13 +100,6 @@ function(ADD_VKSC_PIPELINE_CACHE TARGET_NAME)
     cmake_path(IS_RELATIVE ARG_OUT ARG_OUT_IS_RELATIVE)
     if(ARG_OUT_IS_RELATIVE)
         cmake_path(ABSOLUTE_PATH ARG_OUT BASE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-    endif()
-    get_property(LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
-    if(NOT CXX IN_LIST LANGUAGES)
-        message(FATAL_ERROR
-            "VulkanSC SDK CMake integration requires CXX language support be enabled. "
-            "The VulkanSC package cannot reliably enable_language(CXX). For details, see CMP0165."
-        )
     endif()
 
     set(VulkanSC_PCC_DYNDEP_SCANNER "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/VulkanSCPcJsonDyndepScanner.cmake")

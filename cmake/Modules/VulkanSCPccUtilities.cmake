@@ -52,6 +52,7 @@ function(TARGET_EMBED_VKSC_ENVIRONMENT target)
     if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
         target_link_libraries(${target} ${link_type} $<LINK_LIBRARY:WHOLE_ARCHIVE,DeviceFilterStub>)
     else()
+        target_link_libraries(${target} ${link_type} DeviceFilterStub)
         if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
             target_link_options(${target} ${link_type} "-force_load $<TARGET_FILE:DeviceFilterStub>")
         elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "GNU")
@@ -129,14 +130,11 @@ function(ADD_VKSC_PIPELINE_CACHE TARGET_NAME)
             "${ARG_OUT}"
         DEPENDS
             "${VulkanSC_PCC_EXECUTABLE}"
+            ${ARG_DEPENDS}
         DEPFILE "${DEPFILE}"
         COMMENT "${COMMENT}"
     )
-    add_custom_target(${TARGET_NAME} ALL
-        DEPENDS
-            "${ARG_OUT}"
-            ${ARG_DEPENDS}
-    )
+    add_custom_target(${TARGET_NAME} ALL DEPENDS "${ARG_OUT}")
 
     if(CMAKE_GENERATOR MATCHES "Visual Studio")
         file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${DEPFILE}" NATIVE_DEPFILE)

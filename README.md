@@ -25,6 +25,7 @@ Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file in this repository for mo
 ## How to Build and Run
 
 - [BUILD.md](BUILD.md) includes directions for building all components.
+- [layers/json_gen/README.md](layers/json_gen/README.md) includes information about the Vulkan Pipeline JSON Generator Layer (`VK_LAYER_KHRONOS_json_gen`) and its use.
 
 ## Version Tagging Scheme
 

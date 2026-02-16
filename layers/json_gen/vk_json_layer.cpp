@@ -30,8 +30,21 @@
 #include <numeric>
 #include <fstream>
 #include <sstream>
+#include <type_traits>
 
 namespace vk_json {
+
+template <typename T>
+T as_non_dispatchable_handle(uint64_t integral) {
+    if constexpr (std::numeric_limits<size_t>::max() != std::numeric_limits<uint64_t>::max()) {
+        if (integral > std::numeric_limits<size_t>::max()) /*TODO: [[unlikely]] when C++20*/ {
+            LOG("[%s] ERROR: unique object id not representable as non-dispatchable handle.",
+                VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
+            exit(-1);
+        }
+    }
+    return (T)integral;
+}
 
 static const char* StageBitToString(const VkShaderStageFlagBits stage, VkGraphicsPipelineCreateInfo) {
     switch (stage) {
@@ -73,7 +86,7 @@ struct OwningVpjShaderFilenames {
 };
 
 static OwningVpjShaderFilenames GetShaderFiles(const VkGraphicsPipelineCreateInfo& ci, const std::string& prefix,
-                                               const uintptr_t pipeline_index) {
+                                               const uint64_t pipeline_index) {
     OwningVpjShaderFilenames result{};
     const auto shader_filename = [&](const VkPipelineShaderStageCreateInfo& pss_ci) -> std::string {
         return prefix + "_pipeline_" + std::to_string(pipeline_index) + '.' + StageBitToString(pss_ci.stage, ci) + ".spv";
@@ -87,7 +100,7 @@ static OwningVpjShaderFilenames GetShaderFiles(const VkGraphicsPipelineCreateInf
 };
 
 static OwningVpjShaderFilenames GetShaderFiles(const VkComputePipelineCreateInfo& ci, const std::string& prefix,
-                                               const uintptr_t pipeline_index) {
+                                               const uint64_t pipeline_index) {
     const auto shader_filename = [&](const VkPipelineShaderStageCreateInfo& pss_ci) -> std::string {
         return prefix + "_pipeline_" + std::to_string(pipeline_index) + '.' + StageBitToString(pss_ci.stage, ci) + ".spv";
     };
@@ -106,11 +119,11 @@ struct PipelineLayoutAndChildObjectInfo {
     std::vector<vku::safe_VkSamplerYcbcrConversionCreateInfo> ycbcr_samplers{};
     std::vector<std::string> names_storage{};
     std::vector<const char*> descriptor_set_layout_names{};
-    std::vector<uintptr_t> descriptor_set_layout_ids{};
+    std::vector<uint64_t> descriptor_set_layout_ids{};
     std::vector<const char*> immutable_sampler_names{};
-    std::vector<uintptr_t> immutable_sampler_ids{};
+    std::vector<uint64_t> immutable_sampler_ids{};
     std::vector<const char*> ycbcr_sampler_names{};
-    std::vector<uintptr_t> ycbcr_sampler_ids{};
+    std::vector<uint64_t> ycbcr_sampler_ids{};
 
     PipelineLayoutAndChildObjectInfo(T& state, const PipelineLayoutData& pipeline_layout_data) {
         // Serialize unique object create infos and generate names
@@ -131,7 +144,7 @@ struct PipelineLayoutAndChildObjectInfo {
             }
         }
         names_storage.reserve(names_required);
-        auto not_contains = [](const auto& container, const uintptr_t unique_obj_id) {
+        auto not_contains = [](const auto& container, const uint64_t unique_obj_id) {
             return std::find(std::cbegin(container), std::cend(container), unique_obj_id) == std::cend(container);
         };
         for (size_t i = 0; i < pipeline_layout_data.descriptor_set_layout_data.size(); ++i) {
@@ -167,7 +180,7 @@ struct PipelineLayoutAndChildObjectInfo {
             return std::find(std::cbegin(container), std::cend(container), unique_obj_id);
         };
         for (size_t i = 0; i < pipeline_layout_data.create_info.setLayoutCount; ++i) {
-            pipeline_layout_data.create_info.pSetLayouts[i] = reinterpret_cast<VkDescriptorSetLayout>(
+            pipeline_layout_data.create_info.pSetLayouts[i] = as_non_dispatchable_handle<VkDescriptorSetLayout>(
                 std::distance(std::cbegin(descriptor_set_layout_ids),
                               find_id(descriptor_set_layout_ids, (uintptr_t)pipeline_layout_data.create_info.pSetLayouts[i])));
         }
@@ -175,9 +188,10 @@ struct PipelineLayoutAndChildObjectInfo {
             for (size_t i = 0; i < descriptor_set_layout.bindingCount; ++i) {
                 if (descriptor_set_layout.pBindings[i].pImmutableSamplers) {
                     for (size_t j = 0; j < descriptor_set_layout.pBindings[i].descriptorCount; ++j) {
-                        descriptor_set_layout.pBindings[i].pImmutableSamplers[j] = reinterpret_cast<VkSampler>(std::distance(
-                            std::cbegin(immutable_sampler_ids),
-                            find_id(immutable_sampler_ids, (uintptr_t)descriptor_set_layout.pBindings[i].pImmutableSamplers[j])));
+                        descriptor_set_layout.pBindings[i].pImmutableSamplers[j] = as_non_dispatchable_handle<VkSampler>(
+                            std::distance(std::cbegin(immutable_sampler_ids),
+                                          find_id(immutable_sampler_ids,
+                                                  (uintptr_t)descriptor_set_layout.pBindings[i].pImmutableSamplers[j])));
                     }
                 }
             }
@@ -185,7 +199,7 @@ struct PipelineLayoutAndChildObjectInfo {
         for (auto& immutable_sampler : immutable_samplers) {
             auto ycbcr = vku::FindStructInPNextChain<VkSamplerYcbcrConversionInfo>(const_cast<void*>(immutable_sampler.pNext));
             if (ycbcr) {
-                ycbcr->conversion = reinterpret_cast<VkSamplerYcbcrConversion>(
+                ycbcr->conversion = as_non_dispatchable_handle<VkSamplerYcbcrConversion>(
                     std::distance(std::cbegin(ycbcr_sampler_ids), find_id(ycbcr_sampler_ids, (uintptr_t)ycbcr->conversion)));
             }
         }
@@ -511,7 +525,7 @@ SamplerData::SamplerData(const VkSamplerCreateInfo* ci, DeviceData& device_data)
     if (ycbcr) {
         if (auto result = device_data.ycbcr_map.find(ycbcr->conversion); result->first) {
             // Rewrite handle(s) in create info to unique_obj_id(s)
-            ycbcr->conversion = reinterpret_cast<VkSamplerYcbcrConversion>(result->second->unique_obj_id);
+            ycbcr->conversion = as_non_dispatchable_handle<VkSamplerYcbcrConversion>(result->second->unique_obj_id);
             // Store local copy of dependent create info
             ycbcr_data = *result->second;
         } else {
@@ -531,7 +545,8 @@ DescriptorSetLayoutData::DescriptorSetLayoutData(const VkDescriptorSetLayoutCrea
             for (uint32_t j = 0; j < create_info.pBindings[i].descriptorCount; ++j) {
                 if (auto result = device_data.sampler_map.find(create_info.pBindings[i].pImmutableSamplers[j]); result->first) {
                     // Rewrite handle(s) in create info to unique_obj_id(s)
-                    create_info.pBindings[i].pImmutableSamplers[j] = reinterpret_cast<VkSampler>(result->second->unique_obj_id);
+                    create_info.pBindings[i].pImmutableSamplers[j] =
+                        as_non_dispatchable_handle<VkSampler>(result->second->unique_obj_id);
                     // Store local copy of dependent create info
                     immutable_sampler_data.emplace_back(*result->second);
                 } else {
@@ -549,7 +564,7 @@ PipelineLayoutData::PipelineLayoutData(const VkPipelineLayoutCreateInfo* ci, Dev
     for (uint32_t i = 0; i < create_info.setLayoutCount; ++i) {
         if (auto result = device_data.descriptor_set_layout_map.find(create_info.pSetLayouts[i]); result->first) {
             // Rewrite handle(s) in create info to unique_obj_id(s)
-            create_info.pSetLayouts[i] = reinterpret_cast<VkDescriptorSetLayout>(result->second->unique_obj_id);
+            create_info.pSetLayouts[i] = as_non_dispatchable_handle<VkDescriptorSetLayout>(result->second->unique_obj_id);
             // Store local copy of dependent create info
             descriptor_set_layout_data.emplace_back(*result->second);
         } else {
@@ -573,7 +588,7 @@ GraphicsPipelineData::GraphicsPipelineData(const VkGraphicsPipelineCreateInfo* c
         // Save pipeline layout
         pipeline_layout_data = *result->second;
         // Rewrite handle of pipeline layout in graphics pipeline with autoinc unique_obj_id
-        create_info.layout = reinterpret_cast<VkPipelineLayout>(result->second->unique_obj_id);
+        create_info.layout = as_non_dispatchable_handle<VkPipelineLayout>(result->second->unique_obj_id);
     } else {
         LOG("[%s] ERROR: Failed to find pipeline layout in accelerating structure referenced by graphics pipeline.",
             VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);
@@ -606,7 +621,7 @@ ComputePipelineData::ComputePipelineData(const VkComputePipelineCreateInfo* ci, 
         // Save pipeline layout
         pipeline_layout_data = *result->second;
         // Rewrite handle of pipeline layout in graphics pipeline with autoinc unique_obj_id
-        create_info.layout = reinterpret_cast<VkPipelineLayout>(result->second->unique_obj_id);
+        create_info.layout = as_non_dispatchable_handle<VkPipelineLayout>(result->second->unique_obj_id);
     } else {
         LOG("[%s] ERROR: Failed to find pipeline layout in accelerating structure referenced by compute pipeline.",
             VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME);

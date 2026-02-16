@@ -31,6 +31,18 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 else()
     set(BIT_WIDTH 32)
 endif()
+if(CMAKE_C_FLAGS MATCHES "-m(32|64)")
+    set(CMAKE_C_FLAGS_ARG -D "CMAKE_C_FLAGS=-m${CMAKE_MATCH_1}")
+endif()
+if(CMAKE_CXX_FLAGS MATCHES "-m(32|64)")
+    set(CMAKE_CXX_FLAGS_ARG -D "CMAKE_CXX_FLAGS=-m${CMAKE_MATCH_1}")
+endif()
+if(CMAKE_GENERATOR_PLATFORM)
+    set(CMAKE_GENERATOR_PLATFORM_ARG --build-generator-platform "${CMAKE_GENERATOR_PLATFORM}")
+endif()
+if(CMAKE_GENERATOR_TOOLSET)
+    set(CMAKE_GENERATOR_TOOLSET_ARG --build-generator-toolset "${CMAKE_GENERATOR_TOOLSET}")
+endif()
 
 # Test add_subdirectory suppport
 add_test(NAME Integration.add_subdirectory
@@ -38,11 +50,15 @@ add_test(NAME Integration.add_subdirectory
         --build-and-test "${CMAKE_CURRENT_LIST_DIR}/integration"
                          "${CMAKE_CURRENT_BINARY_DIR}/add_subdirectory"
         --build-generator ${CMAKE_GENERATOR}
+        ${CMAKE_GENERATOR_PLATFORM_ARG}
+        ${CMAKE_GENERATOR_TOOLSET_ARG}
         --build-options -C "${VulkanSC-Pipeline-Cache-Utils_SOURCE_DIR}/external/$<CONFIG>/${BIT_WIDTH}/helper.cmake"
                         -D FIND_PACKAGE_TESTING=OFF
                         -D TEST_JSON_GEN_LAYER=${BUILD_JSON_GEN_LAYER}
                         -D TEST_ADDRESS_SANITIZER=${ENABLE_ADDRESS_SANITIZER}
                         -D TEST_THREAD_SANITIZER=${ENABLE_THREAD_SANITIZER}
+                        ${CMAKE_C_FLAGS_ARG}
+                        ${CMAKE_CXX_FLAGS_ARG}
 )
 
 set(test_install_dir "${CMAKE_CURRENT_BINARY_DIR}/install")
@@ -60,6 +76,8 @@ add_test(NAME Integration.find_package
         --build-and-test "${CMAKE_CURRENT_LIST_DIR}/integration"
                          "${CMAKE_CURRENT_BINARY_DIR}/find_package"
         --build-generator ${CMAKE_GENERATOR}
+        ${CMAKE_GENERATOR_PLATFORM_ARG}
+        ${CMAKE_GENERATOR_TOOLSET_ARG}
         --build-options  -D "CMAKE_PREFIX_PATH=${VULKAN_HEADERS_INSTALL_DIR};${JSONCPP_INSTALL_DIR};${HASHLIB_INSTALL_DIR}"
                          -D "VulkanSCPCUtil_ROOT=${test_install_dir}"
                          -D "VulkanJSONGenLayer_ROOT=${test_install_dir}"
@@ -67,6 +85,8 @@ add_test(NAME Integration.find_package
                          -D TEST_JSON_GEN_LAYER=${BUILD_JSON_GEN_LAYER}
                          -D TEST_ADDRESS_SANITIZER=${ENABLE_ADDRESS_SANITIZER}
                          -D TEST_THREAD_SANITIZER=${ENABLE_THREAD_SANITIZER}
+                         ${CMAKE_C_FLAGS_ARG}
+                         ${CMAKE_CXX_FLAGS_ARG}
 )
 
 # Installing comes before testing

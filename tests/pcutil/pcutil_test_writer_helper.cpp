@@ -75,7 +75,8 @@ void WriteTestDataToCache(VKSCPipelineCacheHeaderWriter &pcw, std::vector<uint8_
         for (const auto &pipeline_test_data : td.pipeline_test_datas_) {
             VkPipelineCacheSafetyCriticalIndexEntry const *pie = pcr.getPipelineIndexEntry(pipeline_test_data.uuid);
 
-            size_t next_stage_vendor_data_offset = pie->stageIndexOffset + sizeof(VkPipelineCacheStageValidationIndexEntry);
+            size_t next_stage_vendor_data_offset =
+                static_cast<size_t>(pie->stageIndexOffset + sizeof(VkPipelineCacheStageValidationIndexEntry));
 
             for (uint32_t stage_id = 0; stage_id < pipeline_test_data.stages.size(); stage_id++) {
                 const auto &stage_data = pipeline_test_data.stages[stage_id];

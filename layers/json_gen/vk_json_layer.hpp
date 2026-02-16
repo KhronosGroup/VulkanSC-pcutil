@@ -47,7 +47,7 @@ struct YcbcrData {
     YcbcrData() = default;
 
     vku::safe_VkSamplerYcbcrConversionCreateInfo create_info;
-    std::uintptr_t unique_obj_id;
+    std::uint64_t unique_obj_id;
 };
 
 struct SamplerData {
@@ -56,7 +56,7 @@ struct SamplerData {
 
     vku::safe_VkSamplerCreateInfo create_info;
     std::optional<YcbcrData> ycbcr_data{};
-    std::uintptr_t unique_obj_id;
+    std::uint64_t unique_obj_id;
 };
 
 struct DescriptorSetLayoutData {
@@ -65,7 +65,7 @@ struct DescriptorSetLayoutData {
 
     vku::safe_VkDescriptorSetLayoutCreateInfo create_info;
     std::vector<SamplerData> immutable_sampler_data{};
-    std::uintptr_t unique_obj_id;
+    std::uint64_t unique_obj_id;
 };
 
 struct PipelineLayoutData {
@@ -74,7 +74,7 @@ struct PipelineLayoutData {
 
     vku::safe_VkPipelineLayoutCreateInfo create_info;
     std::vector<DescriptorSetLayoutData> descriptor_set_layout_data{};
-    std::uintptr_t unique_obj_id;
+    std::uint64_t unique_obj_id;
 };
 
 struct ShaderModuleData {
@@ -114,7 +114,7 @@ struct GraphicsPipelineData {
     std::variant<RenderPassData, RenderPass2Data> renderpass_data{};
     std::vector<ShaderModuleData> shader_module_data{};
     std::array<uint8_t, VK_UUID_SIZE> uuid{};
-    std::uintptr_t unique_obj_id;
+    std::uint64_t unique_obj_id;
 
     void GenJsonUuidAndWriteToDisk(DeviceData& device_data);
 };
@@ -127,7 +127,7 @@ struct ComputePipelineData {
     PipelineLayoutData pipeline_layout_data{};
     ShaderModuleData shader_module_data{};
     std::array<uint8_t, VK_UUID_SIZE> uuid{};
-    std::uintptr_t unique_obj_id;
+    std::uint64_t unique_obj_id;
 
     void GenJsonUuidAndWriteToDisk(DeviceData& device_data);
 };
@@ -208,7 +208,7 @@ struct InstanceData {
 
     vku::concurrent::unordered_map<VkPhysicalDevice, std::shared_ptr<PhysicalDeviceData>> physical_device_map{};
 
-    std::atomic<std::uintptr_t> unique_obj_id_counter{0};
+    std::atomic<uint64_t> unique_obj_id_counter{0};
 };
 
 struct DeviceData {
@@ -289,8 +289,8 @@ struct DeviceData {
     vku::concurrent::unordered_map<VkImageView, std::shared_ptr<ImageViewData>> image_view_map{};
     ObjectResCreateInfo obj_res_info{};
 
-    std::atomic<std::uintptr_t> unique_obj_id_counter{0};
-    uintptr_t unique_obj_id;
+    std::atomic<uint64_t> unique_obj_id_counter{0};
+    uint64_t unique_obj_id;
 
     std::string base_dir_path;
     std::string file_prefix;

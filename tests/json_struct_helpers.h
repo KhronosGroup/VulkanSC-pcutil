@@ -19,6 +19,20 @@
 #include <optional>     // std::optional
 #include <cmath>        // std::isnan
 
+template <typename T>
+uint64_t as_uint64_t(T integral) {
+    if constexpr (std::is_pointer_v<T>) {
+        if constexpr (std::numeric_limits<size_t>::max() == std::numeric_limits<uint64_t>::max()) {
+            return reinterpret_cast<uint64_t>(integral);
+        } else {
+            return static_cast<T>(reinterpret_cast<size_t>(integral));
+        }
+    } else {
+        static_assert(std::is_integral_v<T>, "Non-dispatchable handle is neither pointer type, nor integral type.");
+        return static_cast<T>(integral);
+    }
+}
+
 const char* shader_stage_flag_to_string(VkShaderStageFlags flags) {
     switch (flags) {
         case VK_SHADER_STAGE_VERTEX_BIT:
@@ -174,7 +188,7 @@ std::pair<vku::safe_VkSamplerCreateInfo, std::string> getVkSamplerCreateInfo(uin
         if (params.ycbcr_name) {
             conversion_str = R"(")"s + params.ycbcr_name.value() + R"(")";
         } else {
-            conversion_str = std::to_string(reinterpret_cast<std::size_t>(params.ycbcr_conversion.value()));
+            conversion_str = std::to_string(as_uint64_t(params.ycbcr_conversion.value()));
         }
         conversion_json = R"({
             "sType": "VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_INFO",
@@ -373,12 +387,11 @@ std::pair<vku::safe_VkDescriptorSetLayoutCreateInfo, std::string> getVkDescripto
                 "stageFlags": ")"s +
                 shader_stage_flag_to_string(stageFlags) + R"(",
                 "pImmutableSamplers": )"s +
-                (it->immutableSampler
-                     ? ("["s +
-                        (it->immutableSamplerName ? (R"(")"s + it->immutableSamplerName.value() + R"(")")
-                                                  : std::to_string(reinterpret_cast<std::size_t>(it->immutableSampler.value()))) +
-                        "]")
-                     : R"("NULL")"s) +
+                (it->immutableSampler ? ("["s +
+                                         (it->immutableSamplerName ? (R"(")"s + it->immutableSamplerName.value() + R"(")")
+                                                                   : std::to_string(as_uint64_t(it->immutableSampler.value()))) +
+                                         "]")
+                                      : R"("NULL")"s) +
                 R"(
         })";
             if (std::next(it) != params.end()) {
@@ -474,11 +487,10 @@ std::pair<vku::safe_VkPipelineLayoutCreateInfo, std::string> getVkPipelineLayout
         pSetLayouts_str = "[";
         for (auto it = params.begin(); it != params.end(); ++it) {
             setLayouts.push_back(it->descriptorSetLayout.value());
-            pSetLayouts_str +=
-                it->descriptorSetLayout
-                    ? (it->descriptorSetLayoutName ? (R"(")"s + it->descriptorSetLayoutName.value() + R"(")")
-                                                   : std::to_string(reinterpret_cast<std::size_t>(it->descriptorSetLayout.value())))
-                    : R"("NULL")"s;
+            pSetLayouts_str += it->descriptorSetLayout
+                                   ? (it->descriptorSetLayoutName ? (R"(")"s + it->descriptorSetLayoutName.value() + R"(")")
+                                                                  : std::to_string(as_uint64_t(it->descriptorSetLayout.value())))
+                                   : R"("NULL")"s;
             if (std::next(it) != params.end()) {
                 pSetLayouts_str += ",";
             }

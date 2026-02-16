@@ -52,7 +52,7 @@ bool ReadAndValidate(VKSCPipelineCacheHeaderReader &pcr, std::vector<uint8_t> &c
         if (json_ptr) {
             const auto &td_json = td.pipeline_test_datas_[pipe_id].json;
             EXPECT_TRUE(pie->jsonSize == td_json.size());
-            EXPECT_TRUE(memcmp(json_ptr, td_json.data(), pie->jsonSize) == 0);
+            EXPECT_TRUE(memcmp(json_ptr, td_json.data(), static_cast<size_t>(pie->jsonSize)) == 0);
         }
 
         uint32_t stage_index_count = pie->stageIndexCount;
@@ -70,7 +70,7 @@ bool ReadAndValidate(VKSCPipelineCacheHeaderReader &pcr, std::vector<uint8_t> &c
             EXPECT_TRUE(sie->codeSize == stage_data.code.size());
 
             uint8_t const *spirv = pcr.getSPIRV(*sie);
-            EXPECT_TRUE(memcmp(spirv, stage_data.code.data(), sie->codeSize) == 0);
+            EXPECT_TRUE(memcmp(spirv, stage_data.code.data(), static_cast<size_t>(sie->codeSize)) == 0);
 
             const uint8_t *stage_vendor_data_ptr =
                 reinterpret_cast<const uint8_t *>(sie) + sizeof(VkPipelineCacheStageValidationIndexEntry);

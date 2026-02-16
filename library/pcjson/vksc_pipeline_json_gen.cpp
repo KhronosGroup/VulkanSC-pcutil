@@ -263,7 +263,7 @@ class Generator : private GeneratorBase {
             gen_MD5(md5, value.asBool());
         } else if (value.isString()) {
             auto str = value.asString();
-            gen_MD5(md5, str.size());
+            gen_MD5(md5, static_cast<uint64_t>(str.size()));
             gen_MD5(md5, str.data(), str.size());
         } else if (value.isDouble()) {
             gen_MD5(md5, value.asDouble());
@@ -274,7 +274,7 @@ class Generator : private GeneratorBase {
         } else if (value.isInt64()) {
             gen_MD5(md5, value.asInt64());
         } else if (value.isUInt64()) {
-            gen_MD5(md5, value.asUInt());
+            gen_MD5(md5, value.asUInt64());
         } else {
             Error() << "Unexpected JSON value type";
         }

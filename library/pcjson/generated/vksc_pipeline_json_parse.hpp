@@ -2541,7 +2541,13 @@ class ParserBase : protected Base {
         }
     }
 
-    size_t parse_size_t(const Json::Value& v, const LocationScope& l) { return parse_uint64_t(v, l); }
+    size_t parse_size_t(const Json::Value& v, const LocationScope& l) {
+        if constexpr (sizeof(&v) == 8) {
+            return parse_uint64_t(v, l);
+        } else {
+            return parse_uint32_t(v, l);
+        }
+    }
 
     VkDeviceSize parse_VkDeviceSize(const Json::Value& v, const LocationScope& l) { return parse_uint64_t(v, l); }
 

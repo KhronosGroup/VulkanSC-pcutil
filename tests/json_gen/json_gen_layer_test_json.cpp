@@ -87,7 +87,7 @@ class JSON : public testing::Test {
         auto spirv_path = std::filesystem::path(getenv("VK_JSON_FILE_PATH")) /
                           ("json_gen_layer_test_json_pipeline_"s + std::to_string(pipeline_id) + "." + stage + ".spv");
         auto spirv_size = std::filesystem::file_size(spirv_path);
-        std::vector<uint32_t> spirv_vec(spirv_size / 4, '\0');
+        std::vector<uint32_t> spirv_vec(static_cast<size_t>(spirv_size / static_cast<decltype(spirv_size)>(4)), '\0');
         std::ifstream spirv_stream{spirv_path, std::ios::binary};
         spirv_stream.read(reinterpret_cast<char*>(spirv_vec.data()), spirv_size);
         return spirv_vec;

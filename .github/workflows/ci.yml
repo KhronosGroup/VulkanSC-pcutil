@@ -48,7 +48,7 @@ jobs:
         done
         git diff --exit-code
     - name: Check REUSE compliance
-      uses: fsfe/reuse-action@v5.0.0
+      uses: fsfe/reuse-action@v6.0.0
     - name: Install Python
       uses: actions/setup-python@v5
       with:

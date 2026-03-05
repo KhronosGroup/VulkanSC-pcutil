@@ -69,6 +69,8 @@ jobs:
         config: [ Debug, Release ]
         os: [ ubuntu-22.04, ubuntu-24.04 ]
     steps:
+      # Install Loader dependencies
+      - run: sudo apt install pkg-config libx11-xcb-dev libxkbcommon-dev libwayland-dev libxrandr-dev -y
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
@@ -105,6 +107,8 @@ jobs:
           - config: Debug
             sanitize: THREAD
     steps:
+      # Install Loader dependencies
+      - run: sudo apt install pkg-config libx11-xcb-dev libxkbcommon-dev libwayland-dev libxrandr-dev -y
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:

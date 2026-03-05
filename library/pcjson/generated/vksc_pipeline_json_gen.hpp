@@ -85,10 +85,10 @@ class GeneratorBase : protected Base {
         switch (v) {
             case VK_PIPELINE_CREATE_DISABLE_OPTIMIZATION_BIT:
                 return "VK_PIPELINE_CREATE_DISABLE_OPTIMIZATION_BIT";
-            case VK_PIPELINE_CREATE_VIEW_INDEX_FROM_DEVICE_INDEX_BIT:
-                return "VK_PIPELINE_CREATE_VIEW_INDEX_FROM_DEVICE_INDEX_BIT";
             case VK_PIPELINE_CREATE_DISPATCH_BASE_BIT:
                 return "VK_PIPELINE_CREATE_DISPATCH_BASE_BIT";
+            case VK_PIPELINE_CREATE_VIEW_INDEX_FROM_DEVICE_INDEX_BIT:
+                return "VK_PIPELINE_CREATE_VIEW_INDEX_FROM_DEVICE_INDEX_BIT";
             case VK_PIPELINE_CREATE_FAIL_ON_PIPELINE_COMPILE_REQUIRED_BIT:
                 return "VK_PIPELINE_CREATE_FAIL_ON_PIPELINE_COMPILE_REQUIRED_BIT";
             case VK_PIPELINE_CREATE_EARLY_RETURN_ON_FAILURE_BIT:
@@ -4076,6 +4076,14 @@ class GeneratorBase : protected Base {
 
         while (next != nullptr) {
             switch (next->sType) {
+                case VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT: {
+                    *json_next =
+                        gen_VkDebugUtilsObjectNameInfoEXT_contents(*reinterpret_cast<const VkDebugUtilsObjectNameInfoEXT*>(next),
+                                                                   CreateScope("pNext<VkDebugUtilsObjectNameInfoEXT>", true));
+                    (*json_next)["sType"] = "VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT";
+                    break;
+                }
+
                 case VK_STRUCTURE_TYPE_SAMPLER_CUSTOM_BORDER_COLOR_CREATE_INFO_EXT: {
                     *json_next = gen_VkSamplerCustomBorderColorCreateInfoEXT_contents(
                         *reinterpret_cast<const VkSamplerCustomBorderColorCreateInfoEXT*>(next),

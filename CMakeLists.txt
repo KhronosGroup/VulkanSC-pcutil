@@ -61,6 +61,8 @@ if (BUILD_WERROR)
     add_compile_options("$<IF:$<CXX_COMPILER_ID:MSVC>,/WX,-Werror>")
 endif()
 
+add_definitions(-DVK_ENABLE_BETA_EXTENSIONS)
+
 if (${CMAKE_CXX_COMPILER_ID} MATCHES "(GNU|Clang)")
     add_compile_options(
         -Wall

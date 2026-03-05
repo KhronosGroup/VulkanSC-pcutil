@@ -218,7 +218,10 @@
                         "VK_MAX_VIDEO_AV1_REFERENCES_PER_FRAME_KHR",
                         "VK_MAX_VIDEO_VP9_REFERENCES_PER_FRAME_KHR",
                         "VK_PARTITIONED_ACCELERATION_STRUCTURE_PARTITION_INDEX_GLOBAL_NV",
-                        "VK_MAX_PHYSICAL_DEVICE_DATA_GRAPH_OPERATION_SET_NAME_SIZE_ARM"
+                        "VK_COMPRESSED_TRIANGLE_FORMAT_DGF1_BYTE_ALIGNMENT_AMDX",
+                        "VK_COMPRESSED_TRIANGLE_FORMAT_DGF1_BYTE_STRIDE_AMDX",
+                        "VK_MAX_PHYSICAL_DEVICE_DATA_GRAPH_OPERATION_SET_NAME_SIZE_ARM",
+                        "VK_DATA_GRAPH_MODEL_TOOLCHAIN_VERSION_LENGTH_QCOM"
                     ]
                 }
             ]
@@ -243,7 +246,10 @@
                 },
                 {
                     "enum": [
-                        "VK_LOD_CLAMP_NONE"
+                        "VK_LOD_CLAMP_NONE",
+                        "VK_COMPUTE_OCCUPANCY_PRIORITY_LOW_NV",
+                        "VK_COMPUTE_OCCUPANCY_PRIORITY_NORMAL_NV",
+                        "VK_COMPUTE_OCCUPANCY_PRIORITY_HIGH_NV"
                     ]
                 }
             ]
@@ -360,7 +366,7 @@
                 {
                     "type": "string",
                     "pattern":
-                        "(VK_PIPELINE_CREATE_DISABLE_OPTIMIZATION_BIT|VK_PIPELINE_CREATE_VIEW_INDEX_FROM_DEVICE_INDEX_BIT|VK_PIPELINE_CREATE_DISPATCH_BASE_BIT|VK_PIPELINE_CREATE_FAIL_ON_PIPELINE_COMPILE_REQUIRED_BIT|VK_PIPELINE_CREATE_EARLY_RETURN_ON_FAILURE_BIT|VK_PIPELINE_CREATE_NO_PROTECTED_ACCESS_BIT|VK_PIPELINE_CREATE_PROTECTED_ACCESS_ONLY_BIT)( *| *VK_PIPELINE_CREATE_DISABLE_OPTIMIZATION_BIT|VK_PIPELINE_CREATE_VIEW_INDEX_FROM_DEVICE_INDEX_BIT|VK_PIPELINE_CREATE_DISPATCH_BASE_BIT|VK_PIPELINE_CREATE_FAIL_ON_PIPELINE_COMPILE_REQUIRED_BIT|VK_PIPELINE_CREATE_EARLY_RETURN_ON_FAILURE_BIT|VK_PIPELINE_CREATE_NO_PROTECTED_ACCESS_BIT|VK_PIPELINE_CREATE_PROTECTED_ACCESS_ONLY_BIT)*"
+                        "(VK_PIPELINE_CREATE_DISABLE_OPTIMIZATION_BIT|VK_PIPELINE_CREATE_DISPATCH_BASE_BIT|VK_PIPELINE_CREATE_VIEW_INDEX_FROM_DEVICE_INDEX_BIT|VK_PIPELINE_CREATE_FAIL_ON_PIPELINE_COMPILE_REQUIRED_BIT|VK_PIPELINE_CREATE_EARLY_RETURN_ON_FAILURE_BIT|VK_PIPELINE_CREATE_NO_PROTECTED_ACCESS_BIT|VK_PIPELINE_CREATE_PROTECTED_ACCESS_ONLY_BIT)( *| *VK_PIPELINE_CREATE_DISABLE_OPTIMIZATION_BIT|VK_PIPELINE_CREATE_DISPATCH_BASE_BIT|VK_PIPELINE_CREATE_VIEW_INDEX_FROM_DEVICE_INDEX_BIT|VK_PIPELINE_CREATE_FAIL_ON_PIPELINE_COMPILE_REQUIRED_BIT|VK_PIPELINE_CREATE_EARLY_RETURN_ON_FAILURE_BIT|VK_PIPELINE_CREATE_NO_PROTECTED_ACCESS_BIT|VK_PIPELINE_CREATE_PROTECTED_ACCESS_ONLY_BIT)*"
                 },
                 {
                     "type": "string",
@@ -1237,6 +1243,31 @@
                 }
             ]
         },
+        "VkPipelineInputAssemblyStateCreateInfo_pNext": {
+            "oneOf": [
+                {
+                    "enum": [
+                        "NULL"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "allOf": [
+                        {
+                            "additionalProperties": true,
+                            "properties": {
+                                "pNext": {
+                                    "$ref": "#/definitions/VkPipelineInputAssemblyStateCreateInfo_pNext"
+                                }
+                            }
+                        },
+                        {
+                            "anyOf": []
+                        }
+                    ]
+                }
+            ]
+        },
         "VkPipelineInputAssemblyStateCreateInfo": {
             "additionalProperties": false,
             "properties": {
@@ -1263,13 +1294,7 @@
                     "$ref": "#/definitions/VkBool32"
                 },
                 "pNext": {
-                    "oneOf": [
-                        {
-                            "enum": [
-                                "NULL"
-                            ]
-                        }
-                    ]
+                    "$ref": "#/definitions/VkPipelineInputAssemblyStateCreateInfo_pNext"
                 }
             },
             "required": [
@@ -1475,6 +1500,31 @@
             ],
             "type": "object"
         },
+        "VkPipelineViewportStateCreateInfo_pNext": {
+            "oneOf": [
+                {
+                    "enum": [
+                        "NULL"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "allOf": [
+                        {
+                            "additionalProperties": true,
+                            "properties": {
+                                "pNext": {
+                                    "$ref": "#/definitions/VkPipelineViewportStateCreateInfo_pNext"
+                                }
+                            }
+                        },
+                        {
+                            "anyOf": []
+                        }
+                    ]
+                }
+            ]
+        },
         "VkPipelineViewportStateCreateInfo": {
             "additionalProperties": false,
             "properties": {
@@ -1549,13 +1599,7 @@
                     ]
                 },
                 "pNext": {
-                    "oneOf": [
-                        {
-                            "enum": [
-                                "NULL"
-                            ]
-                        }
-                    ]
+                    "$ref": "#/definitions/VkPipelineViewportStateCreateInfo_pNext"
                 }
             },
             "required": [
@@ -1919,6 +1963,31 @@
             ],
             "type": "object"
         },
+        "VkSampleLocationsInfoEXT_pNext": {
+            "oneOf": [
+                {
+                    "enum": [
+                        "NULL"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "allOf": [
+                        {
+                            "additionalProperties": true,
+                            "properties": {
+                                "pNext": {
+                                    "$ref": "#/definitions/VkSampleLocationsInfoEXT_pNext"
+                                }
+                            }
+                        },
+                        {
+                            "anyOf": []
+                        }
+                    ]
+                }
+            ]
+        },
         "VkSampleLocationsInfoEXT": {
             "additionalProperties": false,
             "properties": {
@@ -1960,13 +2029,7 @@
                     ]
                 },
                 "pNext": {
-                    "oneOf": [
-                        {
-                            "enum": [
-                                "NULL"
-                            ]
-                        }
-                    ]
+                    "$ref": "#/definitions/VkSampleLocationsInfoEXT_pNext"
                 }
             },
             "required": [
@@ -2177,6 +2240,31 @@
             ],
             "type": "object"
         },
+        "VkPipelineDepthStencilStateCreateInfo_pNext": {
+            "oneOf": [
+                {
+                    "enum": [
+                        "NULL"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "allOf": [
+                        {
+                            "additionalProperties": true,
+                            "properties": {
+                                "pNext": {
+                                    "$ref": "#/definitions/VkPipelineDepthStencilStateCreateInfo_pNext"
+                                }
+                            }
+                        },
+                        {
+                            "anyOf": []
+                        }
+                    ]
+                }
+            ]
+        },
         "VkPipelineDepthStencilStateCreateInfo": {
             "additionalProperties": false,
             "properties": {
@@ -2224,13 +2312,7 @@
                     "$ref": "#/definitions/float"
                 },
                 "pNext": {
-                    "oneOf": [
-                        {
-                            "enum": [
-                                "NULL"
-                            ]
-                        }
-                    ]
+                    "$ref": "#/definitions/VkPipelineDepthStencilStateCreateInfo_pNext"
                 }
             },
             "required": [
@@ -2685,6 +2767,31 @@
                 }
             ]
         },
+        "VkPipelineDynamicStateCreateInfo_pNext": {
+            "oneOf": [
+                {
+                    "enum": [
+                        "NULL"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "allOf": [
+                        {
+                            "additionalProperties": true,
+                            "properties": {
+                                "pNext": {
+                                    "$ref": "#/definitions/VkPipelineDynamicStateCreateInfo_pNext"
+                                }
+                            }
+                        },
+                        {
+                            "anyOf": []
+                        }
+                    ]
+                }
+            ]
+        },
         "VkPipelineDynamicStateCreateInfo": {
             "additionalProperties": false,
             "properties": {
@@ -2732,13 +2839,7 @@
                     ]
                 },
                 "pNext": {
-                    "oneOf": [
-                        {
-                            "enum": [
-                                "NULL"
-                            ]
-                        }
-                    ]
+                    "$ref": "#/definitions/VkPipelineDynamicStateCreateInfo_pNext"
                 }
             },
             "required": [
@@ -2913,7 +3014,16 @@
                                             "pattern": "VK_STRUCTURE_TYPE_PIPELINE_CREATE_FLAGS_2_CREATE_INFO"
                                         },
                                         "flags": {
-                                            "$ref": "#/definitions/VkPipelineCreateFlags2"
+                                            "oneOf": [
+                                                {
+                                                    "enum": [
+                                                        "NULL"
+                                                    ]
+                                                },
+                                                {
+                                                    "$ref": "#/definitions/VkPipelineCreateFlags2"
+                                                }
+                                            ]
                                         },
                                         "pNext": {}
                                     },
@@ -3510,7 +3620,16 @@
                                             "pattern": "VK_STRUCTURE_TYPE_PIPELINE_CREATE_FLAGS_2_CREATE_INFO"
                                         },
                                         "flags": {
-                                            "$ref": "#/definitions/VkPipelineCreateFlags2"
+                                            "oneOf": [
+                                                {
+                                                    "enum": [
+                                                        "NULL"
+                                                    ]
+                                                },
+                                                {
+                                                    "$ref": "#/definitions/VkPipelineCreateFlags2"
+                                                }
+                                            ]
                                         },
                                         "pNext": {}
                                     },
@@ -4009,6 +4128,31 @@
                                     "properties": {
                                         "sType": {
                                             "type": "string",
+                                            "pattern": "VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT"
+                                        },
+                                        "objectType": {
+                                            "$ref": "#/definitions/VkObjectType"
+                                        },
+                                        "objectHandle": {
+                                            "$ref": "#/definitions/uint64_t"
+                                        },
+                                        "pObjectName": {
+                                            "type": "string"
+                                        },
+                                        "pNext": {}
+                                    },
+                                    "required": [
+                                        "sType",
+                                        "objectType",
+                                        "objectHandle",
+                                        "pObjectName"
+                                    ]
+                                },
+                                {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                        "sType": {
+                                            "type": "string",
                                             "pattern": "VK_STRUCTURE_TYPE_SAMPLER_CUSTOM_BORDER_COLOR_CREATE_INFO_EXT"
                                         },
                                         "customBorderColor": {
@@ -4463,6 +4607,31 @@
             ],
             "type": "object"
         },
+        "VkPipelineLayoutCreateInfo_pNext": {
+            "oneOf": [
+                {
+                    "enum": [
+                        "NULL"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "allOf": [
+                        {
+                            "additionalProperties": true,
+                            "properties": {
+                                "pNext": {
+                                    "$ref": "#/definitions/VkPipelineLayoutCreateInfo_pNext"
+                                }
+                            }
+                        },
+                        {
+                            "anyOf": []
+                        }
+                    ]
+                }
+            ]
+        },
         "VkPipelineLayoutCreateInfo": {
             "additionalProperties": false,
             "properties": {
@@ -4537,13 +4706,7 @@
                     ]
                 },
                 "pNext": {
-                    "oneOf": [
-                        {
-                            "enum": [
-                                "NULL"
-                            ]
-                        }
-                    ]
+                    "$ref": "#/definitions/VkPipelineLayoutCreateInfo_pNext"
                 }
             },
             "required": [
@@ -8184,6 +8347,31 @@
             ],
             "type": "object"
         },
+        "VkRenderPassCreateInfo2_pNext": {
+            "oneOf": [
+                {
+                    "enum": [
+                        "NULL"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "allOf": [
+                        {
+                            "additionalProperties": true,
+                            "properties": {
+                                "pNext": {
+                                    "$ref": "#/definitions/VkRenderPassCreateInfo2_pNext"
+                                }
+                            }
+                        },
+                        {
+                            "anyOf": []
+                        }
+                    ]
+                }
+            ]
+        },
         "VkRenderPassCreateInfo2": {
             "additionalProperties": false,
             "properties": {
@@ -8303,13 +8491,7 @@
                     ]
                 },
                 "pNext": {
-                    "oneOf": [
-                        {
-                            "enum": [
-                                "NULL"
-                            ]
-                        }
-                    ]
+                    "$ref": "#/definitions/VkRenderPassCreateInfo2_pNext"
                 }
             },
             "required": [

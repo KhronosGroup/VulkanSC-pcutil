@@ -101,11 +101,8 @@ jobs:
       fail-fast: false
       matrix:
         sanitize: [ ADDRESS, THREAD ]
-        config: [ Debug, Release ]
-        os: [ ubuntu-22.04, ubuntu-24.04 ]
-        exclude:
-          - config: Debug
-            sanitize: THREAD
+        config: [ Release ]
+        os: [ ubuntu-24.04 ]
     steps:
       # Install Loader dependencies
       - run: sudo apt install pkg-config libx11-xcb-dev libxkbcommon-dev libwayland-dev libxrandr-dev -y

@@ -6,12 +6,12 @@ This project provides Vulkan SC pipeline cache utilities and tools.
 
 The following components are available in this repository:
 
-- [*Vulkan SC Pipeline JSON Schema*](json/)
+- [*Vulkan SC Pipeline JSON Schema*](json/vksc_pipeline_schema.json)
 - [*Vulkan SC Pipeline JSON Generator/Parser Library*](include/vulkan/pcjson/)
-- [*Vulkan SC Pipeline Cache Reader/Wrtier Library*](include/vulkan/pcutil/)
+- [*Vulkan SC Pipeline Cache Reader/Writer Library*](include/vulkan/pcutil/)
 - [*Vulkan SC Pipeline Cache Command Line Utility*](vkscpcinfo/)
 - [*Vulkan SC Pipeline Cache Compiler Helper Tool*](vkscpcctool/)
-- [*Vulkan Pipeline JSON Generator Layer (VK_LAYER_KHRONOS_json_gen)*](layers/json_gen/)
+- [*Vulkan Pipeline JSON Generator Layer (VK_LAYER_KHRONOS_json_gen)*](layers/json_gen/README.md)
 
 The repository also contains the tooling used for discovering Pipeline Cache Compiler toolchains supporting specific target architectures/devices through PCC manifest files, as described in the [PCC discovery](docs/PccDiscovery.md) documentation.
 

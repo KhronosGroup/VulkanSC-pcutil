@@ -6,7 +6,7 @@
 # ~~~
 cmake_minimum_required(VERSION 3.22.1)
 
-project(VulkanSC-Pipeline-Cache-Utils VERSION 1.0.19)
+project(VulkanSC-Pipeline-Cache-Utils VERSION 1.0.21)
 
 option(BUILD_TESTS "Build pipeline cache utils unit tests of built" ${PROJECT_IS_TOP_LEVEL})
 option(BUILD_VKSCPCINFO "Build vkscpcinfo" ON)

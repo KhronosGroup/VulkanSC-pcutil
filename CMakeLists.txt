@@ -182,6 +182,10 @@ if(PCU_ENABLE_INSTALL)
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/VulkanSCPcJsonDyndepScanner.cmake"
         DESTINATION "share/cmake/Modules")
 
+    if(BUILD_VKSCPCINFO)
+        install(TARGETS vkscpcinfo)
+    endif()
+
     if(BUILD_JSON_GEN_LAYER)
         set_target_properties(VulkanJSONGenLayer PROPERTIES EXPORT_NAME "JSONGenLayer")
 

@@ -103,6 +103,7 @@
                 "-DBUILD_WSI_XCB_SUPPORT=OFF",
                 "-DBUILD_WSI_XLIB_SUPPORT=OFF",
                 "-DBUILD_WSI_WAYLAND_SUPPORT=OFF",
+                "-DBUILD_TESTS=OFF",
                 "-DLOADER_USE_UNSAFE_FILE_SEARCH=ON"
             ],
             "optional": [
@@ -120,6 +121,7 @@
                 "-DBUILD_WSI_XCB_SUPPORT=OFF",
                 "-DBUILD_WSI_XLIB_SUPPORT=OFF",
                 "-DBUILD_WSI_WAYLAND_SUPPORT=OFF",
+                "-DBUILD_TESTS=OFF",
                 "-DLOADER_USE_UNSAFE_FILE_SEARCH=ON"
             ],
             "optional": [
@@ -258,7 +260,8 @@
             "cmake_options": [
                 "-DBUILD_WSI_XCB_SUPPORT=OFF",
                 "-DBUILD_WSI_XLIB_SUPPORT=OFF",
-                "-DBUILD_WSI_WAYLAND_SUPPORT=OFF"
+                "-DBUILD_WSI_WAYLAND_SUPPORT=OFF",
+                "-DBUILD_TESTS=OFF"
             ],
             "deps": [
                 {

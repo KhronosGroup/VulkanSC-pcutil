@@ -176,13 +176,13 @@ struct PipelineLayoutAndChildObjectInfo {
             }
         }
         // Rewrite autoinc ids to indices
-        auto find_id = [](const auto& container, const uintptr_t unique_obj_id) {
+        auto find_id = [](const auto& container, const uint64_t unique_obj_id) {
             return std::find(std::cbegin(container), std::cend(container), unique_obj_id);
         };
         for (size_t i = 0; i < pipeline_layout_data.create_info.setLayoutCount; ++i) {
             pipeline_layout_data.create_info.pSetLayouts[i] = as_non_dispatchable_handle<VkDescriptorSetLayout>(
                 std::distance(std::cbegin(descriptor_set_layout_ids),
-                              find_id(descriptor_set_layout_ids, (uintptr_t)pipeline_layout_data.create_info.pSetLayouts[i])));
+                              find_id(descriptor_set_layout_ids, (uint64_t)pipeline_layout_data.create_info.pSetLayouts[i])));
         }
         for (auto& descriptor_set_layout : descriptor_set_layouts) {
             for (size_t i = 0; i < descriptor_set_layout.bindingCount; ++i) {
@@ -191,7 +191,7 @@ struct PipelineLayoutAndChildObjectInfo {
                         descriptor_set_layout.pBindings[i].pImmutableSamplers[j] = as_non_dispatchable_handle<VkSampler>(
                             std::distance(std::cbegin(immutable_sampler_ids),
                                           find_id(immutable_sampler_ids,
-                                                  (uintptr_t)descriptor_set_layout.pBindings[i].pImmutableSamplers[j])));
+                                                  (uint64_t)descriptor_set_layout.pBindings[i].pImmutableSamplers[j])));
                     }
                 }
             }
@@ -200,7 +200,7 @@ struct PipelineLayoutAndChildObjectInfo {
             auto ycbcr = vku::FindStructInPNextChain<VkSamplerYcbcrConversionInfo>(const_cast<void*>(immutable_sampler.pNext));
             if (ycbcr) {
                 ycbcr->conversion = as_non_dispatchable_handle<VkSamplerYcbcrConversion>(
-                    std::distance(std::cbegin(ycbcr_sampler_ids), find_id(ycbcr_sampler_ids, (uintptr_t)ycbcr->conversion)));
+                    std::distance(std::cbegin(ycbcr_sampler_ids), find_id(ycbcr_sampler_ids, (uint64_t)ycbcr->conversion)));
             }
         }
 

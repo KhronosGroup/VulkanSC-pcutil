@@ -26,6 +26,18 @@
 namespace pcjson {
 
 class ParserBase : protected Base {
+    // NOTE: As legacy pipeline JSONs produced by the old generators have syntax errors
+    // such as integers represented by strings containing numbers and including enum values
+    // that do not exist in Vulkan SC, we provide a bunch of knobs for the parser to enable
+    // relaxed behavior
+  private:
+    bool ignore_invalid_enum_values_{false};
+    bool accept_integers_as_strings_{false};
+
+  protected:
+    void SetIgnoreInvalidEnumValues(bool enable) { ignore_invalid_enum_values_ = enable; }
+    void SetAcceptIntegersAsStrings(bool enable) { accept_integers_as_strings_ = enable; }
+
   private:
     VkShaderModule parse_VkShaderModule(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
@@ -836,7 +848,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkStructureType constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkStructureType constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkStructureType constant: " << v;
+            }
             return static_cast<VkStructureType>(0);
         }
     }
@@ -858,7 +875,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkPipelineCreateFlagBits bit: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkPipelineCreateFlagBits bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkPipelineCreateFlagBits bit: " << v;
+            }
             return static_cast<VkPipelineCreateFlagBits>(0);
         }
     }
@@ -878,7 +900,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkPipelineShaderStageCreateFlagBits bit: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkPipelineShaderStageCreateFlagBits bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkPipelineShaderStageCreateFlagBits bit: " << v;
+            }
             return static_cast<VkPipelineShaderStageCreateFlagBits>(0);
         }
     }
@@ -898,7 +925,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkShaderStageFlagBits bit: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkShaderStageFlagBits bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkShaderStageFlagBits bit: " << v;
+            }
             return static_cast<VkShaderStageFlagBits>(0);
         }
     }
@@ -943,7 +975,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkObjectType constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkObjectType constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkObjectType constant: " << v;
+            }
             return static_cast<VkObjectType>(0);
         }
     }
@@ -961,7 +998,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkPipelineRobustnessBufferBehavior constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkPipelineRobustnessBufferBehavior constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkPipelineRobustnessBufferBehavior constant: " << v;
+            }
             return static_cast<VkPipelineRobustnessBufferBehavior>(0);
         }
     }
@@ -979,7 +1021,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkPipelineRobustnessImageBehavior constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkPipelineRobustnessImageBehavior constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkPipelineRobustnessImageBehavior constant: " << v;
+            }
             return static_cast<VkPipelineRobustnessImageBehavior>(0);
         }
     }
@@ -992,7 +1039,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkVertexInputRate constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkVertexInputRate constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkVertexInputRate constant: " << v;
+            }
             return static_cast<VkVertexInputRate>(0);
         }
     }
@@ -1278,7 +1330,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkFormat constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkFormat constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkFormat constant: " << v;
+            }
             return static_cast<VkFormat>(0);
         }
     }
@@ -1302,7 +1359,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkPrimitiveTopology constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkPrimitiveTopology constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkPrimitiveTopology constant: " << v;
+            }
             return static_cast<VkPrimitiveTopology>(0);
         }
     }
@@ -1315,7 +1377,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkTessellationDomainOrigin constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkTessellationDomainOrigin constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkTessellationDomainOrigin constant: " << v;
+            }
             return static_cast<VkTessellationDomainOrigin>(0);
         }
     }
@@ -1329,7 +1396,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkPolygonMode constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkPolygonMode constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkPolygonMode constant: " << v;
+            }
             return static_cast<VkPolygonMode>(0);
         }
     }
@@ -1344,7 +1416,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkCullModeFlagBits bit: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkCullModeFlagBits bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkCullModeFlagBits bit: " << v;
+            }
             return static_cast<VkCullModeFlagBits>(0);
         }
     }
@@ -1357,7 +1434,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkFrontFace constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkFrontFace constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkFrontFace constant: " << v;
+            }
             return static_cast<VkFrontFace>(0);
         }
     }
@@ -1373,7 +1455,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkConservativeRasterizationModeEXT constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkConservativeRasterizationModeEXT constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkConservativeRasterizationModeEXT constant: " << v;
+            }
             return static_cast<VkConservativeRasterizationModeEXT>(0);
         }
     }
@@ -1396,7 +1483,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkLineRasterizationMode constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkLineRasterizationMode constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkLineRasterizationMode constant: " << v;
+            }
             return static_cast<VkLineRasterizationMode>(0);
         }
     }
@@ -1415,7 +1507,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkSampleCountFlagBits bit: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkSampleCountFlagBits bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkSampleCountFlagBits bit: " << v;
+            }
             return static_cast<VkSampleCountFlagBits>(0);
         }
     }
@@ -1434,7 +1531,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkCompareOp constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkCompareOp constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkCompareOp constant: " << v;
+            }
             return static_cast<VkCompareOp>(0);
         }
     }
@@ -1453,7 +1555,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkStencilOp constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkStencilOp constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkStencilOp constant: " << v;
+            }
             return static_cast<VkStencilOp>(0);
         }
     }
@@ -1480,7 +1587,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkLogicOp constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkLogicOp constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkLogicOp constant: " << v;
+            }
             return static_cast<VkLogicOp>(0);
         }
     }
@@ -1510,7 +1622,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkBlendFactor constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkBlendFactor constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkBlendFactor constant: " << v;
+            }
             return static_cast<VkBlendFactor>(0);
         }
     }
@@ -1572,7 +1689,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkBlendOp constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkBlendOp constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkBlendOp constant: " << v;
+            }
             return static_cast<VkBlendOp>(0);
         }
     }
@@ -1588,7 +1710,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkColorComponentFlagBits bit: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkColorComponentFlagBits bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkColorComponentFlagBits bit: " << v;
+            }
             return static_cast<VkColorComponentFlagBits>(0);
         }
     }
@@ -1602,7 +1729,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkBlendOverlapEXT constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkBlendOverlapEXT constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkBlendOverlapEXT constant: " << v;
+            }
             return static_cast<VkBlendOverlapEXT>(0);
         }
     }
@@ -1664,7 +1796,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkDynamicState constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkDynamicState constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkDynamicState constant: " << v;
+            }
             return static_cast<VkDynamicState>(0);
         }
     }
@@ -1687,7 +1824,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkPipelineCreateFlagBits2 bit: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkPipelineCreateFlagBits2 bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkPipelineCreateFlagBits2 bit: " << v;
+            }
             return static_cast<VkPipelineCreateFlagBits2>(0);
         }
     }
@@ -1704,7 +1846,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkPipelineCreationFeedbackFlagBits bit: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkPipelineCreationFeedbackFlagBits bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkPipelineCreationFeedbackFlagBits bit: " << v;
+            }
             return static_cast<VkPipelineCreationFeedbackFlagBits>(0);
         }
     }
@@ -1717,7 +1864,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkDiscardRectangleModeEXT constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkDiscardRectangleModeEXT constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkDiscardRectangleModeEXT constant: " << v;
+            }
             return static_cast<VkDiscardRectangleModeEXT>(0);
         }
     }
@@ -1733,7 +1885,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkFragmentShadingRateCombinerOpKHR constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkFragmentShadingRateCombinerOpKHR constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkFragmentShadingRateCombinerOpKHR constant: " << v;
+            }
             return static_cast<VkFragmentShadingRateCombinerOpKHR>(0);
         }
     }
@@ -1745,7 +1902,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkPipelineMatchControl constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkPipelineMatchControl constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkPipelineMatchControl constant: " << v;
+            }
             return static_cast<VkPipelineMatchControl>(0);
         }
     }
@@ -1761,7 +1923,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkSamplerYcbcrModelConversion constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkSamplerYcbcrModelConversion constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkSamplerYcbcrModelConversion constant: " << v;
+            }
             return static_cast<VkSamplerYcbcrModelConversion>(0);
         }
     }
@@ -1774,7 +1941,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkSamplerYcbcrRange constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkSamplerYcbcrRange constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkSamplerYcbcrRange constant: " << v;
+            }
             return static_cast<VkSamplerYcbcrRange>(0);
         }
     }
@@ -1792,7 +1964,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkComponentSwizzle constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkComponentSwizzle constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkComponentSwizzle constant: " << v;
+            }
             return static_cast<VkComponentSwizzle>(0);
         }
     }
@@ -1805,7 +1982,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkChromaLocation constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkChromaLocation constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkChromaLocation constant: " << v;
+            }
             return static_cast<VkChromaLocation>(0);
         }
     }
@@ -1818,7 +2000,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkFilter constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkFilter constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkFilter constant: " << v;
+            }
             return static_cast<VkFilter>(0);
         }
     }
@@ -1832,7 +2019,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkSamplerCreateFlagBits bit: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkSamplerCreateFlagBits bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkSamplerCreateFlagBits bit: " << v;
+            }
             return static_cast<VkSamplerCreateFlagBits>(0);
         }
     }
@@ -1845,7 +2037,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkSamplerMipmapMode constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkSamplerMipmapMode constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkSamplerMipmapMode constant: " << v;
+            }
             return static_cast<VkSamplerMipmapMode>(0);
         }
     }
@@ -1861,7 +2058,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkSamplerAddressMode constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkSamplerAddressMode constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkSamplerAddressMode constant: " << v;
+            }
             return static_cast<VkSamplerAddressMode>(0);
         }
     }
@@ -1880,7 +2082,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkBorderColor constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkBorderColor constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkBorderColor constant: " << v;
+            }
             return static_cast<VkBorderColor>(0);
         }
     }
@@ -1894,7 +2101,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkSamplerReductionMode constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkSamplerReductionMode constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkSamplerReductionMode constant: " << v;
+            }
             return static_cast<VkSamplerReductionMode>(0);
         }
     }
@@ -1910,7 +2122,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkDescriptorSetLayoutCreateFlagBits bit: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkDescriptorSetLayoutCreateFlagBits bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkDescriptorSetLayoutCreateFlagBits bit: " << v;
+            }
             return static_cast<VkDescriptorSetLayoutCreateFlagBits>(0);
         }
     }
@@ -1933,7 +2150,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkDescriptorType constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkDescriptorType constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkDescriptorType constant: " << v;
+            }
             return static_cast<VkDescriptorType>(0);
         }
     }
@@ -1951,7 +2173,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkDescriptorBindingFlagBits bit: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkDescriptorBindingFlagBits bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkDescriptorBindingFlagBits bit: " << v;
+            }
             return static_cast<VkDescriptorBindingFlagBits>(0);
         }
     }
@@ -1965,7 +2192,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkPipelineLayoutCreateFlagBits bit: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkPipelineLayoutCreateFlagBits bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkPipelineLayoutCreateFlagBits bit: " << v;
+            }
             return static_cast<VkPipelineLayoutCreateFlagBits>(0);
         }
     }
@@ -1979,7 +2211,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkRenderPassCreateFlagBits bit: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkRenderPassCreateFlagBits bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkRenderPassCreateFlagBits bit: " << v;
+            }
             return static_cast<VkRenderPassCreateFlagBits>(0);
         }
     }
@@ -1992,7 +2229,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkAttachmentDescriptionFlagBits bit: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkAttachmentDescriptionFlagBits bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkAttachmentDescriptionFlagBits bit: " << v;
+            }
             return static_cast<VkAttachmentDescriptionFlagBits>(0);
         }
     }
@@ -2007,7 +2249,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkAttachmentLoadOp constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkAttachmentLoadOp constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkAttachmentLoadOp constant: " << v;
+            }
             return static_cast<VkAttachmentLoadOp>(0);
         }
     }
@@ -2021,7 +2268,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkAttachmentStoreOp constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkAttachmentStoreOp constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkAttachmentStoreOp constant: " << v;
+            }
             return static_cast<VkAttachmentStoreOp>(0);
         }
     }
@@ -2058,7 +2310,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkImageLayout constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkImageLayout constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkImageLayout constant: " << v;
+            }
             return static_cast<VkImageLayout>(0);
         }
     }
@@ -2072,7 +2329,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkSubpassDescriptionFlagBits bit: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkSubpassDescriptionFlagBits bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkSubpassDescriptionFlagBits bit: " << v;
+            }
             return static_cast<VkSubpassDescriptionFlagBits>(0);
         }
     }
@@ -2085,7 +2347,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkPipelineBindPoint constant: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkPipelineBindPoint constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkPipelineBindPoint constant: " << v;
+            }
             return static_cast<VkPipelineBindPoint>(0);
         }
     }
@@ -2119,7 +2386,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkPipelineStageFlagBits bit: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkPipelineStageFlagBits bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkPipelineStageFlagBits bit: " << v;
+            }
             return static_cast<VkPipelineStageFlagBits>(0);
         }
     }
@@ -2154,7 +2426,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkAccessFlagBits bit: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkAccessFlagBits bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkAccessFlagBits bit: " << v;
+            }
             return static_cast<VkAccessFlagBits>(0);
         }
     }
@@ -2169,7 +2446,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkDependencyFlagBits bit: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkDependencyFlagBits bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkDependencyFlagBits bit: " << v;
+            }
             return static_cast<VkDependencyFlagBits>(0);
         }
     }
@@ -2193,7 +2475,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkImageAspectFlagBits bit: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkImageAspectFlagBits bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkImageAspectFlagBits bit: " << v;
+            }
             return static_cast<VkImageAspectFlagBits>(0);
         }
     }
@@ -2210,7 +2497,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkResolveModeFlagBits bit: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkResolveModeFlagBits bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkResolveModeFlagBits bit: " << v;
+            }
             return static_cast<VkResolveModeFlagBits>(0);
         }
     }
@@ -2300,7 +2592,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkPipelineStageFlagBits2 bit: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkPipelineStageFlagBits2 bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkPipelineStageFlagBits2 bit: " << v;
+            }
             return static_cast<VkPipelineStageFlagBits2>(0);
         }
     }
@@ -2375,7 +2672,12 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkAccessFlagBits2 bit: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkAccessFlagBits2 bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkAccessFlagBits2 bit: " << v;
+            }
             return static_cast<VkAccessFlagBits2>(0);
         }
     }
@@ -2392,15 +2694,500 @@ class ParserBase : protected Base {
         if (it != map.end()) {
             return it->second;
         } else {
-            Error() << "Invalid VkPipelineCacheCreateFlagBits bit: " << v;
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkPipelineCacheCreateFlagBits bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkPipelineCacheCreateFlagBits bit: " << v;
+            }
             return static_cast<VkPipelineCacheCreateFlagBits>(0);
         }
     }
 
   protected:
+    Json::Value filter_VkPhysicalDeviceFeatures2(const Json::Value& deviceCreateInfoPNext, const LocationScope& l) {
+        Json::Value base{};
+        Json::Value pnext = "NULL";
+        const Json::Value* p = &deviceCreateInfoPNext;
+        auto copy_struct = [](const Json::Value& value) {
+            Json::Value result = Json::objectValue;
+            for (const auto& member_name : value.getMemberNames()) {
+                if (member_name != "pNext") {
+                    result[member_name] = value[member_name];
+                }
+            }
+            return result;
+        };
+        while (p->isObject() && p->isMember("sType") && (*p)["sType"].isString()) {
+            const char* stype = (*p)["sType"].asCString();
+            if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2") == 0) {
+                base = copy_struct(*p);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_4444_FORMATS_FEATURES_EXT") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ASTC_DECODE_FEATURES_EXT") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_FEATURES_EXT") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COLOR_WRITE_ENABLE_FEATURES_EXT") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_FEATURES_EXT") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_LOCAL_READ_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+#ifdef VK_USE_PLATFORM_SCI
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_SCI_BUF_FEATURES_NV") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+#endif  // VK_USE_PLATFORM_SCI
+#ifdef VK_USE_PLATFORM_SCREEN_QNX
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_SCREEN_BUFFER_FEATURES_QNX") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+#endif  // VK_USE_PLATFORM_SCREEN_QNX
+#ifdef VK_USE_PLATFORM_SCI
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_SCI_SYNC_2_FEATURES_NV") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_SCI_SYNC_FEATURES_NV") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+#endif  // VK_USE_PLATFORM_SCI
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_INTERLOCK_FEATURES_EXT") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GLOBAL_PRIORITY_QUERY_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_IMAGE_COPY_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ROBUSTNESS_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGELESS_FRAMEBUFFER_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_5_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_6_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_QUERY_FEATURES_KHR") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_CREATION_CACHE_CONTROL_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_PROTECTED_ACCESS_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_ROBUSTNESS_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIVATE_DATA_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_KHR") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_YCBCR_CONVERSION_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SEPARATE_DEPTH_STENCIL_LAYOUTS_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT_FEATURES_EXT") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_INT64_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CLOCK_FEATURES_KHR") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_EXPECT_ASSUME_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT_CONTROLS_2_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_IMAGE_ATOMIC_INT64_FEATURES_EXT") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_DOT_PRODUCT_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_ROTATE_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TERMINATE_INVOCATION_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_FEATURES_EXT") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXTURE_COMPRESSION_ASTC_HDR_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_UNIFORM_BUFFER_STANDARD_LAYOUT_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTERS_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_INPUT_DYNAMIC_STATE_FEATURES_EXT") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_MEMORY_MODEL_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_SC_1_0_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_YCBCR_2_PLANE_444_FORMATS_FEATURES_EXT") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_YCBCR_IMAGE_ARRAYS_FEATURES_EXT") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ZERO_INITIALIZE_WORKGROUP_MEMORY_FEATURES") == 0) {
+                Json::Value s = copy_struct(*p);
+                s["pNext"] = pnext;
+                pnext = std::move(s);
+            }
+
+            else {
+                Warn() << "Ignoring structure with type \"" << stype << "\" as it is not a physical device feature structure";
+            }
+            p = &(*p)["pNext"];
+        }
+
+        base["sType"] = "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2";
+        base["pNext"] = pnext;
+
+        return base;
+    }
+
     int8_t parse_int8_t(const Json::Value& v, const LocationScope&) {
         if (v.isInt() && v.asInt() >= INT8_MIN && v.asInt() <= INT8_MAX) {
             return v.asInt();
+        } else if (accept_integers_as_strings_ && v.isString()) {
+            auto result = static_cast<int8_t>(std::stoll(v.asString()));
+            Warn() << "Expected 8-bit signed integer but got the string \"" << v.asString() << "\" (parsed as " << result
+                   << " instead of being treated as an error as relaxed behavior was requested)";
+            return result;
         } else {
             Error() << "Not an 8-bit signed integer";
             return 0;
@@ -2410,6 +3197,11 @@ class ParserBase : protected Base {
     int16_t parse_int16_t(const Json::Value& v, const LocationScope&) {
         if (v.isInt() && v.asInt() >= INT16_MIN && v.asInt() <= INT16_MAX) {
             return v.asInt();
+        } else if (accept_integers_as_strings_ && v.isString()) {
+            auto result = static_cast<int16_t>(std::stoll(v.asString()));
+            Warn() << "Expected 16-bit signed integer but got the string \"" << v.asString() << "\" (parsed as " << result
+                   << " instead of being treated as an error as relaxed behavior was requested)";
+            return result;
         } else {
             Error() << "Not a 16-bit signed integer";
             return 0;
@@ -2419,6 +3211,11 @@ class ParserBase : protected Base {
     int32_t parse_int32_t(const Json::Value& v, const LocationScope&) {
         if (v.isInt() && v.asInt() >= INT32_MIN && v.asInt() <= INT32_MAX) {
             return v.asInt();
+        } else if (accept_integers_as_strings_ && v.isString()) {
+            auto result = static_cast<int32_t>(std::stoll(v.asString()));
+            Warn() << "Expected 32-bit signed integer but got the string \"" << v.asString() << "\" (parsed as " << result
+                   << " instead of being treated as an error as relaxed behavior was requested)";
+            return result;
         } else {
             Error() << "Not a 32-bit signed integer";
             return 0;
@@ -2428,6 +3225,11 @@ class ParserBase : protected Base {
     int64_t parse_int64_t(const Json::Value& v, const LocationScope&) {
         if (v.isInt64()) {
             return v.asInt64();
+        } else if (accept_integers_as_strings_ && v.isString()) {
+            auto result = static_cast<int64_t>(std::stoll(v.asString()));
+            Warn() << "Expected 64-bit signed integer but got the string \"" << v.asString() << "\" (parsed as " << result
+                   << " instead of being treated as an error as relaxed behavior was requested)";
+            return result;
         } else {
             Error() << "Not a 64-bit signed integer";
             return 0;
@@ -2437,6 +3239,11 @@ class ParserBase : protected Base {
     uint8_t parse_uint8_t(const Json::Value& v, const LocationScope&) {
         if (v.isUInt() && v.asUInt() <= UINT8_MAX) {
             return v.asUInt();
+        } else if (accept_integers_as_strings_ && v.isString()) {
+            auto result = static_cast<uint8_t>(std::stoull(v.asString()));
+            Warn() << "Expected 8-bit unsigned integer but got the string \"" << v.asString() << "\" (parsed as " << result
+                   << " instead of being treated as an error as relaxed behavior was requested)";
+            return result;
         } else {
             Error() << "Not an 8-bit unsigned integer";
             return 0;
@@ -2446,6 +3253,11 @@ class ParserBase : protected Base {
     uint16_t parse_uint16_t(const Json::Value& v, const LocationScope&) {
         if (v.isUInt() && v.asUInt() <= UINT16_MAX) {
             return v.asUInt();
+        } else if (accept_integers_as_strings_ && v.isString()) {
+            auto result = static_cast<uint16_t>(std::stoull(v.asString()));
+            Warn() << "Expected 16-bit unsigned integer but got the string \"" << v.asString() << "\" (parsed as " << result
+                   << " instead of being treated as an error as relaxed behavior was requested)";
+            return result;
         } else {
             Error() << "Not a 16-bit unsigned integer";
             return 0;
@@ -2496,7 +3308,12 @@ class ParserBase : protected Base {
                 return VK_MAX_PHYSICAL_DEVICE_DATA_GRAPH_OPERATION_SET_NAME_SIZE_ARM;
             if (str == "VK_DATA_GRAPH_MODEL_TOOLCHAIN_VERSION_LENGTH_QCOM")
                 return VK_DATA_GRAPH_MODEL_TOOLCHAIN_VERSION_LENGTH_QCOM;
-            else {
+            else if (accept_integers_as_strings_ && v.isString()) {
+                auto result = static_cast<uint32_t>(std::stoull(v.asString()));
+                Warn() << "Expected 32-bit unsigned integer but got the string \"" << v.asString() << "\" (parsed as " << result
+                       << " instead of being treated as an error as relaxed behavior was requested)";
+                return result;
+            } else {
                 Error() << "String is not a known 32-bit unsigned integer constant";
                 return 0;
             }
@@ -2516,7 +3333,12 @@ class ParserBase : protected Base {
             std::string_view str(first, str_size);
             if (str == "VK_WHOLE_SIZE")
                 return VK_WHOLE_SIZE;
-            else {
+            else if (accept_integers_as_strings_ && v.isString()) {
+                auto result = static_cast<uint64_t>(std::stoull(v.asString()));
+                Warn() << "Expected 64-bit unsigned integer but got the string \"" << v.asString() << "\" (parsed as " << result
+                       << " instead of being treated as an error as relaxed behavior was requested)";
+                return result;
+            } else {
                 Error() << "String is not a known 64-bit unsigned integer constant";
                 return 0;
             }

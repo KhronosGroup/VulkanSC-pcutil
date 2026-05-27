@@ -70,6 +70,17 @@ class JsonParseGenerator(BaseGenerator):
             self.genStructChainMethod(struct)
 
         out.append(f'''
+                // NOTE: As legacy pipeline JSONs produced by the old generators have syntax errors
+                // such as integers represented by strings containing numbers and including enum values
+                // that do not exist in Vulkan SC, we provide a bunch of knobs for the parser to enable
+                // relaxed behavior
+              private:
+                bool ignore_invalid_enum_values_{{false}};
+                bool accept_integers_as_strings_{{false}};
+              protected:
+                void SetIgnoreInvalidEnumValues(bool enable) {{ ignore_invalid_enum_values_ = enable; }}
+                void SetAcceptIntegersAsStrings(bool enable) {{ accept_integers_as_strings_ = enable; }}
+
               private:
                 {"".join(self.parse_Handle_methods)}
                 {"".join(self.parse_Enum_c_str_methods)}
@@ -137,6 +148,54 @@ class JsonParseGenerator(BaseGenerator):
             }
             ''')
 
+        # VkPhysicalDeviceFeatures2 structure filtering is another special case for which we provide an explicit API
+        # NOTE: This is needed to sanitize invalid input produced by the legacy generator
+        self.parse_basic_methods.append('''
+            Json::Value filter_VkPhysicalDeviceFeatures2(const Json::Value& deviceCreateInfoPNext, const LocationScope& l) {
+                Json::Value base{};
+                Json::Value pnext = "NULL";
+                const Json::Value *p = &deviceCreateInfoPNext;
+                auto copy_struct = [](const Json::Value& value) {
+                    Json::Value result = Json::objectValue;
+                    for (const auto& member_name : value.getMemberNames()) {
+                        if (member_name != "pNext") {
+                            result[member_name] = value[member_name];
+                        }
+                    }
+                    return result;
+                };
+                while (p->isObject() && p->isMember("sType") && (*p)["sType"].isString()) {
+                    const char* stype = (*p)["sType"].asCString();
+                    if (strcmp(stype, "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2") == 0) {
+                        base = copy_struct(*p);
+                    }
+            ''')
+        guard_helper = PlatformGuardHelper()
+        for feature_struct_name in self.vk.structs['VkPhysicalDeviceFeatures2'].extendedBy:
+            feature_struct = self.vk.structs[feature_struct_name]
+            self.parse_basic_methods.extend(guard_helper.add_guard(feature_struct.protect))
+            self.parse_basic_methods.append(f'''
+                    else if (strcmp(stype, "{feature_struct.sType}") == 0) {{
+                        Json::Value s = copy_struct(*p);
+                        s["pNext"] = pnext;
+                        pnext = std::move(s);
+                    }}
+                ''')
+        self.parse_basic_methods.extend(guard_helper.add_guard(None))
+        self.parse_basic_methods.append('''
+                    else {
+                        Warn() << "Ignoring structure with type \\"" << stype << "\\" as it is not a physical device feature structure";
+                    }
+                    p = &(*p)["pNext"];
+                }
+
+                base["sType"] = "VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2";
+                base["pNext"] = pnext;
+
+                return base;
+            }
+            ''')
+
     def genBasicMethods(self):
         self.basicTypes = ['int8_t', 'uint8_t', 'int16_t', 'uint16_t', 'int32_t', 'uint32_t', 'int64_t', 'uint64_t', 'float', 'size_t']
         self.basicTypes.extend(['VkBool32', 'VkDeviceSize', 'VkSampleMask'])
@@ -163,6 +222,10 @@ class JsonParseGenerator(BaseGenerator):
             int8_t parse_int8_t(const Json::Value& v, const LocationScope&) {{
                 if (v.isInt() && v.asInt() >= INT8_MIN && v.asInt() <= INT8_MAX) {{
                     return v.asInt();
+                }} else if (accept_integers_as_strings_ && v.isString()) {{
+                    auto result = static_cast<int8_t>(std::stoll(v.asString()));
+                    Warn() << "Expected 8-bit signed integer but got the string \\"" << v.asString() << "\\" (parsed as " << result << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
                 }} else {{
                     Error() << "Not an 8-bit signed integer";
                     return 0;
@@ -172,6 +235,10 @@ class JsonParseGenerator(BaseGenerator):
             int16_t parse_int16_t(const Json::Value& v, const LocationScope&) {{
                 if (v.isInt() && v.asInt() >= INT16_MIN && v.asInt() <= INT16_MAX) {{
                     return v.asInt();
+                }} else if (accept_integers_as_strings_ && v.isString()) {{
+                    auto result = static_cast<int16_t>(std::stoll(v.asString()));
+                    Warn() << "Expected 16-bit signed integer but got the string \\"" << v.asString() << "\\" (parsed as " << result << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
                 }} else {{
                     Error() << "Not a 16-bit signed integer";
                     return 0;
@@ -181,6 +248,10 @@ class JsonParseGenerator(BaseGenerator):
             int32_t parse_int32_t(const Json::Value& v, const LocationScope&) {{
                 if (v.isInt() && v.asInt() >= INT32_MIN && v.asInt() <= INT32_MAX) {{
                     return v.asInt();
+                }} else if (accept_integers_as_strings_ && v.isString()) {{
+                    auto result = static_cast<int32_t>(std::stoll(v.asString()));
+                    Warn() << "Expected 32-bit signed integer but got the string \\"" << v.asString() << "\\" (parsed as " << result << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
                 }} else {{
                     Error() << "Not a 32-bit signed integer";
                     return 0;
@@ -190,6 +261,10 @@ class JsonParseGenerator(BaseGenerator):
             int64_t parse_int64_t(const Json::Value& v, const LocationScope&) {{
                 if (v.isInt64()) {{
                     return v.asInt64();
+                }} else if (accept_integers_as_strings_ && v.isString()) {{
+                    auto result = static_cast<int64_t>(std::stoll(v.asString()));
+                    Warn() << "Expected 64-bit signed integer but got the string \\"" << v.asString() << "\\" (parsed as " << result << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
                 }} else {{
                     Error() << "Not a 64-bit signed integer";
                     return 0;
@@ -199,6 +274,10 @@ class JsonParseGenerator(BaseGenerator):
             uint8_t parse_uint8_t(const Json::Value& v, const LocationScope&) {{
                 if (v.isUInt() && v.asUInt() <= UINT8_MAX) {{
                     return v.asUInt();
+                }} else if (accept_integers_as_strings_ && v.isString()) {{
+                    auto result = static_cast<uint8_t>(std::stoull(v.asString()));
+                    Warn() << "Expected 8-bit unsigned integer but got the string \\"" << v.asString() << "\\" (parsed as " << result << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
                 }} else {{
                     Error() << "Not an 8-bit unsigned integer";
                     return 0;
@@ -208,6 +287,10 @@ class JsonParseGenerator(BaseGenerator):
             uint16_t parse_uint16_t(const Json::Value& v, const LocationScope&) {{
                 if (v.isUInt() && v.asUInt() <= UINT16_MAX) {{
                     return v.asUInt();
+                }} else if (accept_integers_as_strings_ && v.isString()) {{
+                    auto result = static_cast<uint16_t>(std::stoull(v.asString()));
+                    Warn() << "Expected 16-bit unsigned integer but got the string \\"" << v.asString() << "\\" (parsed as " << result << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
                 }} else {{
                     Error() << "Not a 16-bit unsigned integer";
                     return 0;
@@ -223,7 +306,11 @@ class JsonParseGenerator(BaseGenerator):
                     auto str_size = std::distance(first, last);
                     std::string_view str(first, str_size);
                     {''.join(f'if (str == "{constant}") return {constant};' for constant in uint32_t_constants)}
-                    else {{
+                    else if (accept_integers_as_strings_ && v.isString()) {{
+                        auto result = static_cast<uint32_t>(std::stoull(v.asString()));
+                        Warn() << "Expected 32-bit unsigned integer but got the string \\"" << v.asString() << "\\" (parsed as " << result << " instead of being treated as an error as relaxed behavior was requested)";
+                        return result;
+                    }} else {{
                         Error() << "String is not a known 32-bit unsigned integer constant";
                         return 0;
                     }}
@@ -242,7 +329,11 @@ class JsonParseGenerator(BaseGenerator):
                     auto str_size = std::distance(first, last);
                     std::string_view str(first, str_size);
                     {''.join(f'if (str == "{constant}") return {constant};' for constant in uint64_t_constants)}
-                    else {{
+                    else if (accept_integers_as_strings_ && v.isString()) {{
+                        auto result = static_cast<uint64_t>(std::stoull(v.asString()));
+                        Warn() << "Expected 64-bit unsigned integer but got the string \\"" << v.asString() << "\\" (parsed as " << result << " instead of being treated as an error as relaxed behavior was requested)";
+                        return result;
+                    }} else {{
                         Error() << "String is not a known 64-bit unsigned integer constant";
                         return 0;
                     }}
@@ -491,7 +582,11 @@ class JsonParseGenerator(BaseGenerator):
                 if (it != map.end()) {{
                     return it->second;
                 }} else {{
-                    Error() << "Invalid {enum.name} constant: " << v;
+                    if (ignore_invalid_enum_values_) {{
+                        Warn() << "Invalid {enum.name} constant: " << v << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+                    }} else {{
+                        Error() << "Invalid {enum.name} constant: " << v;
+                    }}
                     return static_cast<{enum.name}>(0);
                 }}
             }}
@@ -532,7 +627,11 @@ class JsonParseGenerator(BaseGenerator):
                 if (it != map.end()) {{
                     return it->second;
                 }} else {{
-                    Error() << "Invalid {bitmask.name} bit: " << v;
+                    if (ignore_invalid_enum_values_) {{
+                        Warn() << "Invalid {bitmask.name} bit: " << v << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+                    }} else {{
+                        Error() << "Invalid {bitmask.name} bit: " << v;
+                    }}
                     return static_cast<{bitmask.name}>(0);
                 }}
             }}

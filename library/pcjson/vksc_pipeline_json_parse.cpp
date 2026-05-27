@@ -16,6 +16,8 @@ namespace pcjson {
 
 class Parser : private ParserBase {
   public:
+    void SetAcceptLegacyInvalidInputData(bool enable) { accept_legacy_invalid_input_data_ = enable; }
+
     bool ParsePipelineJson(const char* pPipelineJson, VpjData* pPipelineData, const char** ppMessages) {
         ClearStatusAndMessages();
 
@@ -35,6 +37,10 @@ class Parser : private ParserBase {
             if (!reader->parse(pPipelineJson, pPipelineJson + strlen(pPipelineJson), &json, &json_errors)) {
                 Error() << "Failed to parse pipeline JSON:" << std::endl << json_errors;
             }
+        }
+
+        if (accept_legacy_invalid_input_data_) {
+            PatchLegacyInvalidInputData(json);
         }
 
         if (IsStatusOK()) {
@@ -460,14 +466,52 @@ class Parser : private ParserBase {
         return nullptr;
     }
 
+    void PatchLegacyInvalidInputData(Json::Value& json) {
+        // Issue #1
+        // The legacy generator will incorrectly serialize all structures in the pNext chain of VkDeviceCreateInfo.
+        // This manifests in the VkDeviceObjectReservationCreateInfo being the "top level" structure instead of
+        // VkPhysicalDeviceFeatures2, as it was always required by the JSON schema. Furthermore, the chain may
+        // contain additional non-feature structures such as VkFaultCallbackInfo.
+        // This pass gets rid of those.
+        if (json.isMember("GraphicsPipelineState")) {
+            Json::Value& pipeline_json = json["GraphicsPipelineState"];
+            if (pipeline_json.isMember("PhysicalDeviceFeatures")) {
+                pipeline_json["PhysicalDeviceFeatures"] = filter_VkPhysicalDeviceFeatures2(pipeline_json["PhysicalDeviceFeatures"],
+                                                                                           CreateScope("PhysicalDeviceFeatures"));
+            }
+        } else if (json.isMember("ComputePipelineState")) {
+            Json::Value& pipeline_json = json["ComputePipelineState"];
+            if (pipeline_json.isMember("PhysicalDeviceFeatures")) {
+                pipeline_json["PhysicalDeviceFeatures"] = filter_VkPhysicalDeviceFeatures2(pipeline_json["PhysicalDeviceFeatures"],
+                                                                                           CreateScope("PhysicalDeviceFeatures"));
+            }
+        }
+
+        // Issue #2
+        // The legacy generator will incorrectly include Vulkan-only stage flags that do not exist in Vulkan SC.
+        // This is handled by enabling relaxed enum matching, making related errors only warnings.
+        SetIgnoreInvalidEnumValues(true);
+
+        // Issue #3
+        // The legacy generator will generate some integer values as strings containing the numbers.
+        // This is handled by enabling relaxed integer parsing, accepting strings containing numbers.
+        SetAcceptIntegersAsStrings(true);
+    }
+
     VpjData data_;
+
+    bool accept_legacy_invalid_input_data_{false};
 };
 
 }  // namespace pcjson
 
 extern "C" {
 
-VpjGenerator vpjCreateParser() { return (new pcjson::Parser())->Handle(); }
+VpjParser vpjCreateParser() { return (new pcjson::Parser())->Handle(); }
+
+void vpjSetAcceptLegacyInvalidInputData(VpjParser parser, bool enable) {
+    pcjson::Parser::FromHandle(parser)->SetAcceptLegacyInvalidInputData(enable);
+}
 
 bool vpjParsePipelineJson(VpjParser parser, const char* pPipelineJson, VpjData* pPipelineData, const char** ppMessages) {
     return pcjson::Parser::FromHandle(parser)->ParsePipelineJson(pPipelineJson, pPipelineData, ppMessages);

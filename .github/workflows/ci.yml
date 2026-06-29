@@ -23,7 +23,7 @@ on:
       - unified
 
 permissions:
-    contents: read
+  contents: read
 
 jobs:
   pre_build:
@@ -38,26 +38,26 @@ jobs:
       CLANG_FORMAT_VERSION: 14
       CLANG_FORMAT_FILES: "*.c *.h *.cpp *.hpp"
     steps:
-    - name: ${{ format('Checkout {0}', github.repository) }}
-      uses: actions/checkout@v4
-    - name: Check code formatting
-      run: |
-        for f in $(git ls-files -- ${CLANG_FORMAT_FILES}); do
-          echo "Checking $f"
-          clang-format-${CLANG_FORMAT_VERSION} -i --Werror "$f"
-        done
-        git diff --exit-code
-    - name: Check REUSE compliance
-      uses: fsfe/reuse-action@v5.0.0
-    - name: Install Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-    - name: Codegen identity
-      run: |
-        python3 scripts/update_deps.py --dir external --no-build
-        python3 scripts/generate_source.py external/Vulkan-Headers/registry/
-        git diff --exit-code
+      - name: ${{ format('Checkout {0}', github.repository) }}
+        uses: actions/checkout@v4
+      - name: Check code formatting
+        run: |
+          for f in $(git ls-files -- ${CLANG_FORMAT_FILES}); do
+            echo "Checking $f"
+            clang-format-${CLANG_FORMAT_VERSION} -i --Werror "$f"
+          done
+          git diff --exit-code
+      - name: Check REUSE compliance
+        uses: fsfe/reuse-action@v6.0.0
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Codegen identity
+        run: |
+          python3 scripts/update_deps.py --dir external --no-build
+          python3 scripts/generate_source.py external/Vulkan-Headers/registry/
+          git diff --exit-code
 
   linux:
     needs: pre_build
@@ -66,15 +66,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        config: [ Debug, Release ]
-        os: [ ubuntu-22.04, ubuntu-24.04 ]
+        config: [Debug, Release]
+        os: [ubuntu-22.04, ubuntu-24.04]
     steps:
       # Install Loader dependencies
       - run: sudo apt install pkg-config libx11-xcb-dev libxkbcommon-dev libwayland-dev libxrandr-dev -y
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: "3.10"
       - name: Install CMake & Ninja
         uses: lukka/get-cmake@latest
         with:
@@ -100,16 +100,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        sanitize: [ ADDRESS, THREAD ]
-        config: [ Release ]
-        os: [ ubuntu-24.04 ]
+        sanitize: [ADDRESS, THREAD]
+        config: [Release]
+        os: [ubuntu-24.04]
     steps:
       # Install Loader dependencies
       - run: sudo apt install pkg-config libx11-xcb-dev libxkbcommon-dev libwayland-dev libxrandr-dev -y
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: "3.10"
       - name: Install CMake & Ninja
         uses: lukka/get-cmake@latest
         with:
@@ -135,23 +135,23 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ windows-2022 ]
-        arch: [ x64 ]
-        toolset: [ v143 ]
-        config: [ Debug, Release ]
-        runtime: [ DLL, '' ]
+        os: [windows-2022]
+        arch: [x64]
+        toolset: [v143]
+        config: [Debug, Release]
+        runtime: [DLL, ""]
     env:
       # Better parallel MSBuild execution
-      UseMultiToolTask: 'true'
-      EnforceProcessCountAcrossBuilds: 'true'
-      MultiProcMaxCount: '3'
+      UseMultiToolTask: "true"
+      EnforceProcessCountAcrossBuilds: "true"
+      MultiProcMaxCount: "3"
     steps:
       - name: ${{ format('Checkout {0}', github.repository) }}
         uses: actions/checkout@v4
       - name: Install Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: "3.10"
       - name: Install CMake & Ninja
         uses: lukka/get-cmake@latest
         with:

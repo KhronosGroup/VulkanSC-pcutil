@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2025-2026 The Khronos Group Inc.
+SPDX-FileCopyrightText: 2025-2026 RasterGrid Kft.
+SPDX-License-Identifier: CC-BY-4.0
+-->
+
 # Pipeline Cache Compiler discovery
 
 Vulkan SC requires offline compiled pipelines, vendors therefore provide such offline Pipeline Cache Compilers (PCCs) alongside their Vulkan SC driver implementation that can be used to build pipeline cache binaries from a set of pipeline JSON files and SPIR-V modules.

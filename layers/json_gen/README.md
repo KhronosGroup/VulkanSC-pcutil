@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2025-2026 The Khronos Group Inc.
+SPDX-FileCopyrightText: 2025-2026 RasterGrid Kft.
+SPDX-License-Identifier: CC-BY-4.0
+-->
+
 # Vulkan Pipeline JSON Generator Layer
 
 This directory contains the Vulkan JSON Gen Layer (`VK_LAYER_KHRONOS_json_gen`) that enables collecting information about the pipelines of a Vulkan application in the form of Vulkan SC pipeline JSON files and included SPIR-V shader module binaries. These then can be fed as input to a Vulkan SC Pipeline Cache Compiler to produce Vulkan SC pipeline binaries.

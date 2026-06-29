@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2025-2026 The Khronos Group, Inc.
+SPDX-FileCopyrightText: 2025-2026 RasterGrid Kft.
+SPDX-License-Identifier: CC-BY-4.0
+-->
+
 # KhronosGroup/VulkanSC-pcutil
 
 This project provides Vulkan SC pipeline cache utilities and tools.

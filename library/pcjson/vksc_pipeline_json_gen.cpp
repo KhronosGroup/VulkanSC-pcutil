@@ -186,6 +186,14 @@ class Generator : private GeneratorBase {
                     json = gen_VkPipelineOfflineCreateInfo(*reinterpret_cast<const VkPipelineOfflineCreateInfo*>(pStruct),
                                                            CreateScope("pStruct", true));
                     break;
+                case VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO:
+                    json =
+                        gen_VkBufferCreateInfo(*reinterpret_cast<const VkBufferCreateInfo*>(pStruct), CreateScope("pStruct", true));
+                    break;
+                case VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO:
+                    json =
+                        gen_VkImageCreateInfo(*reinterpret_cast<const VkImageCreateInfo*>(pStruct), CreateScope("pStruct", true));
+                    break;
                 default:
                     Error() << "Unsupported structure type: " << base->sType;
                     break;

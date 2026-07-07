@@ -81,6 +81,14 @@ class GeneratorBase : protected Base {
         }
     }
 
+    Json::Value gen_VkSwapchainKHR(const VkSwapchainKHR v, const LocationScope&) {
+        if (v == VK_NULL_HANDLE) {
+            return "";
+        } else {
+            return uint64_t(v);
+        }
+    }
+
     const char* gen_VkPipelineCreateFlagBits_c_str(const VkPipelineCreateFlagBits v) {
         switch (v) {
             case VK_PIPELINE_CREATE_DISABLE_OPTIMIZATION_BIT:
@@ -2033,6 +2041,223 @@ class GeneratorBase : protected Base {
         return "Invalid bitmask value";
     }
 
+    const char* gen_VkBufferCreateFlagBits_c_str(const VkBufferCreateFlagBits v) {
+        switch (v) {
+            case VK_BUFFER_CREATE_SPARSE_BINDING_BIT:
+                return "VK_BUFFER_CREATE_SPARSE_BINDING_BIT";
+            case VK_BUFFER_CREATE_SPARSE_RESIDENCY_BIT:
+                return "VK_BUFFER_CREATE_SPARSE_RESIDENCY_BIT";
+            case VK_BUFFER_CREATE_SPARSE_ALIASED_BIT:
+                return "VK_BUFFER_CREATE_SPARSE_ALIASED_BIT";
+            case VK_BUFFER_CREATE_PROTECTED_BIT:
+                return "VK_BUFFER_CREATE_PROTECTED_BIT";
+            case VK_BUFFER_CREATE_DEVICE_ADDRESS_CAPTURE_REPLAY_BIT:
+                return "VK_BUFFER_CREATE_DEVICE_ADDRESS_CAPTURE_REPLAY_BIT";
+            default:
+                break;
+        }
+        Error() << "Invalid bitmask value";
+        return "Invalid bitmask value";
+    }
+
+    const char* gen_VkBufferUsageFlagBits_c_str(const VkBufferUsageFlagBits v) {
+        switch (v) {
+            case VK_BUFFER_USAGE_TRANSFER_SRC_BIT:
+                return "VK_BUFFER_USAGE_TRANSFER_SRC_BIT";
+            case VK_BUFFER_USAGE_TRANSFER_DST_BIT:
+                return "VK_BUFFER_USAGE_TRANSFER_DST_BIT";
+            case VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT:
+                return "VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT";
+            case VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT:
+                return "VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT";
+            case VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT:
+                return "VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT";
+            case VK_BUFFER_USAGE_STORAGE_BUFFER_BIT:
+                return "VK_BUFFER_USAGE_STORAGE_BUFFER_BIT";
+            case VK_BUFFER_USAGE_INDEX_BUFFER_BIT:
+                return "VK_BUFFER_USAGE_INDEX_BUFFER_BIT";
+            case VK_BUFFER_USAGE_VERTEX_BUFFER_BIT:
+                return "VK_BUFFER_USAGE_VERTEX_BUFFER_BIT";
+            case VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT:
+                return "VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT";
+            case VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT:
+                return "VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT";
+            default:
+                break;
+        }
+        Error() << "Invalid bitmask value";
+        return "Invalid bitmask value";
+    }
+
+    const char* gen_VkSharingMode_c_str(const VkSharingMode v) {
+        switch (v) {
+            case VK_SHARING_MODE_EXCLUSIVE:
+                return "VK_SHARING_MODE_EXCLUSIVE";
+            case VK_SHARING_MODE_CONCURRENT:
+                return "VK_SHARING_MODE_CONCURRENT";
+            default:
+                break;
+        }
+        Warn() << "Invalid VkSharingMode enum value";
+        return nullptr;
+    }
+
+    const char* gen_VkBufferUsageFlagBits2_c_str(const VkBufferUsageFlagBits2 v) {
+        switch (v) {
+            case VK_BUFFER_USAGE_2_TRANSFER_SRC_BIT:
+                return "VK_BUFFER_USAGE_2_TRANSFER_SRC_BIT";
+            case VK_BUFFER_USAGE_2_TRANSFER_DST_BIT:
+                return "VK_BUFFER_USAGE_2_TRANSFER_DST_BIT";
+            case VK_BUFFER_USAGE_2_UNIFORM_TEXEL_BUFFER_BIT:
+                return "VK_BUFFER_USAGE_2_UNIFORM_TEXEL_BUFFER_BIT";
+            case VK_BUFFER_USAGE_2_STORAGE_TEXEL_BUFFER_BIT:
+                return "VK_BUFFER_USAGE_2_STORAGE_TEXEL_BUFFER_BIT";
+            case VK_BUFFER_USAGE_2_UNIFORM_BUFFER_BIT:
+                return "VK_BUFFER_USAGE_2_UNIFORM_BUFFER_BIT";
+            case VK_BUFFER_USAGE_2_STORAGE_BUFFER_BIT:
+                return "VK_BUFFER_USAGE_2_STORAGE_BUFFER_BIT";
+            case VK_BUFFER_USAGE_2_INDEX_BUFFER_BIT:
+                return "VK_BUFFER_USAGE_2_INDEX_BUFFER_BIT";
+            case VK_BUFFER_USAGE_2_VERTEX_BUFFER_BIT:
+                return "VK_BUFFER_USAGE_2_VERTEX_BUFFER_BIT";
+            case VK_BUFFER_USAGE_2_INDIRECT_BUFFER_BIT:
+                return "VK_BUFFER_USAGE_2_INDIRECT_BUFFER_BIT";
+            case VK_BUFFER_USAGE_2_SHADER_DEVICE_ADDRESS_BIT:
+                return "VK_BUFFER_USAGE_2_SHADER_DEVICE_ADDRESS_BIT";
+            default:
+                break;
+        }
+        Error() << "Invalid bitmask value";
+        return "Invalid bitmask value";
+    }
+
+    const char* gen_VkExternalMemoryHandleTypeFlagBits_c_str(const VkExternalMemoryHandleTypeFlagBits v) {
+        switch (v) {
+            case VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT:
+                return "VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT";
+            case VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT:
+                return "VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT";
+            case VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT:
+                return "VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT";
+            case VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_BIT:
+                return "VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_BIT";
+            case VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT:
+                return "VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT";
+            case VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_HEAP_BIT:
+                return "VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_HEAP_BIT";
+            case VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_RESOURCE_BIT:
+                return "VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_RESOURCE_BIT";
+            case VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT:
+                return "VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT";
+            case VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT:
+                return "VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT";
+            case VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_MAPPED_FOREIGN_MEMORY_BIT_EXT:
+                return "VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_MAPPED_FOREIGN_MEMORY_BIT_EXT";
+            case VK_EXTERNAL_MEMORY_HANDLE_TYPE_SCI_BUF_BIT_NV:
+                return "VK_EXTERNAL_MEMORY_HANDLE_TYPE_SCI_BUF_BIT_NV";
+            case VK_EXTERNAL_MEMORY_HANDLE_TYPE_SCREEN_BUFFER_BIT_QNX:
+                return "VK_EXTERNAL_MEMORY_HANDLE_TYPE_SCREEN_BUFFER_BIT_QNX";
+            default:
+                break;
+        }
+        Error() << "Invalid bitmask value";
+        return "Invalid bitmask value";
+    }
+
+    const char* gen_VkImageCreateFlagBits_c_str(const VkImageCreateFlagBits v) {
+        switch (v) {
+            case VK_IMAGE_CREATE_SPARSE_BINDING_BIT:
+                return "VK_IMAGE_CREATE_SPARSE_BINDING_BIT";
+            case VK_IMAGE_CREATE_SPARSE_RESIDENCY_BIT:
+                return "VK_IMAGE_CREATE_SPARSE_RESIDENCY_BIT";
+            case VK_IMAGE_CREATE_SPARSE_ALIASED_BIT:
+                return "VK_IMAGE_CREATE_SPARSE_ALIASED_BIT";
+            case VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT:
+                return "VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT";
+            case VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT:
+                return "VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT";
+            case VK_IMAGE_CREATE_ALIAS_BIT:
+                return "VK_IMAGE_CREATE_ALIAS_BIT";
+            case VK_IMAGE_CREATE_SPLIT_INSTANCE_BIND_REGIONS_BIT:
+                return "VK_IMAGE_CREATE_SPLIT_INSTANCE_BIND_REGIONS_BIT";
+            case VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT:
+                return "VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT";
+            case VK_IMAGE_CREATE_BLOCK_TEXEL_VIEW_COMPATIBLE_BIT:
+                return "VK_IMAGE_CREATE_BLOCK_TEXEL_VIEW_COMPATIBLE_BIT";
+            case VK_IMAGE_CREATE_EXTENDED_USAGE_BIT:
+                return "VK_IMAGE_CREATE_EXTENDED_USAGE_BIT";
+            case VK_IMAGE_CREATE_PROTECTED_BIT:
+                return "VK_IMAGE_CREATE_PROTECTED_BIT";
+            case VK_IMAGE_CREATE_DISJOINT_BIT:
+                return "VK_IMAGE_CREATE_DISJOINT_BIT";
+            case VK_IMAGE_CREATE_SAMPLE_LOCATIONS_COMPATIBLE_DEPTH_BIT_EXT:
+                return "VK_IMAGE_CREATE_SAMPLE_LOCATIONS_COMPATIBLE_DEPTH_BIT_EXT";
+            default:
+                break;
+        }
+        Error() << "Invalid bitmask value";
+        return "Invalid bitmask value";
+    }
+
+    const char* gen_VkImageType_c_str(const VkImageType v) {
+        switch (v) {
+            case VK_IMAGE_TYPE_1D:
+                return "VK_IMAGE_TYPE_1D";
+            case VK_IMAGE_TYPE_2D:
+                return "VK_IMAGE_TYPE_2D";
+            case VK_IMAGE_TYPE_3D:
+                return "VK_IMAGE_TYPE_3D";
+            default:
+                break;
+        }
+        Warn() << "Invalid VkImageType enum value";
+        return nullptr;
+    }
+
+    const char* gen_VkImageTiling_c_str(const VkImageTiling v) {
+        switch (v) {
+            case VK_IMAGE_TILING_OPTIMAL:
+                return "VK_IMAGE_TILING_OPTIMAL";
+            case VK_IMAGE_TILING_LINEAR:
+                return "VK_IMAGE_TILING_LINEAR";
+            case VK_IMAGE_TILING_DRM_FORMAT_MODIFIER_EXT:
+                return "VK_IMAGE_TILING_DRM_FORMAT_MODIFIER_EXT";
+            default:
+                break;
+        }
+        Warn() << "Invalid VkImageTiling enum value";
+        return nullptr;
+    }
+
+    const char* gen_VkImageUsageFlagBits_c_str(const VkImageUsageFlagBits v) {
+        switch (v) {
+            case VK_IMAGE_USAGE_TRANSFER_SRC_BIT:
+                return "VK_IMAGE_USAGE_TRANSFER_SRC_BIT";
+            case VK_IMAGE_USAGE_TRANSFER_DST_BIT:
+                return "VK_IMAGE_USAGE_TRANSFER_DST_BIT";
+            case VK_IMAGE_USAGE_SAMPLED_BIT:
+                return "VK_IMAGE_USAGE_SAMPLED_BIT";
+            case VK_IMAGE_USAGE_STORAGE_BIT:
+                return "VK_IMAGE_USAGE_STORAGE_BIT";
+            case VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT:
+                return "VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT";
+            case VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT:
+                return "VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT";
+            case VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT:
+                return "VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT";
+            case VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT:
+                return "VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT";
+            case VK_IMAGE_USAGE_HOST_TRANSFER_BIT:
+                return "VK_IMAGE_USAGE_HOST_TRANSFER_BIT";
+            case VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR:
+                return "VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR";
+            default:
+                break;
+        }
+        Error() << "Invalid bitmask value";
+        return "Invalid bitmask value";
+    }
+
   protected:
     void* filter_VkPhysicalDeviceFeatures2(const void* pDeviceCreateInfoPNext, const LocationScope& l) {
         auto base = AllocMem<VkPhysicalDeviceFeatures2>();
@@ -2974,6 +3199,45 @@ class GeneratorBase : protected Base {
         return gen_VkPipelineCacheCreateFlagBits_c_str(v);
     }
 
+    Json::Value gen_VkBufferCreateFlagBits(const VkBufferCreateFlagBits v, const LocationScope&) {
+        return gen_VkBufferCreateFlagBits_c_str(v);
+    }
+
+    Json::Value gen_VkBufferUsageFlagBits(const VkBufferUsageFlagBits v, const LocationScope&) {
+        return gen_VkBufferUsageFlagBits_c_str(v);
+    }
+
+    Json::Value gen_VkSharingMode(const VkSharingMode v, const LocationScope&) {
+        const char* enum_str = gen_VkSharingMode_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
+    }
+
+    Json::Value gen_VkBufferUsageFlagBits2(const VkBufferUsageFlagBits2 v, const LocationScope&) {
+        return gen_VkBufferUsageFlagBits2_c_str(v);
+    }
+
+    Json::Value gen_VkExternalMemoryHandleTypeFlagBits(const VkExternalMemoryHandleTypeFlagBits v, const LocationScope&) {
+        return gen_VkExternalMemoryHandleTypeFlagBits_c_str(v);
+    }
+
+    Json::Value gen_VkImageCreateFlagBits(const VkImageCreateFlagBits v, const LocationScope&) {
+        return gen_VkImageCreateFlagBits_c_str(v);
+    }
+
+    Json::Value gen_VkImageType(const VkImageType v, const LocationScope&) {
+        const char* enum_str = gen_VkImageType_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
+    }
+
+    Json::Value gen_VkImageTiling(const VkImageTiling v, const LocationScope&) {
+        const char* enum_str = gen_VkImageTiling_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
+    }
+
+    Json::Value gen_VkImageUsageFlagBits(const VkImageUsageFlagBits v, const LocationScope&) {
+        return gen_VkImageUsageFlagBits_c_str(v);
+    }
+
     Json::Value gen_VkPipelineCreateFlags(const VkPipelineCreateFlags v, const LocationScope&) {
         if (!v) {
             return 0;
@@ -3496,6 +3760,114 @@ class GeneratorBase : protected Base {
                     strm << " | ";
                 }
                 strm << gen_VkPipelineCacheCreateFlagBits_c_str(static_cast<VkPipelineCacheCreateFlagBits>(bit));
+            }
+        }
+
+        return strm.str();
+    }
+
+    Json::Value gen_VkBufferCreateFlags(const VkBufferCreateFlags v, const LocationScope&) {
+        if (!v) {
+            return 0;
+        }
+        std::stringstream strm;
+        for (int i = 0; i < 31; ++i) {
+            auto bit = uint32_t(1) << i;
+            if ((v & bit) != 0) {
+                if (strm.rdbuf()->in_avail() > 0) {
+                    strm << " | ";
+                }
+                strm << gen_VkBufferCreateFlagBits_c_str(static_cast<VkBufferCreateFlagBits>(bit));
+            }
+        }
+
+        return strm.str();
+    }
+
+    Json::Value gen_VkBufferUsageFlags(const VkBufferUsageFlags v, const LocationScope&) {
+        if (!v) {
+            return 0;
+        }
+        std::stringstream strm;
+        for (int i = 0; i < 31; ++i) {
+            auto bit = uint32_t(1) << i;
+            if ((v & bit) != 0) {
+                if (strm.rdbuf()->in_avail() > 0) {
+                    strm << " | ";
+                }
+                strm << gen_VkBufferUsageFlagBits_c_str(static_cast<VkBufferUsageFlagBits>(bit));
+            }
+        }
+
+        return strm.str();
+    }
+
+    Json::Value gen_VkBufferUsageFlags2(const VkBufferUsageFlags2 v, const LocationScope&) {
+        if (!v) {
+            return 0;
+        }
+        std::stringstream strm;
+        for (int i = 0; i < 63; ++i) {
+            auto bit = uint64_t(1) << i;
+            if ((v & bit) != 0) {
+                if (strm.rdbuf()->in_avail() > 0) {
+                    strm << " | ";
+                }
+                strm << gen_VkBufferUsageFlagBits2_c_str(static_cast<VkBufferUsageFlagBits2>(bit));
+            }
+        }
+
+        return strm.str();
+    }
+
+    Json::Value gen_VkExternalMemoryHandleTypeFlags(const VkExternalMemoryHandleTypeFlags v, const LocationScope&) {
+        if (!v) {
+            return 0;
+        }
+        std::stringstream strm;
+        for (int i = 0; i < 31; ++i) {
+            auto bit = uint32_t(1) << i;
+            if ((v & bit) != 0) {
+                if (strm.rdbuf()->in_avail() > 0) {
+                    strm << " | ";
+                }
+                strm << gen_VkExternalMemoryHandleTypeFlagBits_c_str(static_cast<VkExternalMemoryHandleTypeFlagBits>(bit));
+            }
+        }
+
+        return strm.str();
+    }
+
+    Json::Value gen_VkImageCreateFlags(const VkImageCreateFlags v, const LocationScope&) {
+        if (!v) {
+            return 0;
+        }
+        std::stringstream strm;
+        for (int i = 0; i < 31; ++i) {
+            auto bit = uint32_t(1) << i;
+            if ((v & bit) != 0) {
+                if (strm.rdbuf()->in_avail() > 0) {
+                    strm << " | ";
+                }
+                strm << gen_VkImageCreateFlagBits_c_str(static_cast<VkImageCreateFlagBits>(bit));
+            }
+        }
+
+        return strm.str();
+    }
+
+    Json::Value gen_VkImageUsageFlags(const VkImageUsageFlags v, const LocationScope&) {
+        if (!v) {
+            return 0;
+        }
+        std::stringstream strm;
+        for (int i = 0; i < 31; ++i) {
+            auto bit = uint32_t(1) << i;
+            if ((v & bit) != 0) {
+                if (strm.rdbuf()->in_avail() > 0) {
+                    strm << " | ";
+                }
+                strm << gen_VkImageUsageFlagBits_c_str(static_cast<VkImageUsageFlagBits>(bit));
             }
         }
 
@@ -5088,6 +5460,138 @@ class GeneratorBase : protected Base {
             switch (next->sType) {
                 default:
                     Error() << "Invalid structure type extending VkPipelineOfflineCreateInfo: " << next->sType;
+                    break;
+            }
+            next = next->pNext;
+            if (!json_next->isNull()) {
+                json_next = &(*json_next)["pNext"];
+            }
+        }
+
+        *json_next = "NULL";
+
+        return json;
+    };
+
+    Json::Value gen_VkBufferCreateInfo(const VkBufferCreateInfo& s, const LocationScope& l) {
+        Json::Value json = gen_VkBufferCreateInfo_contents(s, l);
+
+        json["sType"] = "VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO";
+
+        auto next = reinterpret_cast<const VkBaseInStructure*>(s.pNext);
+        Json::Value* json_next = &json["pNext"];
+
+        while (next != nullptr) {
+            switch (next->sType) {
+                case VK_STRUCTURE_TYPE_BUFFER_OPAQUE_CAPTURE_ADDRESS_CREATE_INFO: {
+                    *json_next = gen_VkBufferOpaqueCaptureAddressCreateInfo_contents(
+                        *reinterpret_cast<const VkBufferOpaqueCaptureAddressCreateInfo*>(next),
+                        CreateScope("pNext<VkBufferOpaqueCaptureAddressCreateInfo>", true));
+                    (*json_next)["sType"] = "VK_STRUCTURE_TYPE_BUFFER_OPAQUE_CAPTURE_ADDRESS_CREATE_INFO";
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_BUFFER_USAGE_FLAGS_2_CREATE_INFO: {
+                    *json_next =
+                        gen_VkBufferUsageFlags2CreateInfo_contents(*reinterpret_cast<const VkBufferUsageFlags2CreateInfo*>(next),
+                                                                   CreateScope("pNext<VkBufferUsageFlags2CreateInfo>", true));
+                    (*json_next)["sType"] = "VK_STRUCTURE_TYPE_BUFFER_USAGE_FLAGS_2_CREATE_INFO";
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO: {
+                    *json_next = gen_VkExternalMemoryBufferCreateInfo_contents(
+                        *reinterpret_cast<const VkExternalMemoryBufferCreateInfo*>(next),
+                        CreateScope("pNext<VkExternalMemoryBufferCreateInfo>", true));
+                    (*json_next)["sType"] = "VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO";
+                    break;
+                }
+
+                default:
+                    Error() << "Invalid structure type extending VkBufferCreateInfo: " << next->sType;
+                    break;
+            }
+            next = next->pNext;
+            if (!json_next->isNull()) {
+                json_next = &(*json_next)["pNext"];
+            }
+        }
+
+        *json_next = "NULL";
+
+        return json;
+    };
+
+    Json::Value gen_VkImageCreateInfo(const VkImageCreateInfo& s, const LocationScope& l) {
+        Json::Value json = gen_VkImageCreateInfo_contents(s, l);
+
+        json["sType"] = "VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO";
+
+        auto next = reinterpret_cast<const VkBaseInStructure*>(s.pNext);
+        Json::Value* json_next = &json["pNext"];
+
+        while (next != nullptr) {
+            switch (next->sType) {
+#ifdef VK_USE_PLATFORM_SCREEN_QNX
+
+                case VK_STRUCTURE_TYPE_EXTERNAL_FORMAT_QNX: {
+                    *json_next = gen_VkExternalFormatQNX_contents(*reinterpret_cast<const VkExternalFormatQNX*>(next),
+                                                                  CreateScope("pNext<VkExternalFormatQNX>", true));
+                    (*json_next)["sType"] = "VK_STRUCTURE_TYPE_EXTERNAL_FORMAT_QNX";
+                    break;
+                }
+#endif  // VK_USE_PLATFORM_SCREEN_QNX
+
+                case VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO: {
+                    *json_next = gen_VkExternalMemoryImageCreateInfo_contents(
+                        *reinterpret_cast<const VkExternalMemoryImageCreateInfo*>(next),
+                        CreateScope("pNext<VkExternalMemoryImageCreateInfo>", true));
+                    (*json_next)["sType"] = "VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO";
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_EXPLICIT_CREATE_INFO_EXT: {
+                    *json_next = gen_VkImageDrmFormatModifierExplicitCreateInfoEXT_contents(
+                        *reinterpret_cast<const VkImageDrmFormatModifierExplicitCreateInfoEXT*>(next),
+                        CreateScope("pNext<VkImageDrmFormatModifierExplicitCreateInfoEXT>", true));
+                    (*json_next)["sType"] = "VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_EXPLICIT_CREATE_INFO_EXT";
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_LIST_CREATE_INFO_EXT: {
+                    *json_next = gen_VkImageDrmFormatModifierListCreateInfoEXT_contents(
+                        *reinterpret_cast<const VkImageDrmFormatModifierListCreateInfoEXT*>(next),
+                        CreateScope("pNext<VkImageDrmFormatModifierListCreateInfoEXT>", true));
+                    (*json_next)["sType"] = "VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_LIST_CREATE_INFO_EXT";
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_IMAGE_FORMAT_LIST_CREATE_INFO: {
+                    *json_next =
+                        gen_VkImageFormatListCreateInfo_contents(*reinterpret_cast<const VkImageFormatListCreateInfo*>(next),
+                                                                 CreateScope("pNext<VkImageFormatListCreateInfo>", true));
+                    (*json_next)["sType"] = "VK_STRUCTURE_TYPE_IMAGE_FORMAT_LIST_CREATE_INFO";
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_IMAGE_STENCIL_USAGE_CREATE_INFO: {
+                    *json_next =
+                        gen_VkImageStencilUsageCreateInfo_contents(*reinterpret_cast<const VkImageStencilUsageCreateInfo*>(next),
+                                                                   CreateScope("pNext<VkImageStencilUsageCreateInfo>", true));
+                    (*json_next)["sType"] = "VK_STRUCTURE_TYPE_IMAGE_STENCIL_USAGE_CREATE_INFO";
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_IMAGE_SWAPCHAIN_CREATE_INFO_KHR: {
+                    *json_next =
+                        gen_VkImageSwapchainCreateInfoKHR_contents(*reinterpret_cast<const VkImageSwapchainCreateInfoKHR*>(next),
+                                                                   CreateScope("pNext<VkImageSwapchainCreateInfoKHR>", true));
+                    (*json_next)["sType"] = "VK_STRUCTURE_TYPE_IMAGE_SWAPCHAIN_CREATE_INFO_KHR";
+                    break;
+                }
+
+                default:
+                    Error() << "Invalid structure type extending VkImageCreateInfo: " << next->sType;
                     break;
             }
             next = next->pNext;
@@ -7790,6 +8294,210 @@ class GeneratorBase : protected Base {
         json["maxTimestampQueriesPerPool"] = gen_uint32_t(s.maxTimestampQueriesPerPool, CreateScope("maxTimestampQueriesPerPool"));
         json["maxImmutableSamplersPerDescriptorSetLayout"] =
             gen_uint32_t(s.maxImmutableSamplersPerDescriptorSetLayout, CreateScope("maxImmutableSamplersPerDescriptorSetLayout"));
+
+        return json;
+    }
+
+    Json::Value gen_VkBufferCreateInfo_contents(const VkBufferCreateInfo& s, const LocationScope& l) {
+        Json::Value json;
+
+        json["flags"] = gen_VkBufferCreateFlags(s.flags, CreateScope("flags"));
+        json["size"] = gen_VkDeviceSize(s.size, CreateScope("size"));
+        json["usage"] = gen_VkBufferUsageFlags(s.usage, CreateScope("usage"));
+        json["sharingMode"] = gen_VkSharingMode(s.sharingMode, CreateScope("sharingMode"));
+        json["queueFamilyIndexCount"] = gen_uint32_t(s.queueFamilyIndexCount, CreateScope("queueFamilyIndexCount"));
+
+        if (s.queueFamilyIndexCount != 0) {
+            Json::Value json_array_pQueueFamilyIndices;
+            if (s.pQueueFamilyIndices != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.queueFamilyIndexCount; i++) {
+                    json_array_pQueueFamilyIndices[i] =
+                        gen_uint32_t(s.pQueueFamilyIndices[i], CreateScope("pQueueFamilyIndices", i));
+                }
+                json["pQueueFamilyIndices"] = json_array_pQueueFamilyIndices;
+            } else {
+                json["pQueueFamilyIndices"] = "NULL";
+            }
+        } else {
+            json["pQueueFamilyIndices"] = "NULL";
+        }
+
+        return json;
+    }
+
+    Json::Value gen_VkBufferOpaqueCaptureAddressCreateInfo_contents(const VkBufferOpaqueCaptureAddressCreateInfo& s,
+                                                                    const LocationScope& l) {
+        Json::Value json;
+
+        json["opaqueCaptureAddress"] = gen_uint64_t(s.opaqueCaptureAddress, CreateScope("opaqueCaptureAddress"));
+
+        return json;
+    }
+
+    Json::Value gen_VkBufferUsageFlags2CreateInfo_contents(const VkBufferUsageFlags2CreateInfo& s, const LocationScope& l) {
+        Json::Value json;
+
+        json["usage"] = gen_VkBufferUsageFlags2(s.usage, CreateScope("usage"));
+
+        return json;
+    }
+
+    Json::Value gen_VkExternalMemoryBufferCreateInfo_contents(const VkExternalMemoryBufferCreateInfo& s, const LocationScope& l) {
+        Json::Value json;
+
+        json["handleTypes"] = gen_VkExternalMemoryHandleTypeFlags(s.handleTypes, CreateScope("handleTypes"));
+
+        return json;
+    }
+
+    Json::Value gen_VkExtent3D_contents(const VkExtent3D& s, const LocationScope& l) {
+        Json::Value json;
+
+        json["width"] = gen_uint32_t(s.width, CreateScope("width"));
+        json["height"] = gen_uint32_t(s.height, CreateScope("height"));
+        json["depth"] = gen_uint32_t(s.depth, CreateScope("depth"));
+
+        return json;
+    }
+
+    Json::Value gen_VkImageCreateInfo_contents(const VkImageCreateInfo& s, const LocationScope& l) {
+        Json::Value json;
+
+        json["flags"] = gen_VkImageCreateFlags(s.flags, CreateScope("flags"));
+        json["imageType"] = gen_VkImageType(s.imageType, CreateScope("imageType"));
+        json["format"] = gen_VkFormat(s.format, CreateScope("format"));
+        json["extent"] = gen_VkExtent3D_contents(s.extent, CreateScope("extent"));
+        json["mipLevels"] = gen_uint32_t(s.mipLevels, CreateScope("mipLevels"));
+        json["arrayLayers"] = gen_uint32_t(s.arrayLayers, CreateScope("arrayLayers"));
+        json["samples"] = gen_VkSampleCountFlagBits(s.samples, CreateScope("samples"));
+        json["tiling"] = gen_VkImageTiling(s.tiling, CreateScope("tiling"));
+        json["usage"] = gen_VkImageUsageFlags(s.usage, CreateScope("usage"));
+        json["sharingMode"] = gen_VkSharingMode(s.sharingMode, CreateScope("sharingMode"));
+        json["queueFamilyIndexCount"] = gen_uint32_t(s.queueFamilyIndexCount, CreateScope("queueFamilyIndexCount"));
+
+        if (s.queueFamilyIndexCount != 0) {
+            Json::Value json_array_pQueueFamilyIndices;
+            if (s.pQueueFamilyIndices != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.queueFamilyIndexCount; i++) {
+                    json_array_pQueueFamilyIndices[i] =
+                        gen_uint32_t(s.pQueueFamilyIndices[i], CreateScope("pQueueFamilyIndices", i));
+                }
+                json["pQueueFamilyIndices"] = json_array_pQueueFamilyIndices;
+            } else {
+                json["pQueueFamilyIndices"] = "NULL";
+            }
+        } else {
+            json["pQueueFamilyIndices"] = "NULL";
+        }
+        json["initialLayout"] = gen_VkImageLayout(s.initialLayout, CreateScope("initialLayout"));
+
+        return json;
+    }
+
+    Json::Value gen_VkExternalMemoryImageCreateInfo_contents(const VkExternalMemoryImageCreateInfo& s, const LocationScope& l) {
+        Json::Value json;
+
+        json["handleTypes"] = gen_VkExternalMemoryHandleTypeFlags(s.handleTypes, CreateScope("handleTypes"));
+
+        return json;
+    }
+
+    Json::Value gen_VkSubresourceLayout_contents(const VkSubresourceLayout& s, const LocationScope& l) {
+        Json::Value json;
+
+        json["offset"] = gen_VkDeviceSize(s.offset, CreateScope("offset"));
+        json["size"] = gen_VkDeviceSize(s.size, CreateScope("size"));
+        json["rowPitch"] = gen_VkDeviceSize(s.rowPitch, CreateScope("rowPitch"));
+        json["arrayPitch"] = gen_VkDeviceSize(s.arrayPitch, CreateScope("arrayPitch"));
+        json["depthPitch"] = gen_VkDeviceSize(s.depthPitch, CreateScope("depthPitch"));
+
+        return json;
+    }
+
+    Json::Value gen_VkImageDrmFormatModifierExplicitCreateInfoEXT_contents(const VkImageDrmFormatModifierExplicitCreateInfoEXT& s,
+                                                                           const LocationScope& l) {
+        Json::Value json;
+
+        json["drmFormatModifier"] = gen_uint64_t(s.drmFormatModifier, CreateScope("drmFormatModifier"));
+        json["drmFormatModifierPlaneCount"] =
+            gen_uint32_t(s.drmFormatModifierPlaneCount, CreateScope("drmFormatModifierPlaneCount"));
+
+        if (s.drmFormatModifierPlaneCount != 0) {
+            Json::Value json_array_pPlaneLayouts;
+            if (s.pPlaneLayouts != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.drmFormatModifierPlaneCount; i++) {
+                    json_array_pPlaneLayouts[i] =
+                        gen_VkSubresourceLayout_contents(s.pPlaneLayouts[i], CreateScope("pPlaneLayouts", i));
+                }
+                json["pPlaneLayouts"] = json_array_pPlaneLayouts;
+            } else {
+                Error() << "pPlaneLayouts is NULL but its length is " << s.drmFormatModifierPlaneCount;
+            }
+        } else {
+            json["pPlaneLayouts"] = "NULL";
+        }
+
+        return json;
+    }
+
+    Json::Value gen_VkImageDrmFormatModifierListCreateInfoEXT_contents(const VkImageDrmFormatModifierListCreateInfoEXT& s,
+                                                                       const LocationScope& l) {
+        Json::Value json;
+
+        json["drmFormatModifierCount"] = gen_uint32_t(s.drmFormatModifierCount, CreateScope("drmFormatModifierCount"));
+
+        if (s.drmFormatModifierCount != 0) {
+            Json::Value json_array_pDrmFormatModifiers;
+            if (s.pDrmFormatModifiers != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.drmFormatModifierCount; i++) {
+                    json_array_pDrmFormatModifiers[i] =
+                        gen_uint64_t(s.pDrmFormatModifiers[i], CreateScope("pDrmFormatModifiers", i));
+                }
+                json["pDrmFormatModifiers"] = json_array_pDrmFormatModifiers;
+            } else {
+                Error() << "pDrmFormatModifiers is NULL but its length is " << s.drmFormatModifierCount;
+            }
+        } else {
+            json["pDrmFormatModifiers"] = "NULL";
+        }
+
+        return json;
+    }
+
+    Json::Value gen_VkImageFormatListCreateInfo_contents(const VkImageFormatListCreateInfo& s, const LocationScope& l) {
+        Json::Value json;
+
+        json["viewFormatCount"] = gen_uint32_t(s.viewFormatCount, CreateScope("viewFormatCount"));
+
+        if (s.viewFormatCount != 0) {
+            Json::Value json_array_pViewFormats;
+            if (s.pViewFormats != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.viewFormatCount; i++) {
+                    json_array_pViewFormats[i] = gen_VkFormat(s.pViewFormats[i], CreateScope("pViewFormats", i));
+                }
+                json["pViewFormats"] = json_array_pViewFormats;
+            } else {
+                Error() << "pViewFormats is NULL but its length is " << s.viewFormatCount;
+            }
+        } else {
+            json["pViewFormats"] = "NULL";
+        }
+
+        return json;
+    }
+
+    Json::Value gen_VkImageStencilUsageCreateInfo_contents(const VkImageStencilUsageCreateInfo& s, const LocationScope& l) {
+        Json::Value json;
+
+        json["stencilUsage"] = gen_VkImageUsageFlags(s.stencilUsage, CreateScope("stencilUsage"));
+
+        return json;
+    }
+
+    Json::Value gen_VkImageSwapchainCreateInfoKHR_contents(const VkImageSwapchainCreateInfoKHR& s, const LocationScope& l) {
+        Json::Value json;
+
+        json["swapchain"] = gen_VkSwapchainKHR(s.swapchain, CreateScope("swapchain"));
 
         return json;
     }

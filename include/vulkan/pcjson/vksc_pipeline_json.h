@@ -170,6 +170,8 @@ bool vpjGetGeneratedPipelineUUID(VpjGenerator generator, uint8_t* pPipelineUUID,
  *  * VkShaderModuleCreateInfo
  *  * VkDeviceObjectReservationCreateInfo
  *  * VkPipelineOfflineCreateInfo
+ *  * VkBufferCreateInfo
+ *  * VkImageCreateInfo
  *
  * @param generator The JSON generator object
  * @param pStruct Pointer to input structure
@@ -273,6 +275,8 @@ bool vpjParsePipelineJson(VpjParser parser, const char* pPipelineJson, VpjData* 
  *  * VkShaderModuleCreateInfo
  *  * VkDeviceObjectReservationCreateInfo
  *  * VkPipelineOfflineCreateInfo
+ *  * VkBufferCreateInfo
+ *  * VkImageCreateInfo
  *
  * @param parser The JSON parser object
  * @param pJson The input JSON string

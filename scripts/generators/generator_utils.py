@@ -49,7 +49,9 @@ class PipelineJsonHelper:
     def getAllParseGenStructs() -> list[str]:
         return PipelineJsonHelper.getPipelineJsonStructs() + [
             'VkDeviceObjectReservationCreateInfo',
-            'VkPipelineOfflineCreateInfo'
+            'VkPipelineOfflineCreateInfo',
+            'VkBufferCreateInfo',
+            'VkImageCreateInfo'
         ]
 
 class TypeCategory(Enum):

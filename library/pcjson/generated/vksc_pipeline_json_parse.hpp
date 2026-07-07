@@ -151,6 +151,22 @@ class ParserBase : protected Base {
         }
     }
 
+    VkSwapchainKHR parse_VkSwapchainKHR(const Json::Value& json, const LocationScope& l) {
+        if (json.isString()) {
+            auto json_str = json.asCString();
+            if (strcmp(json_str, "") == 0) {
+                return VK_NULL_HANDLE;
+            } else {
+                return reinterpret_cast<VkSwapchainKHR>((void*)parse_string(json, l));
+            }
+        } else if (json.isUInt64()) {
+            return VkSwapchainKHR(parse_uint64_t(json, l));
+        } else {
+            Error() << "Invalid handle";
+            return VkSwapchainKHR(0);
+        }
+    }
+
     VkStructureType parse_VkStructureType_c_str(const char* v) {
         static std::unordered_map<std::string_view, VkStructureType> map = {
             std::make_pair("VK_STRUCTURE_TYPE_APPLICATION_INFO", VK_STRUCTURE_TYPE_APPLICATION_INFO),
@@ -2704,6 +2720,231 @@ class ParserBase : protected Base {
         }
     }
 
+    VkBufferCreateFlagBits parse_VkBufferCreateFlagBits_c_str(const char* v) {
+        static std::unordered_map<std::string_view, VkBufferCreateFlagBits> map = {
+            std::make_pair("0", static_cast<VkBufferCreateFlagBits>(0)),
+            std::make_pair("VK_BUFFER_CREATE_SPARSE_BINDING_BIT", VK_BUFFER_CREATE_SPARSE_BINDING_BIT),
+            std::make_pair("VK_BUFFER_CREATE_SPARSE_RESIDENCY_BIT", VK_BUFFER_CREATE_SPARSE_RESIDENCY_BIT),
+            std::make_pair("VK_BUFFER_CREATE_SPARSE_ALIASED_BIT", VK_BUFFER_CREATE_SPARSE_ALIASED_BIT),
+            std::make_pair("VK_BUFFER_CREATE_PROTECTED_BIT", VK_BUFFER_CREATE_PROTECTED_BIT),
+            std::make_pair("VK_BUFFER_CREATE_DEVICE_ADDRESS_CAPTURE_REPLAY_BIT",
+                           VK_BUFFER_CREATE_DEVICE_ADDRESS_CAPTURE_REPLAY_BIT)};
+        auto it = map.find(v);
+        if (it != map.end()) {
+            return it->second;
+        } else {
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkBufferCreateFlagBits bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkBufferCreateFlagBits bit: " << v;
+            }
+            return static_cast<VkBufferCreateFlagBits>(0);
+        }
+    }
+
+    VkBufferUsageFlagBits parse_VkBufferUsageFlagBits_c_str(const char* v) {
+        static std::unordered_map<std::string_view, VkBufferUsageFlagBits> map = {
+            std::make_pair("0", static_cast<VkBufferUsageFlagBits>(0)),
+            std::make_pair("VK_BUFFER_USAGE_TRANSFER_SRC_BIT", VK_BUFFER_USAGE_TRANSFER_SRC_BIT),
+            std::make_pair("VK_BUFFER_USAGE_TRANSFER_DST_BIT", VK_BUFFER_USAGE_TRANSFER_DST_BIT),
+            std::make_pair("VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT", VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT),
+            std::make_pair("VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT", VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT),
+            std::make_pair("VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT", VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT),
+            std::make_pair("VK_BUFFER_USAGE_STORAGE_BUFFER_BIT", VK_BUFFER_USAGE_STORAGE_BUFFER_BIT),
+            std::make_pair("VK_BUFFER_USAGE_INDEX_BUFFER_BIT", VK_BUFFER_USAGE_INDEX_BUFFER_BIT),
+            std::make_pair("VK_BUFFER_USAGE_VERTEX_BUFFER_BIT", VK_BUFFER_USAGE_VERTEX_BUFFER_BIT),
+            std::make_pair("VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT", VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT),
+            std::make_pair("VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT", VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT)};
+        auto it = map.find(v);
+        if (it != map.end()) {
+            return it->second;
+        } else {
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkBufferUsageFlagBits bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkBufferUsageFlagBits bit: " << v;
+            }
+            return static_cast<VkBufferUsageFlagBits>(0);
+        }
+    }
+
+    VkSharingMode parse_VkSharingMode_c_str(const char* v) {
+        static std::unordered_map<std::string_view, VkSharingMode> map = {
+            std::make_pair("VK_SHARING_MODE_EXCLUSIVE", VK_SHARING_MODE_EXCLUSIVE),
+            std::make_pair("VK_SHARING_MODE_CONCURRENT", VK_SHARING_MODE_CONCURRENT)};
+        auto it = map.find(v);
+        if (it != map.end()) {
+            return it->second;
+        } else {
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkSharingMode constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkSharingMode constant: " << v;
+            }
+            return static_cast<VkSharingMode>(0);
+        }
+    }
+
+    VkBufferUsageFlagBits2 parse_VkBufferUsageFlagBits2_c_str(const char* v) {
+        static std::unordered_map<std::string_view, VkBufferUsageFlagBits2> map = {
+            std::make_pair("0", static_cast<VkBufferUsageFlagBits2>(0)),
+            std::make_pair("VK_BUFFER_USAGE_2_TRANSFER_SRC_BIT", VK_BUFFER_USAGE_2_TRANSFER_SRC_BIT),
+            std::make_pair("VK_BUFFER_USAGE_2_TRANSFER_DST_BIT", VK_BUFFER_USAGE_2_TRANSFER_DST_BIT),
+            std::make_pair("VK_BUFFER_USAGE_2_UNIFORM_TEXEL_BUFFER_BIT", VK_BUFFER_USAGE_2_UNIFORM_TEXEL_BUFFER_BIT),
+            std::make_pair("VK_BUFFER_USAGE_2_STORAGE_TEXEL_BUFFER_BIT", VK_BUFFER_USAGE_2_STORAGE_TEXEL_BUFFER_BIT),
+            std::make_pair("VK_BUFFER_USAGE_2_UNIFORM_BUFFER_BIT", VK_BUFFER_USAGE_2_UNIFORM_BUFFER_BIT),
+            std::make_pair("VK_BUFFER_USAGE_2_STORAGE_BUFFER_BIT", VK_BUFFER_USAGE_2_STORAGE_BUFFER_BIT),
+            std::make_pair("VK_BUFFER_USAGE_2_INDEX_BUFFER_BIT", VK_BUFFER_USAGE_2_INDEX_BUFFER_BIT),
+            std::make_pair("VK_BUFFER_USAGE_2_VERTEX_BUFFER_BIT", VK_BUFFER_USAGE_2_VERTEX_BUFFER_BIT),
+            std::make_pair("VK_BUFFER_USAGE_2_INDIRECT_BUFFER_BIT", VK_BUFFER_USAGE_2_INDIRECT_BUFFER_BIT),
+            std::make_pair("VK_BUFFER_USAGE_2_SHADER_DEVICE_ADDRESS_BIT", VK_BUFFER_USAGE_2_SHADER_DEVICE_ADDRESS_BIT)};
+        auto it = map.find(v);
+        if (it != map.end()) {
+            return it->second;
+        } else {
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkBufferUsageFlagBits2 bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkBufferUsageFlagBits2 bit: " << v;
+            }
+            return static_cast<VkBufferUsageFlagBits2>(0);
+        }
+    }
+
+    VkExternalMemoryHandleTypeFlagBits parse_VkExternalMemoryHandleTypeFlagBits_c_str(const char* v) {
+        static std::unordered_map<std::string_view, VkExternalMemoryHandleTypeFlagBits> map = {
+            std::make_pair("0", static_cast<VkExternalMemoryHandleTypeFlagBits>(0)),
+            std::make_pair("VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT", VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT),
+            std::make_pair("VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT", VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT),
+            std::make_pair("VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT",
+                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT),
+            std::make_pair("VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_BIT", VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_BIT),
+            std::make_pair("VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT",
+                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT),
+            std::make_pair("VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_HEAP_BIT", VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_HEAP_BIT),
+            std::make_pair("VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_RESOURCE_BIT", VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_RESOURCE_BIT),
+            std::make_pair("VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT", VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT),
+            std::make_pair("VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT",
+                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT),
+            std::make_pair("VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_MAPPED_FOREIGN_MEMORY_BIT_EXT",
+                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_MAPPED_FOREIGN_MEMORY_BIT_EXT),
+            std::make_pair("VK_EXTERNAL_MEMORY_HANDLE_TYPE_SCI_BUF_BIT_NV", VK_EXTERNAL_MEMORY_HANDLE_TYPE_SCI_BUF_BIT_NV),
+            std::make_pair("VK_EXTERNAL_MEMORY_HANDLE_TYPE_SCREEN_BUFFER_BIT_QNX",
+                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_SCREEN_BUFFER_BIT_QNX)};
+        auto it = map.find(v);
+        if (it != map.end()) {
+            return it->second;
+        } else {
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkExternalMemoryHandleTypeFlagBits bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkExternalMemoryHandleTypeFlagBits bit: " << v;
+            }
+            return static_cast<VkExternalMemoryHandleTypeFlagBits>(0);
+        }
+    }
+
+    VkImageCreateFlagBits parse_VkImageCreateFlagBits_c_str(const char* v) {
+        static std::unordered_map<std::string_view, VkImageCreateFlagBits> map = {
+            std::make_pair("0", static_cast<VkImageCreateFlagBits>(0)),
+            std::make_pair("VK_IMAGE_CREATE_SPARSE_BINDING_BIT", VK_IMAGE_CREATE_SPARSE_BINDING_BIT),
+            std::make_pair("VK_IMAGE_CREATE_SPARSE_RESIDENCY_BIT", VK_IMAGE_CREATE_SPARSE_RESIDENCY_BIT),
+            std::make_pair("VK_IMAGE_CREATE_SPARSE_ALIASED_BIT", VK_IMAGE_CREATE_SPARSE_ALIASED_BIT),
+            std::make_pair("VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT", VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT),
+            std::make_pair("VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT", VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT),
+            std::make_pair("VK_IMAGE_CREATE_ALIAS_BIT", VK_IMAGE_CREATE_ALIAS_BIT),
+            std::make_pair("VK_IMAGE_CREATE_SPLIT_INSTANCE_BIND_REGIONS_BIT", VK_IMAGE_CREATE_SPLIT_INSTANCE_BIND_REGIONS_BIT),
+            std::make_pair("VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT", VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT),
+            std::make_pair("VK_IMAGE_CREATE_BLOCK_TEXEL_VIEW_COMPATIBLE_BIT", VK_IMAGE_CREATE_BLOCK_TEXEL_VIEW_COMPATIBLE_BIT),
+            std::make_pair("VK_IMAGE_CREATE_EXTENDED_USAGE_BIT", VK_IMAGE_CREATE_EXTENDED_USAGE_BIT),
+            std::make_pair("VK_IMAGE_CREATE_PROTECTED_BIT", VK_IMAGE_CREATE_PROTECTED_BIT),
+            std::make_pair("VK_IMAGE_CREATE_DISJOINT_BIT", VK_IMAGE_CREATE_DISJOINT_BIT),
+            std::make_pair("VK_IMAGE_CREATE_SAMPLE_LOCATIONS_COMPATIBLE_DEPTH_BIT_EXT",
+                           VK_IMAGE_CREATE_SAMPLE_LOCATIONS_COMPATIBLE_DEPTH_BIT_EXT)};
+        auto it = map.find(v);
+        if (it != map.end()) {
+            return it->second;
+        } else {
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkImageCreateFlagBits bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkImageCreateFlagBits bit: " << v;
+            }
+            return static_cast<VkImageCreateFlagBits>(0);
+        }
+    }
+
+    VkImageType parse_VkImageType_c_str(const char* v) {
+        static std::unordered_map<std::string_view, VkImageType> map = {std::make_pair("VK_IMAGE_TYPE_1D", VK_IMAGE_TYPE_1D),
+                                                                        std::make_pair("VK_IMAGE_TYPE_2D", VK_IMAGE_TYPE_2D),
+                                                                        std::make_pair("VK_IMAGE_TYPE_3D", VK_IMAGE_TYPE_3D)};
+        auto it = map.find(v);
+        if (it != map.end()) {
+            return it->second;
+        } else {
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkImageType constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkImageType constant: " << v;
+            }
+            return static_cast<VkImageType>(0);
+        }
+    }
+
+    VkImageTiling parse_VkImageTiling_c_str(const char* v) {
+        static std::unordered_map<std::string_view, VkImageTiling> map = {
+            std::make_pair("VK_IMAGE_TILING_OPTIMAL", VK_IMAGE_TILING_OPTIMAL),
+            std::make_pair("VK_IMAGE_TILING_LINEAR", VK_IMAGE_TILING_LINEAR),
+            std::make_pair("VK_IMAGE_TILING_DRM_FORMAT_MODIFIER_EXT", VK_IMAGE_TILING_DRM_FORMAT_MODIFIER_EXT)};
+        auto it = map.find(v);
+        if (it != map.end()) {
+            return it->second;
+        } else {
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkImageTiling constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkImageTiling constant: " << v;
+            }
+            return static_cast<VkImageTiling>(0);
+        }
+    }
+
+    VkImageUsageFlagBits parse_VkImageUsageFlagBits_c_str(const char* v) {
+        static std::unordered_map<std::string_view, VkImageUsageFlagBits> map = {
+            std::make_pair("0", static_cast<VkImageUsageFlagBits>(0)),
+            std::make_pair("VK_IMAGE_USAGE_TRANSFER_SRC_BIT", VK_IMAGE_USAGE_TRANSFER_SRC_BIT),
+            std::make_pair("VK_IMAGE_USAGE_TRANSFER_DST_BIT", VK_IMAGE_USAGE_TRANSFER_DST_BIT),
+            std::make_pair("VK_IMAGE_USAGE_SAMPLED_BIT", VK_IMAGE_USAGE_SAMPLED_BIT),
+            std::make_pair("VK_IMAGE_USAGE_STORAGE_BIT", VK_IMAGE_USAGE_STORAGE_BIT),
+            std::make_pair("VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT", VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT),
+            std::make_pair("VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT", VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT),
+            std::make_pair("VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT", VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT),
+            std::make_pair("VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT", VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT),
+            std::make_pair("VK_IMAGE_USAGE_HOST_TRANSFER_BIT", VK_IMAGE_USAGE_HOST_TRANSFER_BIT),
+            std::make_pair("VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR",
+                           VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR)};
+        auto it = map.find(v);
+        if (it != map.end()) {
+            return it->second;
+        } else {
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkImageUsageFlagBits bit: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkImageUsageFlagBits bit: " << v;
+            }
+            return static_cast<VkImageUsageFlagBits>(0);
+        }
+    }
+
   protected:
     Json::Value filter_VkPhysicalDeviceFeatures2(const Json::Value& deviceCreateInfoPNext, const LocationScope& l) {
         Json::Value base{};
@@ -4087,6 +4328,93 @@ class ParserBase : protected Base {
         }
     }
 
+    VkBufferCreateFlagBits parse_VkBufferCreateFlagBits(const Json::Value& json, const LocationScope& l) {
+        if (json.isString()) {
+            return parse_VkBufferCreateFlagBits_c_str(json.asCString());
+        } else {
+            Error() << "Invalid format";
+            return static_cast<VkBufferCreateFlagBits>(0);
+        }
+    }
+
+    VkBufferUsageFlagBits parse_VkBufferUsageFlagBits(const Json::Value& json, const LocationScope& l) {
+        if (json.isString()) {
+            return parse_VkBufferUsageFlagBits_c_str(json.asCString());
+        } else {
+            Error() << "Invalid format";
+            return static_cast<VkBufferUsageFlagBits>(0);
+        }
+    }
+
+    VkSharingMode parse_VkSharingMode(const Json::Value& json, const LocationScope& l) {
+        if (json.isString()) {
+            return parse_VkSharingMode_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkSharingMode>(json.asInt());
+        } else {
+            Error() << "Invalid format";
+            return static_cast<VkSharingMode>(0);
+        }
+    }
+
+    VkBufferUsageFlagBits2 parse_VkBufferUsageFlagBits2(const Json::Value& json, const LocationScope& l) {
+        if (json.isString()) {
+            return parse_VkBufferUsageFlagBits2_c_str(json.asCString());
+        } else {
+            Error() << "Invalid format";
+            return static_cast<VkBufferUsageFlagBits2>(0);
+        }
+    }
+
+    VkExternalMemoryHandleTypeFlagBits parse_VkExternalMemoryHandleTypeFlagBits(const Json::Value& json, const LocationScope& l) {
+        if (json.isString()) {
+            return parse_VkExternalMemoryHandleTypeFlagBits_c_str(json.asCString());
+        } else {
+            Error() << "Invalid format";
+            return static_cast<VkExternalMemoryHandleTypeFlagBits>(0);
+        }
+    }
+
+    VkImageCreateFlagBits parse_VkImageCreateFlagBits(const Json::Value& json, const LocationScope& l) {
+        if (json.isString()) {
+            return parse_VkImageCreateFlagBits_c_str(json.asCString());
+        } else {
+            Error() << "Invalid format";
+            return static_cast<VkImageCreateFlagBits>(0);
+        }
+    }
+
+    VkImageType parse_VkImageType(const Json::Value& json, const LocationScope& l) {
+        if (json.isString()) {
+            return parse_VkImageType_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkImageType>(json.asInt());
+        } else {
+            Error() << "Invalid format";
+            return static_cast<VkImageType>(0);
+        }
+    }
+
+    VkImageTiling parse_VkImageTiling(const Json::Value& json, const LocationScope& l) {
+        if (json.isString()) {
+            return parse_VkImageTiling_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkImageTiling>(json.asInt());
+        } else {
+            Error() << "Invalid format";
+            return static_cast<VkImageTiling>(0);
+        }
+    }
+
+    VkImageUsageFlagBits parse_VkImageUsageFlagBits(const Json::Value& json, const LocationScope& l) {
+        if (json.isString()) {
+            return parse_VkImageUsageFlagBits_c_str(json.asCString());
+        } else {
+            Error() << "Invalid format";
+            return static_cast<VkImageUsageFlagBits>(0);
+        }
+    }
+
     VkPipelineCreateFlags parse_VkPipelineCreateFlags(const Json::Value& json, const LocationScope& l) {
         VkPipelineCreateFlags result = 0;
         if (json.isUInt() && json.asUInt() == 0) {
@@ -4615,6 +4943,132 @@ class ParserBase : protected Base {
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkPipelineCacheCreateFlagBits_c_str(str.c_str());
+            }
+        } else {
+            Error() << "Invalid format";
+        }
+        return result;
+    }
+
+    VkBufferCreateFlags parse_VkBufferCreateFlags(const Json::Value& json, const LocationScope& l) {
+        VkBufferCreateFlags result = 0;
+        if (json.isUInt() && json.asUInt() == 0) {
+            return result;
+        } else if (json.isString()) {
+            auto json_str = json.asCString();
+            if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
+                return result;
+            }
+            std::stringstream strm(json_str);
+            std::string str;
+            while (std::getline(strm, str, '|')) {
+                str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                result |= parse_VkBufferCreateFlagBits_c_str(str.c_str());
+            }
+        } else {
+            Error() << "Invalid format";
+        }
+        return result;
+    }
+
+    VkBufferUsageFlags parse_VkBufferUsageFlags(const Json::Value& json, const LocationScope& l) {
+        VkBufferUsageFlags result = 0;
+        if (json.isUInt() && json.asUInt() == 0) {
+            return result;
+        } else if (json.isString()) {
+            auto json_str = json.asCString();
+            if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
+                return result;
+            }
+            std::stringstream strm(json_str);
+            std::string str;
+            while (std::getline(strm, str, '|')) {
+                str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                result |= parse_VkBufferUsageFlagBits_c_str(str.c_str());
+            }
+        } else {
+            Error() << "Invalid format";
+        }
+        return result;
+    }
+
+    VkBufferUsageFlags2 parse_VkBufferUsageFlags2(const Json::Value& json, const LocationScope& l) {
+        VkBufferUsageFlags2 result = 0;
+        if (json.isUInt() && json.asUInt() == 0) {
+            return result;
+        } else if (json.isString()) {
+            auto json_str = json.asCString();
+            if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
+                return result;
+            }
+            std::stringstream strm(json_str);
+            std::string str;
+            while (std::getline(strm, str, '|')) {
+                str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                result |= parse_VkBufferUsageFlagBits2_c_str(str.c_str());
+            }
+        } else {
+            Error() << "Invalid format";
+        }
+        return result;
+    }
+
+    VkExternalMemoryHandleTypeFlags parse_VkExternalMemoryHandleTypeFlags(const Json::Value& json, const LocationScope& l) {
+        VkExternalMemoryHandleTypeFlags result = 0;
+        if (json.isUInt() && json.asUInt() == 0) {
+            return result;
+        } else if (json.isString()) {
+            auto json_str = json.asCString();
+            if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
+                return result;
+            }
+            std::stringstream strm(json_str);
+            std::string str;
+            while (std::getline(strm, str, '|')) {
+                str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                result |= parse_VkExternalMemoryHandleTypeFlagBits_c_str(str.c_str());
+            }
+        } else {
+            Error() << "Invalid format";
+        }
+        return result;
+    }
+
+    VkImageCreateFlags parse_VkImageCreateFlags(const Json::Value& json, const LocationScope& l) {
+        VkImageCreateFlags result = 0;
+        if (json.isUInt() && json.asUInt() == 0) {
+            return result;
+        } else if (json.isString()) {
+            auto json_str = json.asCString();
+            if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
+                return result;
+            }
+            std::stringstream strm(json_str);
+            std::string str;
+            while (std::getline(strm, str, '|')) {
+                str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                result |= parse_VkImageCreateFlagBits_c_str(str.c_str());
+            }
+        } else {
+            Error() << "Invalid format";
+        }
+        return result;
+    }
+
+    VkImageUsageFlags parse_VkImageUsageFlags(const Json::Value& json, const LocationScope& l) {
+        VkImageUsageFlags result = 0;
+        if (json.isUInt() && json.asUInt() == 0) {
+            return result;
+        } else if (json.isString()) {
+            auto json_str = json.asCString();
+            if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
+                return result;
+            }
+            std::stringstream strm(json_str);
+            std::string str;
+            while (std::getline(strm, str, '|')) {
+                str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                result |= parse_VkImageUsageFlagBits_c_str(str.c_str());
             }
         } else {
             Error() << "Invalid format";
@@ -6701,6 +7155,169 @@ class ParserBase : protected Base {
                 default:
                     Error() << "Invalid structure type extending VkPipelineOfflineCreateInfo: "
                             << (*json_next)["sType"].asCString();
+                    break;
+            }
+            json_next = &(*json_next)["pNext"];
+            if (prev->pNext != nullptr) prev = prev->pNext;
+        }
+
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
+            Error() << "Invalid pNext format";
+        }
+        return s;
+    }
+
+    VkBufferCreateInfo parse_VkBufferCreateInfo(const Json::Value& json, const LocationScope& l) {
+        VkBufferCreateInfo s = parse_VkBufferCreateInfo_contents(json, l);
+
+        const auto& json_stype = json["sType"];
+        if (json_stype.isString()) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+            } else {
+                Error() << "Invalid sType value: " << json_stype.asCString();
+            }
+        } else {
+            Error() << "Invalid sType format";
+        }
+
+        [[maybe_unused]] auto prev = reinterpret_cast<VkBaseOutStructure*>(&s);
+        const Json::Value* json_next = &json["pNext"];
+        const char* current_pnext_ref = "pNext";
+        while (json_next->isObject()) {
+            auto next_stype = parse_VkStructureType((*json_next)["sType"], CreateScope(current_pnext_ref));
+            switch (next_stype) {
+                case VK_STRUCTURE_TYPE_BUFFER_OPAQUE_CAPTURE_ADDRESS_CREATE_INFO: {
+                    auto next = AllocMem<VkBufferOpaqueCaptureAddressCreateInfo>();
+                    current_pnext_ref = "pNext<VkBufferOpaqueCaptureAddressCreateInfo>";
+                    *next = parse_VkBufferOpaqueCaptureAddressCreateInfo_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_BUFFER_OPAQUE_CAPTURE_ADDRESS_CREATE_INFO;
+                    prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_BUFFER_USAGE_FLAGS_2_CREATE_INFO: {
+                    auto next = AllocMem<VkBufferUsageFlags2CreateInfo>();
+                    current_pnext_ref = "pNext<VkBufferUsageFlags2CreateInfo>";
+                    *next = parse_VkBufferUsageFlags2CreateInfo_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_BUFFER_USAGE_FLAGS_2_CREATE_INFO;
+                    prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO: {
+                    auto next = AllocMem<VkExternalMemoryBufferCreateInfo>();
+                    current_pnext_ref = "pNext<VkExternalMemoryBufferCreateInfo>";
+                    *next = parse_VkExternalMemoryBufferCreateInfo_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO;
+                    prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
+                    break;
+                }
+
+                default:
+                    Error() << "Invalid structure type extending VkBufferCreateInfo: " << (*json_next)["sType"].asCString();
+                    break;
+            }
+            json_next = &(*json_next)["pNext"];
+            if (prev->pNext != nullptr) prev = prev->pNext;
+        }
+
+        if (!json_next->isString() || strcmp(json_next->asCString(), "NULL") != 0) {
+            Error() << "Invalid pNext format";
+        }
+        return s;
+    }
+
+    VkImageCreateInfo parse_VkImageCreateInfo(const Json::Value& json, const LocationScope& l) {
+        VkImageCreateInfo s = parse_VkImageCreateInfo_contents(json, l);
+
+        const auto& json_stype = json["sType"];
+        if (json_stype.isString()) {
+            if (strcmp(json_stype.asCString(), "VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO") == 0) {
+                s.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+            } else {
+                Error() << "Invalid sType value: " << json_stype.asCString();
+            }
+        } else {
+            Error() << "Invalid sType format";
+        }
+
+        [[maybe_unused]] auto prev = reinterpret_cast<VkBaseOutStructure*>(&s);
+        const Json::Value* json_next = &json["pNext"];
+        const char* current_pnext_ref = "pNext";
+        while (json_next->isObject()) {
+            auto next_stype = parse_VkStructureType((*json_next)["sType"], CreateScope(current_pnext_ref));
+            switch (next_stype) {
+#ifdef VK_USE_PLATFORM_SCREEN_QNX
+
+                case VK_STRUCTURE_TYPE_EXTERNAL_FORMAT_QNX: {
+                    auto next = AllocMem<VkExternalFormatQNX>();
+                    current_pnext_ref = "pNext<VkExternalFormatQNX>";
+                    *next = parse_VkExternalFormatQNX_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_EXTERNAL_FORMAT_QNX;
+                    prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
+                    break;
+                }
+#endif  // VK_USE_PLATFORM_SCREEN_QNX
+
+                case VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO: {
+                    auto next = AllocMem<VkExternalMemoryImageCreateInfo>();
+                    current_pnext_ref = "pNext<VkExternalMemoryImageCreateInfo>";
+                    *next = parse_VkExternalMemoryImageCreateInfo_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO;
+                    prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_EXPLICIT_CREATE_INFO_EXT: {
+                    auto next = AllocMem<VkImageDrmFormatModifierExplicitCreateInfoEXT>();
+                    current_pnext_ref = "pNext<VkImageDrmFormatModifierExplicitCreateInfoEXT>";
+                    *next = parse_VkImageDrmFormatModifierExplicitCreateInfoEXT_contents(*json_next,
+                                                                                         CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_EXPLICIT_CREATE_INFO_EXT;
+                    prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_LIST_CREATE_INFO_EXT: {
+                    auto next = AllocMem<VkImageDrmFormatModifierListCreateInfoEXT>();
+                    current_pnext_ref = "pNext<VkImageDrmFormatModifierListCreateInfoEXT>";
+                    *next =
+                        parse_VkImageDrmFormatModifierListCreateInfoEXT_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_LIST_CREATE_INFO_EXT;
+                    prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_IMAGE_FORMAT_LIST_CREATE_INFO: {
+                    auto next = AllocMem<VkImageFormatListCreateInfo>();
+                    current_pnext_ref = "pNext<VkImageFormatListCreateInfo>";
+                    *next = parse_VkImageFormatListCreateInfo_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_IMAGE_FORMAT_LIST_CREATE_INFO;
+                    prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_IMAGE_STENCIL_USAGE_CREATE_INFO: {
+                    auto next = AllocMem<VkImageStencilUsageCreateInfo>();
+                    current_pnext_ref = "pNext<VkImageStencilUsageCreateInfo>";
+                    *next = parse_VkImageStencilUsageCreateInfo_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_IMAGE_STENCIL_USAGE_CREATE_INFO;
+                    prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_IMAGE_SWAPCHAIN_CREATE_INFO_KHR: {
+                    auto next = AllocMem<VkImageSwapchainCreateInfoKHR>();
+                    current_pnext_ref = "pNext<VkImageSwapchainCreateInfoKHR>";
+                    *next = parse_VkImageSwapchainCreateInfoKHR_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_IMAGE_SWAPCHAIN_CREATE_INFO_KHR;
+                    prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
+                    break;
+                }
+
+                default:
+                    Error() << "Invalid structure type extending VkImageCreateInfo: " << (*json_next)["sType"].asCString();
                     break;
             }
             json_next = &(*json_next)["pNext"];
@@ -9820,6 +10437,245 @@ class ParserBase : protected Base {
             parse_uint32_t(json["maxTimestampQueriesPerPool"], CreateScope("maxTimestampQueriesPerPool"));
         s.maxImmutableSamplersPerDescriptorSetLayout = parse_uint32_t(json["maxImmutableSamplersPerDescriptorSetLayout"],
                                                                       CreateScope("maxImmutableSamplersPerDescriptorSetLayout"));
+        return s;
+    }
+
+    VkBufferCreateInfo parse_VkBufferCreateInfo_contents(const Json::Value& json, const LocationScope& l) {
+        VkBufferCreateInfo s{};
+        s.flags = parse_VkBufferCreateFlags(json["flags"], CreateScope("flags"));
+        s.size = parse_VkDeviceSize(json["size"], CreateScope("size"));
+        s.usage = parse_VkBufferUsageFlags(json["usage"], CreateScope("usage"));
+        s.sharingMode = parse_VkSharingMode(json["sharingMode"], CreateScope("sharingMode"));
+        s.queueFamilyIndexCount = parse_uint32_t(json["queueFamilyIndexCount"], CreateScope("queueFamilyIndexCount"));
+        {
+            const Json::Value& json_member = json["pQueueFamilyIndices"];
+
+            if (s.queueFamilyIndexCount == 0) {
+                s.pQueueFamilyIndices = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pQueueFamilyIndices is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.queueFamilyIndexCount) {
+                        auto dst_buffer = AllocMem<uint32_t>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_uint32_t(json_member[i], CreateScope("pQueueFamilyIndices", i));
+                        }
+                        s.pQueueFamilyIndices = dst_buffer;
+                    } else {
+                        Error() << "pQueueFamilyIndices array size (" << json_member.size() << ") does not match expected length ("
+                                << s.queueFamilyIndexCount << ")";
+                    }
+                } else if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                    s.pQueueFamilyIndices = nullptr;
+                } else {
+                    Error() << "pQueueFamilyIndices is not an array and is not NULL";
+                }
+            }
+        }
+
+        return s;
+    }
+
+    VkBufferOpaqueCaptureAddressCreateInfo parse_VkBufferOpaqueCaptureAddressCreateInfo_contents(const Json::Value& json,
+                                                                                                 const LocationScope& l) {
+        VkBufferOpaqueCaptureAddressCreateInfo s{};
+        s.opaqueCaptureAddress = parse_uint64_t(json["opaqueCaptureAddress"], CreateScope("opaqueCaptureAddress"));
+        return s;
+    }
+
+    VkBufferUsageFlags2CreateInfo parse_VkBufferUsageFlags2CreateInfo_contents(const Json::Value& json, const LocationScope& l) {
+        VkBufferUsageFlags2CreateInfo s{};
+        s.usage = parse_VkBufferUsageFlags2(json["usage"], CreateScope("usage"));
+        return s;
+    }
+
+    VkExternalMemoryBufferCreateInfo parse_VkExternalMemoryBufferCreateInfo_contents(const Json::Value& json,
+                                                                                     const LocationScope& l) {
+        VkExternalMemoryBufferCreateInfo s{};
+        s.handleTypes = parse_VkExternalMemoryHandleTypeFlags(json["handleTypes"], CreateScope("handleTypes"));
+        return s;
+    }
+
+    VkExtent3D parse_VkExtent3D_contents(const Json::Value& json, const LocationScope& l) {
+        VkExtent3D s{};
+        s.width = parse_uint32_t(json["width"], CreateScope("width"));
+        s.height = parse_uint32_t(json["height"], CreateScope("height"));
+        s.depth = parse_uint32_t(json["depth"], CreateScope("depth"));
+        return s;
+    }
+
+    VkImageCreateInfo parse_VkImageCreateInfo_contents(const Json::Value& json, const LocationScope& l) {
+        VkImageCreateInfo s{};
+        s.flags = parse_VkImageCreateFlags(json["flags"], CreateScope("flags"));
+        s.imageType = parse_VkImageType(json["imageType"], CreateScope("imageType"));
+        s.format = parse_VkFormat(json["format"], CreateScope("format"));
+        s.extent = parse_VkExtent3D_contents(json["extent"], CreateScope("extent"));
+        s.mipLevels = parse_uint32_t(json["mipLevels"], CreateScope("mipLevels"));
+        s.arrayLayers = parse_uint32_t(json["arrayLayers"], CreateScope("arrayLayers"));
+        s.samples = parse_VkSampleCountFlagBits(json["samples"], CreateScope("samples"));
+        s.tiling = parse_VkImageTiling(json["tiling"], CreateScope("tiling"));
+        s.usage = parse_VkImageUsageFlags(json["usage"], CreateScope("usage"));
+        s.sharingMode = parse_VkSharingMode(json["sharingMode"], CreateScope("sharingMode"));
+        s.queueFamilyIndexCount = parse_uint32_t(json["queueFamilyIndexCount"], CreateScope("queueFamilyIndexCount"));
+        {
+            const Json::Value& json_member = json["pQueueFamilyIndices"];
+
+            if (s.queueFamilyIndexCount == 0) {
+                s.pQueueFamilyIndices = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pQueueFamilyIndices is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.queueFamilyIndexCount) {
+                        auto dst_buffer = AllocMem<uint32_t>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_uint32_t(json_member[i], CreateScope("pQueueFamilyIndices", i));
+                        }
+                        s.pQueueFamilyIndices = dst_buffer;
+                    } else {
+                        Error() << "pQueueFamilyIndices array size (" << json_member.size() << ") does not match expected length ("
+                                << s.queueFamilyIndexCount << ")";
+                    }
+                } else if (json_member.isString() && strcmp(json_member.asCString(), "NULL") == 0) {
+                    s.pQueueFamilyIndices = nullptr;
+                } else {
+                    Error() << "pQueueFamilyIndices is not an array and is not NULL";
+                }
+            }
+        }
+        s.initialLayout = parse_VkImageLayout(json["initialLayout"], CreateScope("initialLayout"));
+        return s;
+    }
+
+    VkExternalMemoryImageCreateInfo parse_VkExternalMemoryImageCreateInfo_contents(const Json::Value& json,
+                                                                                   const LocationScope& l) {
+        VkExternalMemoryImageCreateInfo s{};
+        s.handleTypes = parse_VkExternalMemoryHandleTypeFlags(json["handleTypes"], CreateScope("handleTypes"));
+        return s;
+    }
+
+    VkSubresourceLayout parse_VkSubresourceLayout_contents(const Json::Value& json, const LocationScope& l) {
+        VkSubresourceLayout s{};
+        s.offset = parse_VkDeviceSize(json["offset"], CreateScope("offset"));
+        s.size = parse_VkDeviceSize(json["size"], CreateScope("size"));
+        s.rowPitch = parse_VkDeviceSize(json["rowPitch"], CreateScope("rowPitch"));
+        s.arrayPitch = parse_VkDeviceSize(json["arrayPitch"], CreateScope("arrayPitch"));
+        s.depthPitch = parse_VkDeviceSize(json["depthPitch"], CreateScope("depthPitch"));
+        return s;
+    }
+
+    VkImageDrmFormatModifierExplicitCreateInfoEXT parse_VkImageDrmFormatModifierExplicitCreateInfoEXT_contents(
+        const Json::Value& json, const LocationScope& l) {
+        VkImageDrmFormatModifierExplicitCreateInfoEXT s{};
+        s.drmFormatModifier = parse_uint64_t(json["drmFormatModifier"], CreateScope("drmFormatModifier"));
+        s.drmFormatModifierPlaneCount =
+            parse_uint32_t(json["drmFormatModifierPlaneCount"], CreateScope("drmFormatModifierPlaneCount"));
+        {
+            const Json::Value& json_member = json["pPlaneLayouts"];
+
+            if (s.drmFormatModifierPlaneCount == 0) {
+                s.pPlaneLayouts = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pPlaneLayouts is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.drmFormatModifierPlaneCount) {
+                        auto dst_buffer = AllocMem<VkSubresourceLayout>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkSubresourceLayout_contents(json_member[i], CreateScope("pPlaneLayouts", i));
+                        }
+                        s.pPlaneLayouts = dst_buffer;
+                    } else {
+                        Error() << "pPlaneLayouts array size (" << json_member.size() << ") does not match expected length ("
+                                << s.drmFormatModifierPlaneCount << ")";
+                    }
+                } else {
+                    Error() << "pPlaneLayouts is not an array";
+                }
+            }
+        }
+
+        return s;
+    }
+
+    VkImageDrmFormatModifierListCreateInfoEXT parse_VkImageDrmFormatModifierListCreateInfoEXT_contents(const Json::Value& json,
+                                                                                                       const LocationScope& l) {
+        VkImageDrmFormatModifierListCreateInfoEXT s{};
+        s.drmFormatModifierCount = parse_uint32_t(json["drmFormatModifierCount"], CreateScope("drmFormatModifierCount"));
+        {
+            const Json::Value& json_member = json["pDrmFormatModifiers"];
+
+            if (s.drmFormatModifierCount == 0) {
+                s.pDrmFormatModifiers = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pDrmFormatModifiers is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.drmFormatModifierCount) {
+                        auto dst_buffer = AllocMem<uint64_t>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_uint64_t(json_member[i], CreateScope("pDrmFormatModifiers", i));
+                        }
+                        s.pDrmFormatModifiers = dst_buffer;
+                    } else {
+                        Error() << "pDrmFormatModifiers array size (" << json_member.size() << ") does not match expected length ("
+                                << s.drmFormatModifierCount << ")";
+                    }
+                } else {
+                    Error() << "pDrmFormatModifiers is not an array";
+                }
+            }
+        }
+
+        return s;
+    }
+
+    VkImageFormatListCreateInfo parse_VkImageFormatListCreateInfo_contents(const Json::Value& json, const LocationScope& l) {
+        VkImageFormatListCreateInfo s{};
+        s.viewFormatCount = parse_uint32_t(json["viewFormatCount"], CreateScope("viewFormatCount"));
+        {
+            const Json::Value& json_member = json["pViewFormats"];
+
+            if (s.viewFormatCount == 0) {
+                s.pViewFormats = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pViewFormats is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.viewFormatCount) {
+                        auto dst_buffer = AllocMem<VkFormat>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] = parse_VkFormat(json_member[i], CreateScope("pViewFormats", i));
+                        }
+                        s.pViewFormats = dst_buffer;
+                    } else {
+                        Error() << "pViewFormats array size (" << json_member.size() << ") does not match expected length ("
+                                << s.viewFormatCount << ")";
+                    }
+                } else {
+                    Error() << "pViewFormats is not an array";
+                }
+            }
+        }
+
+        return s;
+    }
+
+    VkImageStencilUsageCreateInfo parse_VkImageStencilUsageCreateInfo_contents(const Json::Value& json, const LocationScope& l) {
+        VkImageStencilUsageCreateInfo s{};
+        s.stencilUsage = parse_VkImageUsageFlags(json["stencilUsage"], CreateScope("stencilUsage"));
+        return s;
+    }
+
+    VkImageSwapchainCreateInfoKHR parse_VkImageSwapchainCreateInfoKHR_contents(const Json::Value& json, const LocationScope& l) {
+        VkImageSwapchainCreateInfoKHR s{};
+        s.swapchain = parse_VkSwapchainKHR(json["swapchain"], CreateScope("swapchain"));
         return s;
     }
 };

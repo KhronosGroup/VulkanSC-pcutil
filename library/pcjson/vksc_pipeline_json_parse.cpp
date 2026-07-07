@@ -143,6 +143,12 @@ class Parser : private ParserBase {
                     *reinterpret_cast<VkPipelineOfflineCreateInfo*>(pStruct) =
                         parse_VkPipelineOfflineCreateInfo(json, CreateScope("$"));
                     break;
+                case VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO:
+                    *reinterpret_cast<VkBufferCreateInfo*>(pStruct) = parse_VkBufferCreateInfo(json, CreateScope("$"));
+                    break;
+                case VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO:
+                    *reinterpret_cast<VkImageCreateInfo*>(pStruct) = parse_VkImageCreateInfo(json, CreateScope("$"));
+                    break;
                 default:
                     Error() << "Unsupported structure type: " << stype;
                     break;

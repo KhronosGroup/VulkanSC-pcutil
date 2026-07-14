@@ -836,14 +836,14 @@ std::pair<vku::safe_VkRenderPassCreateInfo2, std::string> getVkRenderPassCreateI
     mb2.srcStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
     mb2.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_READ_NONCOHERENT_BIT_EXT;
     mb2.dstStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
-    mb2.dstAccessMask = VK_ACCESS_2_COMMAND_PREPROCESS_READ_BIT_NV;
+    mb2.dstAccessMask = VK_ACCESS_2_MEMORY_READ_BIT;
     mb2_json = R"({
         "sType" : "VK_STRUCTURE_TYPE_MEMORY_BARRIER_2",
         "pNext": "NULL",
         "srcStageMask": "VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT",
         "srcAccessMask": "VK_ACCESS_2_COLOR_ATTACHMENT_READ_NONCOHERENT_BIT_EXT",
         "dstStageMask": "VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT",
-        "dstAccessMask": "VK_ACCESS_2_COMMAND_PREPROCESS_READ_BIT_EXT"
+        "dstAccessMask": "VK_ACCESS_2_MEMORY_READ_BIT"
     })";
     dependencies.push_back(vku::InitStructHelper());
     dependencies.back().pNext = &mb2;

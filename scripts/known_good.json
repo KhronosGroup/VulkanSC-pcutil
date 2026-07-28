@@ -9,7 +9,7 @@
             "cmake_options": [
                 "-DGEN_VULKANSC_COMBINED=ON"
             ],
-            "commit": "0ab56483a26838b40cf024df0ae425d5e577484a"
+            "commit": "vksc1.0.22"
         },
         {
             "name": "Vulkan-Utility-Libraries",
@@ -17,7 +17,7 @@
             "sub_dir": "Vulkan-Utility-Libraries",
             "build_dir": "Vulkan-Utility-Libraries/build",
             "install_dir": "Vulkan-Utility-Libraries/build/install",
-            "commit": "03435f0be4ad26606d8c38863ddeff214c098dcf",
+            "commit": "vksc1.0.22",
             "deps": [
                 {
                     "var_name": "VULKAN_HEADERS_INSTALL_DIR",
@@ -116,7 +116,7 @@
             "sub_dir": "VulkanSC-Loader",
             "build_dir": "VulkanSC-Loader/build",
             "install_dir": "VulkanSC-Loader/build/install",
-            "commit": "c0cbea0f3b67a36119d61c9ee204ff42c8b2084e",
+            "commit": "vksc1.0.22",
             "cmake_options": [
                 "-DBUILD_WSI_XCB_SUPPORT=OFF",
                 "-DBUILD_WSI_XLIB_SUPPORT=OFF",
@@ -209,7 +209,7 @@
             "sub_dir": "VulkanSC-Tools",
             "build_dir": "VulkanSC-Tools/build",
             "install_dir": "VulkanSC-Tools/build/install",
-            "commit": "e471e52cea21e49698347c776241ff90f3662ed4",
+            "commit": "vksc1.0.22",
             "cmake_options": [
                 "-DBUILD_WSI_XCB_SUPPORT=OFF",
                 "-DBUILD_WSI_XLIB_SUPPORT=OFF",
@@ -253,7 +253,7 @@
             "sub_dir": "VulkanSC-ValidationLayers",
             "build_dir": "VulkanSC-ValidationLayers/build",
             "install_dir": "VulkanSC-ValidationLayers/build/install",
-            "commit": "21d3b728e8eb5cb0a3eb5452504f59036fc97e93",
+            "commit": "vksc1.0.22",
             "optional": [
                 "tests"
             ],

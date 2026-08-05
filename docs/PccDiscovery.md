@@ -33,7 +33,7 @@ Here is an example PCC manifest file:
     "devices": [
         {
             "pipeline_cache_compiler": "<path-to-pcc-executable>",
-            "pipeline_cache_device_flags": "<command-line-flag-taking-a-device-id-argument>",
+            "pipeline_cache_device_flag": "<command-line-flag-taking-a-device-id-argument>",
             "pipeline_cache_debug_flag": "<command-line-flag-enabling-debug-info>",
             "vendor_id_filter" : "<optional-vendor-id-filter>",
             "driver_id_filter" : "<optional-driver-id-filter>",

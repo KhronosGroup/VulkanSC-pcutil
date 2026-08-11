@@ -500,7 +500,11 @@ class Parser : private ParserBase {
 
         // Issue #3
         // The legacy generator will generate some integer values as strings containing the numbers.
-        // This is handled by enabling relaxed integer parsing, accepting strings containing numbers.
+        // It also serializes 64-bit synchronization2 flag masks (VkPipelineStageFlags2 / VkAccessFlags2,
+        // e.g. on a VkMemoryBarrier2) as bare integers instead of "|"-joined bit-name strings, even
+        // though the schema permits only integer 0 for a flags field. Both are handled by enabling
+        // relaxed integer parsing, which accepts strings containing numbers as well as a bare non-zero
+        // integer mask for a flags field.
         SetAcceptIntegersAsStrings(true);
     }
 

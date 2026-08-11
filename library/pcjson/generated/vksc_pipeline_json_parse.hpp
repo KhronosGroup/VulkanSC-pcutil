@@ -4396,6 +4396,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkPipelineCreateFlagBits_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkPipelineCreateFlags>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }
@@ -4417,6 +4421,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkPipelineShaderStageCreateFlagBits_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkPipelineShaderStageCreateFlags>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }
@@ -4477,6 +4485,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkCullModeFlagBits_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkCullModeFlags>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }
@@ -4538,6 +4550,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkColorComponentFlagBits_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkColorComponentFlags>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }
@@ -4566,6 +4582,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkPipelineCreateFlagBits2_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkPipelineCreateFlags2>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }
@@ -4587,6 +4607,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkPipelineCreationFeedbackFlagBits_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkPipelineCreationFeedbackFlags>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }
@@ -4616,6 +4640,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkSamplerCreateFlagBits_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkSamplerCreateFlags>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }
@@ -4637,6 +4665,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkDescriptorSetLayoutCreateFlagBits_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkDescriptorSetLayoutCreateFlags>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }
@@ -4658,6 +4690,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkShaderStageFlagBits_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkShaderStageFlags>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }
@@ -4679,6 +4715,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkDescriptorBindingFlagBits_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkDescriptorBindingFlags>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }
@@ -4700,6 +4740,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkPipelineLayoutCreateFlagBits_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkPipelineLayoutCreateFlags>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }
@@ -4721,6 +4765,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkRenderPassCreateFlagBits_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkRenderPassCreateFlags>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }
@@ -4742,6 +4790,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkAttachmentDescriptionFlagBits_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkAttachmentDescriptionFlags>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }
@@ -4763,6 +4815,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkSubpassDescriptionFlagBits_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkSubpassDescriptionFlags>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }
@@ -4784,6 +4840,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkPipelineStageFlagBits_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkPipelineStageFlags>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }
@@ -4805,6 +4865,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkAccessFlagBits_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkAccessFlags>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }
@@ -4826,6 +4890,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkDependencyFlagBits_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkDependencyFlags>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }
@@ -4847,6 +4915,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkImageAspectFlagBits_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkImageAspectFlags>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }
@@ -4868,6 +4940,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkPipelineStageFlagBits2_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkPipelineStageFlags2>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }
@@ -4889,6 +4965,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkAccessFlagBits2_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkAccessFlags2>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }
@@ -4910,6 +4990,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkPipelineCacheCreateFlagBits_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkPipelineCacheCreateFlags>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }
@@ -4931,6 +5015,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkBufferCreateFlagBits_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkBufferCreateFlags>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }
@@ -4952,6 +5040,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkBufferUsageFlagBits_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkBufferUsageFlags>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }
@@ -4973,6 +5065,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkBufferUsageFlagBits2_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkBufferUsageFlags2>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }
@@ -4994,6 +5090,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkExternalMemoryHandleTypeFlagBits_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkExternalMemoryHandleTypeFlags>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }
@@ -5015,6 +5115,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkImageCreateFlagBits_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkImageCreateFlags>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }
@@ -5036,6 +5140,10 @@ class ParserBase : protected Base {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                 result |= parse_VkImageUsageFlagBits_c_str(str.c_str());
             }
+        } else if (accept_integers_as_strings_ && json.isUInt64()) {
+            // Legacy input: older CTS generators emit non-zero flag masks as bare
+            // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+            result = static_cast<VkImageUsageFlags>(json.asUInt64());
         } else {
             Error() << "Invalid format";
         }

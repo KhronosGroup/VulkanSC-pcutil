@@ -1724,3 +1724,126 @@ TEST_F(Parse, AcceptLegacyInvalidInputData) {
     EXPECT_EQ(po_ci->sType, VK_STRUCTURE_TYPE_PIPELINE_OFFLINE_CREATE_INFO);
     EXPECT_EQ(po_ci->poolEntrySize, 42);
 }
+
+TEST_F(Parse, AcceptLegacyBareNumberFlags2) {
+    TEST_DESCRIPTION(
+        "The legacy (Vulkan-Docs) generator used by older VulkanSC-CTS serializes 64-bit "
+        "synchronization2 flag masks (a VkMemoryBarrier2's VkPipelineStageFlags2 / VkAccessFlags2 "
+        "in a VkSubpassDependency2 pNext) as bare JSON integers rather than \"|\"-joined bit-name "
+        "strings. The schema permits an integer only when it is 0, so strict parsing rejects a "
+        "non-zero raw mask; relaxed/legacy parsing accepts it as the raw mask value.");
+
+    // The relaxed/legacy flag only affects vpjParsePipelineJson (per the public API contract), so the
+    // renderpass2 is embedded in an otherwise-strictly-valid graphics pipeline built from the same
+    // helpers as the GraphicsPipelineJSON test. The only schema violation is the bare-number sync2
+    // masks on the VkMemoryBarrier2 in the subpass dependency's pNext; every other 32-bit flags field
+    // uses a bare 0, which the schema (and strict parsing) permit.
+    VpjData data{};
+
+    auto [pl_ci, pl_json] = getVkPipelineLayoutCreateInfo(1);
+    auto [gp_ci, gp_json] = getVkGraphicsPipelineCreateInfo(1);
+    auto [shaderFileNames, shaderFileNames_json] = getShaderFileNames({
+        {VK_SHADER_STAGE_VERTEX_BIT, "shader.vert.spv"},
+        {VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, "shader.tess_ctrl.spv"},
+        {VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, "shader.tess_eval.spv"},
+        {VK_SHADER_STAGE_FRAGMENT_BIT, "shader.frag.spv"},
+    });
+
+    // The mask values are arbitrary representative synchronization2 bit combinations (e.g.
+    // 1024 = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, 256 = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
+    // the exact bits are irrelevant - the test only verifies the raw 64-bit values round-trip unchanged,
+    // since relaxed parsing accepts the bare mask without decomposing or validating individual bits.
+    const std::string renderpass2_json = R"({
+                "sType" : "VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2",
+                "pNext" : "NULL",
+                "flags" : 0,
+                "attachmentCount" : 0,
+                "pAttachments" : "NULL",
+                "subpassCount" : 1,
+                "pSubpasses" :
+                [
+                    {
+                        "sType" : "VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2",
+                        "pNext" : "NULL",
+                        "flags" : 0,
+                        "pipelineBindPoint" : "VK_PIPELINE_BIND_POINT_GRAPHICS",
+                        "viewMask" : 0,
+                        "inputAttachmentCount" : 0,
+                        "pInputAttachments" : "NULL",
+                        "colorAttachmentCount" : 0,
+                        "pColorAttachments" : "NULL",
+                        "pResolveAttachments" : "NULL",
+                        "pDepthStencilAttachment" : "NULL",
+                        "preserveAttachmentCount" : 0,
+                        "pPreserveAttachments" : "NULL"
+                    }
+                ],
+                "dependencyCount" : 1,
+                "pDependencies" :
+                [
+                    {
+                        "sType" : "VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2",
+                        "pNext" :
+                        {
+                            "sType" : "VK_STRUCTURE_TYPE_MEMORY_BARRIER_2",
+                            "pNext" : "NULL",
+                            "srcStageMask" : 1024,
+                            "srcAccessMask" : 256,
+                            "dstStageMask" : 1152,
+                            "dstAccessMask" : 352
+                        },
+                        "srcSubpass" : 4294967295,
+                        "dstSubpass" : 0,
+                        "srcStageMask" : 0,
+                        "dstStageMask" : 0,
+                        "srcAccessMask" : 0,
+                        "dstAccessMask" : 0,
+                        "dependencyFlags" : 0,
+                        "viewOffset" : 0
+                    }
+                ],
+                "correlatedViewMaskCount" : 0,
+                "pCorrelatedViewMasks" : "NULL"
+    })";
+
+    const std::string json = R"({
+        "GraphicsPipelineState" :
+        {
+            "Renderpass2" : )" +
+                             renderpass2_json + R"(,
+            "GraphicsPipeline" : )" +
+                             gp_json + R"(,
+            "PipelineLayout" : )" +
+                             pl_json + R"(,
+            "ShaderFileNames" : )" +
+                             shaderFileNames_json + R"(
+        },
+        "PipelineUUID" : [85, 43, 255, 24, 155, 64, 62, 24, 0, 0, 0, 0, 0, 0, 0, 0]
+    })";
+
+    // Strict parsing (default parser, no legacy flag): the bare non-zero sync2 masks are a schema
+    // violation and the whole pipeline parse is rejected.
+    {
+        VpjParser strict = vpjCreateParser();
+        VpjData strict_data{};
+        const char* msg = nullptr;
+        EXPECT_FALSE(vpjParsePipelineJson(strict, json.c_str(), &strict_data, &msg));
+        vpjDestroyParser(strict);
+    }
+
+    // Relaxed/legacy parsing: the bare integers are accepted as the raw 64-bit mask values.
+    vpjSetAcceptLegacyInvalidInputData(this->parser_, true);
+    EXPECT_TRUE(vpjParsePipelineJson(this->parser_, json.c_str(), &data, &msg_));
+    CHECK_PARSE(true);
+
+    auto rp = reinterpret_cast<const VkRenderPassCreateInfo2*>(data.graphicsPipelineState.pRenderPass);
+    ASSERT_NE(rp, nullptr);
+    ASSERT_EQ(rp->dependencyCount, 1u);
+    auto barrier = reinterpret_cast<const VkMemoryBarrier2*>(rp->pDependencies[0].pNext);
+    ASSERT_NE(barrier, nullptr);
+    EXPECT_EQ(barrier->sType, VK_STRUCTURE_TYPE_MEMORY_BARRIER_2);
+    EXPECT_EQ(barrier->srcStageMask, 1024u);
+    EXPECT_EQ(barrier->srcAccessMask, 256u);
+    EXPECT_EQ(barrier->dstStageMask, 1152u);
+    EXPECT_EQ(barrier->dstAccessMask, 352u);
+}

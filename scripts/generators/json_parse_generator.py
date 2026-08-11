@@ -545,6 +545,10 @@ class JsonParseGenerator(BaseGenerator):
                             str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
                             result |= parse_{flags.bitmaskName}_c_str(str.c_str());
                         }}
+                    }} else if (accept_integers_as_strings_ && json.isUInt64()) {{
+                        // Legacy input: older CTS generators emit non-zero flag masks as bare
+                        // integers (the schema allows only 0). Accept the raw mask in relaxed mode.
+                        result = static_cast<{flags.name}>(json.asUInt64());
                     }} else {{
                         Error() << "Invalid format";
                     }}

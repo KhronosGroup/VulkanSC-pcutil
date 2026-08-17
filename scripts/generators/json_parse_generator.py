@@ -35,6 +35,9 @@ class JsonParseGenerator(BaseGenerator):
             #include <json/json.h>
             #include <vulkan/vulkan.h>
 
+            #include <stdlib.h>
+            #include <string.h>
+
             #include <string>
             #include <sstream>
             #include <string_view>
@@ -77,9 +80,14 @@ class JsonParseGenerator(BaseGenerator):
               private:
                 bool ignore_invalid_enum_values_{{false}};
                 bool accept_integers_as_strings_{{false}};
+                bool accept_non_zero_integer_flags_{{false}};
+                bool accept_empty_string_flag_bits_{{false}};
+
               protected:
                 void SetIgnoreInvalidEnumValues(bool enable) {{ ignore_invalid_enum_values_ = enable; }}
                 void SetAcceptIntegersAsStrings(bool enable) {{ accept_integers_as_strings_ = enable; }}
+                void SetAcceptNonZeroIntegerFlags(bool enable) {{ accept_non_zero_integer_flags_ = enable; }}
+                void SetAcceptEmptyStringFlagBits(bool enable) {{ accept_empty_string_flag_bits_ = enable; }}
 
               private:
                 {"".join(self.parse_Handle_methods)}
@@ -223,7 +231,7 @@ class JsonParseGenerator(BaseGenerator):
                 if (v.isInt() && v.asInt() >= INT8_MIN && v.asInt() <= INT8_MAX) {{
                     return v.asInt();
                 }} else if (accept_integers_as_strings_ && v.isString()) {{
-                    auto result = static_cast<int8_t>(std::stoll(v.asString()));
+                    auto result = static_cast<int8_t>(strtoll(v.asCString(), nullptr, 0));
                     Warn() << "Expected 8-bit signed integer but got the string \\"" << v.asString() << "\\" (parsed as " << result << " instead of being treated as an error as relaxed behavior was requested)";
                     return result;
                 }} else {{
@@ -236,7 +244,7 @@ class JsonParseGenerator(BaseGenerator):
                 if (v.isInt() && v.asInt() >= INT16_MIN && v.asInt() <= INT16_MAX) {{
                     return v.asInt();
                 }} else if (accept_integers_as_strings_ && v.isString()) {{
-                    auto result = static_cast<int16_t>(std::stoll(v.asString()));
+                    auto result = static_cast<int16_t>(strtoll(v.asCString(), nullptr, 0));
                     Warn() << "Expected 16-bit signed integer but got the string \\"" << v.asString() << "\\" (parsed as " << result << " instead of being treated as an error as relaxed behavior was requested)";
                     return result;
                 }} else {{
@@ -249,7 +257,7 @@ class JsonParseGenerator(BaseGenerator):
                 if (v.isInt() && v.asInt() >= INT32_MIN && v.asInt() <= INT32_MAX) {{
                     return v.asInt();
                 }} else if (accept_integers_as_strings_ && v.isString()) {{
-                    auto result = static_cast<int32_t>(std::stoll(v.asString()));
+                    auto result = static_cast<int32_t>(strtoll(v.asCString(), nullptr, 0));
                     Warn() << "Expected 32-bit signed integer but got the string \\"" << v.asString() << "\\" (parsed as " << result << " instead of being treated as an error as relaxed behavior was requested)";
                     return result;
                 }} else {{
@@ -262,7 +270,7 @@ class JsonParseGenerator(BaseGenerator):
                 if (v.isInt64()) {{
                     return v.asInt64();
                 }} else if (accept_integers_as_strings_ && v.isString()) {{
-                    auto result = static_cast<int64_t>(std::stoll(v.asString()));
+                    auto result = static_cast<int64_t>(strtoll(v.asCString(), nullptr, 0));
                     Warn() << "Expected 64-bit signed integer but got the string \\"" << v.asString() << "\\" (parsed as " << result << " instead of being treated as an error as relaxed behavior was requested)";
                     return result;
                 }} else {{
@@ -275,7 +283,7 @@ class JsonParseGenerator(BaseGenerator):
                 if (v.isUInt() && v.asUInt() <= UINT8_MAX) {{
                     return v.asUInt();
                 }} else if (accept_integers_as_strings_ && v.isString()) {{
-                    auto result = static_cast<uint8_t>(std::stoull(v.asString()));
+                    auto result = static_cast<uint8_t>(strtoull(v.asCString(), nullptr, 0));
                     Warn() << "Expected 8-bit unsigned integer but got the string \\"" << v.asString() << "\\" (parsed as " << result << " instead of being treated as an error as relaxed behavior was requested)";
                     return result;
                 }} else {{
@@ -288,7 +296,7 @@ class JsonParseGenerator(BaseGenerator):
                 if (v.isUInt() && v.asUInt() <= UINT16_MAX) {{
                     return v.asUInt();
                 }} else if (accept_integers_as_strings_ && v.isString()) {{
-                    auto result = static_cast<uint16_t>(std::stoull(v.asString()));
+                    auto result = static_cast<uint16_t>(strtoull(v.asCString(), nullptr, 0));
                     Warn() << "Expected 16-bit unsigned integer but got the string \\"" << v.asString() << "\\" (parsed as " << result << " instead of being treated as an error as relaxed behavior was requested)";
                     return result;
                 }} else {{
@@ -307,7 +315,7 @@ class JsonParseGenerator(BaseGenerator):
                     std::string_view str(first, str_size);
                     {''.join(f'if (str == "{constant}") return {constant};' for constant in uint32_t_constants)}
                     else if (accept_integers_as_strings_ && v.isString()) {{
-                        auto result = static_cast<uint32_t>(std::stoull(v.asString()));
+                        auto result = static_cast<uint32_t>(strtoull(v.asCString(), nullptr, 0));
                         Warn() << "Expected 32-bit unsigned integer but got the string \\"" << v.asString() << "\\" (parsed as " << result << " instead of being treated as an error as relaxed behavior was requested)";
                         return result;
                     }} else {{
@@ -330,7 +338,7 @@ class JsonParseGenerator(BaseGenerator):
                     std::string_view str(first, str_size);
                     {''.join(f'if (str == "{constant}") return {constant};' for constant in uint64_t_constants)}
                     else if (accept_integers_as_strings_ && v.isString()) {{
-                        auto result = static_cast<uint64_t>(std::stoull(v.asString()));
+                        auto result = static_cast<uint64_t>(strtoull(v.asCString(), nullptr, 0));
                         Warn() << "Expected 64-bit unsigned integer but got the string \\"" << v.asString() << "\\" (parsed as " << result << " instead of being treated as an error as relaxed behavior was requested)";
                         return result;
                     }} else {{
@@ -539,12 +547,28 @@ class JsonParseGenerator(BaseGenerator):
                         if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {{
                             return result;
                         }}
+                        if (accept_integers_as_strings_) {{
+                            char* str_end = nullptr;
+                            result = static_cast<{flags.name}>(strtoull(json_str, &str_end, 0));
+                            if (json_str != str_end) {{
+                                Warn() << "Expected flags but got the string \\"" << json.asString() << "\\" (parsed as " << result << " instead of being treated as an error as relaxed behavior was requested)";
+                                return result;
+                            }}
+                        }}
                         std::stringstream strm(json_str);
                         std::string str;
                         while (std::getline(strm, str, '|')) {{
                             str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                            if (accept_empty_string_flag_bits_ && str.size() == 0) {{
+                                Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of being treated as an error as relaxed behavior was requested)";
+                                continue;
+                            }}
                             result |= parse_{flags.bitmaskName}_c_str(str.c_str());
                         }}
+                    }}
+                    else if (accept_non_zero_integer_flags_ && json.isUInt64()) {{
+                        result = static_cast<{flags.name}>(json.asUInt64());
+                        Warn() << "Expected flags but got the integer value \\"" << result << "\\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
                     }} else {{
                         Error() << "Invalid format";
                     }}
@@ -555,7 +579,21 @@ class JsonParseGenerator(BaseGenerator):
             self.parse_Flags_methods.append(f'''
                 {flags.name} parse_{flags.name}(const Json::Value& json, const LocationScope& l) {{
                     if (!((json.isUInt() && json.asUInt() == 0) || (json.isString() && strcmp(json.asCString(), "0") == 0))) {{
-                        Error() << "Invalid format";
+                        if (accept_empty_string_flag_bits_ && json.isString()) {{
+                            auto json_str = json.asCString();
+                            std::stringstream strm(json_str);
+                            std::string str;
+                            while (std::getline(strm, str, '|')) {{
+                                str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                                if (accept_empty_string_flag_bits_ && str.size() == 0) {{
+                                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of being treated as an error as relaxed behavior was requested)";
+                                    continue;
+                                }}
+                                Error() << "Invalid {flags.name} bit: " << str;
+                            }}
+                        }} else {{
+                            Error() << "Invalid format";
+                        }}
                     }}
                     return static_cast<{flags.name}>(0);
                 }}

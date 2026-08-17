@@ -502,6 +502,18 @@ class Parser : private ParserBase {
         // The legacy generator will generate some integer values as strings containing the numbers.
         // This is handled by enabling relaxed integer parsing, accepting strings containing numbers.
         SetAcceptIntegersAsStrings(true);
+
+        // Issue #4
+        // The legacy generator will generate integer values for some flag types instead of strings containing
+        // the flag names concatenated with "|", even though the JSON schema permits only integer 0 as a special case.
+        // This is handled by enabling relaxed flags value parsing, accepting raw integer values other than 0.
+        // In combination with the workaround for issue #3 this will also accept strings containing numbers as flags.
+        SetAcceptNonZeroIntegerFlags(true);
+
+        // Issue #5
+        // The legacy generator will generate empty strings for some flag bits resulting in such empty
+        // subexpressions being joined with "|". This enables accepting empty flag bits and treating them as zero.
+        SetAcceptEmptyStringFlagBits(true);
     }
 
     VpjData data_;

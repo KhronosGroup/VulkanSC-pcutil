@@ -1090,15 +1090,17 @@ TEST_F(Parse, AcceptLegacyInvalidInputData) {
     const std::string json{R"({
         "GraphicsPipelineState" :
         {
-            "Renderpass" : 
+            "Renderpass2" : 
             {
-                "sType" : "VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO",
+                "sType" : "VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2",
                 "pNext":"NULL",
                 "flags" : "0",
                 "attachmentCount" : 1,
                 "pAttachments": 
                 [
                 {
+                    "sType" : "VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2",
+                    "pNext":"NULL",
                     "flags" : "0",
                     "format" : "VK_FORMAT_R8G8B8A8_UNORM",
                     "samples" : "VK_SAMPLE_COUNT_1_BIT",
@@ -1114,8 +1116,11 @@ TEST_F(Parse, AcceptLegacyInvalidInputData) {
                 "pSubpasses": 
                 [
                 {
+                    "sType" : "VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2",
+                    "pNext":"NULL",
                     "flags" : "0",
                     "pipelineBindPoint" : "VK_PIPELINE_BIND_POINT_GRAPHICS",
+                    "viewMask" : 0,
                     "inputAttachmentCount" : 0,
                     "pInputAttachments": 
                     "NULL",
@@ -1123,8 +1128,11 @@ TEST_F(Parse, AcceptLegacyInvalidInputData) {
                     "pColorAttachments": 
                     [
                     {
+                        "sType": "VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2",
+                        "pNext":"NULL",
                         "attachment" : 0,
-                        "layout" : "VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL"
+                        "layout" : "VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL",
+                        "aspectMask" : 1
                     }
                     ],
                     "pResolveAttachments": 
@@ -1137,8 +1145,31 @@ TEST_F(Parse, AcceptLegacyInvalidInputData) {
                     ]
                 }
                 ],
-                "dependencyCount" : 0,
+                "dependencyCount" : 1,
                 "pDependencies": 
+                [
+                {
+                    "sType" : "VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2",
+                    "pNext": {
+                        "sType" : "VK_STRUCTURE_TYPE_MEMORY_BARRIER_2",
+                        "pNext":"NULL",
+                        "srcStageMask" : 1024,
+                        "srcAccessMask" : 256,
+                        "dstStageMask" : 1152,
+                        "dstAccessMask" : 352
+                    },
+                    "srcSubpass" : 4294967295,
+                    "dstSubpass" : 0,
+                    "srcStageMask" : 0,
+                    "dstStageMask" : 0,
+                    "srcAccessMask" : 0,
+                    "dstAccessMask" : 0,
+                    "dependencyFlags" : 0,
+                    "viewOffset" : 0
+                }
+                ],
+                "correlatedViewMaskCount" : 0,
+                "pCorrelatedViewMasks": 
                 "NULL"
             },
 )"
@@ -1151,14 +1182,14 @@ TEST_F(Parse, AcceptLegacyInvalidInputData) {
                         "sType" : "VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO",
                         "pNext":"NULL",
                         "flags" : "0",
-                        "bindingCount" : 3,
+                        "bindingCount" : 5,
                         "pBindings": 
                         [
                         {
                             "binding" : 0,
                             "descriptorType" : "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER",
                             "descriptorCount" : 1,
-                            "stageFlags" : "VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT | VK_SHADER_STAGE_TASK_BIT_NV | VK_SHADER_STAGE_MESH_BIT_NV | VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR | VK_SHADER_STAGE_INTERSECTION_BIT_KHR | VK_SHADER_STAGE_CALLABLE_BIT_KHR | VK_SHADER_STAGE_SUBPASS_SHADING_BIT_HUAWEI",
+                            "stageFlags" : 2147483646,
                             "pImmutableSamplers":
                             "NULL"
                         },
@@ -1166,13 +1197,29 @@ TEST_F(Parse, AcceptLegacyInvalidInputData) {
                             "binding" : 1,
                             "descriptorType" : "VK_DESCRIPTOR_TYPE_STORAGE_BUFFER",
                             "descriptorCount" : 1,
-                            "stageFlags" : "VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT | VK_SHADER_STAGE_TASK_BIT_NV | VK_SHADER_STAGE_MESH_BIT_NV | VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR | VK_SHADER_STAGE_INTERSECTION_BIT_KHR | VK_SHADER_STAGE_CALLABLE_BIT_KHR | VK_SHADER_STAGE_SUBPASS_SHADING_BIT_HUAWEI",
+                            "stageFlags" : "2147483646",
                             "pImmutableSamplers":
                             "NULL"
                         },
                         {
                             "binding" : 2,
                             "descriptorType" : "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER",
+                            "descriptorCount" : 1,
+                            "stageFlags" : " | | ",
+                            "pImmutableSamplers":
+                            "NULL"
+                        },
+                        {
+                            "binding" : 3,
+                            "descriptorType" : "VK_DESCRIPTOR_TYPE_STORAGE_BUFFER",
+                            "descriptorCount" : 1,
+                            "stageFlags" : " | VK_SHADER_STAGE_VERTEX_BIT | ",
+                            "pImmutableSamplers":
+                            "NULL"
+                        },
+                        {
+                            "binding" : 4,
+                            "descriptorType" : "VK_DESCRIPTOR_TYPE_STORAGE_BUFFER",
                             "descriptorCount" : 1,
                             "stageFlags" : "VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT | VK_SHADER_STAGE_TASK_BIT_NV | VK_SHADER_STAGE_MESH_BIT_NV | VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR | VK_SHADER_STAGE_INTERSECTION_BIT_KHR | VK_SHADER_STAGE_CALLABLE_BIT_KHR | VK_SHADER_STAGE_SUBPASS_SHADING_BIT_HUAWEI",
                             "pImmutableSamplers":
@@ -1393,7 +1440,7 @@ TEST_F(Parse, AcceptLegacyInvalidInputData) {
                 {
                     "sType" : "VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO",
                     "pNext":"NULL",
-                    "flags" : 0,
+                    "flags" : " | | ",
                     "logicOpEnable" : "VK_FALSE",
                     "logicOp" : "VK_LOGIC_OP_CLEAR",
                     "attachmentCount" : 1,
@@ -1694,6 +1741,8 @@ TEST_F(Parse, AcceptLegacyInvalidInputData) {
     })"};
 
     VpjData data;
+    // Strict parsing will fail, but enabling accepting legacy inputs will succeed
+    EXPECT_FALSE(vpjParsePipelineJson(this->parser_, json.c_str(), &data, &msg_));
     vpjSetAcceptLegacyInvalidInputData(this->parser_, true);
     EXPECT_TRUE(vpjParsePipelineJson(this->parser_, json.c_str(), &data, &msg_));
 
@@ -1712,15 +1761,44 @@ TEST_F(Parse, AcceptLegacyInvalidInputData) {
 
     auto dsl_ci = reinterpret_cast<const VkDescriptorSetLayoutCreateInfo*>(data.graphicsPipelineState.pDescriptorSetLayouts);
     for (uint32_t i = 0; i < data.graphicsPipelineState.descriptorSetLayoutCount; ++i) {
-        for (uint32_t binding_idx = 0; binding_idx < dsl_ci[i].bindingCount; ++i) {
+        for (uint32_t binding_idx = 0; binding_idx < dsl_ci[i].bindingCount; ++binding_idx) {
             auto parsed_shader_stage_flags = dsl_ci[i].pBindings[binding_idx].stageFlags;
-            EXPECT_EQ(parsed_shader_stage_flags, (parsed_shader_stage_flags & valid_shader_stage_flags));
+            if (i == 0 && binding_idx < 2) {
+                // When explicit integer value is included, it is parsed unmodified which may include invalid bits set
+                // but this is for legacy content anyway
+                EXPECT_EQ(parsed_shader_stage_flags, 2147483646);
+            } else if (i == 0 && binding_idx < 4) {
+                // When empty/whitespace strings are joined with "|" (e.g. " | | "), ignore those "bits"
+                if (binding_idx == 2) {
+                    EXPECT_EQ(parsed_shader_stage_flags, 0);
+                } else {
+                    EXPECT_EQ(parsed_shader_stage_flags, VK_SHADER_STAGE_VERTEX_BIT);
+                }
+            } else {
+                EXPECT_EQ(parsed_shader_stage_flags, (parsed_shader_stage_flags & valid_shader_stage_flags));
+            }
         }
     }
 
-    // Verify that pool entry size stored as string instead of integer was parsed correctly
+    // When empty/whitespace strings are joined with "|" (e.g. " | | "), ignore those "bits" even when the flags type has no flag
+    // bits type
     auto gp_ci = reinterpret_cast<const VkGraphicsPipelineCreateInfo*>(data.graphicsPipelineState.pGraphicsPipeline);
+    EXPECT_EQ(gp_ci->pColorBlendState->flags, 0);
+
+    // Verify that pool entry size stored as string instead of integer was parsed correctly
     auto po_ci = reinterpret_cast<const VkPipelineOfflineCreateInfo*>(gp_ci->pNext);
+    ASSERT_NE(po_ci, nullptr);
     EXPECT_EQ(po_ci->sType, VK_STRUCTURE_TYPE_PIPELINE_OFFLINE_CREATE_INFO);
     EXPECT_EQ(po_ci->poolEntrySize, 42);
+
+    // Verify that 64-bit barrier flags are accepted as raw integer values
+    auto rp_ci = reinterpret_cast<const VkRenderPassCreateInfo2*>(data.graphicsPipelineState.pRenderPass);
+    ASSERT_EQ(rp_ci->sType, VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2);
+    auto barrier = reinterpret_cast<const VkMemoryBarrier2*>(rp_ci->pDependencies[0].pNext);
+    ASSERT_NE(barrier, nullptr);
+    ASSERT_EQ(barrier->sType, VK_STRUCTURE_TYPE_MEMORY_BARRIER_2);
+    EXPECT_EQ(barrier->srcStageMask, 1024u);
+    EXPECT_EQ(barrier->srcAccessMask, 256u);
+    EXPECT_EQ(barrier->dstStageMask, 1152u);
+    EXPECT_EQ(barrier->dstAccessMask, 352u);
 }

@@ -14,6 +14,9 @@
 #include <json/json.h>
 #include <vulkan/vulkan.h>
 
+#include <stdlib.h>
+#include <string.h>
+
 #include <string>
 #include <sstream>
 #include <string_view>
@@ -33,10 +36,14 @@ class ParserBase : protected Base {
   private:
     bool ignore_invalid_enum_values_{false};
     bool accept_integers_as_strings_{false};
+    bool accept_non_zero_integer_flags_{false};
+    bool accept_empty_string_flag_bits_{false};
 
   protected:
     void SetIgnoreInvalidEnumValues(bool enable) { ignore_invalid_enum_values_ = enable; }
     void SetAcceptIntegersAsStrings(bool enable) { accept_integers_as_strings_ = enable; }
+    void SetAcceptNonZeroIntegerFlags(bool enable) { accept_non_zero_integer_flags_ = enable; }
+    void SetAcceptEmptyStringFlagBits(bool enable) { accept_empty_string_flag_bits_ = enable; }
 
   private:
     VkShaderModule parse_VkShaderModule(const Json::Value& json, const LocationScope& l) {
@@ -3388,7 +3395,7 @@ class ParserBase : protected Base {
         if (v.isInt() && v.asInt() >= INT8_MIN && v.asInt() <= INT8_MAX) {
             return v.asInt();
         } else if (accept_integers_as_strings_ && v.isString()) {
-            auto result = static_cast<int8_t>(std::stoll(v.asString()));
+            auto result = static_cast<int8_t>(strtoll(v.asCString(), nullptr, 0));
             Warn() << "Expected 8-bit signed integer but got the string \"" << v.asString() << "\" (parsed as " << result
                    << " instead of being treated as an error as relaxed behavior was requested)";
             return result;
@@ -3402,7 +3409,7 @@ class ParserBase : protected Base {
         if (v.isInt() && v.asInt() >= INT16_MIN && v.asInt() <= INT16_MAX) {
             return v.asInt();
         } else if (accept_integers_as_strings_ && v.isString()) {
-            auto result = static_cast<int16_t>(std::stoll(v.asString()));
+            auto result = static_cast<int16_t>(strtoll(v.asCString(), nullptr, 0));
             Warn() << "Expected 16-bit signed integer but got the string \"" << v.asString() << "\" (parsed as " << result
                    << " instead of being treated as an error as relaxed behavior was requested)";
             return result;
@@ -3416,7 +3423,7 @@ class ParserBase : protected Base {
         if (v.isInt() && v.asInt() >= INT32_MIN && v.asInt() <= INT32_MAX) {
             return v.asInt();
         } else if (accept_integers_as_strings_ && v.isString()) {
-            auto result = static_cast<int32_t>(std::stoll(v.asString()));
+            auto result = static_cast<int32_t>(strtoll(v.asCString(), nullptr, 0));
             Warn() << "Expected 32-bit signed integer but got the string \"" << v.asString() << "\" (parsed as " << result
                    << " instead of being treated as an error as relaxed behavior was requested)";
             return result;
@@ -3430,7 +3437,7 @@ class ParserBase : protected Base {
         if (v.isInt64()) {
             return v.asInt64();
         } else if (accept_integers_as_strings_ && v.isString()) {
-            auto result = static_cast<int64_t>(std::stoll(v.asString()));
+            auto result = static_cast<int64_t>(strtoll(v.asCString(), nullptr, 0));
             Warn() << "Expected 64-bit signed integer but got the string \"" << v.asString() << "\" (parsed as " << result
                    << " instead of being treated as an error as relaxed behavior was requested)";
             return result;
@@ -3444,7 +3451,7 @@ class ParserBase : protected Base {
         if (v.isUInt() && v.asUInt() <= UINT8_MAX) {
             return v.asUInt();
         } else if (accept_integers_as_strings_ && v.isString()) {
-            auto result = static_cast<uint8_t>(std::stoull(v.asString()));
+            auto result = static_cast<uint8_t>(strtoull(v.asCString(), nullptr, 0));
             Warn() << "Expected 8-bit unsigned integer but got the string \"" << v.asString() << "\" (parsed as " << result
                    << " instead of being treated as an error as relaxed behavior was requested)";
             return result;
@@ -3458,7 +3465,7 @@ class ParserBase : protected Base {
         if (v.isUInt() && v.asUInt() <= UINT16_MAX) {
             return v.asUInt();
         } else if (accept_integers_as_strings_ && v.isString()) {
-            auto result = static_cast<uint16_t>(std::stoull(v.asString()));
+            auto result = static_cast<uint16_t>(strtoull(v.asCString(), nullptr, 0));
             Warn() << "Expected 16-bit unsigned integer but got the string \"" << v.asString() << "\" (parsed as " << result
                    << " instead of being treated as an error as relaxed behavior was requested)";
             return result;
@@ -3516,7 +3523,7 @@ class ParserBase : protected Base {
             if (str == "VK_MAX_TENSOR_CREATE_INFO_ROLLING_BACKING_WRAP_COUNT_ARM")
                 return VK_MAX_TENSOR_CREATE_INFO_ROLLING_BACKING_WRAP_COUNT_ARM;
             else if (accept_integers_as_strings_ && v.isString()) {
-                auto result = static_cast<uint32_t>(std::stoull(v.asString()));
+                auto result = static_cast<uint32_t>(strtoull(v.asCString(), nullptr, 0));
                 Warn() << "Expected 32-bit unsigned integer but got the string \"" << v.asString() << "\" (parsed as " << result
                        << " instead of being treated as an error as relaxed behavior was requested)";
                 return result;
@@ -3541,7 +3548,7 @@ class ParserBase : protected Base {
             if (str == "VK_WHOLE_SIZE")
                 return VK_WHOLE_SIZE;
             else if (accept_integers_as_strings_ && v.isString()) {
-                auto result = static_cast<uint64_t>(std::stoull(v.asString()));
+                auto result = static_cast<uint64_t>(strtoull(v.asCString(), nullptr, 0));
                 Warn() << "Expected 64-bit unsigned integer but got the string \"" << v.asString() << "\" (parsed as " << result
                        << " instead of being treated as an error as relaxed behavior was requested)";
                 return result;
@@ -4390,12 +4397,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkPipelineCreateFlags>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkPipelineCreateFlagBits_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkPipelineCreateFlags>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }
@@ -4411,12 +4436,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkPipelineShaderStageCreateFlags>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkPipelineShaderStageCreateFlagBits_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkPipelineShaderStageCreateFlags>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }
@@ -4426,7 +4469,22 @@ class ParserBase : protected Base {
     VkPipelineVertexInputStateCreateFlags parse_VkPipelineVertexInputStateCreateFlags(const Json::Value& json,
                                                                                       const LocationScope& l) {
         if (!((json.isUInt() && json.asUInt() == 0) || (json.isString() && strcmp(json.asCString(), "0") == 0))) {
-            Error() << "Invalid format";
+            if (accept_empty_string_flag_bits_ && json.isString()) {
+                auto json_str = json.asCString();
+                std::stringstream strm(json_str);
+                std::string str;
+                while (std::getline(strm, str, '|')) {
+                    str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                    if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                        Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead "
+                                  "of being treated as an error as relaxed behavior was requested)";
+                        continue;
+                    }
+                    Error() << "Invalid VkPipelineVertexInputStateCreateFlags bit: " << str;
+                }
+            } else {
+                Error() << "Invalid format";
+            }
         }
         return static_cast<VkPipelineVertexInputStateCreateFlags>(0);
     }
@@ -4434,7 +4492,22 @@ class ParserBase : protected Base {
     VkPipelineInputAssemblyStateCreateFlags parse_VkPipelineInputAssemblyStateCreateFlags(const Json::Value& json,
                                                                                           const LocationScope& l) {
         if (!((json.isUInt() && json.asUInt() == 0) || (json.isString() && strcmp(json.asCString(), "0") == 0))) {
-            Error() << "Invalid format";
+            if (accept_empty_string_flag_bits_ && json.isString()) {
+                auto json_str = json.asCString();
+                std::stringstream strm(json_str);
+                std::string str;
+                while (std::getline(strm, str, '|')) {
+                    str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                    if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                        Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead "
+                                  "of being treated as an error as relaxed behavior was requested)";
+                        continue;
+                    }
+                    Error() << "Invalid VkPipelineInputAssemblyStateCreateFlags bit: " << str;
+                }
+            } else {
+                Error() << "Invalid format";
+            }
         }
         return static_cast<VkPipelineInputAssemblyStateCreateFlags>(0);
     }
@@ -4442,14 +4515,44 @@ class ParserBase : protected Base {
     VkPipelineTessellationStateCreateFlags parse_VkPipelineTessellationStateCreateFlags(const Json::Value& json,
                                                                                         const LocationScope& l) {
         if (!((json.isUInt() && json.asUInt() == 0) || (json.isString() && strcmp(json.asCString(), "0") == 0))) {
-            Error() << "Invalid format";
+            if (accept_empty_string_flag_bits_ && json.isString()) {
+                auto json_str = json.asCString();
+                std::stringstream strm(json_str);
+                std::string str;
+                while (std::getline(strm, str, '|')) {
+                    str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                    if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                        Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead "
+                                  "of being treated as an error as relaxed behavior was requested)";
+                        continue;
+                    }
+                    Error() << "Invalid VkPipelineTessellationStateCreateFlags bit: " << str;
+                }
+            } else {
+                Error() << "Invalid format";
+            }
         }
         return static_cast<VkPipelineTessellationStateCreateFlags>(0);
     }
 
     VkPipelineViewportStateCreateFlags parse_VkPipelineViewportStateCreateFlags(const Json::Value& json, const LocationScope& l) {
         if (!((json.isUInt() && json.asUInt() == 0) || (json.isString() && strcmp(json.asCString(), "0") == 0))) {
-            Error() << "Invalid format";
+            if (accept_empty_string_flag_bits_ && json.isString()) {
+                auto json_str = json.asCString();
+                std::stringstream strm(json_str);
+                std::string str;
+                while (std::getline(strm, str, '|')) {
+                    str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                    if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                        Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead "
+                                  "of being treated as an error as relaxed behavior was requested)";
+                        continue;
+                    }
+                    Error() << "Invalid VkPipelineViewportStateCreateFlags bit: " << str;
+                }
+            } else {
+                Error() << "Invalid format";
+            }
         }
         return static_cast<VkPipelineViewportStateCreateFlags>(0);
     }
@@ -4457,7 +4560,22 @@ class ParserBase : protected Base {
     VkPipelineRasterizationStateCreateFlags parse_VkPipelineRasterizationStateCreateFlags(const Json::Value& json,
                                                                                           const LocationScope& l) {
         if (!((json.isUInt() && json.asUInt() == 0) || (json.isString() && strcmp(json.asCString(), "0") == 0))) {
-            Error() << "Invalid format";
+            if (accept_empty_string_flag_bits_ && json.isString()) {
+                auto json_str = json.asCString();
+                std::stringstream strm(json_str);
+                std::string str;
+                while (std::getline(strm, str, '|')) {
+                    str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                    if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                        Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead "
+                                  "of being treated as an error as relaxed behavior was requested)";
+                        continue;
+                    }
+                    Error() << "Invalid VkPipelineRasterizationStateCreateFlags bit: " << str;
+                }
+            } else {
+                Error() << "Invalid format";
+            }
         }
         return static_cast<VkPipelineRasterizationStateCreateFlags>(0);
     }
@@ -4471,12 +4589,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkCullModeFlags>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkCullModeFlagBits_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkCullModeFlags>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }
@@ -4486,7 +4622,22 @@ class ParserBase : protected Base {
     VkPipelineRasterizationConservativeStateCreateFlagsEXT parse_VkPipelineRasterizationConservativeStateCreateFlagsEXT(
         const Json::Value& json, const LocationScope& l) {
         if (!((json.isUInt() && json.asUInt() == 0) || (json.isString() && strcmp(json.asCString(), "0") == 0))) {
-            Error() << "Invalid format";
+            if (accept_empty_string_flag_bits_ && json.isString()) {
+                auto json_str = json.asCString();
+                std::stringstream strm(json_str);
+                std::string str;
+                while (std::getline(strm, str, '|')) {
+                    str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                    if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                        Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead "
+                                  "of being treated as an error as relaxed behavior was requested)";
+                        continue;
+                    }
+                    Error() << "Invalid VkPipelineRasterizationConservativeStateCreateFlagsEXT bit: " << str;
+                }
+            } else {
+                Error() << "Invalid format";
+            }
         }
         return static_cast<VkPipelineRasterizationConservativeStateCreateFlagsEXT>(0);
     }
@@ -4494,7 +4645,22 @@ class ParserBase : protected Base {
     VkPipelineRasterizationDepthClipStateCreateFlagsEXT parse_VkPipelineRasterizationDepthClipStateCreateFlagsEXT(
         const Json::Value& json, const LocationScope& l) {
         if (!((json.isUInt() && json.asUInt() == 0) || (json.isString() && strcmp(json.asCString(), "0") == 0))) {
-            Error() << "Invalid format";
+            if (accept_empty_string_flag_bits_ && json.isString()) {
+                auto json_str = json.asCString();
+                std::stringstream strm(json_str);
+                std::string str;
+                while (std::getline(strm, str, '|')) {
+                    str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                    if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                        Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead "
+                                  "of being treated as an error as relaxed behavior was requested)";
+                        continue;
+                    }
+                    Error() << "Invalid VkPipelineRasterizationDepthClipStateCreateFlagsEXT bit: " << str;
+                }
+            } else {
+                Error() << "Invalid format";
+            }
         }
         return static_cast<VkPipelineRasterizationDepthClipStateCreateFlagsEXT>(0);
     }
@@ -4502,7 +4668,22 @@ class ParserBase : protected Base {
     VkPipelineMultisampleStateCreateFlags parse_VkPipelineMultisampleStateCreateFlags(const Json::Value& json,
                                                                                       const LocationScope& l) {
         if (!((json.isUInt() && json.asUInt() == 0) || (json.isString() && strcmp(json.asCString(), "0") == 0))) {
-            Error() << "Invalid format";
+            if (accept_empty_string_flag_bits_ && json.isString()) {
+                auto json_str = json.asCString();
+                std::stringstream strm(json_str);
+                std::string str;
+                while (std::getline(strm, str, '|')) {
+                    str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                    if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                        Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead "
+                                  "of being treated as an error as relaxed behavior was requested)";
+                        continue;
+                    }
+                    Error() << "Invalid VkPipelineMultisampleStateCreateFlags bit: " << str;
+                }
+            } else {
+                Error() << "Invalid format";
+            }
         }
         return static_cast<VkPipelineMultisampleStateCreateFlags>(0);
     }
@@ -4510,7 +4691,22 @@ class ParserBase : protected Base {
     VkPipelineDepthStencilStateCreateFlags parse_VkPipelineDepthStencilStateCreateFlags(const Json::Value& json,
                                                                                         const LocationScope& l) {
         if (!((json.isUInt() && json.asUInt() == 0) || (json.isString() && strcmp(json.asCString(), "0") == 0))) {
-            Error() << "Invalid format";
+            if (accept_empty_string_flag_bits_ && json.isString()) {
+                auto json_str = json.asCString();
+                std::stringstream strm(json_str);
+                std::string str;
+                while (std::getline(strm, str, '|')) {
+                    str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                    if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                        Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead "
+                                  "of being treated as an error as relaxed behavior was requested)";
+                        continue;
+                    }
+                    Error() << "Invalid VkPipelineDepthStencilStateCreateFlags bit: " << str;
+                }
+            } else {
+                Error() << "Invalid format";
+            }
         }
         return static_cast<VkPipelineDepthStencilStateCreateFlags>(0);
     }
@@ -4518,7 +4714,22 @@ class ParserBase : protected Base {
     VkPipelineColorBlendStateCreateFlags parse_VkPipelineColorBlendStateCreateFlags(const Json::Value& json,
                                                                                     const LocationScope& l) {
         if (!((json.isUInt() && json.asUInt() == 0) || (json.isString() && strcmp(json.asCString(), "0") == 0))) {
-            Error() << "Invalid format";
+            if (accept_empty_string_flag_bits_ && json.isString()) {
+                auto json_str = json.asCString();
+                std::stringstream strm(json_str);
+                std::string str;
+                while (std::getline(strm, str, '|')) {
+                    str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                    if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                        Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead "
+                                  "of being treated as an error as relaxed behavior was requested)";
+                        continue;
+                    }
+                    Error() << "Invalid VkPipelineColorBlendStateCreateFlags bit: " << str;
+                }
+            } else {
+                Error() << "Invalid format";
+            }
         }
         return static_cast<VkPipelineColorBlendStateCreateFlags>(0);
     }
@@ -4532,12 +4743,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkColorComponentFlags>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkColorComponentFlagBits_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkColorComponentFlags>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }
@@ -4546,7 +4775,22 @@ class ParserBase : protected Base {
 
     VkPipelineDynamicStateCreateFlags parse_VkPipelineDynamicStateCreateFlags(const Json::Value& json, const LocationScope& l) {
         if (!((json.isUInt() && json.asUInt() == 0) || (json.isString() && strcmp(json.asCString(), "0") == 0))) {
-            Error() << "Invalid format";
+            if (accept_empty_string_flag_bits_ && json.isString()) {
+                auto json_str = json.asCString();
+                std::stringstream strm(json_str);
+                std::string str;
+                while (std::getline(strm, str, '|')) {
+                    str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                    if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                        Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead "
+                                  "of being treated as an error as relaxed behavior was requested)";
+                        continue;
+                    }
+                    Error() << "Invalid VkPipelineDynamicStateCreateFlags bit: " << str;
+                }
+            } else {
+                Error() << "Invalid format";
+            }
         }
         return static_cast<VkPipelineDynamicStateCreateFlags>(0);
     }
@@ -4560,12 +4804,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkPipelineCreateFlags2>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkPipelineCreateFlagBits2_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkPipelineCreateFlags2>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }
@@ -4581,12 +4843,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkPipelineCreationFeedbackFlags>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkPipelineCreationFeedbackFlagBits_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkPipelineCreationFeedbackFlags>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }
@@ -4596,7 +4876,22 @@ class ParserBase : protected Base {
     VkPipelineDiscardRectangleStateCreateFlagsEXT parse_VkPipelineDiscardRectangleStateCreateFlagsEXT(const Json::Value& json,
                                                                                                       const LocationScope& l) {
         if (!((json.isUInt() && json.asUInt() == 0) || (json.isString() && strcmp(json.asCString(), "0") == 0))) {
-            Error() << "Invalid format";
+            if (accept_empty_string_flag_bits_ && json.isString()) {
+                auto json_str = json.asCString();
+                std::stringstream strm(json_str);
+                std::string str;
+                while (std::getline(strm, str, '|')) {
+                    str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                    if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                        Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead "
+                                  "of being treated as an error as relaxed behavior was requested)";
+                        continue;
+                    }
+                    Error() << "Invalid VkPipelineDiscardRectangleStateCreateFlagsEXT bit: " << str;
+                }
+            } else {
+                Error() << "Invalid format";
+            }
         }
         return static_cast<VkPipelineDiscardRectangleStateCreateFlagsEXT>(0);
     }
@@ -4610,12 +4905,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkSamplerCreateFlags>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkSamplerCreateFlagBits_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkSamplerCreateFlags>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }
@@ -4631,12 +4944,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkDescriptorSetLayoutCreateFlags>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkDescriptorSetLayoutCreateFlagBits_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkDescriptorSetLayoutCreateFlags>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }
@@ -4652,12 +4983,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkShaderStageFlags>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkShaderStageFlagBits_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkShaderStageFlags>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }
@@ -4673,12 +5022,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkDescriptorBindingFlags>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkDescriptorBindingFlagBits_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkDescriptorBindingFlags>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }
@@ -4694,12 +5061,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkPipelineLayoutCreateFlags>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkPipelineLayoutCreateFlagBits_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkPipelineLayoutCreateFlags>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }
@@ -4715,12 +5100,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkRenderPassCreateFlags>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkRenderPassCreateFlagBits_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkRenderPassCreateFlags>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }
@@ -4736,12 +5139,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkAttachmentDescriptionFlags>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkAttachmentDescriptionFlagBits_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkAttachmentDescriptionFlags>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }
@@ -4757,12 +5178,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkSubpassDescriptionFlags>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkSubpassDescriptionFlagBits_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkSubpassDescriptionFlags>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }
@@ -4778,12 +5217,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkPipelineStageFlags>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkPipelineStageFlagBits_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkPipelineStageFlags>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }
@@ -4799,12 +5256,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkAccessFlags>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkAccessFlagBits_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkAccessFlags>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }
@@ -4820,12 +5295,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkDependencyFlags>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkDependencyFlagBits_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkDependencyFlags>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }
@@ -4841,12 +5334,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkImageAspectFlags>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkImageAspectFlagBits_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkImageAspectFlags>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }
@@ -4862,12 +5373,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkPipelineStageFlags2>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkPipelineStageFlagBits2_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkPipelineStageFlags2>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }
@@ -4883,12 +5412,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkAccessFlags2>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkAccessFlagBits2_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkAccessFlags2>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }
@@ -4904,12 +5451,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkPipelineCacheCreateFlags>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkPipelineCacheCreateFlagBits_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkPipelineCacheCreateFlags>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }
@@ -4925,12 +5490,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkBufferCreateFlags>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkBufferCreateFlagBits_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkBufferCreateFlags>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }
@@ -4946,12 +5529,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkBufferUsageFlags>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkBufferUsageFlagBits_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkBufferUsageFlags>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }
@@ -4967,12 +5568,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkBufferUsageFlags2>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkBufferUsageFlagBits2_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkBufferUsageFlags2>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }
@@ -4988,12 +5607,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkExternalMemoryHandleTypeFlags>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkExternalMemoryHandleTypeFlagBits_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkExternalMemoryHandleTypeFlags>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }
@@ -5009,12 +5646,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkImageCreateFlags>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkImageCreateFlagBits_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkImageCreateFlags>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }
@@ -5030,12 +5685,30 @@ class ParserBase : protected Base {
             if (strcmp(json_str, "NULL") == 0 || strcmp(json_str, "0") == 0) {
                 return result;
             }
+            if (accept_integers_as_strings_) {
+                char* str_end = nullptr;
+                result = static_cast<VkImageUsageFlags>(strtoull(json_str, &str_end, 0));
+                if (json_str != str_end) {
+                    Warn() << "Expected flags but got the string \"" << json.asString() << "\" (parsed as " << result
+                           << " instead of being treated as an error as relaxed behavior was requested)";
+                    return result;
+                }
+            }
             std::stringstream strm(json_str);
             std::string str;
             while (std::getline(strm, str, '|')) {
                 str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+                if (accept_empty_string_flag_bits_ && str.size() == 0) {
+                    Warn() << "Expected flag bit in expression separated by '|' but got empty subexpression (ignored instead of "
+                              "being treated as an error as relaxed behavior was requested)";
+                    continue;
+                }
                 result |= parse_VkImageUsageFlagBits_c_str(str.c_str());
             }
+        } else if (accept_non_zero_integer_flags_ && json.isUInt64()) {
+            result = static_cast<VkImageUsageFlags>(json.asUInt64());
+            Warn() << "Expected flags but got the integer value \"" << result
+                   << "\" (parsed as is instead of being treated as an error as relaxed behavior was requested)";
         } else {
             Error() << "Invalid format";
         }

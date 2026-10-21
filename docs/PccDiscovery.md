@@ -125,8 +125,32 @@ The discovery mechanism will first look for PCC manifest files on the path `%VUL
 
 Then, on Windows, the process is followed by looking for registry keys containing PCC manifest file paths in the following registry locations and order:
 
-  * `HKEY_CURRENT_USER\SOFTWARE\Khronos\VulkanSC\PCC\`
-  * `HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\VulkanSC\PCC\`
+```
+HKEY_CURRENT_USER\SOFTWARE\Khronos\VulkanSC\PCC\
+HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\VulkanSC\PCC\
+```
+
+Additionally the PCC discovery will scan through registry keys specific to Display Adapters and all Software
+Components associated with these adapters for the locations of PCC manifest files.
+These keys are located in device keys created during driver installation and
+contain configuration information for base settings, including driver component locations.
+
+The Device Adapter and Software Component key paths will be obtained using the PnP Configuration Manager API.
+The `000X` key will be a numbered key, where each device is assigned a different
+number.
+
+```
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Class\{GUID_DEVCLASS_DISPLAY}\000X\VulkanSCPccManifest
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Class\{GUID_DEVCLASS_SOFTWARECOMPONENT}\000X\VulkanSCPccManifest
+```
+
+If any of the above values exist and is of type `REG_SZ`, the value will be added
+to the list of discovered PCC manifests.
+Each value must be a full absolute path to a PCC manifest file.
+The values may also be of type `REG_MULTI_SZ`, in which case the value will be
+interpreted as a list of paths to PCC manifest files.
+
+Devices that are pending a driver update reboot are skipped from the discovery process.
 
 While on Linux, the process is followed by looking for PCC manifest files in the following file system location  and order:
 

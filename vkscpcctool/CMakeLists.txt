@@ -12,3 +12,7 @@ target_link_libraries(vkscpcctool PRIVATE
     cxxopts::cxxopts
     Vulkan::Headers
     Vulkan::UtilityHeaders)
+
+if(WIN32)
+    target_link_libraries(vkscpcctool PRIVATE cfgmgr32)
+endif()

@@ -72,31 +72,54 @@ if(NOT DEFINED VulkanSC_PCC_EXECUTABLE OR DEFINED VulkanSC_PCC)
     endforeach()
 
     if(WIN32)
+        set(PCC_PROP_NAMES "")
+
         # Find PCC JSON manifests in the registry
         if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
             foreach(HIVE IN ITEMS HKCU HKLM)
                 cmake_host_system_information(
-                    RESULT PCC_PROP_NAMES
+                    RESULT QUERY_RESULT
                     QUERY WINDOWS_REGISTRY "${HIVE}/SOFTWARE/Khronos/VulkanSC/PCC" VALUE_NAMES
                 )
-                foreach(PCC_PROP_NAME IN LISTS PCC_PROP_NAMES)
-                    file(REAL_PATH "${PCC_PROP_NAME}" PCC_PROP_NAME)
-                    if(EXISTS "${PCC_PROP_NAME}")
-                        if(NOT PCC_PROP_NAME IN_LIST PCC_JSON_PATHS)
-                            message(DEBUG "Discovered PCJSON: ${PCC_PROP_NAME}")
-                            list(APPEND PCC_JSON_PATHS "${PCC_PROP_NAME}")
-                        else()
-                            message(DEBUG "Skipped PCJSON: ${PCC_PROP_NAME} (a registry entry resolving to the same file already found)")
-                        endif()
-                    else()
-                        message(WARNING "Skipping PCC JSON manifest file '${PCC_PROP_NAME}' as it does not exist (possibly broken driver or vendor SDK installation)")
-                    endif()
-                endforeach()
+                list(APPEND PCC_PROP_NAMES ${QUERY_RESULT})
+
+                message(DEBUG "PCC JSON manifests from ${HIVE}: ${QUERY_RESULT}")
+                message(DEBUG "All discovered PCC JSON manifests: ${PCC_PROP_NAMES}")
             endforeach()
         else()
             message(FATAL_ERROR "PCC (pipeline cache compiler) discovery on Windows requires CMake 3.24 or newer")
         endif()
-    else()
+
+        separate_arguments(PCC_DISCOVERY_COMMAND NATIVE_COMMAND PROGRAM SEPARATE_ARGS
+                    "${VulkanSC_PCCTOOL_EXECUTABLE} --windows-driver-store-pcc-discovery")
+        cmake_path(GET VulkanSC_PCCTOOL_EXECUTABLE PARENT_PATH PCCTOOL_PARENT_PATH)
+        execute_process(
+            COMMAND ${PCC_DISCOVERY_COMMAND}
+            WORKING_DIRECTORY "${PCCTOOL_PARENT_PATH}"
+            OUTPUT_VARIABLE PCC_DISCOVERY_OUTPUT
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            COMMAND_ERROR_IS_FATAL ANY
+        )
+        string(REPLACE "\n" ";" PCC_DISCOVERY_OUTPUT "${PCC_DISCOVERY_OUTPUT}")
+        list(APPEND PCC_PROP_NAMES ${PCC_DISCOVERY_OUTPUT})
+
+        message(DEBUG "PCC JSON manifests discovered by vkscpctool in Driver Store registry: ${PCC_DISCOVERY_OUTPUT}")
+        message(DEBUG "All discovered PCC JSON manifests: ${PCC_PROP_NAMES}")
+
+        foreach(PCC_PROP_NAME IN LISTS PCC_PROP_NAMES)
+            file(REAL_PATH "${PCC_PROP_NAME}" PCC_PROP_NAME)
+            if(EXISTS "${PCC_PROP_NAME}")
+                if(NOT PCC_PROP_NAME IN_LIST PCC_JSON_PATHS)
+                    message(DEBUG "Discovered PCJSON: ${PCC_PROP_NAME}")
+                    list(APPEND PCC_JSON_PATHS "${PCC_PROP_NAME}")
+                else()
+                    message(DEBUG "Skipped PCJSON: ${PCC_PROP_NAME} (a registry entry resolving to the same file already found)")
+                endif()
+            else()
+                message(WARNING "Skipping PCC JSON manifest file '${PCC_PROP_NAME}' as it does not exist (possibly broken driver or vendor SDK installation)")
+            endif()
+        endforeach()
+else()
         # Find PCC JSON manifests in the supported FHS locations
         foreach(MANIFEST_DIR IN ITEMS
             $ENV{HOME}/.config/vulkansc/pcc.d

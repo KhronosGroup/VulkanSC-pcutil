@@ -51,22 +51,22 @@ struct PCWriterTestData {
 
     void GenShaderStages(uint32_t pipeline_entry_id, uint32_t shader_stage_count) {
         assert(pipeline_entry_id < pipeline_test_datas_.size());
-        auto &pipeline_stages = pipeline_test_datas_[pipeline_entry_id].stages;
+        auto& pipeline_stages = pipeline_test_datas_[pipeline_entry_id].stages;
 
         pipeline_stages.resize(shader_stage_count);
 
         for (uint32_t i = 0; i < shader_stage_count; i++) {
             uint32_t code[8]{0x11111111, 0x22222222, 0x33333333, i, 0x55665566, 0x66666666, 0x77887788, 0x88998899};
             pipeline_stages[i].code.resize(sizeof(code));
-            memcpy(pipeline_stages[i].code.data(), reinterpret_cast<uint8_t *>(&code[0]), sizeof(code));
+            memcpy(pipeline_stages[i].code.data(), reinterpret_cast<uint8_t*>(&code[0]), sizeof(code));
         }
     }
 
     void GenShaderStageVendorData(uint32_t vendor_data_size) {
         per_stage_vendor_data_size_ = vendor_data_size;
 
-        for (auto &pipeline_test_data : pipeline_test_datas_) {
-            auto &pipeline_stages = pipeline_test_data.stages;
+        for (auto& pipeline_test_data : pipeline_test_datas_) {
+            auto& pipeline_stages = pipeline_test_data.stages;
 
             for (uint32_t i = 0; i < pipeline_stages.size(); i++) {
                 pipeline_stages[i].vendor_data.resize(per_stage_vendor_data_size_);
@@ -84,16 +84,16 @@ struct PCWriterTestData {
         }
     }
 
-    void SetJson(uint32_t pipeline_entry_id, const std::string &payload) { pipeline_test_datas_[pipeline_entry_id].json = payload; }
+    void SetJson(uint32_t pipeline_entry_id, const std::string& payload) { pipeline_test_datas_[pipeline_entry_id].json = payload; }
 
     void SetImplementationData(uint32_t implementation_data) { implementation_data_ = implementation_data; }
 
-    void SetShaderStageCode(uint32_t pipeline_entry_id, uint32_t shader_stage_id, const std::vector<uint8_t> &code) {
+    void SetShaderStageCode(uint32_t pipeline_entry_id, uint32_t shader_stage_id, const std::vector<uint8_t>& code) {
         pipeline_test_datas_[pipeline_entry_id].stages[shader_stage_id].code = code;
     }
 
-    void SetShaderStageCode(uint32_t pipeline_entry_id, uint32_t shader_stage_id, const std::vector<uint32_t> &code) {
-        auto &stage_code = pipeline_test_datas_[pipeline_entry_id].stages[shader_stage_id].code;
+    void SetShaderStageCode(uint32_t pipeline_entry_id, uint32_t shader_stage_id, const std::vector<uint32_t>& code) {
+        auto& stage_code = pipeline_test_datas_[pipeline_entry_id].stages[shader_stage_id].code;
         stage_code.resize(code.size() * 4);
         memcpy(stage_code.data(), code.data(), stage_code.size());
     }
@@ -127,4 +127,4 @@ struct PCWriterTestData {
     static const uint64_t default_cache_size_ = 10 * 1024 * 1024;  // 10 MB
 };
 
-void WriteTestDataToCache(VKSCPipelineCacheHeaderWriter &pcw, std::vector<uint8_t> &cache, const PCWriterTestData &td);
+void WriteTestDataToCache(VKSCPipelineCacheHeaderWriter& pcw, std::vector<uint8_t>& cache, const PCWriterTestData& td);

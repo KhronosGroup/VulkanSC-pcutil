@@ -9,7 +9,7 @@
 #include <vulkan/vulkan.h>
 
 template <typename T>
-static VkResult EnumerateProperties(uint32_t src_count, const T *src_props, uint32_t *dst_count, T *dst_props) {
+static VkResult EnumerateProperties(uint32_t src_count, const T* src_props, uint32_t* dst_count, T* dst_props) {
     assert(dst_count);
     if (!dst_props || !src_props) {
         *dst_count = src_count;

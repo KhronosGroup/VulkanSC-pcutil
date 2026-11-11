@@ -11320,4 +11320,4 @@ class ParserBase : protected Base {
 };
 
 }  // namespace pcjson
-   // NOLINTEND
+// NOLINTEND

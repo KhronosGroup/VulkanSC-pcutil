@@ -23,7 +23,7 @@
 #include <vector>
 
 #ifdef _WIN32
-bool get_device_registry_entry(DEVINST dev_id, LPCSTR value_name, std::vector<std::string> &results) {
+bool get_device_registry_entry(DEVINST dev_id, LPCSTR value_name, std::vector<std::string>& results) {
     HKEY hkrKey = 0;
     DWORD requiredSize, data_type;
 
@@ -51,7 +51,7 @@ bool get_device_registry_entry(DEVINST dev_id, LPCSTR value_name, std::vector<st
     std::vector<BYTE> buffer;
     buffer.resize(requiredSize + 2);
 
-    ret = RegQueryValueEx(hkrKey, value_name, NULL, &data_type, (BYTE *)buffer.data(), &requiredSize);
+    ret = RegQueryValueEx(hkrKey, value_name, NULL, &data_type, (BYTE*)buffer.data(), &requiredSize);
 
     if (ret != ERROR_SUCCESS) {
         fprintf(stderr, "vkscpcctool: DeviceID(%ld) Failed to obtain %s\n", dev_id, value_name);
@@ -89,9 +89,9 @@ bool get_device_registry_entry(DEVINST dev_id, LPCSTR value_name, std::vector<st
     return true;
 }
 
-bool get_device_registry_entries(LPCSTR value_name, std::vector<std::string> &results) {
-    const wchar_t *softwareComponentGUID = L"{5c4c3332-344d-483c-8739-259e934c9cc8}";
-    const wchar_t *displayGUID = L"{4d36e968-e325-11ce-bfc1-08002be10318}";
+bool get_device_registry_entries(LPCSTR value_name, std::vector<std::string>& results) {
+    const wchar_t* softwareComponentGUID = L"{5c4c3332-344d-483c-8739-259e934c9cc8}";
+    const wchar_t* displayGUID = L"{4d36e968-e325-11ce-bfc1-08002be10318}";
 
 #if defined(CM_GETIDLIST_FILTER_PRESENT)
     const ULONG flags = CM_GETIDLIST_FILTER_CLASS | CM_GETIDLIST_FILTER_PRESENT;
@@ -104,7 +104,7 @@ bool get_device_registry_entries(LPCSTR value_name, std::vector<std::string> &re
     DEVINST devID = 0, childID = 0;
 
     std::vector<wchar_t> deviceNames;
-    wchar_t *pDeviceNames = NULL;
+    wchar_t* pDeviceNames = NULL;
 
     ULONG deviceNamesSize = 0;
 
@@ -118,7 +118,7 @@ bool get_device_registry_entries(LPCSTR value_name, std::vector<std::string> &re
     } while (CM_Get_Device_ID_ListW(displayGUID, pDeviceNames, deviceNamesSize, flags) == CR_BUFFER_SMALL);
 
     if (pDeviceNames) {
-        for (wchar_t *deviceName = pDeviceNames; *deviceName; deviceName += wcslen(deviceName) + 1) {
+        for (wchar_t* deviceName = pDeviceNames; *deviceName; deviceName += wcslen(deviceName) + 1) {
             CONFIGRET status = CM_Locate_DevNodeW(&devID, deviceName, CM_LOCATE_DEVNODE_NORMAL);
 
             if (CR_SUCCESS != status) {
@@ -180,13 +180,13 @@ bool pcc_discovery() {
 
     get_device_registry_entries("VulkanSCPccManifest", results);
 
-    const auto remove_duplicates = [](const std::vector<std::string> &values) {
+    const auto remove_duplicates = [](const std::vector<std::string>& values) {
         std::vector<std::string> results;
         std::unordered_set<std::string> seen;
 
         results.reserve(values.size());
 
-        for (const auto &value : values) {
+        for (const auto& value : values) {
             if (seen.count(value) == 0) {
                 seen.insert(value);
                 results.push_back(value);
@@ -198,7 +198,7 @@ bool pcc_discovery() {
 
     results = remove_duplicates(results);
 
-    for (const auto &result : results) {
+    for (const auto& result : results) {
         printf("%s\n", result.c_str());
     }
 
@@ -279,11 +279,11 @@ class API {
         }
     }
 
-    void *loader_module_{nullptr};
+    void* loader_module_{nullptr};
     PFN_vkGetInstanceProcAddr gipa_{nullptr};
 };
 
-void setenv(const char *envvar, const char *value) {
+void setenv(const char* envvar, const char* value) {
 #if defined(_WIN32)
     if (_putenv_s(envvar, value) != 0) {
 #else
@@ -359,7 +359,7 @@ void list_devices() {
     api.DestroyInstance(instance, nullptr);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     // clang-format off
     cxxopts::Options options(argv[0], "Pipeline Cache Compiler Helper Tool (For Internal Use)");
     options.add_options()
@@ -381,7 +381,7 @@ int main(int argc, char *argv[]) {
     cxxopts::ParseResult args{};
     try {
         args = options.parse(argc, argv);
-    } catch (cxxopts::exceptions::exception &excp) {
+    } catch (cxxopts::exceptions::exception& excp) {
         fprintf(stderr, "ERROR: %s\n", excp.what());
         fprintf(stdout, "%s\n", options.help().c_str());
         return EXIT_FAILURE;

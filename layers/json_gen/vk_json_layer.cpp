@@ -1389,10 +1389,8 @@ VKAPI_ATTR VkResult VKAPI_ATTR VKAPI_CALL GetPipelinePropertiesEXT(VkDevice devi
 VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL GetDeviceProcAddr(VkDevice device, const char* pName);
 VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL GetInstanceProcAddr(VkInstance instance, const char* pName);
 
-#define ADD_HOOK(fn) \
-    { "vk" #fn, (PFN_vkVoidFunction)fn }
-#define ADD_HOOK_ALIAS(fn, fn_alias) \
-    { "vk" #fn, (PFN_vkVoidFunction)fn_alias }
+#define ADD_HOOK(fn) {"vk" #fn, (PFN_vkVoidFunction)fn}
+#define ADD_HOOK_ALIAS(fn, fn_alias) {"vk" #fn, (PFN_vkVoidFunction)fn_alias}
 
 static const std::unordered_map<std::string, PFN_vkVoidFunction> kInstanceFunctions = {ADD_HOOK(CreateInstance),
                                                                                        ADD_HOOK(DestroyInstance),

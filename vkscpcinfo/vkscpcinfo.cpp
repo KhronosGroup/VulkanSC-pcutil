@@ -30,12 +30,12 @@ typedef enum DetailMode {
     DETAIL_MODE_ALL,
 } DetailMode;
 
-std::ostream &operator<<(std::ostream &out, uint8_t i) {
+std::ostream& operator<<(std::ostream& out, uint8_t i) {
     out << static_cast<unsigned int>(i);
     return out;
 }
 
-std::ostream &operator<<(std::ostream &out, uint8_t const uuid[VK_UUID_SIZE]) {
+std::ostream& operator<<(std::ostream& out, uint8_t const uuid[VK_UUID_SIZE]) {
     out << "0x" << std::uppercase << std::hex;
     for (uint32_t i = 0; i < VK_UUID_SIZE; ++i) {
         out << std::setfill('0') << std::setw(2) << uuid[i];
@@ -44,7 +44,7 @@ std::ostream &operator<<(std::ostream &out, uint8_t const uuid[VK_UUID_SIZE]) {
     return out;
 }
 
-std::ostream &operator<<(std::ostream &out, VkPipelineCacheHeaderVersionOne const &s) {
+std::ostream& operator<<(std::ostream& out, VkPipelineCacheHeaderVersionOne const& s) {
     out << "{" << std::endl;
     out << s.headerSize << std::endl;
     out << s.headerVersion << std::endl;
@@ -57,7 +57,7 @@ std::ostream &operator<<(std::ostream &out, VkPipelineCacheHeaderVersionOne cons
     return out;
 }
 
-std::ostream &operator<<(std::ostream &out, VkPipelineCacheHeaderVersionSafetyCriticalOne const &s) {
+std::ostream& operator<<(std::ostream& out, VkPipelineCacheHeaderVersionSafetyCriticalOne const& s) {
     out << "{" << std::endl;
     out << s.headerVersionOne << std::endl;
     out << s.validationVersion << std::endl;
@@ -69,7 +69,7 @@ std::ostream &operator<<(std::ostream &out, VkPipelineCacheHeaderVersionSafetyCr
     return out;
 }
 
-std::ostream &operator<<(std::ostream &out, VkPipelineCacheSafetyCriticalIndexEntry const &s) {
+std::ostream& operator<<(std::ostream& out, VkPipelineCacheSafetyCriticalIndexEntry const& s) {
     out << "{" << std::endl;
     out << "identifier " << s.pipelineIdentifier << std::endl;
     out << "pipelineMemorySize " << s.pipelineMemorySize << std::endl;
@@ -82,7 +82,7 @@ std::ostream &operator<<(std::ostream &out, VkPipelineCacheSafetyCriticalIndexEn
     return out;
 }
 
-std::ostream &operator<<(std::ostream &out, VkPipelineCacheStageValidationIndexEntry const &s) {
+std::ostream& operator<<(std::ostream& out, VkPipelineCacheStageValidationIndexEntry const& s) {
     out << "{" << std::endl;
     out << s.codeSize << std::endl;
     out << s.codeOffset << std::endl;
@@ -91,7 +91,7 @@ std::ostream &operator<<(std::ostream &out, VkPipelineCacheStageValidationIndexE
 }
 
 struct PipelinePool {
-    PipelinePool(uint64_t size) : poolSize(size){};
+    PipelinePool(uint64_t size) : poolSize(size) {};
 
     uint64_t poolSize;
     uint64_t poolMin{std::numeric_limits<uint64_t>::max()};
@@ -100,22 +100,22 @@ struct PipelinePool {
     std::vector<uint32_t> poolEntries{};
 };
 
-std::ostream &operator<<(std::ostream &out, PipelinePool const &pool) {
+std::ostream& operator<<(std::ostream& out, PipelinePool const& pool) {
     out << "pool size: " << pool.poolSize << ", pool entries: " << pool.poolEntries.size() << std::endl;
     return out;
 }
 
 // <pools> must be sorted in increasing order by poolSize
-bool bucketPipelines(VKSCPipelineCacheHeaderReader &pcr, std::vector<PipelinePool> &pools) {
+bool bucketPipelines(VKSCPipelineCacheHeaderReader& pcr, std::vector<PipelinePool>& pools) {
     bool allAdded = true;
 
     // iterate through the pipelines and add to the smallest pool that they fit
     for (uint32_t i = 0; i < pcr.getPipelineIndexCount(); i++) {
-        VkPipelineCacheSafetyCriticalIndexEntry const *pie = pcr.getPipelineIndexEntry(i);
+        VkPipelineCacheSafetyCriticalIndexEntry const* pie = pcr.getPipelineIndexEntry(i);
         assert(pie != nullptr);
         bool addedToPool = false;
 
-        for (PipelinePool &pool : pools) {
+        for (PipelinePool& pool : pools) {
             if (pie->pipelineMemorySize <= pool.poolSize) {
                 // cout << "adding index " << i << " to pool " << pool.poolSize << endl;
                 pool.poolEntries.push_back(i);
@@ -137,8 +137,8 @@ bool bucketPipelines(VKSCPipelineCacheHeaderReader &pcr, std::vector<PipelinePoo
     return allAdded;
 }
 
-bool printCacheInfo(VKSCPipelineCacheHeaderReader &pcr, DetailMode details) {
-    VkPipelineCacheHeaderVersionOne const *hv1 = pcr.getHeaderVersionOne();
+bool printCacheInfo(VKSCPipelineCacheHeaderReader& pcr, DetailMode details) {
+    VkPipelineCacheHeaderVersionOne const* hv1 = pcr.getHeaderVersionOne();
 
     uint64_t minPoolSize = std::numeric_limits<uint64_t>::max();
     uint64_t maxPoolSize = 0;
@@ -160,7 +160,7 @@ bool printCacheInfo(VKSCPipelineCacheHeaderReader &pcr, DetailMode details) {
 
     // iterate over each pipeline and print the UUID
     for (uint32_t i = 0; i < pcr.getPipelineIndexCount(); i++) {
-        VkPipelineCacheSafetyCriticalIndexEntry const *pie = pcr.getPipelineIndexEntry(i);
+        VkPipelineCacheSafetyCriticalIndexEntry const* pie = pcr.getPipelineIndexEntry(i);
         if (nullptr != pie) {
             if (details >= DETAIL_MODE_ALL_HEADERS) {
                 std::cout << "pipeline " << i << ":" << std::endl
@@ -172,13 +172,13 @@ bool printCacheInfo(VKSCPipelineCacheHeaderReader &pcr, DetailMode details) {
                           << "  stageIndexStride:   " << pie->stageIndexStride << std::endl
                           << "  stageIndexOffset:   " << pie->stageIndexOffset << std::endl;
                 for (uint32_t j = 0; j < pie->stageIndexCount; j++) {
-                    VkPipelineCacheStageValidationIndexEntry const *vie = pcr.getStageIndexEntry(*pie, j);
+                    VkPipelineCacheStageValidationIndexEntry const* vie = pcr.getStageIndexEntry(*pie, j);
                     if (nullptr != vie) {
                         std::cout << "  stage " << j << ":" << std::endl
                                   << "    codeSize:         " << vie->codeSize << std::endl
                                   << "    codeOffset:       " << vie->codeOffset << std::endl;
                         if (details >= DETAIL_MODE_ALL) {
-                            uint32_t const *spirv = reinterpret_cast<uint32_t const *>(pcr.getSPIRV(*vie));
+                            uint32_t const* spirv = reinterpret_cast<uint32_t const*>(pcr.getSPIRV(*vie));
                             std::cout << "    spirv:            ";
                             for (uint32_t k = 0; k < vie->codeSize / 4; k++) {
                                 std::cout << "0x" << std::setw(8) << std::setbase(16) << spirv[k] << ",";
@@ -192,7 +192,7 @@ bool printCacheInfo(VKSCPipelineCacheHeaderReader &pcr, DetailMode details) {
                 }
                 if (details >= DETAIL_MODE_ALL) {
                     std::string const json =
-                        std::string(reinterpret_cast<char const *>(pcr.getJson(*pie)), static_cast<size_t>(pie->jsonSize));
+                        std::string(reinterpret_cast<char const*>(pcr.getJson(*pie)), static_cast<size_t>(pie->jsonSize));
                     std::cout << "  json:" << std::endl << json << std::endl;
                 }
                 std::cout << std::endl;
@@ -215,7 +215,7 @@ bool printCacheInfo(VKSCPipelineCacheHeaderReader &pcr, DetailMode details) {
     return true;
 }
 
-void printUsageAndExit(char *executable, int exitCode) {
+void printUsageAndExit(char* executable, int exitCode) {
     std::cerr << "usage: " << executable << " [-h|--help] [-l|-f|-d|-a] [-pool <poolsize>] <pipeline_cache_file>" << std::endl
               << std::endl;
     std::cerr << "  -h | --help: print this usage message" << std::endl << std::endl;
@@ -229,9 +229,9 @@ void printUsageAndExit(char *executable, int exitCode) {
     exit(exitCode);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
     ifstream file_cache;
-    char *cache_filename{nullptr};
+    char* cache_filename{nullptr};
     int const lastArg{argc};
     DetailMode listMode{DETAIL_MODE_NONE};
     std::vector<PipelinePool> pools{};
@@ -296,7 +296,7 @@ int main(int argc, char **argv) {
 
     std::vector<uint8_t> mem_cache(static_cast<size_t>(size));
     file_cache.seekg(0, ios::beg);
-    file_cache.read(reinterpret_cast<char *>(mem_cache.data()), static_cast<streamsize>(mem_cache.size()));
+    file_cache.read(reinterpret_cast<char*>(mem_cache.data()), static_cast<streamsize>(mem_cache.size()));
     file_cache.close();
 
     std::cout << "read " << size << " bytes from file" << std::endl;
@@ -315,7 +315,7 @@ int main(int argc, char **argv) {
 
     if (pools.size() > 0) {
         // sort the pools
-        std::sort(pools.begin(), pools.end(), [](PipelinePool &a, PipelinePool &b) { return (a.poolSize < b.poolSize); });
+        std::sort(pools.begin(), pools.end(), [](PipelinePool& a, PipelinePool& b) { return (a.poolSize < b.poolSize); });
 
         cout << "requested pools" << endl;
         for (auto pool : pools) {
@@ -335,7 +335,7 @@ int main(int argc, char **argv) {
             cout << "pool wasted space: " << (pool.poolSize * pool.poolEntries.size() - pool.poolTotal) << endl;
             cout << "pool entry identifiers (hex):" << endl;
             for (auto id : pool.poolEntries) {
-                VkPipelineCacheSafetyCriticalIndexEntry const *pie = pcr.getPipelineIndexEntry(id);
+                VkPipelineCacheSafetyCriticalIndexEntry const* pie = pcr.getPipelineIndexEntry(id);
                 cout << "    " << pie->pipelineIdentifier << endl;
             }
         }

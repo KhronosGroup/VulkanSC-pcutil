@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <stdexcept>
 
-bool JsonValidator::LoadAndValidateSchema(const std::string &schema_file, const RemoteSchemaRemap &remote_schema_remap) {
+bool JsonValidator::LoadAndValidateSchema(const std::string& schema_file, const RemoteSchemaRemap& remote_schema_remap) {
     msg_stream.clear();
 
     Json::Value schema_document;
@@ -27,7 +27,7 @@ bool JsonValidator::LoadAndValidateSchema(const std::string &schema_file, const 
         return false;
     }
 
-    const auto fetch_document = [this, &remote_schema_remap](const std::string &uri) -> Json::Value * {
+    const auto fetch_document = [this, &remote_schema_remap](const std::string& uri) -> Json::Value* {
         const std::string schema_path = remote_schema_remap.at(uri);
 
         auto schema_document = new Json::Value();
@@ -38,7 +38,7 @@ bool JsonValidator::LoadAndValidateSchema(const std::string &schema_file, const 
         return schema_document;
     };
 
-    const auto free_document = [](const Json::Value *adapter) { delete adapter; };
+    const auto free_document = [](const Json::Value* adapter) { delete adapter; };
 
     schema.reset(new valijson::Schema);
 
@@ -46,7 +46,7 @@ bool JsonValidator::LoadAndValidateSchema(const std::string &schema_file, const 
         valijson::SchemaParser parser;
         valijson::adapters::JsonCppAdapter schema_adapter(schema_document);
         parser.populateSchema(schema_adapter, *schema, fetch_document, free_document);
-    } catch (const std::runtime_error &error) {
+    } catch (const std::runtime_error& error) {
         msg_stream << "Failed to parse schema document: " << error.what();
         return false;
     } catch (...) {
@@ -57,7 +57,7 @@ bool JsonValidator::LoadAndValidateSchema(const std::string &schema_file, const 
     return schema.get() != nullptr;
 }
 
-bool JsonValidator::ValidateJson(const Json::Value &json_document) {
+bool JsonValidator::ValidateJson(const Json::Value& json_document) {
     assert(!json_document.empty());
 
     valijson::Validator validator(valijson::Validator::kStrongTypes);
@@ -90,7 +90,7 @@ bool JsonValidator::ValidateJson(const Json::Value &json_document) {
     return true;
 }
 
-bool JsonValidator::ValidateJsonFromFile(const std::string &json_file) {
+bool JsonValidator::ValidateJsonFromFile(const std::string& json_file) {
     Json::Value json_document;
     if (!valijson::utils::loadDocument(json_file.c_str(), json_document)) {
         std::cerr << "Failed to load json document." << std::endl;
@@ -100,7 +100,7 @@ bool JsonValidator::ValidateJsonFromFile(const std::string &json_file) {
     return ValidateJson(json_document);
 }
 
-bool ValidatePipelineJson(const std::string &json_str) {
+bool ValidatePipelineJson(const std::string& json_str) {
     JsonValidator json_validator;
 
     const std::string schema_path = std::string(SCHEMA_PATH) + "vksc_pipeline_schema.json";
@@ -129,7 +129,7 @@ bool ValidatePipelineJson(const std::string &json_str) {
     return true;
 }
 
-bool ValidatePipelineJsonFile(const char *pipeline_jsonfile) {
+bool ValidatePipelineJsonFile(const char* pipeline_jsonfile) {
     JsonValidator json_validator;
 
     const std::string schema_path = std::string(SCHEMA_PATH) + "vksc_pipeline_schema.json";
@@ -149,7 +149,7 @@ bool ValidatePipelineJsonFile(const char *pipeline_jsonfile) {
     return true;
 }
 
-bool CompareJson(const std::string &actual, const std::string &reference) {
+bool CompareJson(const std::string& actual, const std::string& reference) {
     Json::Value json{};
 
     Json::CharReaderBuilder charReaderBuilder{};

@@ -20,10 +20,10 @@ class JsonValidator {
     JsonValidator() = default;
     ~JsonValidator() = default;
 
-    bool LoadAndValidateSchema(const std::string &schema_file, const RemoteSchemaRemap &remote_schema_remap = {});
+    bool LoadAndValidateSchema(const std::string& schema_file, const RemoteSchemaRemap& remote_schema_remap = {});
 
-    bool ValidateJson(const Json::Value &json_document);
-    bool ValidateJsonFromFile(const std::string &json_file);
+    bool ValidateJson(const Json::Value& json_document);
+    bool ValidateJsonFromFile(const std::string& json_file);
 
     std::string GetMessage() const { return msg_stream.str(); }
 
@@ -32,6 +32,6 @@ class JsonValidator {
     std::unique_ptr<valijson::Schema> schema;
 };
 
-bool ValidatePipelineJson(const std::string &json_str);
-bool ValidatePipelineJsonFile(const char *pipeline_jsonfile);
-bool CompareJson(const std::string &actual, const std::string &reference);
+bool ValidatePipelineJson(const std::string& json_str);
+bool ValidatePipelineJsonFile(const char* pipeline_jsonfile);
+bool CompareJson(const std::string& actual, const std::string& reference);

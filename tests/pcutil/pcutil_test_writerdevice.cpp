@@ -36,7 +36,7 @@
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
 
-char const *to_string(VkPhysicalDeviceType const type) {
+char const* to_string(VkPhysicalDeviceType const type) {
     switch (type) {
         case VK_PHYSICAL_DEVICE_TYPE_OTHER:
             return "Other";
@@ -56,9 +56,9 @@ char const *to_string(VkPhysicalDeviceType const type) {
 struct ErrorMonitor {
     ErrorMonitor() { Reset(); }
 
-    void AddDesiredMessage(const std::string &msg) { desired_messages_.insert(msg); }
+    void AddDesiredMessage(const std::string& msg) { desired_messages_.insert(msg); }
 
-    void AddIgnoredMessage(const std::string &msg) { ignored_messages_.insert(msg); }
+    void AddIgnoredMessage(const std::string& msg) { ignored_messages_.insert(msg); }
 
     void Reset() {
         desired_messages_.clear();
@@ -73,7 +73,7 @@ struct ErrorMonitor {
 
     bool Check() { return (desired_messages_.size() == occured_desired_messages_.size()) && !undesired_message_occurs_; }
 
-    bool ProcessMsg(const char *vuid_cstr, const char *msg) {
+    bool ProcessMsg(const char* vuid_cstr, const char* msg) {
         std::string vuid = vuid_cstr ? vuid_cstr : "";
         if (vuid == "Loader Message") {
             return true;
@@ -81,13 +81,13 @@ struct ErrorMonitor {
 
         auto msg_with_vuid = vuid + " " + msg;
 
-        for (const auto &ignored_message : ignored_messages_) {
+        for (const auto& ignored_message : ignored_messages_) {
             if (msg_with_vuid.find(ignored_message) != std::string::npos) {
                 return true;
             }
         }
 
-        for (const auto &desired_message : desired_messages_) {
+        for (const auto& desired_message : desired_messages_) {
             if (msg_with_vuid.find(desired_message) != std::string::npos) {
                 occured_desired_messages_.insert(desired_message);
                 return true;
@@ -108,9 +108,9 @@ struct ErrorMonitor {
 
 VKAPI_ATTR VkBool32 VKAPI_CALL debug_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
                                                         VkDebugUtilsMessageTypeFlagsEXT messageType,
-                                                        const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
-                                                        void *pUserData) {
-    ErrorMonitor *error_monitor = reinterpret_cast<ErrorMonitor *>(pUserData);
+                                                        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+                                                        void* pUserData) {
+    ErrorMonitor* error_monitor = reinterpret_cast<ErrorMonitor*>(pUserData);
 
     bool processed = error_monitor->ProcessMsg(pCallbackData->pMessageIdName, pCallbackData->pMessage);
 
@@ -159,7 +159,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_messenger_callback(VkDebugUtilsMessageSever
             VkObjectType t = pCallbackData->pObjects[object].objectType;
             if (t == VK_OBJECT_TYPE_INSTANCE || t == VK_OBJECT_TYPE_PHYSICAL_DEVICE || t == VK_OBJECT_TYPE_DEVICE ||
                 t == VK_OBJECT_TYPE_COMMAND_BUFFER || t == VK_OBJECT_TYPE_QUEUE) {
-                sprintf(tmp_message, ", Handle %p", (void *)(uintptr_t)(pCallbackData->pObjects[object].objectHandle));
+                sprintf(tmp_message, ", Handle %p", (void*)(uintptr_t)(pCallbackData->pObjects[object].objectHandle));
                 strcat(message, tmp_message);
             } else {
                 sprintf(tmp_message, ", Handle Ox%" PRIx64, (pCallbackData->pObjects[object].objectHandle));
@@ -208,8 +208,8 @@ struct TestEnviroment {
 
     uint32_t enabled_extension_count = 0;
     uint32_t enabled_layer_count = 0;
-    const char *extension_names[64];
-    const char *enabled_layers[64];
+    const char* extension_names[64];
+    const char* enabled_layers[64];
 
     VkDebugUtilsMessengerEXT dbg_messenger;
 
@@ -221,7 +221,7 @@ struct TestEnviroment {
     ErrorMonitor error_monitor;
 };
 
-static VkBool32 test_check_layers(uint32_t check_count, const char **check_names, uint32_t layer_count, VkLayerProperties *layers) {
+static VkBool32 test_check_layers(uint32_t check_count, const char** check_names, uint32_t layer_count, VkLayerProperties* layers) {
     for (uint32_t i = 0; i < check_count; i++) {
         VkBool32 found = 0;
         for (uint32_t j = 0; j < layer_count; j++) {
@@ -238,11 +238,11 @@ static VkBool32 test_check_layers(uint32_t check_count, const char **check_names
     return 1;
 }
 
-static bool test_init_vk(TestEnviroment &test_env) {
+static bool test_init_vk(TestEnviroment& test_env) {
     VkResult err;
     uint32_t instance_extension_count = 0;
     uint32_t instance_layer_count = 0;
-    const char *instance_validation_layers[] = {"VK_LAYER_KHRONOS_validation"};
+    const char* instance_validation_layers[] = {"VK_LAYER_KHRONOS_validation"};
     test_env.enabled_extension_count = 0;
     test_env.enabled_layer_count = 0;
 
@@ -303,9 +303,9 @@ static bool test_init_vk(TestEnviroment &test_env) {
     inst_info.flags = 0;
     inst_info.pApplicationInfo = &app;
     inst_info.enabledLayerCount = test_env.enabled_layer_count;
-    inst_info.ppEnabledLayerNames = (const char *const *)instance_validation_layers;
+    inst_info.ppEnabledLayerNames = (const char* const*)instance_validation_layers;
     inst_info.enabledExtensionCount = test_env.enabled_extension_count;
-    inst_info.ppEnabledExtensionNames = (const char *const *)test_env.extension_names;
+    inst_info.ppEnabledExtensionNames = (const char* const*)test_env.extension_names;
 
     /*
      * This is info for a temp callback to use during CreateInstance.
@@ -435,13 +435,13 @@ static bool test_init_vk(TestEnviroment &test_env) {
     return true;
 }
 
-void test_teardown_vk(TestEnviroment &test_env) {
+void test_teardown_vk(TestEnviroment& test_env) {
     vkDestroyDevice(test_env.device, nullptr);
     test_env.pfnDestroyDebugUtilsMessengerEXT(test_env.inst, test_env.dbg_messenger, nullptr);
     vkDestroyInstance(test_env.inst, nullptr);
 }
 
-static bool test_create_device(TestEnviroment &test_env, const std::vector<uint8_t> &cache) {
+static bool test_create_device(TestEnviroment& test_env, const std::vector<uint8_t>& cache) {
     VkResult U_ASSERT_ONLY err;
 
     float queue_priorities[1] = {0.0};
@@ -519,7 +519,7 @@ static bool test_create_device(TestEnviroment &test_env, const std::vector<uint8
     device.enabledLayerCount = 0;
     device.ppEnabledLayerNames = NULL;
     device.enabledExtensionCount = test_env.enabled_extension_count;
-    device.ppEnabledExtensionNames = (const char *const *)test_env.extension_names;
+    device.ppEnabledExtensionNames = (const char* const*)test_env.extension_names;
     device.pEnabledFeatures = NULL;  // If specific features are required, pass them in here
 
     err = vkCreateDevice(test_env.gpu, &device, NULL, &test_env.device);

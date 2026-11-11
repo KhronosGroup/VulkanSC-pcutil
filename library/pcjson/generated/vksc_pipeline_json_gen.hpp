@@ -8470,4 +8470,4 @@ class GeneratorBase : protected Base {
 };
 
 }  // namespace pcjson
-   // NOLINTEND
+// NOLINTEND

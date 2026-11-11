@@ -16,11 +16,9 @@ concurrency:
 
 on:
   push:
-    branches-ignore:
-      - unified
   pull_request:
     branches:
-      - unified
+      - main
 
 permissions:
     contents: read
@@ -28,14 +26,11 @@ permissions:
 jobs:
   pre_build:
     name: Pre-build tests
-    # Runner fixed to accelerate clang-format install, to omit installing a full-blown LLVM install
-    # with the likes of KyleMayes/install-llvm-action for. When oldest supported Ubuntu changes, so
-    # should the clang-format used.
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
     env:
-      CLANG_FORMAT_VERSION: 14
+      CLANG_FORMAT_VERSION: 22
       CLANG_FORMAT_FILES: "*.c *.h *.cpp *.hpp"
     steps:
     - name: ${{ format('Checkout {0}', github.repository) }}

@@ -11,10 +11,10 @@
 
 const uint8_t PCWriterTestData::sample_payload[8] = {0xde, 0xad, 0xde, 0xad, 0xbe, 0xef, 0x7a, 0xc0};
 
-void WriteTestDataToCache(VKSCPipelineCacheHeaderWriter &pcw, std::vector<uint8_t> &cache, const PCWriterTestData &td) {
+void WriteTestDataToCache(VKSCPipelineCacheHeaderWriter& pcw, std::vector<uint8_t>& cache, const PCWriterTestData& td) {
     uint32_t pipeline_entry_count_ = uint32_t(td.pipeline_test_datas_.size());
 
-    std::vector<VKSCPipelineEntry *> pipe_store(pipeline_entry_count_);
+    std::vector<VKSCPipelineEntry*> pipe_store(pipeline_entry_count_);
     pcw.allocatePipelineIndex(pipeline_entry_count_);
 
     pcw.setImplementationData(td.implementation_data_);
@@ -37,12 +37,12 @@ void WriteTestDataToCache(VKSCPipelineCacheHeaderWriter &pcw, std::vector<uint8_
     size_t next_pipeline_vendor_data_offset = pipeline_index_offset + sizeof(VkPipelineCacheSafetyCriticalIndexEntry);
 
     for (uint32_t i = 0; i < pipeline_entry_count_; i++) {
-        VKSCPipelineEntry *pe = new VKSCPipelineEntry(td.pipeline_test_datas_[i].uuid, 32 + i * 11);
-        auto &pipeline_stages = td.pipeline_test_datas_[i].stages;
+        VKSCPipelineEntry* pe = new VKSCPipelineEntry(td.pipeline_test_datas_[i].uuid, 32 + i * 11);
+        auto& pipeline_stages = td.pipeline_test_datas_[i].stages;
 
         if (td.pipeline_test_datas_[i].json.size()) {
             pe->setJsonCode(td.pipeline_test_datas_[i].json.size(),
-                            reinterpret_cast<uint8_t const *>(td.pipeline_test_datas_[i].json.data()));
+                            reinterpret_cast<uint8_t const*>(td.pipeline_test_datas_[i].json.data()));
         }
 
         memcpy(cache.data() + next_pipeline_vendor_data_offset, td.pipeline_test_datas_[i].vendor_data.data(),
@@ -63,7 +63,7 @@ void WriteTestDataToCache(VKSCPipelineCacheHeaderWriter &pcw, std::vector<uint8_
     pcw.writeHeaderSafetyCriticalOne(cache.size(), cache.data());
     pcw.writePipelineIndex(cache.size(), cache.data());
 
-    for (auto &entry : pipe_store) {
+    for (auto& entry : pipe_store) {
         delete entry;
     }
 
@@ -72,14 +72,14 @@ void WriteTestDataToCache(VKSCPipelineCacheHeaderWriter &pcw, std::vector<uint8_
     {
         VKSCPipelineCacheHeaderReader pcr(cache.size(), cache.data());
 
-        for (const auto &pipeline_test_data : td.pipeline_test_datas_) {
-            VkPipelineCacheSafetyCriticalIndexEntry const *pie = pcr.getPipelineIndexEntry(pipeline_test_data.uuid);
+        for (const auto& pipeline_test_data : td.pipeline_test_datas_) {
+            VkPipelineCacheSafetyCriticalIndexEntry const* pie = pcr.getPipelineIndexEntry(pipeline_test_data.uuid);
 
             size_t next_stage_vendor_data_offset =
                 static_cast<size_t>(pie->stageIndexOffset + sizeof(VkPipelineCacheStageValidationIndexEntry));
 
             for (uint32_t stage_id = 0; stage_id < pipeline_test_data.stages.size(); stage_id++) {
-                const auto &stage_data = pipeline_test_data.stages[stage_id];
+                const auto& stage_data = pipeline_test_data.stages[stage_id];
 
                 memcpy(cache.data() + next_stage_vendor_data_offset, stage_data.vendor_data.data(), stage_data.vendor_data.size());
 

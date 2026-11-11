@@ -11,7 +11,7 @@
 
 #include "pcutil_test_writer_helper.h"
 
-bool ReadAndValidate(VKSCPipelineCacheHeaderReader &pcr, std::vector<uint8_t> &cache, const PCWriterTestData &td) {
+bool ReadAndValidate(VKSCPipelineCacheHeaderReader& pcr, std::vector<uint8_t>& cache, const PCWriterTestData& td) {
     uint32_t pipeline_entry_count_ = uint32_t(td.pipeline_test_datas_.size());
 
     uint32_t pipeline_entry_count = pcr.getPipelineIndexCount();
@@ -26,54 +26,54 @@ bool ReadAndValidate(VKSCPipelineCacheHeaderReader &pcr, std::vector<uint8_t> &c
                        td.global_vendor_data_.size()) == 0);
 
     for (uint32_t pipe_index = 0; pipe_index < pipeline_entry_count; pipe_index++) {
-        VkPipelineCacheSafetyCriticalIndexEntry const *pie = pcr.getPipelineIndexEntry(pipe_index);
+        VkPipelineCacheSafetyCriticalIndexEntry const* pie = pcr.getPipelineIndexEntry(pipe_index);
         EXPECT_TRUE(pie);
     }
 
     // query non existent pipeline entry by id
     {
-        VkPipelineCacheSafetyCriticalIndexEntry const *pie = pcr.getPipelineIndexEntry(pipeline_entry_count);
+        VkPipelineCacheSafetyCriticalIndexEntry const* pie = pcr.getPipelineIndexEntry(pipeline_entry_count);
         EXPECT_FALSE(pie);
     }
 
     for (uint32_t i = 0; i < pipeline_entry_count; i++) {
         uint32_t pipe_id = (i + 7) % pipeline_entry_count;
 
-        VkPipelineCacheSafetyCriticalIndexEntry const *pie = pcr.getPipelineIndexEntry(td.pipeline_test_datas_[pipe_id].uuid);
+        VkPipelineCacheSafetyCriticalIndexEntry const* pie = pcr.getPipelineIndexEntry(td.pipeline_test_datas_[pipe_id].uuid);
         EXPECT_TRUE(pie);
 
-        const uint8_t *pipeline_vendor_data_ptr =
-            reinterpret_cast<const uint8_t *>(pie) + sizeof(VkPipelineCacheSafetyCriticalIndexEntry);
+        const uint8_t* pipeline_vendor_data_ptr =
+            reinterpret_cast<const uint8_t*>(pie) + sizeof(VkPipelineCacheSafetyCriticalIndexEntry);
         EXPECT_TRUE(memcmp(pipeline_vendor_data_ptr, td.pipeline_test_datas_[pipe_id].vendor_data.data(),
                            td.per_pipeline_vendor_data_size_) == 0);
 
-        char const *json_ptr = reinterpret_cast<char const *>(pcr.getJson(*pie));
+        char const* json_ptr = reinterpret_cast<char const*>(pcr.getJson(*pie));
 
         if (json_ptr) {
-            const auto &td_json = td.pipeline_test_datas_[pipe_id].json;
+            const auto& td_json = td.pipeline_test_datas_[pipe_id].json;
             EXPECT_TRUE(pie->jsonSize == td_json.size());
             EXPECT_TRUE(memcmp(json_ptr, td_json.data(), static_cast<size_t>(pie->jsonSize)) == 0);
         }
 
         uint32_t stage_index_count = pie->stageIndexCount;
-        const auto &pipeline_stages = td.pipeline_test_datas_[pipe_id].stages;
+        const auto& pipeline_stages = td.pipeline_test_datas_[pipe_id].stages;
         EXPECT_TRUE(stage_index_count == pipeline_stages.size());
 
         // get non existent stage entry
         EXPECT_FALSE(pcr.getStageIndexEntry(*pie, stage_index_count));
 
         for (uint32_t stage_id = 0; stage_id < stage_index_count; stage_id++) {
-            const auto &stage_data = pipeline_stages[stage_id];
-            VkPipelineCacheStageValidationIndexEntry const *sie = pcr.getStageIndexEntry(*pie, stage_id);
+            const auto& stage_data = pipeline_stages[stage_id];
+            VkPipelineCacheStageValidationIndexEntry const* sie = pcr.getStageIndexEntry(*pie, stage_id);
             EXPECT_TRUE(sie);
 
             EXPECT_TRUE(sie->codeSize == stage_data.code.size());
 
-            uint8_t const *spirv = pcr.getSPIRV(*sie);
+            uint8_t const* spirv = pcr.getSPIRV(*sie);
             EXPECT_TRUE(memcmp(spirv, stage_data.code.data(), static_cast<size_t>(sie->codeSize)) == 0);
 
-            const uint8_t *stage_vendor_data_ptr =
-                reinterpret_cast<const uint8_t *>(sie) + sizeof(VkPipelineCacheStageValidationIndexEntry);
+            const uint8_t* stage_vendor_data_ptr =
+                reinterpret_cast<const uint8_t*>(sie) + sizeof(VkPipelineCacheStageValidationIndexEntry);
             EXPECT_TRUE(memcmp(stage_vendor_data_ptr, stage_data.vendor_data.data(), td.per_stage_vendor_data_size_) == 0);
         }
     }

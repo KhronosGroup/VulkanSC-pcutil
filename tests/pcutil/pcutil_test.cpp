@@ -62,12 +62,12 @@ void print_pipeline_layout() {
     PRINT_STRUCTMEMB(VkPipelineCacheHeaderVersionSafetyCriticalOne, pipelineIndexOffset);
 }
 
-std::ostream &operator<<(std::ostream &out, uint8_t i) {
+std::ostream& operator<<(std::ostream& out, uint8_t i) {
     out << static_cast<unsigned int>(i);
     return out;
 }
 
-std::ostream &operator<<(std::ostream &out, uint8_t const uuid[VK_UUID_SIZE]) {
+std::ostream& operator<<(std::ostream& out, uint8_t const uuid[VK_UUID_SIZE]) {
     out << "{";
     for (uint32_t i = 0; i < VK_UUID_SIZE; ++i) {
         if (i) out << ", ";
@@ -77,7 +77,7 @@ std::ostream &operator<<(std::ostream &out, uint8_t const uuid[VK_UUID_SIZE]) {
     return out;
 }
 
-std::ostream &operator<<(std::ostream &out, VkPipelineCacheHeaderVersionOne const &s) {
+std::ostream& operator<<(std::ostream& out, VkPipelineCacheHeaderVersionOne const& s) {
     out << "{" << std::endl;
     out << s.headerSize << std::endl;
     out << s.headerVersion << std::endl;
@@ -88,7 +88,7 @@ std::ostream &operator<<(std::ostream &out, VkPipelineCacheHeaderVersionOne cons
     return out;
 }
 
-std::ostream &operator<<(std::ostream &out, VkPipelineCacheHeaderVersionSafetyCriticalOne const &s) {
+std::ostream& operator<<(std::ostream& out, VkPipelineCacheHeaderVersionSafetyCriticalOne const& s) {
     out << "{" << std::endl;
     out << s.headerVersionOne << std::endl;
     out << s.validationVersion << std::endl;
@@ -100,7 +100,7 @@ std::ostream &operator<<(std::ostream &out, VkPipelineCacheHeaderVersionSafetyCr
     return out;
 }
 
-std::ostream &operator<<(std::ostream &out, VkPipelineCacheSafetyCriticalIndexEntry const &s) {
+std::ostream& operator<<(std::ostream& out, VkPipelineCacheSafetyCriticalIndexEntry const& s) {
     out << "{" << std::endl;
     out << "identifier " << s.pipelineIdentifier << std::endl;
     out << "memorySize " << s.pipelineMemorySize << std::endl;
@@ -113,7 +113,7 @@ std::ostream &operator<<(std::ostream &out, VkPipelineCacheSafetyCriticalIndexEn
     return out;
 }
 
-std::ostream &operator<<(std::ostream &out, VkPipelineCacheStageValidationIndexEntry const &s) {
+std::ostream& operator<<(std::ostream& out, VkPipelineCacheStageValidationIndexEntry const& s) {
     out << "{" << std::endl;
     out << s.codeSize << std::endl;
     out << s.codeOffset << std::endl;
@@ -134,28 +134,28 @@ int main(void) {
         uint32_t const testSize = 8;
         std::vector<std::string> jsonStore(testSize);
         std::vector<std::vector<uint8_t>> codeStore(testSize * 2);
-        std::vector<VKSCPipelineEntry *> pipeStore(testSize);
+        std::vector<VKSCPipelineEntry*> pipeStore(testSize);
         pcw.allocatePipelineIndex(testSize);
 
         for (uint8_t i = 0; i < testSize; i++) {
             uint8_t peUuid[VK_UUID_SIZE]{i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i};
-            VKSCPipelineEntry *pe = new VKSCPipelineEntry(peUuid, 32 + i * 11);
+            VKSCPipelineEntry* pe = new VKSCPipelineEntry(peUuid, 32 + i * 11);
 
             pe->allocateStages(2);
 
             std::string fakeJson("<json>Let's pretend this is a Json file </json>");
             jsonStore[i] = fakeJson;
-            pe->setJsonCode(jsonStore[i].size(), reinterpret_cast<uint8_t const *>(jsonStore[i].data()));
+            pe->setJsonCode(jsonStore[i].size(), reinterpret_cast<uint8_t const*>(jsonStore[i].data()));
 
             uint32_t code[8]{0x11111111, 0x22222222, 0x33333333, i, 0x55665566, 0x66666666, 0x77887788, 0x88998899};
             codeStore[i * 2].resize(sizeof(code));
-            memcpy(codeStore[i * 2].data(), reinterpret_cast<uint8_t *>(&code[0]), sizeof(code));
+            memcpy(codeStore[i * 2].data(), reinterpret_cast<uint8_t*>(&code[0]), sizeof(code));
 
             pe->setShaderStageCode(0, codeStore[i * 2].size(), codeStore[i * 2].data());
 
             uint32_t code2[4]{0xdeaddead, 0xbeef7ac0, 0xfeedface, 2u * i};
             codeStore[i * 2 + 1].resize(sizeof(code2));
-            memcpy(codeStore[i * 2 + 1].data(), reinterpret_cast<uint8_t *>(&code2[0]), sizeof(code2));
+            memcpy(codeStore[i * 2 + 1].data(), reinterpret_cast<uint8_t*>(&code2[0]), sizeof(code2));
             pe->setShaderStageCode(1, codeStore[i * 2 + 1].size(), codeStore[i * 2 + 1].data());
 
             pipeStore[i] = pe;
@@ -166,7 +166,7 @@ int main(void) {
         uint64_t end = pcw.writePipelineIndex(cacheSize, cache.data());
         uint64_t pipelineIndexSize = pcw.getPipelineIndexSize();
 
-        for (auto &entry : pipeStore) {
+        for (auto& entry : pipeStore) {
             delete entry;
         }
         std::cout << "pipeline index ends at " << end << " bytes" << std::endl;
@@ -176,7 +176,7 @@ int main(void) {
     VKSCPipelineCacheHeaderReader pcr(cacheSize, cache.data());
     std::cout << "isValid = " << pcr.isValid() << std::endl;
 
-    VkPipelineCacheHeaderVersionOne const *hv1 = pcr.getHeaderVersionOne();
+    VkPipelineCacheHeaderVersionOne const* hv1 = pcr.getHeaderVersionOne();
     std::cout << "headerv1 = " << *hv1 << std::endl;
     std::cout << "validationVersion = " << pcr.getValidationVersion() << std::endl;
     std::cout << "implementationData = " << pcr.getImplementationData() << std::endl;
@@ -186,7 +186,7 @@ int main(void) {
 
     // iterate over each pipeline and print the UUID
     for (uint32_t i = 0; i < pcr.getPipelineIndexCount(); i++) {
-        VkPipelineCacheSafetyCriticalIndexEntry const *pie = pcr.getPipelineIndexEntry(i);
+        VkPipelineCacheSafetyCriticalIndexEntry const* pie = pcr.getPipelineIndexEntry(i);
         if (nullptr != pie) {
             std::cout << "pie " << i << ": " << pie->pipelineIdentifier << std::endl;
         } else {
@@ -198,23 +198,23 @@ int main(void) {
     for (uint8_t i = 0; i < 8; i++) {
         uint8_t id = static_cast<uint8_t>(7 - i);
         uint8_t queryUUID[VK_UUID_SIZE]{id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id};
-        VkPipelineCacheSafetyCriticalIndexEntry const *pie = pcr.getPipelineIndexEntry(queryUUID);
+        VkPipelineCacheSafetyCriticalIndexEntry const* pie = pcr.getPipelineIndexEntry(queryUUID);
         if (nullptr != pie) {
             std::cout << "pie " << id << ": " << *pie << std::endl;
         } else {
             std::cout << "pie " << id << ": not found" << std::endl;
         }
-        char const *jsonPtr = reinterpret_cast<char const *>(pcr.getJson(*pie));
+        char const* jsonPtr = reinterpret_cast<char const*>(pcr.getJson(*pie));
         if (nullptr != jsonPtr) {
             std::string json(jsonPtr, static_cast<size_t>(pie->jsonSize));
             std::cout << "json: " << json << std::endl;
         }
         for (uint32_t stage = 0; stage < pie->stageIndexCount; stage++) {
-            VkPipelineCacheStageValidationIndexEntry const *sie = pcr.getStageIndexEntry(*pie, stage);
+            VkPipelineCacheStageValidationIndexEntry const* sie = pcr.getStageIndexEntry(*pie, stage);
             if (nullptr != sie) {
                 std::cout << "sie " << stage << ": " << *sie << std::endl;
-                uint8_t const *spirv = pcr.getSPIRV(*sie);
-                uint32_t const *code = reinterpret_cast<uint32_t const *>(spirv);
+                uint8_t const* spirv = pcr.getSPIRV(*sie);
+                uint32_t const* code = reinterpret_cast<uint32_t const*>(spirv);
                 for (uint32_t c = 0; c < sie->codeSize / 4; c++) {
                     std::cout << std::hex << code[c] << ", ";
                 }

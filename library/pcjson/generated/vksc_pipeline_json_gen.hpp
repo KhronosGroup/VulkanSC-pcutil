@@ -261,6 +261,50 @@ class GeneratorBase : protected Base {
         return nullptr;
     }
 
+    const char* gen_VkValidationFeatureEnableEXT_c_str(const VkValidationFeatureEnableEXT v) {
+        switch (v) {
+            case VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT:
+                return "VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT";
+            case VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT:
+                return "VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT";
+            case VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT:
+                return "VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT";
+            case VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT:
+                return "VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT";
+            case VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT:
+                return "VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT";
+            default:
+                break;
+        }
+        Warn() << "Invalid VkValidationFeatureEnableEXT enum value";
+        return nullptr;
+    }
+
+    const char* gen_VkValidationFeatureDisableEXT_c_str(const VkValidationFeatureDisableEXT v) {
+        switch (v) {
+            case VK_VALIDATION_FEATURE_DISABLE_ALL_EXT:
+                return "VK_VALIDATION_FEATURE_DISABLE_ALL_EXT";
+            case VK_VALIDATION_FEATURE_DISABLE_SHADERS_EXT:
+                return "VK_VALIDATION_FEATURE_DISABLE_SHADERS_EXT";
+            case VK_VALIDATION_FEATURE_DISABLE_THREAD_SAFETY_EXT:
+                return "VK_VALIDATION_FEATURE_DISABLE_THREAD_SAFETY_EXT";
+            case VK_VALIDATION_FEATURE_DISABLE_API_PARAMETERS_EXT:
+                return "VK_VALIDATION_FEATURE_DISABLE_API_PARAMETERS_EXT";
+            case VK_VALIDATION_FEATURE_DISABLE_OBJECT_LIFETIMES_EXT:
+                return "VK_VALIDATION_FEATURE_DISABLE_OBJECT_LIFETIMES_EXT";
+            case VK_VALIDATION_FEATURE_DISABLE_CORE_CHECKS_EXT:
+                return "VK_VALIDATION_FEATURE_DISABLE_CORE_CHECKS_EXT";
+            case VK_VALIDATION_FEATURE_DISABLE_UNIQUE_HANDLES_EXT:
+                return "VK_VALIDATION_FEATURE_DISABLE_UNIQUE_HANDLES_EXT";
+            case VK_VALIDATION_FEATURE_DISABLE_SHADER_VALIDATION_CACHE_EXT:
+                return "VK_VALIDATION_FEATURE_DISABLE_SHADER_VALIDATION_CACHE_EXT";
+            default:
+                break;
+        }
+        Warn() << "Invalid VkValidationFeatureDisableEXT enum value";
+        return nullptr;
+    }
+
     const char* gen_VkVertexInputRate_c_str(const VkVertexInputRate v) {
         switch (v) {
             case VK_VERTEX_INPUT_RATE_VERTEX:
@@ -2931,6 +2975,16 @@ class GeneratorBase : protected Base {
         return enum_str ? Json::Value(enum_str) : Json::Value(v);
     }
 
+    Json::Value gen_VkValidationFeatureEnableEXT(const VkValidationFeatureEnableEXT v, const LocationScope&) {
+        const char* enum_str = gen_VkValidationFeatureEnableEXT_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
+    }
+
+    Json::Value gen_VkValidationFeatureDisableEXT(const VkValidationFeatureDisableEXT v, const LocationScope&) {
+        const char* enum_str = gen_VkValidationFeatureDisableEXT_c_str(v);
+        return enum_str ? Json::Value(enum_str) : Json::Value(v);
+    }
+
     Json::Value gen_VkVertexInputRate(const VkVertexInputRate v, const LocationScope&) {
         const char* enum_str = gen_VkVertexInputRate_c_str(v);
         return enum_str ? Json::Value(enum_str) : Json::Value(v);
@@ -3884,6 +3938,13 @@ class GeneratorBase : protected Base {
                     break;
                 }
 
+                case VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT: {
+                    *json_next = gen_VkValidationFeaturesEXT_contents(*reinterpret_cast<const VkValidationFeaturesEXT*>(next),
+                                                                      CreateScope("pNext<VkValidationFeaturesEXT>", true));
+                    (*json_next)["sType"] = "VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT";
+                    break;
+                }
+
                 default:
                     Error() << "Invalid structure type extending VkPipelineShaderStageCreateInfo: " << next->sType;
                     break;
@@ -4297,6 +4358,13 @@ class GeneratorBase : protected Base {
                     break;
                 }
 
+                case VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT: {
+                    *json_next = gen_VkValidationFeaturesEXT_contents(*reinterpret_cast<const VkValidationFeaturesEXT*>(next),
+                                                                      CreateScope("pNext<VkValidationFeaturesEXT>", true));
+                    (*json_next)["sType"] = "VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT";
+                    break;
+                }
+
                 default:
                     Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: " << next->sType;
                     break;
@@ -4351,6 +4419,13 @@ class GeneratorBase : protected Base {
                         gen_VkPipelineRobustnessCreateInfo_contents(*reinterpret_cast<const VkPipelineRobustnessCreateInfo*>(next),
                                                                     CreateScope("pNext<VkPipelineRobustnessCreateInfo>", true));
                     (*json_next)["sType"] = "VK_STRUCTURE_TYPE_PIPELINE_ROBUSTNESS_CREATE_INFO";
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT: {
+                    *json_next = gen_VkValidationFeaturesEXT_contents(*reinterpret_cast<const VkValidationFeaturesEXT*>(next),
+                                                                      CreateScope("pNext<VkValidationFeaturesEXT>", true));
+                    (*json_next)["sType"] = "VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT";
                     break;
                 }
 
@@ -5654,6 +5729,47 @@ class GeneratorBase : protected Base {
         Json::Value json;
 
         json["requiredSubgroupSize"] = gen_uint32_t(s.requiredSubgroupSize, CreateScope("requiredSubgroupSize"));
+
+        return json;
+    }
+
+    Json::Value gen_VkValidationFeaturesEXT_contents(const VkValidationFeaturesEXT& s, const LocationScope& l) {
+        Json::Value json;
+
+        json["enabledValidationFeatureCount"] =
+            gen_uint32_t(s.enabledValidationFeatureCount, CreateScope("enabledValidationFeatureCount"));
+
+        if (s.enabledValidationFeatureCount != 0) {
+            Json::Value json_array_pEnabledValidationFeatures;
+            if (s.pEnabledValidationFeatures != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.enabledValidationFeatureCount; i++) {
+                    json_array_pEnabledValidationFeatures[i] = gen_VkValidationFeatureEnableEXT(
+                        s.pEnabledValidationFeatures[i], CreateScope("pEnabledValidationFeatures", i));
+                }
+                json["pEnabledValidationFeatures"] = json_array_pEnabledValidationFeatures;
+            } else {
+                Error() << "pEnabledValidationFeatures is NULL but its length is " << s.enabledValidationFeatureCount;
+            }
+        } else {
+            json["pEnabledValidationFeatures"] = "NULL";
+        }
+        json["disabledValidationFeatureCount"] =
+            gen_uint32_t(s.disabledValidationFeatureCount, CreateScope("disabledValidationFeatureCount"));
+
+        if (s.disabledValidationFeatureCount != 0) {
+            Json::Value json_array_pDisabledValidationFeatures;
+            if (s.pDisabledValidationFeatures != nullptr) {
+                for (Json::Value::ArrayIndex i = 0; i < s.disabledValidationFeatureCount; i++) {
+                    json_array_pDisabledValidationFeatures[i] = gen_VkValidationFeatureDisableEXT(
+                        s.pDisabledValidationFeatures[i], CreateScope("pDisabledValidationFeatures", i));
+                }
+                json["pDisabledValidationFeatures"] = json_array_pDisabledValidationFeatures;
+            } else {
+                Error() << "pDisabledValidationFeatures is NULL but its length is " << s.disabledValidationFeatureCount;
+            }
+        } else {
+            json["pDisabledValidationFeatures"] = "NULL";
+        }
 
         return json;
     }

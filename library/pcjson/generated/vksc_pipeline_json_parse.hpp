@@ -1050,6 +1050,55 @@ class ParserBase : protected Base {
         }
     }
 
+    VkValidationFeatureEnableEXT parse_VkValidationFeatureEnableEXT_c_str(const char* v) {
+        static std::unordered_map<std::string_view, VkValidationFeatureEnableEXT> map = {
+            std::make_pair("VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT", VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT),
+            std::make_pair("VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT",
+                           VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT),
+            std::make_pair("VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT", VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT),
+            std::make_pair("VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT", VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT),
+            std::make_pair("VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT",
+                           VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT)};
+        auto it = map.find(v);
+        if (it != map.end()) {
+            return it->second;
+        } else {
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkValidationFeatureEnableEXT constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkValidationFeatureEnableEXT constant: " << v;
+            }
+            return static_cast<VkValidationFeatureEnableEXT>(0);
+        }
+    }
+
+    VkValidationFeatureDisableEXT parse_VkValidationFeatureDisableEXT_c_str(const char* v) {
+        static std::unordered_map<std::string_view, VkValidationFeatureDisableEXT> map = {
+            std::make_pair("VK_VALIDATION_FEATURE_DISABLE_ALL_EXT", VK_VALIDATION_FEATURE_DISABLE_ALL_EXT),
+            std::make_pair("VK_VALIDATION_FEATURE_DISABLE_SHADERS_EXT", VK_VALIDATION_FEATURE_DISABLE_SHADERS_EXT),
+            std::make_pair("VK_VALIDATION_FEATURE_DISABLE_THREAD_SAFETY_EXT", VK_VALIDATION_FEATURE_DISABLE_THREAD_SAFETY_EXT),
+            std::make_pair("VK_VALIDATION_FEATURE_DISABLE_API_PARAMETERS_EXT", VK_VALIDATION_FEATURE_DISABLE_API_PARAMETERS_EXT),
+            std::make_pair("VK_VALIDATION_FEATURE_DISABLE_OBJECT_LIFETIMES_EXT",
+                           VK_VALIDATION_FEATURE_DISABLE_OBJECT_LIFETIMES_EXT),
+            std::make_pair("VK_VALIDATION_FEATURE_DISABLE_CORE_CHECKS_EXT", VK_VALIDATION_FEATURE_DISABLE_CORE_CHECKS_EXT),
+            std::make_pair("VK_VALIDATION_FEATURE_DISABLE_UNIQUE_HANDLES_EXT", VK_VALIDATION_FEATURE_DISABLE_UNIQUE_HANDLES_EXT),
+            std::make_pair("VK_VALIDATION_FEATURE_DISABLE_SHADER_VALIDATION_CACHE_EXT",
+                           VK_VALIDATION_FEATURE_DISABLE_SHADER_VALIDATION_CACHE_EXT)};
+        auto it = map.find(v);
+        if (it != map.end()) {
+            return it->second;
+        } else {
+            if (ignore_invalid_enum_values_) {
+                Warn() << "Invalid VkValidationFeatureDisableEXT constant: " << v
+                       << " (ignored instead of being treated as an error as relaxed behavior was requested)";
+            } else {
+                Error() << "Invalid VkValidationFeatureDisableEXT constant: " << v;
+            }
+            return static_cast<VkValidationFeatureDisableEXT>(0);
+        }
+    }
+
     VkVertexInputRate parse_VkVertexInputRate_c_str(const char* v) {
         static std::unordered_map<std::string_view, VkVertexInputRate> map = {
             std::make_pair("VK_VERTEX_INPUT_RATE_VERTEX", VK_VERTEX_INPUT_RATE_VERTEX),
@@ -3769,6 +3818,28 @@ class ParserBase : protected Base {
         }
     }
 
+    VkValidationFeatureEnableEXT parse_VkValidationFeatureEnableEXT(const Json::Value& json, const LocationScope& l) {
+        if (json.isString()) {
+            return parse_VkValidationFeatureEnableEXT_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkValidationFeatureEnableEXT>(json.asInt());
+        } else {
+            Error() << "Invalid format";
+            return static_cast<VkValidationFeatureEnableEXT>(0);
+        }
+    }
+
+    VkValidationFeatureDisableEXT parse_VkValidationFeatureDisableEXT(const Json::Value& json, const LocationScope& l) {
+        if (json.isString()) {
+            return parse_VkValidationFeatureDisableEXT_c_str(json.asCString());
+        } else if (json.isInt()) {
+            return static_cast<VkValidationFeatureDisableEXT>(json.asInt());
+        } else {
+            Error() << "Invalid format";
+            return static_cast<VkValidationFeatureDisableEXT>(0);
+        }
+    }
+
     VkVertexInputRate parse_VkVertexInputRate(const Json::Value& json, const LocationScope& l) {
         if (json.isString()) {
             return parse_VkVertexInputRate_c_str(json.asCString());
@@ -5807,6 +5878,15 @@ class ParserBase : protected Base {
                     break;
                 }
 
+                case VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT: {
+                    auto next = AllocMem<VkValidationFeaturesEXT>();
+                    current_pnext_ref = "pNext<VkValidationFeaturesEXT>";
+                    *next = parse_VkValidationFeaturesEXT_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+                    prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
+                    break;
+                }
+
                 default:
                     Error() << "Invalid structure type extending VkPipelineShaderStageCreateInfo: "
                             << (*json_next)["sType"].asCString();
@@ -6359,6 +6439,15 @@ class ParserBase : protected Base {
                     break;
                 }
 
+                case VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT: {
+                    auto next = AllocMem<VkValidationFeaturesEXT>();
+                    current_pnext_ref = "pNext<VkValidationFeaturesEXT>";
+                    *next = parse_VkValidationFeaturesEXT_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+                    prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
+                    break;
+                }
+
                 default:
                     Error() << "Invalid structure type extending VkGraphicsPipelineCreateInfo: "
                             << (*json_next)["sType"].asCString();
@@ -6426,6 +6515,15 @@ class ParserBase : protected Base {
                     current_pnext_ref = "pNext<VkPipelineRobustnessCreateInfo>";
                     *next = parse_VkPipelineRobustnessCreateInfo_contents(*json_next, CreateScope(current_pnext_ref, true));
                     next->sType = VK_STRUCTURE_TYPE_PIPELINE_ROBUSTNESS_CREATE_INFO;
+                    prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
+                    break;
+                }
+
+                case VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT: {
+                    auto next = AllocMem<VkValidationFeaturesEXT>();
+                    current_pnext_ref = "pNext<VkValidationFeaturesEXT>";
+                    *next = parse_VkValidationFeaturesEXT_contents(*json_next, CreateScope(current_pnext_ref, true));
+                    next->sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
                     prev->pNext = reinterpret_cast<VkBaseOutStructure*>(next);
                     break;
                 }
@@ -8069,6 +8167,68 @@ class ParserBase : protected Base {
         const Json::Value& json, const LocationScope& l) {
         VkPipelineShaderStageRequiredSubgroupSizeCreateInfo s{};
         s.requiredSubgroupSize = parse_uint32_t(json["requiredSubgroupSize"], CreateScope("requiredSubgroupSize"));
+        return s;
+    }
+
+    VkValidationFeaturesEXT parse_VkValidationFeaturesEXT_contents(const Json::Value& json, const LocationScope& l) {
+        VkValidationFeaturesEXT s{};
+        s.enabledValidationFeatureCount =
+            parse_uint32_t(json["enabledValidationFeatureCount"], CreateScope("enabledValidationFeatureCount"));
+        {
+            const Json::Value& json_member = json["pEnabledValidationFeatures"];
+
+            if (s.enabledValidationFeatureCount == 0) {
+                s.pEnabledValidationFeatures = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pEnabledValidationFeatures is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.enabledValidationFeatureCount) {
+                        auto dst_buffer = AllocMem<VkValidationFeatureEnableEXT>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] =
+                                parse_VkValidationFeatureEnableEXT(json_member[i], CreateScope("pEnabledValidationFeatures", i));
+                        }
+                        s.pEnabledValidationFeatures = dst_buffer;
+                    } else {
+                        Error() << "pEnabledValidationFeatures array size (" << json_member.size()
+                                << ") does not match expected length (" << s.enabledValidationFeatureCount << ")";
+                    }
+                } else {
+                    Error() << "pEnabledValidationFeatures is not an array";
+                }
+            }
+        }
+        s.disabledValidationFeatureCount =
+            parse_uint32_t(json["disabledValidationFeatureCount"], CreateScope("disabledValidationFeatureCount"));
+        {
+            const Json::Value& json_member = json["pDisabledValidationFeatures"];
+
+            if (s.disabledValidationFeatureCount == 0) {
+                s.pDisabledValidationFeatures = nullptr;
+                if (!json_member.isString() || strcmp(json_member.asCString(), "NULL") != 0) {
+                    Warn() << "pDisabledValidationFeatures is not NULL but its length is zero";
+                }
+            } else {
+                if (json_member.isArray()) {
+                    if (json_member.size() == s.disabledValidationFeatureCount) {
+                        auto dst_buffer = AllocMem<VkValidationFeatureDisableEXT>(json_member.size());
+                        for (Json::Value::ArrayIndex i = 0; i < json_member.size(); ++i) {
+                            dst_buffer[i] =
+                                parse_VkValidationFeatureDisableEXT(json_member[i], CreateScope("pDisabledValidationFeatures", i));
+                        }
+                        s.pDisabledValidationFeatures = dst_buffer;
+                    } else {
+                        Error() << "pDisabledValidationFeatures array size (" << json_member.size()
+                                << ") does not match expected length (" << s.disabledValidationFeatureCount << ")";
+                    }
+                } else {
+                    Error() << "pDisabledValidationFeatures is not an array";
+                }
+            }
+        }
+
         return s;
     }
 

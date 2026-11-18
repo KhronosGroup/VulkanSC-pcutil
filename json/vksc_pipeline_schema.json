@@ -570,6 +570,41 @@
                 }
             ]
         },
+        "VkValidationFeatureEnableEXT": {
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT",
+                        "VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT",
+                        "VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT",
+                        "VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT",
+                        "VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
+            ]
+        },
+        "VkValidationFeatureDisableEXT": {
+            "oneOf": [
+                {
+                    "enum": [
+                        "VK_VALIDATION_FEATURE_DISABLE_ALL_EXT",
+                        "VK_VALIDATION_FEATURE_DISABLE_SHADERS_EXT",
+                        "VK_VALIDATION_FEATURE_DISABLE_THREAD_SAFETY_EXT",
+                        "VK_VALIDATION_FEATURE_DISABLE_API_PARAMETERS_EXT",
+                        "VK_VALIDATION_FEATURE_DISABLE_OBJECT_LIFETIMES_EXT",
+                        "VK_VALIDATION_FEATURE_DISABLE_CORE_CHECKS_EXT",
+                        "VK_VALIDATION_FEATURE_DISABLE_UNIQUE_HANDLES_EXT",
+                        "VK_VALIDATION_FEATURE_DISABLE_SHADER_VALIDATION_CACHE_EXT"
+                    ]
+                },
+                {
+                    "type": "integer"
+                }
+            ]
+        },
         "VkPipelineShaderStageCreateInfo_pNext": {
             "oneOf": [
                 {
@@ -660,6 +695,77 @@
                                     "required": [
                                         "sType",
                                         "requiredSubgroupSize"
+                                    ]
+                                },
+                                {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                        "sType": {
+                                            "type": "string",
+                                            "pattern": "VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT"
+                                        },
+                                        "enabledValidationFeatureCount": {
+                                            "oneOf": [
+                                                {
+                                                    "enum": [
+                                                        "NULL"
+                                                    ]
+                                                },
+                                                {
+                                                    "$ref": "#/definitions/uint32_t"
+                                                }
+                                            ]
+                                        },
+                                        "pEnabledValidationFeatures": {
+                                            "oneOf": [
+                                                {
+                                                    "enum": [
+                                                        "NULL"
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/definitions/VkValidationFeatureEnableEXT"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "disabledValidationFeatureCount": {
+                                            "oneOf": [
+                                                {
+                                                    "enum": [
+                                                        "NULL"
+                                                    ]
+                                                },
+                                                {
+                                                    "$ref": "#/definitions/uint32_t"
+                                                }
+                                            ]
+                                        },
+                                        "pDisabledValidationFeatures": {
+                                            "oneOf": [
+                                                {
+                                                    "enum": [
+                                                        "NULL"
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/definitions/VkValidationFeatureDisableEXT"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "pNext": {}
+                                    },
+                                    "required": [
+                                        "sType",
+                                        "enabledValidationFeatureCount",
+                                        "pEnabledValidationFeatures",
+                                        "disabledValidationFeatureCount",
+                                        "pDisabledValidationFeatures"
                                     ]
                                 }
                             ]
@@ -3392,6 +3498,77 @@
                                         "pDepthInputAttachmentIndex",
                                         "pStencilInputAttachmentIndex"
                                     ]
+                                },
+                                {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                        "sType": {
+                                            "type": "string",
+                                            "pattern": "VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT"
+                                        },
+                                        "enabledValidationFeatureCount": {
+                                            "oneOf": [
+                                                {
+                                                    "enum": [
+                                                        "NULL"
+                                                    ]
+                                                },
+                                                {
+                                                    "$ref": "#/definitions/uint32_t"
+                                                }
+                                            ]
+                                        },
+                                        "pEnabledValidationFeatures": {
+                                            "oneOf": [
+                                                {
+                                                    "enum": [
+                                                        "NULL"
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/definitions/VkValidationFeatureEnableEXT"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "disabledValidationFeatureCount": {
+                                            "oneOf": [
+                                                {
+                                                    "enum": [
+                                                        "NULL"
+                                                    ]
+                                                },
+                                                {
+                                                    "$ref": "#/definitions/uint32_t"
+                                                }
+                                            ]
+                                        },
+                                        "pDisabledValidationFeatures": {
+                                            "oneOf": [
+                                                {
+                                                    "enum": [
+                                                        "NULL"
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/definitions/VkValidationFeatureDisableEXT"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "pNext": {}
+                                    },
+                                    "required": [
+                                        "sType",
+                                        "enabledValidationFeatureCount",
+                                        "pEnabledValidationFeatures",
+                                        "disabledValidationFeatureCount",
+                                        "pDisabledValidationFeatures"
+                                    ]
                                 }
                             ]
                         }
@@ -3750,6 +3927,77 @@
                                         "uniformBuffers",
                                         "vertexInputs",
                                         "images"
+                                    ]
+                                },
+                                {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                        "sType": {
+                                            "type": "string",
+                                            "pattern": "VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT"
+                                        },
+                                        "enabledValidationFeatureCount": {
+                                            "oneOf": [
+                                                {
+                                                    "enum": [
+                                                        "NULL"
+                                                    ]
+                                                },
+                                                {
+                                                    "$ref": "#/definitions/uint32_t"
+                                                }
+                                            ]
+                                        },
+                                        "pEnabledValidationFeatures": {
+                                            "oneOf": [
+                                                {
+                                                    "enum": [
+                                                        "NULL"
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/definitions/VkValidationFeatureEnableEXT"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "disabledValidationFeatureCount": {
+                                            "oneOf": [
+                                                {
+                                                    "enum": [
+                                                        "NULL"
+                                                    ]
+                                                },
+                                                {
+                                                    "$ref": "#/definitions/uint32_t"
+                                                }
+                                            ]
+                                        },
+                                        "pDisabledValidationFeatures": {
+                                            "oneOf": [
+                                                {
+                                                    "enum": [
+                                                        "NULL"
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/definitions/VkValidationFeatureDisableEXT"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "pNext": {}
+                                    },
+                                    "required": [
+                                        "sType",
+                                        "enabledValidationFeatureCount",
+                                        "pEnabledValidationFeatures",
+                                        "disabledValidationFeatureCount",
+                                        "pDisabledValidationFeatures"
                                     ]
                                 }
                             ]

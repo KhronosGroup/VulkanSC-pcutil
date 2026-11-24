@@ -15,6 +15,7 @@ option(BUILD_WERROR "Treat pipeline cache utils compiler warnings as errors" ${P
 option(ENABLE_ADDRESS_SANITIZER "Use address sanitization")
 option(ENABLE_THREAD_SANITIZER "Use thread sanitization")
 option(PCU_ENABLE_INSTALL "Install VulkanSC-pcutil" ${PROJECT_IS_TOP_LEVEL})
+option(PCJSON_ENABLE_INSTALL "Install VulkanSC pipeline JSON generator/parser" ${PROJECT_IS_TOP_LEVEL})
 
 set(API_TYPE "vulkansc")
 add_definitions(-DVULKANSC)
@@ -160,9 +161,12 @@ if(BUILD_TESTS)
     add_subdirectory(tests)
 endif()
 
-if(PCU_ENABLE_INSTALL)
+if (PCU_ENABLE_INSTALL OR PCJSON_ENABLE_INSTALL)
+    include(GNUInstallDirs)
     include(CMakePackageConfigHelpers)
+endif()
 
+if(PCU_ENABLE_INSTALL)
     install(EXPORT VulkanSCPCUtilConfig NAMESPACE "VulkanSC::" DESTINATION "share/cmake/VulkanSCPCUtil")
 
     set(version_config "${CMAKE_CURRENT_BINARY_DIR}/generated/VulkanSCPCUtilConfigVersion.cmake")
@@ -195,4 +199,23 @@ if(PCU_ENABLE_INSTALL)
         write_basic_package_version_file("${version_config}" COMPATIBILITY SameMajorVersion ARCH_INDEPENDENT)
         install(FILES "${version_config}" DESTINATION "share/cmake/VulkanJSONGenLayer")
     endif()
+endif()
+
+if(PCJSON_ENABLE_INSTALL)
+    install(EXPORT VulkanSCPCJsonConfig NAMESPACE "VulkanSC::" DESTINATION "share/cmake/VulkanSCPCJson")
+
+    set(pcjon_version_config "${CMAKE_CURRENT_BINARY_DIR}/generated/VulkanSCPCJsonConfigVersion.cmake")
+    write_basic_package_version_file("${pcjon_version_config}" COMPATIBILITY SameMajorVersion ARCH_INDEPENDENT)
+    install(FILES "${pcjon_version_config}" DESTINATION "share/cmake/VulkanSCPCJson")
+
+    install(TARGETS VulkanSCPCJson EXPORT VulkanSCPCJsonConfig)
+    install(
+        DIRECTORY "${PROJECT_SOURCE_DIR}/include/vulkan/pcjson"
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/vulkan"
+    )
+
+    install(
+        DIRECTORY "${PROJECT_SOURCE_DIR}/json"
+        DESTINATION .
+    )
 endif()

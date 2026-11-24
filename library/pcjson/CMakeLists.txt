@@ -39,3 +39,6 @@ target_link_libraries(VulkanSCPCJson PRIVATE
 set_target_properties(VulkanSCPCJson PROPERTIES
     OUTPUT_NAME vkscpcjson
 )
+set_target_properties(VulkanSCPCJson PROPERTIES
+    EXPORT_NAME PCJson
+)

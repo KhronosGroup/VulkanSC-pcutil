@@ -245,46 +245,6 @@
                     "repo_name": "valijson"
                 }
             ]
-        },
-        {
-            "name": "VulkanSC-ValidationLayers",
-            "api": "vulkansc",
-            "url": "https://github.com/KhronosGroup/VulkanSC-ValidationLayers.git",
-            "sub_dir": "VulkanSC-ValidationLayers",
-            "build_dir": "VulkanSC-ValidationLayers/build",
-            "install_dir": "VulkanSC-ValidationLayers/build/install",
-            "commit": "7a590692d8cc862f8fddae3f1b71a5b703f55a77",
-            "optional": [
-                "tests"
-            ],
-            "cmake_options": [
-                "-DBUILD_WSI_XCB_SUPPORT=OFF",
-                "-DBUILD_WSI_XLIB_SUPPORT=OFF",
-                "-DBUILD_WSI_WAYLAND_SUPPORT=OFF",
-                "-DBUILD_TESTS=OFF"
-            ],
-            "deps": [
-                {
-                    "var_name": "JSONCPP_INSTALL_DIR",
-                    "repo_name": "jsoncpp"
-                },
-                {
-                    "var_name": "VULKAN_HEADERS_INSTALL_DIR",
-                    "repo_name": "Vulkan-Headers"
-                },
-                {
-                    "var_name": "VULKAN_UTILITY_LIBRARIES_INSTALL_DIR",
-                    "repo_name": "Vulkan-Utility-Libraries"
-                },
-                {
-                    "var_name": "SPIRV_HEADERS_INSTALL_DIR",
-                    "repo_name": "SPIRV-Headers"
-                },
-                {
-                    "var_name": "SPIRV_TOOLS_INSTALL_DIR",
-                    "repo_name": "SPIRV-Tools"
-                }
-            ]
         }
     ],
     "install_names": {
@@ -301,7 +261,6 @@
         "SPIRV-Tools": "SPIRV_TOOLS_INSTALL_DIR",
         "volk": "VOLK_INSTALL_DIR",
         "Vulkan-Tools": "VULKAN_TOOLS_INSTALL_DIR",
-        "VulkanSC-Tools": "VULKANSC_TOOLS_INSTALL_DIR",
-        "VulkanSC-ValidationLayers": "VULKANSC_VALIDATION_LAYERS_INSTALL_DIR"
+        "VulkanSC-Tools": "VULKANSC_TOOLS_INSTALL_DIR"
     }
 }

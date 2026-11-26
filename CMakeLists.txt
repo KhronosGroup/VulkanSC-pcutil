@@ -77,13 +77,9 @@ if (${CMAKE_CXX_COMPILER_ID} MATCHES "(GNU|Clang)")
         add_compile_options(
             -Wno-stringop-truncation
             -Wl,--no-undefined
-            -Wno-address         # TODO: JOSN lib generator generates non-null address checks for stack arrays
+            -Wno-address                # TODO: JSON lib generator generates non-null address checks for stack arrays
+            -Wno-maybe-uninitialized    # GCC 13's libstdc++ regex header doesn't parse without tripping maybe-uninitialized
         )
-        if (ENABLE_ADDRESS_SANITIZER)
-            add_compile_options(
-                -Wno-maybe-uninitialized # GCC 13's libstdc++ regex header doesn't parse without tripping maybe-uninitialized
-            )
-        endif()
     endif()
 
     if (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
